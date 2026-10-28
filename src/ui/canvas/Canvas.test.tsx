@@ -128,22 +128,17 @@ describe('Canvas editing', () => {
     expect(st().selection).toEqual({ states: [], transitions: [] });
   });
 
-  it('Enter toggles accepting and Space toggles start on the selected state', () => {
+  it('Enter and Space do not toggle accepting or start', () => {
     load(two());
     render(<Canvas />);
     click(stateEl('q1'), 100, 0);
     fireEvent.keyDown(canvas(), { key: 'Enter' });
-    expect(active().accepting).toEqual(['q1']);
-    fireEvent.keyDown(canvas(), { key: 'Enter' });
-    expect(active().accepting).toEqual([]);
-    // Default prevented: the page does not scroll.
-    expect(fireEvent.keyDown(canvas(), { key: ' ' })).toBe(false);
-    expect(active().start).toBe('q1');
     fireEvent.keyDown(canvas(), { key: ' ' });
+    expect(active().accepting).toEqual([]);
     expect(active().start).toBeNull();
   });
 
-  it('S and A remain aliases for start and accepting', () => {
+  it('S toggles start and A toggles accepting on the selected state', () => {
     load(two());
     render(<Canvas />);
     click(stateEl('q1'), 100, 0);

@@ -505,37 +505,111 @@ input.av-switcher-input {
   margin-bottom: 6px;
 }
 .av-modal-head h2 {
-  font-family: var(--av-font-math);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
 }
 .av-modal-head .av-icon-button {
   margin-right: -8px;
 }
-.av-controls section + section {
-  margin-top: 14px;
+.av-guide {
+  width: min(560px, 100%);
 }
-.av-controls h3 {
-  margin-bottom: 2px;
-  font-size: 12.5px;
-  font-weight: 600;
+.av-guide-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 6px 0 10px;
+  padding: 3px;
+  background: var(--av-hover);
+  border-radius: 9px;
+}
+.av-guide-tabs [role='tab'] {
+  flex: 1;
+  min-height: 30px;
   color: var(--av-ink-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
 }
-.av-controls dl {
+.av-guide-tabs [role='tab']:hover:not(:disabled) {
+  color: var(--av-ink);
+  background: transparent;
+}
+.av-guide-tabs [role='tab'][aria-selected='true'] {
+  font-weight: 600;
+  color: var(--av-ink);
+  background: var(--av-surface-raised);
+  box-shadow: 0 1px 2px var(--av-shadow);
+}
+/* Tall enough for the longest tab, so switching tabs doesn't make the dialog jump. */
+.av-guide-list {
+  min-height: 336px;
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.av-controls-row {
+.av-guide-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: 196px minmax(0, 1fr);
   gap: 16px;
-  padding: 5px 0;
+  align-items: center;
+  padding: 10px 2px;
+}
+.av-guide-row + .av-guide-row {
   border-top: 1px solid var(--av-rule);
 }
-.av-controls dt {
-  color: var(--av-ink);
+.av-gesture {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
 }
-.av-controls dd {
-  margin: 0;
+.av-gesture-input,
+.av-gesture-part {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.av-gesture-plus {
+  font-size: 12px;
+  color: var(--av-ink-muted);
+}
+.av-gesture-mouse {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 0 7px 0 5px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  background: var(--av-kbd);
+  border: 1px solid var(--av-rule-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+}
+.av-mouse rect,
+.av-mouse path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+}
+.av-mouse .av-mouse-on {
+  fill: var(--av-accent);
+  stroke: none;
+}
+.av-gesture-on {
+  font-size: 12px;
+  color: var(--av-ink-muted);
+}
+.av-guide-what {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.av-guide-action {
+  font-weight: 600;
+}
+.av-guide-hint {
+  font-size: 12.5px;
   color: var(--av-ink-muted);
 }
 kbd {
@@ -672,8 +746,11 @@ kbd {
     top: auto;
     bottom: 72px;
   }
-  .av-controls-row {
+  .av-guide-row {
     grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
+    gap: 6px;
+  }
+  .av-guide-list {
+    min-height: 0;
   }
 }

@@ -25,13 +25,18 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 - [x] Subscript labels (`q_1`, `q_{12}`); new states are named `q_0`, `q_1`, …
 - [x] Shift + drag draws a transition (the ring gesture is gone); drag an edge to bend it, drag a loop to rotate it
 - [x] The transition being drawn is a solid arrow; over a state it shows the edge (or self-loop) it will create
-- [x] Enter toggles accepting, Space toggles start on the selected state
+- [x] Geist / Geist Mono instead of STIX Two and Schibsted Grotesk; upright labels
+- [x] Controls popup as tabs (Build, Arrange, Run, Keys) with gesture chips instead of sentences
+- [x] ε or `\epsilon` in the word is the empty word
+- [x] Run plays at once with a chime, and an accept/reject cue when the verdict appears
+- [x] Run highlight is a slim violet ring and edge instead of the wide yellow highlighter
+- [x] A toggles accepting, S toggles start on the selected state (Enter/Space no longer do)
 - [x] Alignment snapping with guides while dragging (Alt skips)
 - [x] `\epsilon` types ε; ε on a DFA turns it into an NFA
 - [x] Remove the transition table, issues panel and sidebar; derived alphabet; issues chip
 - [x] Minimal top bar with automaton switcher; floating run pill; light/dark/system theme toggle
 - [x] Controls popup (help button, `?`, first visit)
-- [x] No seeded examples: first launch is one blank automaton; "Load examples" in the menu
+- [x] No examples at all: first launch is one blank automaton (e2e imports `e2e/fixtures/automata.json`)
 - [x] Run animation: tape with read head, tokens along edges, dead-branch ✕, verdict banner with a reason
 - [x] e2e specs rewritten for the new gestures and shell
 

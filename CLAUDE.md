@@ -50,9 +50,10 @@ Layers, with dependencies pointing downward only:
   automaton closes the trace. `useAppStore` selectors must return stable references (see its doc comment)
   or React 19 loops. `traceActions.ts` opens traces (`startRun`, `startSubset`, `startMinimize`).
 - `src/persistence/`: localStorage autosave (key `automaton-vis:v1`, 500 ms debounce, flush on `pagehide`),
-  seeded examples, and the versioned JSON file format
+  and the versioned JSON file format
   (`{ format: "automaton-vis", version, automata }`). Every load goes through `migrate()` and the zod
-  schema; corrupt stored data is copied to a backup key and the examples load instead.
+  schema; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
+  built-in examples; e2e specs import `e2e/fixtures/automata.json`.
 - `src/ui/`:
   - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
     states, tints, visibility). Its `data-testid`s and `data-*` attributes are a contract used by tests,

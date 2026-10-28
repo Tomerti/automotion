@@ -1,10 +1,13 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Automaton } from '../../core/model';
 import { appStore, resetAppStore } from '../../store/store';
 import App from '../shell/App';
 import { RunPanel } from './RunPanel';
+import { playRunSound } from './sound';
+
+vi.mock('./sound', () => ({ playRunSound: vi.fn(), playVerdictSound: vi.fn() }));
 
 /** DFA over {0,1} accepting words with an even number of zeros. */
 const evenZeros: Automaton = {
@@ -27,7 +30,10 @@ const evenZeros: Automaton = {
 };
 const ab: Automaton = { ...evenZeros, alphabet: ['a', 'b'], transitions: [] };
 
-beforeEach(() => resetAppStore());
+beforeEach(() => {
+  resetAppStore();
+  vi.mocked(playRunSound).mockClear();
+});
 afterEach(cleanup);
 
 describe('RunPanel', () => {
@@ -55,6 +61,32 @@ describe('RunPanel', () => {
     render(<RunPanel />);
     await user.type(screen.getByLabelText('Word'), '0010{Enter}');
     expect(appStore.getState().trace?.kind).toBe('run');
+  });
+
+  it('Run plays the run sound; a disabled Run does not', async () => {
+    resetAppStore({ automata: [evenZeros] });
+    const user = userEvent.setup();
+    render(<RunPanel />);
+    await user.type(screen.getByLabelText('Word'), '2{Enter}');
+    expect(playRunSound).not.toHaveBeenCalled();
+    await user.clear(screen.getByLabelText('Word'));
+    await user.type(screen.getByLabelText('Word'), '01{Enter}');
+    expect(playRunSound).toHaveBeenCalledTimes(1);
+  });
+
+  it('ε, typed or as \\epsilon, is the empty word', async () => {
+    resetAppStore({ automata: [evenZeros] });
+    const user = userEvent.setup();
+    render(<RunPanel />);
+    const input = screen.getByLabelText('Word');
+    await user.type(input, '0\\epsilon');
+    expect(input).toHaveValue('0ε');
+    await user.type(input, '0{Enter}');
+    expect(appStore.getState().trace).toMatchObject({ kind: 'run', word: '00', accepted: true });
+    appStore.getState().closeTrace();
+    await user.clear(input);
+    await user.type(input, 'ε{Enter}');
+    expect(appStore.getState().trace).toMatchObject({ kind: 'run', word: '', accepted: true });
   });
 
   it('running shows the verdict on the last step', async () => {

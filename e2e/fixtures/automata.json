@@ -1,0 +1,44 @@
+{
+  "format": "automaton-vis",
+  "version": 1,
+  "automata": [
+    {
+      "id": "ends-in-ab",
+      "name": "Ends in ab (NFA)",
+      "kind": "NFA",
+      "alphabet": ["a", "b"],
+      "states": [
+        { "id": "q0", "label": "q_0", "x": 100, "y": 150 },
+        { "id": "q1", "label": "q_1", "x": 250, "y": 150 },
+        { "id": "q2", "label": "q_2", "x": 400, "y": 150 },
+        { "id": "q3", "label": "q_3", "x": 550, "y": 150 }
+      ],
+      "start": "q0",
+      "accepting": ["q3"],
+      "transitions": [
+        { "id": "q0->q0", "from": "q0", "to": "q0", "symbols": ["a", "b"] },
+        { "id": "q0->q1", "from": "q0", "to": "q1", "symbols": ["ε"] },
+        { "id": "q1->q2", "from": "q1", "to": "q2", "symbols": ["a"] },
+        { "id": "q2->q3", "from": "q2", "to": "q3", "symbols": ["b"] }
+      ]
+    },
+    {
+      "id": "even-zeros",
+      "name": "Even number of 0s (DFA)",
+      "kind": "DFA",
+      "alphabet": ["0", "1"],
+      "states": [
+        { "id": "even", "label": "even", "x": 150, "y": 150 },
+        { "id": "odd", "label": "odd", "x": 300, "y": 150 }
+      ],
+      "start": "even",
+      "accepting": ["even"],
+      "transitions": [
+        { "id": "even->odd", "from": "even", "to": "odd", "symbols": ["0"] },
+        { "id": "odd->even", "from": "odd", "to": "even", "symbols": ["0"] },
+        { "id": "even->even", "from": "even", "to": "even", "symbols": ["1"] },
+        { "id": "odd->odd", "from": "odd", "to": "odd", "symbols": ["1"] }
+      ]
+    }
+  ]
+}

@@ -10,7 +10,7 @@
   display: grid;
   transform: translate(-50%, -50%);
   font-family: var(--av-font-math);
-  font-style: italic;
+  font-weight: 500;
   line-height: 1.2;
   color: var(--av-text);
 }

@@ -32,7 +32,7 @@ export function Canvas(): React.JSX.Element {
         </svg>
         <p className="av-empty-title">Create an automaton to get started</p>
         <p className="av-empty-hint">
-          Use the automaton menu in the top bar: New DFA, New NFA, Load examples or Import.
+          Use the automaton menu in the top bar: New DFA, New NFA or Import.
         </p>
       </div>
     );

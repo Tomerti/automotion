@@ -1,9 +1,18 @@
 import { epsilonClosure, move, transitionsTaken } from './analysis';
+import { normalizeSymbolText } from './edit';
 import { formatSet } from './format';
 import { EPSILON } from './model';
 import type { Automaton, StateId } from './model';
 import type { RunStep, RunTrace } from './trace';
 import { hasErrors, validate } from './validate';
+
+/**
+ * The word to run for what the user typed: `\epsilon` reads as ε, and ε is the empty word, so
+ * `ε` runs the empty word and `aεb` runs `ab`.
+ */
+export function readWord(text: string): string {
+  return normalizeSymbolText(text).replaceAll(EPSILON, '');
+}
 
 /** Why `word` can't be run on `a`, or null when it can. */
 export function canRun(a: Automaton, word: string): string | null {

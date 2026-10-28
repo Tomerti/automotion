@@ -1,19 +1,24 @@
 import { useState } from 'react';
-import { canRun } from '../../core/run';
+import { normalizeSymbolText } from '../../core/edit';
+import { canRun, readWord } from '../../core/run';
 import { useAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
+import { playRunSound } from './sound';
 
 /**
- * The floating "test a word" pill at the bottom of the canvas; Enter runs. The shell keeps it
+ * The floating "test a word" pill at the bottom of the canvas; Enter runs, with a chime, and the
+ * player starts playing at once. ε (or `\epsilon`) is the empty word. The shell keeps it
  * mounted but `hidden` while a trace is open, so the word survives for the next run.
  */
 export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.Element {
   const automaton = useAppStore((s) => s.automata.find((a) => a.id === s.activeId));
   const [word, setWord] = useState('');
-  const reason = automaton ? canRun(automaton, word) : 'Create an automaton first';
+  const reason = automaton ? canRun(automaton, readWord(word)) : 'Create an automaton first';
 
   const run = (): void => {
-    if (reason === null) startRun(word);
+    if (reason !== null) return;
+    playRunSound();
+    startRun(readWord(word));
   };
 
   return (
@@ -28,11 +33,11 @@ export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.El
       <input
         aria-label="Word"
         placeholder="Test a word…"
-        title="Leave empty to test ε, the empty word"
+        title="Type ε (or \epsilon), or leave it empty, to test the empty word"
         autoComplete="off"
         spellCheck={false}
         value={word}
-        onChange={(e) => setWord(e.target.value)}
+        onChange={(e) => setWord(normalizeSymbolText(e.target.value))}
       />
       <button
         type="submit"

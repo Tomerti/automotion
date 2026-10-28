@@ -11,6 +11,8 @@ export interface TracePlayerProps {
   explanation: string;
   onClose: () => void;
   extraActions?: ReactNode;
+  /** Start playing as soon as the player opens (a run plays right after Run). */
+  autoPlay?: boolean;
 }
 
 const isTypingTarget = (t: EventTarget | null): boolean =>
@@ -64,8 +66,8 @@ function IconButton(props: {
 
 /** The floating step player shared by every trace kind. */
 export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
-  const { stepCount, index, onIndex, explanation, onClose, extraActions } = props;
-  const [playing, setPlaying] = useState(false);
+  const { stepCount, index, onIndex, explanation, onClose, extraActions, autoPlay = false } = props;
+  const [playing, setPlaying] = useState(autoPlay && stepCount > 1);
   // Local, so a new trace (which remounts the player) starts at 1×; mirrored for the views.
   const [speed, setSpeed] = useState(1);
   const last = stepCount - 1;

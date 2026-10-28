@@ -4,10 +4,10 @@
  * values and must stay plain (no parentheses) so the exporter can resolve them.
  */
 export const diagramStyles = `
-.av-diagram { background: var(--av-canvas-bg, transparent); font-family: var(--av-font, Georgia, serif); user-select: none; }
+.av-diagram { background: var(--av-canvas-bg, transparent); font-family: var(--av-font, Geist, system-ui, sans-serif); user-select: none; }
 .av-state-body { fill: var(--av-state-fill, #ffffff); stroke: var(--av-state-stroke, #1c2333); stroke-width: 1.75; transition: fill 0.2s, stroke 0.2s, opacity 0.2s; }
 .av-state-ring { fill: none; stroke: var(--av-state-stroke, #1c2333); stroke-width: 1.5; transition: stroke 0.2s; }
-.av-state-label { fill: var(--av-text, #1c2333); font-size: 15px; font-style: italic; text-anchor: middle; dominant-baseline: central; pointer-events: none; transition: fill 0.2s; }
+.av-state-label { fill: var(--av-text, #1c2333); font-size: 15px; font-weight: 500; text-anchor: middle; dominant-baseline: central; pointer-events: none; transition: fill 0.2s; }
 .av-state { transition: opacity 0.2s, transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1); }
 .av-diagram[data-dragging] .av-state { transition: opacity 0.2s; }
 .av-state-hit { fill: transparent; stroke: none; }
@@ -16,7 +16,7 @@ export const diagramStyles = `
 .av-state[data-editing="true"] .av-state-label, .av-edge[data-editing="true"] .av-edge-label { visibility: hidden; }
 .av-edge-path { fill: none; stroke: var(--av-edge-stroke, #3a4356); stroke-width: 1.4; stroke-linecap: round; transition: stroke 0.2s, stroke-width 0.2s; }
 .av-edge-head { fill: var(--av-edge-stroke, #3a4356); transition: fill 0.2s; }
-.av-edge-label { fill: var(--av-text, #1c2333); font-size: 15px; font-style: italic; text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--av-label-halo, #f3f5f0); stroke-width: 4px; stroke-linejoin: round; }
+.av-edge-label { fill: var(--av-text, #1c2333); font-size: 15px; font-weight: 500; text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--av-label-halo, #f3f5f0); stroke-width: 4px; stroke-linejoin: round; }
 .av-rubber-band { pointer-events: none; }
 .av-rubber-band .av-edge-path { stroke: var(--av-selected, #2563eb); stroke-width: 2; }
 .av-rubber-band .av-edge-head { fill: var(--av-selected, #2563eb); }
@@ -35,17 +35,17 @@ export const diagramStyles = `
 .av-state[data-faded="true"], .av-edge[data-faded="true"] { opacity: 0.25; }
 .av-state[data-selected="true"] .av-state-body { stroke: var(--av-selected, #2563eb); stroke-width: 3; }
 .av-state[data-selected="true"] .av-state-ring { stroke: var(--av-selected, #2563eb); }
-.av-state[data-active="true"] .av-state-body { fill: var(--av-active-fill, #ffe14d); stroke: var(--av-active-stroke, #7a5600); stroke-width: 2.5; }
-.av-state[data-active="true"] .av-state-ring { stroke: var(--av-active-stroke, #7a5600); }
+.av-state[data-active="true"] .av-state-body { fill: var(--av-active-fill, #ede9fe); stroke: var(--av-active-stroke, #6d28d9); stroke-width: 2.25; }
+.av-state[data-active="true"] .av-state-ring { stroke: var(--av-active-stroke, #6d28d9); }
 .av-state[data-active="true"] .av-state-label { fill: var(--av-active-text, #1c2333); }
 .av-state[data-error="true"] .av-state-body { stroke: var(--av-error, #c42f36); stroke-width: 3; }
 .av-state[data-error="true"] .av-state-ring { stroke: var(--av-error, #c42f36); }
 
 .av-edge[data-selected="true"] .av-edge-path { stroke: var(--av-selected, #2563eb); stroke-width: 2.5; }
 .av-edge[data-selected="true"] .av-edge-head { fill: var(--av-selected, #2563eb); }
-.av-edge[data-taken="true"] .av-edge-hit { stroke: var(--av-taken-band, #ffe14dc0); }
-.av-edge[data-taken="true"] .av-edge-path { stroke: var(--av-active, #7a5600); stroke-width: 2.25; }
-.av-edge[data-taken="true"] .av-edge-head { fill: var(--av-active, #7a5600); }
+.av-edge[data-taken="true"] .av-edge-hit { stroke: var(--av-taken-band, #8b5cf62e); stroke-width: 7; }
+.av-edge[data-taken="true"] .av-edge-path { stroke: var(--av-active, #6d28d9); stroke-width: 2.25; }
+.av-edge[data-taken="true"] .av-edge-head { fill: var(--av-active, #6d28d9); }
 .av-edge[data-error="true"] .av-edge-path { stroke: var(--av-error, #c42f36); stroke-width: 2.5; }
 .av-edge[data-error="true"] .av-edge-head { fill: var(--av-error, #c42f36); }
 

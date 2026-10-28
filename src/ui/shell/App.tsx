@@ -60,6 +60,7 @@ export default function App(): React.JSX.Element {
               onIndex={setStep}
               explanation={step.explanation}
               onClose={closeTrace}
+              autoPlay={trace.kind === 'run'}
               extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
             />
           )}

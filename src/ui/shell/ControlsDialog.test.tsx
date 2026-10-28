@@ -11,20 +11,49 @@ beforeEach(() => resetAppStore());
 afterEach(cleanup);
 
 describe('Controls popup', () => {
-  it('opens from the help button and lists the gestures with keys as <kbd>', async () => {
+  it('opens from the help button on the Build tab, gestures shown as chips', async () => {
     const user = userEvent.setup();
     render(<App />);
     expect(dialog()).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Controls' }));
     const d = dialog()!;
     expect(d).toHaveAttribute('aria-modal', 'true');
-    expect(within(d).getByText('Double-click empty canvas')).toBeInTheDocument();
-    expect(within(d).getByText('Add a state')).toBeInTheDocument();
-    const keys = Array.from(d.querySelectorAll('kbd')).map((k) => k.textContent);
-    expect(keys).toEqual(expect.arrayContaining(['Shift', 'Enter', 'Space', 'Delete', '?']));
+    expect(within(d).getByRole('tab', { name: 'Build' })).toHaveAttribute('aria-selected', 'true');
+    const panel = within(d).getByRole('tabpanel');
+    expect(within(panel).getByText('Add a state')).toBeInTheDocument();
+    expect(within(panel).getAllByText('Double-click').length).toBeGreaterThan(0);
+    expect(Array.from(panel.querySelectorAll('kbd')).map((k) => k.textContent)).toContain('Shift');
+  });
+
+  it('the Keys tab lists S and A for start and accepting, not Enter or Space', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
+    await user.click(within(dialog()!).getByRole('tab', { name: 'Keys' }));
+    const panel = within(dialog()!).getByRole('tabpanel');
+    const keys = Array.from(panel.querySelectorAll('kbd')).map((k) => k.textContent);
+    expect(keys).toEqual(expect.arrayContaining(['S', 'A', 'Delete', '?']));
+    expect(keys).not.toContain('Enter');
+    expect(keys).not.toContain('Space');
+    expect(within(panel).getByText('Toggle start state')).toBeInTheDocument();
+  });
+
+  it('arrow keys move between tabs and Tab stays inside the dialog', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
+    const d = dialog()!;
+    const tab = (name: string) => within(d).getByRole('tab', { name });
     expect(d).toHaveFocus();
     await user.tab();
     expect(within(d).getByRole('button', { name: 'Close controls' })).toHaveFocus();
+    await user.tab();
+    expect(tab('Build')).toHaveFocus();
+    await user.keyboard('{ArrowRight}');
+    expect(tab('Arrange')).toHaveFocus();
+    expect(tab('Arrange')).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{ArrowLeft}{ArrowLeft}');
+    expect(tab('Keys')).toHaveAttribute('aria-selected', 'true');
     await user.tab();
     expect(within(d).getByRole('button', { name: 'Close controls' })).toHaveFocus();
   });

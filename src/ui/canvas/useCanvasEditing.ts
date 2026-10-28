@@ -281,7 +281,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
   const [inline, setInline] = useState<InlineEdit | null>(null);
   const [menu, setMenu] = useState<MenuView | null>(null);
 
-  /** Give the keyboard back to the canvas so Enter/Space/Delete work without another click. */
+  /** Give the keyboard back to the canvas so A/S/Delete work without another click. */
   const refocus = useCallback(() => containerRef.current?.focus(), []);
   const closeMenu = useCallback(() => {
     setMenu(null);
@@ -574,10 +574,10 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     );
     const stateId = states[0];
     const key = e.key.toLowerCase();
-    if ((e.key === ' ' || key === 's') && stateId) {
+    if (key === 's' && stateId) {
       e.preventDefault();
       edit((a) => setStart(a, a.start === stateId ? null : stateId));
-    } else if ((e.key === 'Enter' || key === 'a') && stateId) {
+    } else if (key === 'a' && stateId) {
       e.preventDefault();
       edit((a) => toggleAccepting(a, stateId));
     } else if (

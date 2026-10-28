@@ -2,11 +2,10 @@
  * Automaton Vis theme: a marked-up problem set.
  *
  * The canvas is dotted engineering paper and the diagram is ink on it. Processes are marked
- * up the way a student would: highlighter yellow for the active states and taken edges, red
- * pen for errors and rejections, blue pen for your own selection, and marker tints for the
- * blocks of a minimization. Mathematical text (state labels, symbols, the input tape, step
- * explanations) is set in STIX Two Text, the face of scientific publishing; the interface
- * chrome is Schibsted Grotesk and stays quiet. The loud element is the run's input tape with
+ * up in four distinct pens: violet for the run (active states, taken edges, the tape's read
+ * cell), red for errors and rejections, blue for your own selection, green for acceptance, and
+ * marker tints for the blocks of a minimization. Everything is set in Geist; the input tape
+ * uses Geist Mono so its cells line up. The loud element is the run's input tape with
  * its read head; the one orchestrated motion is the verdict stamp. Light and dark follow
  * prefers-color-scheme unless the theme button forces one (`<html data-theme>`, set by
  * src/ui/shell/theme.ts before the first render). Diagram exports always use the light (paper) tokens via
@@ -17,8 +16,9 @@
 .av-theme-light {
   color-scheme: light;
 
-  --av-font-ui: 'Schibsted Grotesk', 'Segoe UI', system-ui, sans-serif;
-  --av-font-math: 'STIX Two Text', 'Cambria Math', Cambria, Georgia, serif;
+  --av-font-ui: 'Geist', 'Segoe UI', system-ui, sans-serif;
+  --av-font-math: var(--av-font-ui);
+  --av-font-mono: 'Geist Mono', ui-monospace, Consolas, monospace;
 
   /* Surfaces and ink */
   --av-paper: #f3f5f0;
@@ -41,9 +41,10 @@
   --av-red: #c42f36;
   --av-green: #1c7a47;
   --av-warn: #8a5a00;
-  --av-highlighter: #ffe14d;
-  --av-highlighter-band: #ffe14dc0;
-  --av-highlighter-ink: #7a5600;
+  --av-highlighter: #8b5cf6;
+  --av-highlighter-soft: #ede9fe;
+  --av-highlighter-band: #8b5cf62e;
+  --av-highlighter-ink: #6d28d9;
 
   /* Diagram tokens, consumed by src/ui/canvas/diagramStyles.ts */
   --av-font: var(--av-font-math);
@@ -55,7 +56,7 @@
   --av-selected: var(--av-accent);
   --av-active: var(--av-highlighter-ink);
   --av-active-stroke: var(--av-highlighter-ink);
-  --av-active-fill: var(--av-highlighter);
+  --av-active-fill: var(--av-highlighter-soft);
   --av-active-text: var(--av-ink);
   --av-taken-band: var(--av-highlighter-band);
   --av-error: var(--av-red);
@@ -98,13 +99,14 @@
     --av-red: #ff7b7b;
     --av-green: #5ed39a;
     --av-warn: #e8b85a;
-    --av-highlighter: #f2d24b;
-    --av-highlighter-band: #f2d24b55;
-    --av-highlighter-ink: #f2d24b;
+    --av-highlighter: #a78bfa;
+    --av-highlighter-soft: #3b2a6e;
+    --av-highlighter-band: #a78bfa38;
+    --av-highlighter-ink: #c4b5fd;
 
     --av-edge-stroke: #b9c0cc;
-    --av-active-stroke: #9c7a12;
-    --av-active-text: #1c2333;
+    --av-active-stroke: var(--av-highlighter);
+    --av-active-text: #f5f3ff;
 
     --av-tint-0: #2a4680;
     --av-tint-1: #6e3428;
@@ -138,13 +140,14 @@
   --av-red: #ff7b7b;
   --av-green: #5ed39a;
   --av-warn: #e8b85a;
-  --av-highlighter: #f2d24b;
-  --av-highlighter-band: #f2d24b55;
-  --av-highlighter-ink: #f2d24b;
+  --av-highlighter: #a78bfa;
+  --av-highlighter-soft: #3b2a6e;
+  --av-highlighter-band: #a78bfa38;
+  --av-highlighter-ink: #c4b5fd;
 
   --av-edge-stroke: #b9c0cc;
-  --av-active-stroke: #9c7a12;
-  --av-active-text: #1c2333;
+  --av-active-stroke: var(--av-highlighter);
+  --av-active-text: #f5f3ff;
 
   --av-tint-0: #2a4680;
   --av-tint-1: #6e3428;

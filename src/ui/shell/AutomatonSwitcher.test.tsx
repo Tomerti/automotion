@@ -1,10 +1,8 @@
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { emptyAutomaton } from '../../core/model';
 import { runWord } from '../../core/run';
 import { fixture } from '../../core/testing/fixtures';
-import { exampleAutomata } from '../../persistence/examples';
 import { serialize } from '../../persistence/fileFormat';
 import { appStore, resetAppStore } from '../../store/store';
 import { AutomatonSwitcher } from './AutomatonSwitcher';
@@ -133,35 +131,6 @@ describe('AutomatonSwitcher', () => {
     appStore.getState().openTrace(runWord(d, ''));
     render(<AutomatonSwitcher />);
     expect(screen.getByRole('button', { name: 'd' })).toBeDisabled();
-  });
-
-  it('Load examples adds the examples under fresh ids, twice without clashes', async () => {
-    const user = userEvent.setup();
-    resetAppStore({ automata: two(), activeId: 'one' });
-    render(<AutomatonSwitcher />);
-    const count = exampleAutomata().length;
-    await openMenu(user);
-    await user.click(menuItem('Load examples'));
-    await openMenu(user);
-    await user.click(menuItem('Load examples'));
-    const all = appStore.getState().automata;
-    expect(all).toHaveLength(2 + 2 * count);
-    expect(new Set(all.map((a) => a.id)).size).toBe(all.length);
-    const exampleIds = new Set(exampleAutomata().map((a) => a.id));
-    expect(all.some((a) => exampleIds.has(a.id))).toBe(false);
-    // The first of the newly loaded examples is opened.
-    expect(appStore.getState().activeId).toBe(all[2 + count]?.id);
-    expect(toastStore.getState().toasts.at(-1)?.message).toBe(`Loaded ${count} examples`);
-  });
-
-  it('Load examples replaces an untouched blank automaton', async () => {
-    const user = userEvent.setup();
-    const blank = emptyAutomaton('Untitled', 'DFA');
-    resetAppStore({ automata: [blank], activeId: blank.id });
-    render(<AutomatonSwitcher />);
-    await openMenu(user);
-    await user.click(menuItem('Load examples'));
-    expect(names()).toEqual(exampleAutomata().map((a) => a.name));
   });
 
   it('Delete asks, removes the active automaton and keeps one on the canvas', async () => {
