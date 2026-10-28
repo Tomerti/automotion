@@ -5,6 +5,7 @@ import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { startMinimize, startRun, startSubset } from '../../store/traceActions';
 import App from './App';
+import { HISTORY_BAR_KEY } from './historyPrefs';
 import { toastStore } from './toastStore';
 
 const loop = () =>
@@ -29,14 +30,32 @@ it('renders the app title in the top bar', () => {
   );
 });
 
-it('has no side panels: the canvas and the dock fill the page under the top bar', () => {
+it('the history bar sits beside the canvas; the canvas and the dock fill the rest', () => {
   resetAppStore({ automata: [loop()], activeId: 'd' });
   render(<App />);
   expect(screen.queryByTestId('right-panel')).toBeNull();
-  expect(screen.queryByRole('navigation')).toBeNull();
+  const history = screen.getByRole('navigation', { name: 'History' });
+  expect(history).not.toContainElement(screen.getByRole('main'));
   const main = screen.getByRole('main');
   expect(within(main).getByTestId('diagram')).toBeInTheDocument();
   expect(within(main).getByTestId('dock')).toContainElement(screen.getByLabelText('Word'));
+});
+
+it('the History button hides and shows the history bar, and the choice is remembered', async () => {
+  const user = userEvent.setup();
+  localStorage.removeItem(HISTORY_BAR_KEY);
+  const { unmount } = render(<App />);
+  const toggle = screen.getByRole('button', { name: 'History' });
+  expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await user.click(toggle);
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  expect(screen.queryByRole('navigation', { name: 'History' })).toBeNull();
+  unmount();
+  render(<App />);
+  expect(screen.queryByRole('navigation', { name: 'History' })).toBeNull();
+  await user.click(screen.getByRole('button', { name: 'History' }));
+  expect(screen.getByRole('navigation', { name: 'History' })).toBeInTheDocument();
+  localStorage.removeItem(HISTORY_BAR_KEY);
 });
 
 it('the dock swaps the run pill for the trace player while a trace is open', async () => {

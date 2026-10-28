@@ -45,7 +45,9 @@ Layers, with dependencies pointing downward only:
 - `src/layout/layout.ts`: elkjs wrapper (imports only `core/`). It is always loaded with a dynamic
   `import()` (Tidy, subset walkthrough) so elk (~1.5 MB) stays out of the main bundle.
 - `src/store/`: one Zustand store (`store.ts`) holding the automata, active id, selection, per-automaton
-  viewports, the open trace and per-automaton undo/redo (capped at 100). The editing lock lives here:
+  viewports, the open trace and per-automaton undo/redo (capped at 100). `automata` is kept most
+  recently edited first: edits, undo/redo, creating and adding move one to the front (switching doesn't),
+  and that order is what gets saved, so the app reopens on the last edited automaton. The editing lock lives here:
   `edit`, `checkpoint` and undo/redo do nothing while a trace is open. Selecting, creating or adding an
   automaton closes the trace. `useAppStore` selectors must return stable references (see its doc comment)
   or React 19 loops. `traceActions.ts` opens traces (`startRun`, `startSubset`, `startMinimize`).
@@ -61,9 +63,12 @@ Layers, with dependencies pointing downward only:
     drag crosses 3 px, so double-clicks keep their real target. Pure math is in `geometry.ts` / `viewport.ts`.
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button.
-  - `shell/`: top bar (automaton switcher, toolbar, issues chip, theme toggle, Controls popup), the
-    bottom dock (run pill / trace player), toasts, error boundary, import/export plumbing. There is
-    no table or alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
+  - `shell/`: top bar (history toggle, automaton switcher, toolbar, issues chip, theme toggle, Controls
+    popup), the left history bar (`HistoryBar.tsx`: every automaton with a `canvas/Thumbnail.tsx`
+    picture, newest edit first; open/closed remembered in `historyPrefs.ts`), the bottom dock (run
+    pill / trace player), toasts, error boundary, import/export plumbing. Thumbnails are their own
+    small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or
+    alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
   - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
     the canvas uses `<tspan>`s).
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain

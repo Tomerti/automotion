@@ -25,6 +25,12 @@ Nothing in progress: pick the next task from the list below.
 - [x] A new transition's arrow stays on screen while its symbols are typed
 - [x] A new transition's symbol input opens where its label will be drawn, not on the arrow
 
+### History bar
+
+- [x] Left history bar: every automaton with a thumbnail, name, kind and state count; click to open
+- [x] Automata are kept most recently edited first (also in the switcher, exports and on reload)
+- [x] History button in the top bar hides/shows it (remembered; starts hidden on phones, where it overlays the canvas)
+
 ### v2 UX overhaul and polish (merged in PRs #5 and #6)
 
 - [x] Double-click adds a state; borderless in-place rename and symbol editing (commit on blur)

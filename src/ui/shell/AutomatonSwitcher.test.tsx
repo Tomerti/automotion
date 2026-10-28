@@ -83,8 +83,9 @@ describe('AutomatonSwitcher', () => {
     expect(appStore.getState().activeId).toBe(appStore.getState().automata[0]?.id);
     await openMenu(user);
     await user.click(menuItem('New NFA'));
-    expect(appStore.getState().automata[1]?.kind).toBe('NFA');
-    expect(appStore.getState().activeId).toBe(appStore.getState().automata[1]?.id);
+    // Newest first.
+    expect(appStore.getState().automata[0]?.kind).toBe('NFA');
+    expect(appStore.getState().activeId).toBe(appStore.getState().automata[0]?.id);
   });
 
   it('clicking the name renames in place; Enter commits', async () => {

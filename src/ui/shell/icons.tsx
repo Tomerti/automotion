@@ -11,6 +11,14 @@ function Icon({ children }: { children: React.ReactNode }): React.JSX.Element {
   );
 }
 
+/** A panel down the left edge: the history bar. */
+export const HistoryIcon = (): React.JSX.Element => (
+  <Icon>
+    <rect x="3" y="4" width="14" height="12" rx="2" />
+    <path d="M8 4v12" />
+  </Icon>
+);
+
 export const UndoIcon = (): React.JSX.Element => (
   <Icon>
     <path d="M7.5 5 4 8.5 7.5 12" />

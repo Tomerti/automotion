@@ -1,5 +1,5 @@
 import { AutomatonSwitcher } from './AutomatonSwitcher';
-import { HelpIcon } from './icons';
+import { HelpIcon, HistoryIcon } from './icons';
 import { IssuesChip } from './IssuesChip';
 import { ThemeToggle } from './ThemeToggle';
 import { Toolbar } from './Toolbar';
@@ -16,11 +16,26 @@ function BrandMark(): React.JSX.Element {
   );
 }
 
-/** The one strip of chrome: brand, the current automaton, its tools, theme and help. */
-export function TopBar({ onHelp }: { onHelp: () => void }): React.JSX.Element {
+/** The one strip of chrome: history toggle, brand, the current automaton, its tools, theme and help. */
+export function TopBar(props: {
+  onHelp: () => void;
+  historyOpen: boolean;
+  onToggleHistory: () => void;
+}): React.JSX.Element {
+  const { onHelp, historyOpen, onToggleHistory } = props;
   return (
     <header className="av-topbar">
       <div className="av-topbar-start">
+        <button
+          type="button"
+          className="av-icon-button"
+          aria-label="History"
+          title={historyOpen ? 'Hide history' : 'Show history'}
+          aria-expanded={historyOpen}
+          onClick={onToggleHistory}
+        >
+          <HistoryIcon />
+        </button>
         <h1 className="av-brand">
           <BrandMark />
           <span className="av-brand-name">Automaton Vis</span>

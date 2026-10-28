@@ -9,6 +9,8 @@ import { TracePlayer } from '../player/TracePlayer';
 import { TraceView } from '../player/TraceView';
 import { ControlsDialog } from './ControlsDialog';
 import { useControlsHelp } from './help';
+import { HistoryBar } from './HistoryBar';
+import { useHistoryOpen } from './historyPrefs';
 import { importFile } from './importFile';
 import { toast } from './toastStore';
 import { Toasts } from './Toasts';
@@ -54,6 +56,7 @@ export default function App(): React.JSX.Element {
   const setStep = useAppStore((s) => s.setStep);
   const closeTrace = useAppStore((s) => s.closeTrace);
   const [helpOpen, setHelpOpen] = useControlsHelp();
+  const [historyOpen, toggleHistory] = useHistoryOpen();
   const step = trace?.steps[stepIndex];
   const [dockRef, dockHeight] = useDockHeight();
 
@@ -68,33 +71,40 @@ export default function App(): React.JSX.Element {
         }
       }}
     >
-      <TopBar onHelp={() => setHelpOpen(true)} />
-      <main
-        className="av-canvas-area"
-        style={{ '--av-dock-h': `${dockHeight}px` } as React.CSSProperties}
-      >
-        {trace ? <TraceView trace={trace} stepIndex={stepIndex} /> : <Canvas />}
-        <div
-          ref={dockRef}
-          className="av-dock"
-          data-testid="dock"
-          data-mode={trace ? 'trace' : 'run'}
+      <TopBar
+        onHelp={() => setHelpOpen(true)}
+        historyOpen={historyOpen}
+        onToggleHistory={toggleHistory}
+      />
+      <div className="av-body">
+        {historyOpen && <HistoryBar />}
+        <main
+          className="av-canvas-area"
+          style={{ '--av-dock-h': `${dockHeight}px` } as React.CSSProperties}
         >
-          <RunPanel hidden={trace !== null} />
-          {trace && step && (
-            <TracePlayer
-              key={traceKey(trace)}
-              stepCount={trace.steps.length}
-              index={stepIndex}
-              onIndex={setStep}
-              explanation={step.explanation}
-              onClose={closeTrace}
-              autoPlay={trace.kind === 'run' || trace.kind === 'subset'}
-              extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
-            />
-          )}
-        </div>
-      </main>
+          {trace ? <TraceView trace={trace} stepIndex={stepIndex} /> : <Canvas />}
+          <div
+            ref={dockRef}
+            className="av-dock"
+            data-testid="dock"
+            data-mode={trace ? 'trace' : 'run'}
+          >
+            <RunPanel hidden={trace !== null} />
+            {trace && step && (
+              <TracePlayer
+                key={traceKey(trace)}
+                stepCount={trace.steps.length}
+                index={stepIndex}
+                onIndex={setStep}
+                explanation={step.explanation}
+                onClose={closeTrace}
+                autoPlay={trace.kind === 'run' || trace.kind === 'subset'}
+                extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
+              />
+            )}
+          </div>
+        </main>
+      </div>
       <Toasts />
       {helpOpen && <ControlsDialog onClose={() => setHelpOpen(false)} />}
     </div>

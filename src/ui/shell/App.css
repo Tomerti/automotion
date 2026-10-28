@@ -370,6 +370,119 @@ input.av-switcher-input {
 
 /* Canvas area and the floating dock */
 
+/* Under the top bar: the history bar (when open) and the canvas beside it. */
+.av-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+/* History bar: every automaton, newest edit first, each with a picture of its diagram. */
+.av-history {
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+  min-height: 0;
+  background: var(--av-surface);
+  border-right: 1px solid var(--av-rule);
+}
+.av-history-new {
+  display: flex;
+  gap: 6px;
+  padding: 10px 10px 6px;
+}
+.av-history-new button {
+  flex: 1;
+}
+.av-history-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  margin: 0;
+  padding: 4px 10px 12px;
+  overflow-y: auto;
+  list-style: none;
+}
+.av-history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: stretch;
+  width: 100%;
+  padding: 7px;
+  font-weight: 400;
+  text-align: left;
+  white-space: normal;
+  background: transparent;
+  border-color: transparent;
+  border-radius: 10px;
+}
+.av-history-item:hover:not(:disabled) {
+  border-color: transparent;
+}
+.av-history-item[aria-current='page'],
+.av-history-item[aria-current='page']:hover {
+  background: var(--av-surface-raised);
+  border-color: var(--av-accent);
+  box-shadow: 0 1px 2px var(--av-shadow);
+}
+/* The picture leads visually; the name stays first in the DOM, so it leads the button's name. */
+.av-history-thumb {
+  display: grid;
+  order: -1;
+  place-items: center;
+  height: 92px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  background: var(--av-paper);
+  border-radius: 7px;
+}
+.av-history-empty {
+  font-size: 12px;
+  color: var(--av-ink-muted);
+}
+.av-history-name {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.av-history-item[aria-current='page'] .av-history-name {
+  font-weight: 600;
+}
+.av-history-meta {
+  font-size: 11.5px;
+  color: var(--av-ink-muted);
+}
+
+.av-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.av-thumb-edge-path {
+  fill: none;
+  stroke: var(--av-edge-stroke, #3a4356);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.av-thumb .av-edge-head {
+  fill: var(--av-edge-stroke, #3a4356);
+}
+.av-thumb-state,
+.av-thumb-accept {
+  fill: var(--av-state-fill, #ffffff);
+  stroke: var(--av-state-stroke, #1c2333);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.av-thumb-accept {
+  fill: none;
+}
+
 .av-canvas-area {
   /* How far the floating dock sits above the bottom edge; --av-dock-h is set by App. */
   --av-dock-bottom: 18px;
@@ -722,6 +835,13 @@ kbd {
 }
 
 @media (max-width: 760px) {
+  /* On a phone the bar floats over the canvas instead of squeezing it. */
+  .av-history {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 15;
+    box-shadow: var(--av-shadow-float);
+  }
   .av-topbar {
     flex-wrap: wrap;
     gap: 4px;
