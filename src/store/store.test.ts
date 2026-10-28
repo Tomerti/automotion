@@ -188,6 +188,27 @@ describe('store', () => {
     expect(hist(st(), 'a1').future.map(x0)).toEqual([20]);
   });
 
+  it('setActive, createAutomaton and addAutomaton close an open trace', () => {
+    const open = (st: () => AppState, active: () => Automaton): void => {
+      st().openTrace(runWord(active(), 'a'));
+      st().setStep(1);
+    };
+    const { st, active } = setup();
+    open(st, active);
+    st().setActive('a1');
+    expect(st().trace).toBeNull();
+    expect(st().stepIndex).toBe(0);
+    open(st, active);
+    st().createAutomaton('NFA');
+    expect(st().trace).toBeNull();
+    expect(st().stepIndex).toBe(0);
+    st().setActive('a1');
+    open(st, active);
+    st().addAutomaton(dfa('a2'));
+    expect(st().trace).toBeNull();
+    expect(st().stepIndex).toBe(0);
+  });
+
   describe('module store', () => {
     beforeEach(() => resetAppStore());
     it('resetAppStore gives fresh state', () => {
