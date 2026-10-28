@@ -1,0 +1,64 @@
+.av-runpanel {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+}
+.av-runpanel input {
+  flex: 1;
+  max-width: 320px;
+}
+.av-player {
+  padding: 6px 8px;
+}
+.av-player-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.av-player-explanation {
+  margin: 6px 0 0;
+}
+.av-trace-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+.av-trace-diagram {
+  flex: 1;
+  min-height: 0;
+}
+.av-word {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 8px;
+  font-family: monospace;
+  font-size: 1.4rem;
+}
+.av-word-char {
+  padding: 0 4px;
+  border-bottom: 3px solid transparent;
+}
+.av-word-char[data-state='consumed'] {
+  color: #888;
+}
+.av-word-char[data-state='current'] {
+  font-weight: bold;
+  border-bottom-color: #1a56db;
+}
+.av-verdict {
+  margin-left: 12px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-family: sans-serif;
+  font-size: 1rem;
+  color: #fff;
+}
+.av-verdict[data-accepted='true'] {
+  background: #1b7f3b;
+}
+.av-verdict[data-accepted='false'] {
+  background: #b00020;
+}
