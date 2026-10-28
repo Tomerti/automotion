@@ -6,6 +6,17 @@ import type { MinimizeStep } from './trace';
 import { fixture } from './testing/fixtures';
 import { arbDfa, arbWord } from './testing/arbitraries';
 
+/** Every word over `alphabet` of length 0..maxLen. */
+function wordsUpTo(alphabet: string[], maxLen: number): string[] {
+  const out = [''];
+  let layer = [''];
+  for (let n = 1; n <= maxLen; n++) {
+    layer = layer.flatMap((w) => alphabet.map((s) => w + s));
+    out.push(...layer);
+  }
+  return out;
+}
+
 const redundant = fixture({
   kind: 'DFA',
   alphabet: 'a',
@@ -178,6 +189,29 @@ describe('minimize', () => {
         const { result } = minimize(d);
         return (
           accepts(result, w) === accepts(d, w) && result.states.length <= trimmed.states.length
+        );
+      }),
+    ));
+
+  it('property: accepts exactly the same words up to length 6', () =>
+    fc.assert(
+      fc.property(arbDfa(), (d) => {
+        const { result } = minimize(d);
+        return wordsUpTo(['a', 'b'], 6).every((w) => accepts(result, w) === accepts(d, w));
+      }),
+    ));
+
+  it('property: minimal (no two result states are equivalent)', () =>
+    fc.assert(
+      fc.property(arbDfa(), (d) => {
+        const { result } = minimize(d);
+        // Distinct states of an n-state DFA, if distinguishable, differ on a word shorter than n.
+        const words = wordsUpTo(result.alphabet, result.states.length);
+        const from = (p: string, w: string): boolean => accepts({ ...result, start: p }, w);
+        return result.states.every((p, i) =>
+          result.states
+            .slice(i + 1)
+            .every((q) => words.some((w) => from(p.id, w) !== from(q.id, w))),
         );
       }),
     ));
