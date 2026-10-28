@@ -1,3 +1,4 @@
+import type { AnyTrace } from '../../core/trace';
 import { useAppStore } from '../../store/store';
 import { Canvas } from '../canvas/Canvas';
 import { useAutosave } from '../../persistence/useAutosave';
@@ -12,6 +13,18 @@ import { Toasts } from './Toasts';
 import { Toolbar } from './Toolbar';
 import '../player/player.css';
 import './App.css';
+
+/** One key per trace object, so a new trace remounts the player (resetting play and speed). */
+const traceKeys = new WeakMap<AnyTrace, number>();
+let nextTraceKey = 0;
+function traceKey(trace: AnyTrace): number {
+  let key = traceKeys.get(trace);
+  if (key === undefined) {
+    key = nextTraceKey++;
+    traceKeys.set(trace, key);
+  }
+  return key;
+}
 
 /** A start arrow into an accepting state: the smallest complete automaton. */
 function BrandMark(): React.JSX.Element {
@@ -67,6 +80,7 @@ export default function App(): React.JSX.Element {
         <RunPanel />
         {trace && step && (
           <TracePlayer
+            key={traceKey(trace)}
             stepCount={trace.steps.length}
             index={stepIndex}
             onIndex={setStep}

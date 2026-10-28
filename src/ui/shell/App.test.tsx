@@ -1,7 +1,9 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, it, expect } from 'vitest';
+import { fixture } from '../../core/testing/fixtures';
 import { resetAppStore } from '../../store/store';
+import { startRun } from '../../store/traceActions';
 import App from './App';
 
 beforeEach(() => resetAppStore());
@@ -25,4 +27,26 @@ it('New DFA shows the diagram in place of the empty state', async () => {
   await user.click(screen.getByRole('button', { name: 'New DFA' }));
   expect(screen.getByTestId('diagram')).toBeInTheDocument();
   expect(screen.queryByText('Create an automaton to get started')).toBeNull();
+});
+
+it('a new trace resets the player (paused, 1× speed)', async () => {
+  const user = userEvent.setup();
+  const d = fixture({
+    kind: 'DFA',
+    alphabet: 'a',
+    states: ['q0'],
+    start: 'q0',
+    accepting: ['q0'],
+    edges: [['q0', 'a', 'q0']],
+    name: 'd',
+  });
+  resetAppStore({ automata: [d], activeId: 'd' });
+  render(<App />);
+  act(() => startRun('aaaaaa'));
+  await user.selectOptions(screen.getByRole('combobox', { name: 'Speed' }), '2');
+  await user.click(screen.getByRole('button', { name: 'Play' }));
+  expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+  act(() => startRun('aaa'));
+  expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+  expect(screen.getByRole('combobox', { name: 'Speed' })).toHaveValue('1');
 });
