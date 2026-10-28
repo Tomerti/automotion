@@ -21,6 +21,10 @@ const SPEEDS = [
 const isTypingTarget = (t: EventTarget | null): boolean =>
   t instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName);
 
+/** Targets whose native Space handling (activation, editing) must not become a global toggle. */
+const isActivatable = (t: EventTarget | null): boolean =>
+  t instanceof HTMLElement && (t.tagName === 'BUTTON' || t.tagName === 'A' || t.isContentEditable);
+
 export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
   const { stepCount, index, onIndex, explanation, onClose, extraActions } = props;
   const [playing, setPlaying] = useState(false);
@@ -61,7 +65,7 @@ export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
       if (e.key === 'ArrowRight') cur.onIndex(cur.index + 1);
       else if (e.key === 'ArrowLeft') cur.onIndex(cur.index - 1);
       else if (e.key === 'Escape') cur.onClose();
-      else if (e.key === ' ') {
+      else if (e.key === ' ' && !isActivatable(e.target)) {
         e.preventDefault();
         togglePlay();
       }

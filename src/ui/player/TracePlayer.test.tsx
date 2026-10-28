@@ -95,6 +95,14 @@ describe('TracePlayer', () => {
     expect(screen.getByText('Step 1 / 4')).toBeInTheDocument();
   });
 
+  it('Space on a focused button is left to the button, not the global toggle', () => {
+    render(<Harness />);
+    const next = screen.getByRole('button', { name: 'Next' });
+    next.focus();
+    fireEvent.keyDown(next, { key: ' ' });
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+  });
+
   it('Close button closes and extraActions render', async () => {
     const onClose = vi.fn();
     const user = userEvent.setup();
