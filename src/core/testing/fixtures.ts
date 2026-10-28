@@ -37,3 +37,22 @@ export function fixture(spec: FixtureSpec): Automaton {
     transitions,
   };
 }
+
+/** NFA over {a,b} for "the n-th symbol from the end is a": its DFA has 2^n states. */
+export function nthFromEnd(n: number): Automaton {
+  const states = Array.from({ length: n + 1 }, (_, i) => `q${i}`);
+  const edges: [string, string, string][] = [
+    ['q0', 'a,b', 'q0'],
+    ['q0', 'a', 'q1'],
+  ];
+  for (let i = 1; i < n; i++) edges.push([`q${i}`, 'a,b', `q${i + 1}`]);
+  return fixture({
+    kind: 'NFA',
+    alphabet: 'ab',
+    states,
+    start: 'q0',
+    accepting: [`q${n}`],
+    edges,
+    name: `nth${n}`,
+  });
+}

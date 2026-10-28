@@ -1,9 +1,9 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { accepts, isComplete } from './analysis';
-import { canConvert, subsetConstruction } from './subset';
+import { canConvert, MAX_DFA_STATES, subsetConstruction } from './subset';
 import { arbNfa, arbWord } from './testing/arbitraries';
-import { fixture } from './testing/fixtures';
+import { fixture, nthFromEnd } from './testing/fixtures';
 import { hasErrors, validate } from './validate';
 
 const endsInAb = fixture({
@@ -46,6 +46,17 @@ describe('subsetConstruction', () => {
       "{q0} on 'a': move = {q0, q1}, ε-closure = {q0, q1} → new state {q0,q1}",
     );
     expect(result.states.every((s) => s.x === 0 && s.y === 0)).toBe(true);
+  });
+
+  it('stops when the DFA would have more than 64 states', () => {
+    expect(MAX_DFA_STATES).toBe(64);
+    expect(() => subsetConstruction(nthFromEnd(7))).toThrow(
+      'Conversion stopped: the DFA would have more than 64 states',
+    );
+  });
+
+  it('converts an NFA whose DFA has exactly 64 states', () => {
+    expect(subsetConstruction(nthFromEnd(6)).result.states).toHaveLength(64);
   });
 
   it('adds an explicit ∅ dead state when needed', () => {

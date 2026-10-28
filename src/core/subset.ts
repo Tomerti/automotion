@@ -15,6 +15,9 @@ export function canConvert(a: Automaton): string | null {
   return null;
 }
 
+/** Largest DFA the construction will build; beyond it the walkthrough and layout are unusable. */
+export const MAX_DFA_STATES = 64;
+
 /** DFA state label: "{q0,q1}" without a space, or "∅". */
 function dfaLabel(nfa: Automaton, subset: StateId[]): string {
   return formatSet(nfa, subset).replaceAll(', ', ',');
@@ -34,6 +37,9 @@ export function subsetConstruction(nfa: Automaton): SubsetTrace {
   const revealedTransitions: string[] = [];
 
   const addState = (subset: StateId[]): { id: StateId; subset: StateId[] } => {
+    if (states.length >= MAX_DFA_STATES) {
+      throw new Error(`Conversion stopped: the DFA would have more than ${MAX_DFA_STATES} states`);
+    }
     const entry = { id: newId(), subset };
     byKey.set(subset.join('|'), entry);
     states.push({ id: entry.id, label: dfaLabel(nfa, subset), x: 0, y: 0 });

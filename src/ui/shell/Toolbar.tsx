@@ -105,7 +105,7 @@ export function Toolbar(): React.JSX.Element {
           type="button"
           disabled={none || convertReason !== null}
           title={convertReason ?? undefined}
-          onClick={() => void startSubset()}
+          onClick={() => void startSubset((m) => toast(m, 'error'))}
         >
           Convert to DFA
         </button>

@@ -11,12 +11,21 @@ export function startRun(word: string): void {
   openTrace(runWord(a, word));
 }
 
-/** Convert the active NFA to a DFA: lay out the result and open the subset-construction trace. */
-export async function startSubset(): Promise<void> {
+/**
+ * Convert the active NFA to a DFA: lay out the result and open the subset-construction trace.
+ * Failures (e.g. the state cap) are reported through `onError`.
+ */
+export async function startSubset(onError?: (message: string) => void): Promise<void> {
   const { automata, activeId, openTrace } = appStore.getState();
   const a = automata.find((x) => x.id === activeId);
   if (!a || canConvert(a) !== null) return;
-  const trace = subsetConstruction(a);
+  let trace;
+  try {
+    trace = subsetConstruction(a);
+  } catch (e) {
+    onError?.(e instanceof Error ? e.message : 'Could not convert the automaton');
+    return;
+  }
   // Dynamic import keeps elk out of the main bundle.
   const { layoutAutomaton } = await import('../layout/layout');
   const result = await layoutAutomaton(trace.result);

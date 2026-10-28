@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { moveState } from '../../core/edit';
 import { runWord } from '../../core/run';
-import { fixture } from '../../core/testing/fixtures';
+import { fixture, nthFromEnd } from '../../core/testing/fixtures';
 import { serialize } from '../../persistence/fileFormat';
 import { appStore, resetAppStore } from '../../store/store';
 import { Toolbar } from './Toolbar';
@@ -48,6 +48,19 @@ describe('Toolbar', () => {
     render(<Toolbar />);
     expect(btn('Convert to DFA')).toBeDisabled();
     expect(btn('Convert to DFA')).toHaveAttribute('title');
+  });
+
+  it('Convert to DFA shows an error toast when the DFA would be too large', async () => {
+    const user = userEvent.setup();
+    resetAppStore({ automata: [nthFromEnd(7)], activeId: 'nth7' });
+    render(<Toolbar />);
+    await user.click(btn('Convert to DFA'));
+    await waitFor(() => expect(toastStore.getState().toasts).toHaveLength(1));
+    expect(toastStore.getState().toasts[0]).toMatchObject({
+      message: 'Conversion stopped: the DFA would have more than 64 states',
+      kind: 'error',
+    });
+    expect(appStore.getState().trace).toBeNull();
   });
 
   it('kind toggle reflects and changes the kind', async () => {
