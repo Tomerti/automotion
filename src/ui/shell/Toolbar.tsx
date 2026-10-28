@@ -3,6 +3,7 @@ import type { AutomatonKind } from '../../core/model';
 import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, useAppStore } from '../../store/store';
+import { startMinimize } from '../../store/traceActions';
 import { FileMenu } from './FileMenu';
 import { toast } from './toastStore';
 
@@ -83,6 +84,7 @@ export function Toolbar(): React.JSX.Element {
       <button
         type="button"
         disabled={none || minimizeReason !== null}
+        onClick={startMinimize}
         title={minimizeReason ?? undefined}
       >
         Minimize
