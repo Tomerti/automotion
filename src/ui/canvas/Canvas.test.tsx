@@ -192,7 +192,11 @@ describe('Canvas editing', () => {
     fireEvent.pointerMove(diagram(), at(60, 10, { shiftKey: true }));
     expect(screen.getByTestId('rubber-band')).toBeInTheDocument();
     fireEvent.pointerUp(diagram(), at(100, 0));
-    expect(screen.queryByTestId('rubber-band')).toBeNull();
+    // The arrow stays while its symbols are typed.
+    expect(screen.getByTestId('rubber-band').querySelector('.av-edge-path')).toHaveAttribute(
+      'd',
+      'M 24 0 L 76 0',
+    );
     const input = screen.getByTestId('symbol-input');
     expect(input).toHaveFocus();
     await user.type(input, 'a, b{Enter}');
@@ -200,6 +204,7 @@ describe('Canvas editing', () => {
       expect.objectContaining({ from: 'q0', to: 'q1', symbols: ['a', 'b'] }),
     ]);
     expect(screen.queryByTestId('symbol-input')).toBeNull();
+    expect(screen.queryByTestId('rubber-band')).toBeNull();
     expect(active().states.map((s) => [s.x, s.y])).toEqual([
       [0, 0],
       [100, 0],
@@ -243,6 +248,19 @@ describe('Canvas editing', () => {
     expect(band()).toHaveAttribute('data-loop', 'true');
     expect(path()).toMatch(/^M .* C /);
     fireEvent.pointerUp(diagram(), at(5, 5));
+    expect(band()).toHaveAttribute('data-loop', 'true');
+  });
+
+  it('the new arrow goes away when its symbol input is cancelled or loses focus', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(<Canvas />);
+    drawEdge([100, 0]);
+    expect(screen.getByTestId('rubber-band')).toBeInTheDocument();
+    await user.type(screen.getByTestId('symbol-input'), 'a{Escape}');
+    expect(screen.queryByTestId('rubber-band')).toBeNull();
+    drawEdge([100, 0]);
+    act(() => screen.getByTestId('symbol-input').blur());
     expect(screen.queryByTestId('rubber-band')).toBeNull();
   });
 

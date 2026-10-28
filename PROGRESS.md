@@ -19,6 +19,11 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Fixes
+
+- [x] Replaying a run (Play at the end, First, scrubbing to step 1) plays the Run chime again
+- [x] A new transition's arrow stays on screen while its symbols are typed
+
 ### v2 UX overhaul and polish (merged in PRs #5 and #6)
 
 - [x] Double-click adds a state; borderless in-place rename and symbol editing (commit on blur)

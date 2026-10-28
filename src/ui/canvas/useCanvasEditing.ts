@@ -58,7 +58,7 @@ type Gesture = { pointerId: number; start: Point; moved: boolean } & (
   | { kind: 'loop'; transitionId: string; center: Point }
 );
 
-/** The arrow drawn while Shift-dragging a new transition, in world coordinates. */
+/** The arrow of a new transition, while it is Shift-dragged and named, in world coordinates. */
 export type RubberBand = Pick<PathGeometry, 'd' | 'end' | 'endAngle'> & { loop: boolean };
 
 /** A dashed alignment guide, in world coordinates. */
@@ -80,11 +80,13 @@ interface InlineEdit {
   fontSize: number;
   /** State or transition whose drawn label the input covers. */
   covers?: string;
+  /** The arrow of a new transition, kept on screen while its symbols are typed. */
+  draft?: RubberBand;
   normalize?(text: string): string;
   submit(text: string): string | null;
 }
 
-export interface InlineView extends Omit<InlineEdit, 'submit' | 'covers'> {
+export interface InlineView extends Omit<InlineEdit, 'submit' | 'covers' | 'draft'> {
   onSubmit(text: string): string | null;
   /** Escape: close and hand the keyboard back to the canvas. */
   onCancel(): void;
@@ -316,12 +318,14 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       from === to
         ? { x: a.x, y: a.y - LOOP_INPUT_OFFSET }
         : { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const { d, end, endAngle } = transitionGeometry(automaton, a, b);
     openInline({
       testId: 'symbol-input',
       label: 'Transition symbols',
       initial: '',
       at,
       fontSize: EDGE_LABEL_FONT_SIZE,
+      draft: { loop: from === to, d, end, endAngle },
       normalize: normalizeSymbolText,
       submit: (text) => commitSymbols(from, to, text, 'merge'),
     });
@@ -676,7 +680,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     containerRef,
     svgRef,
     selection,
-    rubberBand,
+    rubberBand: rubberBand ?? inline?.draft ?? null,
     guides,
     inline: inlineView,
     /** Id of the state or transition whose label the inline input covers. */
