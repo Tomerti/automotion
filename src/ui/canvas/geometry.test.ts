@@ -17,7 +17,7 @@ const B = { x: 200, y: 0 };
 
 describe('edgeGeometry', () => {
   it('straight edges start and end on the circle boundaries', () => {
-    const g = edgeGeometry(A, B, false);
+    const g = edgeGeometry(A, B, 0);
     expect(g.end.x).toBeCloseTo(200 - STATE_RADIUS);
     expect(g.end.y).toBeCloseTo(0);
     expect(g.endAngle).toBeCloseTo(0);
@@ -26,13 +26,13 @@ describe('edgeGeometry', () => {
     expect(Math.abs(g.label.y)).toBeCloseTo(14);
   });
   it('opposite curved edges put labels on opposite sides', () => {
-    const ab = edgeGeometry(A, B, true);
-    const ba = edgeGeometry(B, A, true);
+    const ab = edgeGeometry(A, B, CURVE_OFFSET);
+    const ba = edgeGeometry(B, A, CURVE_OFFSET);
     expect(ab.label.y).not.toBe(0);
     expect(Math.sign(ab.label.y)).toBe(-Math.sign(ba.label.y));
   });
   it('curved edges end on the target circle boundary', () => {
-    const g = edgeGeometry(A, B, true);
+    const g = edgeGeometry(A, B, CURVE_OFFSET);
     expect(Math.hypot(g.end.x - B.x, g.end.y - B.y)).toBeCloseTo(STATE_RADIUS);
     expect(Math.abs(g.label.y)).toBeGreaterThan(CURVE_OFFSET / 2);
   });

@@ -13,6 +13,8 @@ const transitionSchema = z.object({
   from: z.string(),
   to: z.string(),
   symbols: z.array(z.string()),
+  bend: z.number().optional(),
+  loopAngle: z.number().optional(),
 });
 
 export const automatonSchema = z

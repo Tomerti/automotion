@@ -4,6 +4,7 @@ import { Arrowhead, EdgeView } from './EdgeView';
 import { StateNode } from './StateNode';
 import { diagramStyles } from './diagramStyles';
 import {
+  autoBend,
   bestLoopAngle,
   edgeGeometry,
   selfLoopGeometry,
@@ -101,9 +102,9 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
             if (automaton.start === t.from) {
               neighbors.push({ x: from.x - START_ARROW_CLEARANCE, y: from.y });
             }
-            geometry = selfLoopGeometry(from, bestLoopAngle(from, neighbors));
+            geometry = selfLoopGeometry(from, t.loopAngle ?? bestLoopAngle(from, neighbors));
           } else {
-            geometry = edgeGeometry(from, to, hasEdge(t.to, t.from));
+            geometry = edgeGeometry(from, to, t.bend ?? autoBend(hasEdge(t.to, t.from)));
           }
           return (
             <EdgeView

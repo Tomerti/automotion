@@ -21,8 +21,7 @@ const sample = () =>
     name: 'Sample',
   });
 
-const wrap = (x: unknown) =>
-  JSON.stringify({ format: 'automaton-vis', version: 1, automata: [x] });
+const wrap = (x: unknown) => JSON.stringify({ format: 'automaton-vis', version: 1, automata: [x] });
 
 describe('fileFormat', () => {
   it('round-trips serialize → parseFile', () => {
@@ -104,12 +103,10 @@ describe('fileFormat', () => {
 });
 
 describe('storage', () => {
-  it('loads the examples on first launch', () => {
+  it('starts with one blank DFA on first launch', () => {
     const r = loadFromStorage(memoryStorage());
-    expect(r.automata.map((a) => a.name)).toEqual([
-      'Ends in ab (NFA)',
-      'Even number of 0s (DFA)',
-      'Redundant states (DFA)',
+    expect(r.automata.map((a) => [a.name, a.kind, a.states.length])).toEqual([
+      ['Untitled', 'DFA', 0],
     ]);
     expect(r.warning).toBeUndefined();
   });
@@ -130,7 +127,7 @@ describe('storage', () => {
   it('survives corrupted storage and keeps a backup', () => {
     const s = memoryStorage({ [STORAGE_KEY]: '{oops' });
     const r = loadFromStorage(s);
-    expect(r.automata.length).toBe(3);
+    expect(r.automata.length).toBe(1);
     expect(r.warning).toMatch(/backup/);
     expect(s.getItem(BACKUP_KEY)).toBe('{oops');
   });
@@ -145,7 +142,7 @@ describe('storage', () => {
       },
     } as unknown as Storage;
     const r = loadFromStorage(throwing);
-    expect(r.automata.length).toBe(3);
+    expect(r.automata.length).toBe(1);
     expect(r.warning).toBe("Changes won't persist — export to save");
     expect(saveToStorage(throwing, [])).toBe(false);
     expect(loadFromStorage(null).warning).toBe("Changes won't persist — export to save");

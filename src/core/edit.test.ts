@@ -3,8 +3,10 @@ import {
   addAlphabetSymbol,
   addState,
   addSymbolToEdge,
+  commitEdgeSymbols,
   moveState,
   nextStateLabel,
+  normalizeSymbolText,
   parseSymbolInput,
   removeAlphabetSymbol,
   removeState,
@@ -13,9 +15,12 @@ import {
   renameAlphabetSymbol,
   renameAutomaton,
   renameState,
+  setEdgeBend,
   setEdgeSymbols,
   setKind,
+  setLoopAngle,
   setStart,
+  syncAlphabet,
   toggleAccepting,
 } from './edit';
 import type { Automaton } from './model';
@@ -42,13 +47,15 @@ const edge = (a: Automaton, from: string, to: string) =>
 describe('states', () => {
   it('labels new states with the lowest free index', () => {
     const a = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0', 'q2'] });
-    expect(nextStateLabel(a)).toBe('q1');
-    expect(addState(a, { x: 0, y: 0 }, 'n').states.find((s) => s.id === 'n')?.label).toBe('q1');
+    const b = fixture({ kind: 'DFA', alphabet: 'a', states: ['q_0', 'q_2'] });
+    expect(nextStateLabel(a)).toBe('q_0');
+    expect(nextStateLabel(b)).toBe('q_1');
+    expect(addState(b, { x: 0, y: 0 }, 'n').states.find((s) => s.id === 'n')?.label).toBe('q_1');
   });
 
   it('addState defaults to a fresh id and sets the position', () => {
     const s = addState(base(), { x: 5, y: 6 }).states[2];
-    expect(s).toMatchObject({ label: 'q2', x: 5, y: 6 });
+    expect(s).toMatchObject({ label: 'q_0', x: 5, y: 6 });
     expect(s?.id).toBeTruthy();
   });
 
@@ -234,4 +241,39 @@ describe('parseSymbolInput', () => {
     }));
   it('empty input is an empty list', () =>
     expect(parseSymbolInput('  ', 'DFA')).toEqual({ ok: true, symbols: [] }));
+  it('accepts \\epsilon as ε', () =>
+    expect(parseSymbolInput('a, \\epsilon', 'NFA')).toEqual({ ok: true, symbols: ['a', 'ε'] }));
+});
+
+describe('normalizeSymbolText', () => {
+  it('replaces \\epsilon with ε while typing', () =>
+    expect(normalizeSymbolText('a,\\epsilon')).toBe('a,ε'));
+});
+
+describe('derived alphabet and edge shape', () => {
+  it('syncs the alphabet to the symbols in use, keeping order', () => {
+    const a = { ...setEdgeSymbols(base(), 'q0', 'q1', ['c', 'a', 'ε']), alphabet: ['b', 'a'] };
+    expect(syncAlphabet(a).alphabet).toEqual(['a', 'c']);
+  });
+
+  it('returns the same object when the alphabet is already in sync', () => {
+    const a = syncAlphabet(setEdgeSymbols(base(), 'q0', 'q1', ['a']));
+    expect(syncAlphabet(a)).toBe(a);
+  });
+
+  it('turns a DFA into an NFA when ε is committed', () => {
+    const r = commitEdgeSymbols(dfa(), 'q0', 'q1', ['ε']);
+    expect(r.promoted).toBe(true);
+    expect(r.automaton.kind).toBe('NFA');
+    expect(commitEdgeSymbols(dfa(), 'q0', 'q1', ['b']).promoted).toBe(false);
+  });
+
+  it('sets and clears a bend and a loop angle', () => {
+    const a = dfa();
+    const id = a.transitions[0]?.id ?? '';
+    const bent = setEdgeBend(a, id, 20);
+    expect(bent.transitions[0]?.bend).toBe(20);
+    expect('bend' in (setEdgeBend(bent, id, undefined).transitions[0] ?? {})).toBe(false);
+    expect(setLoopAngle(a, id, 1).transitions[0]?.loopAngle).toBe(1);
+  });
 });
