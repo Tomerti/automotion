@@ -11,7 +11,7 @@ export interface TracePlayerProps {
   explanation: string;
   onClose: () => void;
   extraActions?: ReactNode;
-  /** Start playing as soon as the player opens (a run plays right after Run). */
+  /** Start playing as soon as the player opens (a run or a conversion plays right away). */
   autoPlay?: boolean;
 }
 

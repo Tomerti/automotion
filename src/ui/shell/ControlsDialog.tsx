@@ -234,7 +234,7 @@ export function ControlsDialog({ onClose }: { onClose: () => void }): React.JSX.
               type="button"
               role="tab"
               aria-selected={i === tab}
-              aria-controls={`${baseId}-panel`}
+              aria-controls={`${baseId}-panel-${i}`}
               tabIndex={i === tab ? 0 : -1}
               data-focus-stop
               onClick={() => setTab(i)}
@@ -243,22 +243,31 @@ export function ControlsDialog({ onClose }: { onClose: () => void }): React.JSX.
             </button>
           ))}
         </div>
-        <ul
-          id={`${baseId}-panel`}
-          className="av-guide-list"
-          role="tabpanel"
-          aria-labelledby={`${baseId}-tab-${tab}`}
-        >
-          {(TABS[tab]?.rows ?? []).map((r) => (
-            <li key={r.action} className="av-guide-row">
-              <GestureChip gesture={r.gesture} />
-              <span className="av-guide-what">
-                <span className="av-guide-action">{r.action}</span>
-                {r.hint && <span className="av-guide-hint">{r.hint}</span>}
-              </span>
-            </li>
+        {/* Every panel sits in the same grid cell, so the dialog is as tall as the longest tab. */}
+        <div className="av-guide-panels">
+          {TABS.map((t, i) => (
+            <ul
+              key={t.id}
+              id={`${baseId}-panel-${i}`}
+              className="av-guide-list"
+              role="tabpanel"
+              aria-labelledby={`${baseId}-tab-${i}`}
+              aria-hidden={i === tab ? undefined : true}
+              inert={i !== tab}
+              data-current={i === tab}
+            >
+              {t.rows.map((r) => (
+                <li key={r.action} className="av-guide-row">
+                  <GestureChip gesture={r.gesture} />
+                  <span className="av-guide-what">
+                    <span className="av-guide-action">{r.action}</span>
+                    {r.hint && <span className="av-guide-hint">{r.hint}</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );

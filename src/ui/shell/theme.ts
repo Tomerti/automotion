@@ -1,14 +1,9 @@
-/** Colour theme preference: follow the system, or force light or dark. */
-export type ThemePref = 'system' | 'light' | 'dark';
+/** Colour theme: light (the default, whatever the system prefers) or dark. */
+export type Theme = 'light' | 'dark';
 
 export const THEME_KEY = 'automaton-vis:theme';
 
-/** The cycle the theme button walks through. */
-export const NEXT_THEME: Record<ThemePref, ThemePref> = {
-  system: 'light',
-  light: 'dark',
-  dark: 'system',
-};
+export const OTHER_THEME: Record<Theme, Theme> = { light: 'dark', dark: 'light' };
 
 function storage(): Storage | null {
   try {
@@ -18,29 +13,25 @@ function storage(): Storage | null {
   }
 }
 
-export function readTheme(): ThemePref {
+/** The stored theme; anything else (nothing stored, an old "system" choice) is light. */
+export function readTheme(): Theme {
   try {
-    const v = storage()?.getItem(THEME_KEY);
-    return v === 'light' || v === 'dark' ? v : 'system';
+    return storage()?.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
   } catch {
-    return 'system';
+    return 'light';
   }
 }
 
-/** Apply `pref` to `<html data-theme>` (absent = system); see src/ui/theme.css. */
-export function applyTheme(pref: ThemePref): void {
-  const root = document.documentElement;
-  if (pref === 'system') root.removeAttribute('data-theme');
-  else root.setAttribute('data-theme', pref);
+/** Apply `theme` to `<html data-theme>`; see src/ui/theme.css. */
+export function applyTheme(theme: Theme): void {
+  document.documentElement.setAttribute('data-theme', theme);
 }
 
-/** Apply and remember `pref`. Storage is best-effort. */
-export function saveTheme(pref: ThemePref): void {
-  applyTheme(pref);
+/** Apply and remember `theme`. Storage is best-effort. */
+export function saveTheme(theme: Theme): void {
+  applyTheme(theme);
   try {
-    const s = storage();
-    if (pref === 'system') s?.removeItem(THEME_KEY);
-    else s?.setItem(THEME_KEY, pref);
+    storage()?.setItem(THEME_KEY, theme);
   } catch {
     // Not persisted; the choice still holds for this visit.
   }

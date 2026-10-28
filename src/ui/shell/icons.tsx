@@ -63,13 +63,6 @@ export const ExportIcon = (): React.JSX.Element => (
   </Icon>
 );
 
-export const SystemThemeIcon = (): React.JSX.Element => (
-  <Icon>
-    <circle cx="10" cy="10" r="6.5" />
-    <path className="av-icon-fill" d="M10 3.5a6.5 6.5 0 0 1 0 13z" />
-  </Icon>
-);
-
 export const LightThemeIcon = (): React.JSX.Element => (
   <Icon>
     <circle cx="10" cy="10" r="3.25" />

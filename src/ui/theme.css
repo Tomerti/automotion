@@ -2,12 +2,13 @@
  * Automaton Vis theme: a marked-up problem set.
  *
  * The canvas is dotted engineering paper and the diagram is ink on it. Processes are marked
- * up in four distinct pens: violet for the run (active states, taken edges, the tape's read
- * cell), red for errors and rejections, blue for your own selection, green for acceptance, and
+ * up in four distinct pens: orange for the run (active states, taken edges, the tape's read
+ * cell, the Run button), red for errors and rejections, blue for your own selection, green for
+ * acceptance, and
  * marker tints for the blocks of a minimization. Everything is set in Geist; the input tape
  * uses Geist Mono so its cells line up. The loud element is the run's input tape with
- * its read head; the one orchestrated motion is the verdict stamp. Light and dark follow
- * prefers-color-scheme unless the theme button forces one (`<html data-theme>`, set by
+ * its read head; the one orchestrated motion is the verdict stamp. Light is the default whatever
+ * the system prefers; the theme button switches to dark (`<html data-theme="dark">`, set by
  * src/ui/shell/theme.ts before the first render). Diagram exports always use the light (paper) tokens via
  * `.av-theme-light`, so an export taken in dark mode still reads on white.
  */
@@ -41,10 +42,12 @@
   --av-red: #c42f36;
   --av-green: #1c7a47;
   --av-warn: #8a5a00;
-  --av-highlighter: #8b5cf6;
-  --av-highlighter-soft: #ede9fe;
-  --av-highlighter-band: #8b5cf62e;
-  --av-highlighter-ink: #6d28d9;
+  --av-highlighter: #f76707;
+  --av-highlighter-soft: #fff0e1;
+  --av-highlighter-band: #f7670726;
+  --av-highlighter-ink: #d9480f;
+  --av-run: #d9480f;
+  --av-on-run: #ffffff;
 
   /* Diagram tokens, consumed by src/ui/canvas/diagramStyles.ts */
   --av-font: var(--av-font-math);
@@ -73,54 +76,8 @@
   --av-tint-7: #dadfe6;
 }
 
-/*
- * Dark tokens. They apply when the system is dark unless the page forces light
- * (`<html data-theme="light">`), and whenever the page forces dark. The two selectors must stay
- * identical; `.av-theme-light` (the export probe) redeclares the light tokens on itself, so it
- * reads light under either.
- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-
-    --av-paper: #151920;
-    --av-paper-dot: #2b313d;
-    --av-surface: #1b2029;
-    --av-surface-raised: #222834;
-    --av-hover: #2a3140;
-    --av-ink: #e6e9ef;
-    --av-ink-muted: #9aa3b2;
-    --av-rule: #2c3340;
-    --av-rule-strong: #3d4656;
-    --av-shadow: #00000066;
-
-    --av-accent: #8fa7ff;
-    --av-on-accent: #10142a;
-    --av-red: #ff7b7b;
-    --av-green: #5ed39a;
-    --av-warn: #e8b85a;
-    --av-highlighter: #a78bfa;
-    --av-highlighter-soft: #3b2a6e;
-    --av-highlighter-band: #a78bfa38;
-    --av-highlighter-ink: #c4b5fd;
-
-    --av-edge-stroke: #b9c0cc;
-    --av-active-stroke: var(--av-highlighter);
-    --av-active-text: #f5f3ff;
-
-    --av-tint-0: #2a4680;
-    --av-tint-1: #6e3428;
-    --av-tint-2: #275c37;
-    --av-tint-3: #50306c;
-    --av-tint-4: #6b4b18;
-    --av-tint-5: #1f5857;
-    --av-tint-6: #6a2a48;
-    --av-tint-7: #3b424e;
-
-    --av-backdrop: #05070bb3;
-    --av-kbd: #2a3140;
-  }
-}
+/* Dark tokens: only when the theme button chooses dark. `.av-theme-light` (the export probe)
+ * redeclares the light tokens on itself, so it reads light either way. */
 :root[data-theme='dark'] {
   color-scheme: dark;
 
@@ -140,14 +97,16 @@
   --av-red: #ff7b7b;
   --av-green: #5ed39a;
   --av-warn: #e8b85a;
-  --av-highlighter: #a78bfa;
-  --av-highlighter-soft: #3b2a6e;
-  --av-highlighter-band: #a78bfa38;
-  --av-highlighter-ink: #c4b5fd;
+  --av-highlighter: #ff922b;
+  --av-highlighter-soft: #5a2d0c;
+  --av-highlighter-band: #ff922b38;
+  --av-highlighter-ink: #ffa94d;
+  --av-run: #ff922b;
+  --av-on-run: #1f1206;
 
   --av-edge-stroke: #b9c0cc;
   --av-active-stroke: var(--av-highlighter);
-  --av-active-text: #f5f3ff;
+  --av-active-text: #fff4e6;
 
   --av-tint-0: #2a4680;
   --av-tint-1: #6e3428;

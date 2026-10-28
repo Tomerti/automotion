@@ -412,10 +412,18 @@ input.av-switcher-input {
   box-shadow: var(--av-shadow-float);
 }
 .av-runpill:focus-within {
-  border-color: var(--av-accent);
+  border-color: var(--av-run);
   box-shadow:
     var(--av-shadow-float),
-    0 0 0 1px var(--av-accent);
+    0 0 0 1px var(--av-run);
+}
+/* Run is in the run's own colour, like everything a run lights up. */
+.av-runpill button.av-primary,
+.av-runpill button.av-primary:hover:not(:disabled) {
+  font-weight: 600;
+  color: var(--av-on-run);
+  background: var(--av-run);
+  border-color: var(--av-run);
 }
 .av-runpill input,
 .av-runpill input:focus-visible {
@@ -540,12 +548,17 @@ input.av-switcher-input {
   background: var(--av-surface-raised);
   box-shadow: 0 1px 2px var(--av-shadow);
 }
-/* Tall enough for the longest tab, so switching tabs doesn't make the dialog jump. */
+.av-guide-panels {
+  display: grid;
+}
 .av-guide-list {
-  min-height: 336px;
+  grid-area: 1 / 1;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+.av-guide-list[data-current='false'] {
+  visibility: hidden;
 }
 .av-guide-row {
   display: grid;
@@ -749,8 +762,5 @@ kbd {
   .av-guide-row {
     grid-template-columns: minmax(0, 1fr);
     gap: 6px;
-  }
-  .av-guide-list {
-    min-height: 0;
   }
 }

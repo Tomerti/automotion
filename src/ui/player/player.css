@@ -233,9 +233,9 @@ select.av-player-speed:hover {
   position: relative;
   z-index: 1;
   font-weight: 600;
-  color: var(--av-highlighter-ink, #6d28d9);
-  background: var(--av-highlighter-soft, #ede9fe);
-  box-shadow: inset 0 -3px 0 var(--av-highlighter, #8b5cf6);
+  color: var(--av-highlighter-ink, #d9480f);
+  background: var(--av-highlighter-soft, #fff0e1);
+  box-shadow: inset 0 -3px 0 var(--av-highlighter, #f76707);
 }
 .av-word-char[data-stuck='true'] {
   color: var(--av-red);
@@ -277,7 +277,7 @@ select.av-player-speed:hover {
 }
 .av-run-halo {
   fill: none;
-  stroke: var(--av-highlighter, #8b5cf6);
+  stroke: var(--av-highlighter, #f76707);
   stroke-width: 2;
   opacity: 0.55;
   transform-box: fill-box;
@@ -304,11 +304,11 @@ select.av-player-speed:hover {
   }
 }
 .av-run-token-glow {
-  fill: var(--av-highlighter, #8b5cf6);
+  fill: var(--av-highlighter, #f76707);
   opacity: 0.22;
 }
 .av-run-token-core {
-  fill: var(--av-highlighter, #8b5cf6);
+  fill: var(--av-highlighter, #f76707);
   stroke: var(--av-surface-raised, #ffffff);
   stroke-width: 1.5;
 }
@@ -347,7 +347,7 @@ select.av-player-speed:hover {
 /* The taken edge's label takes the run's colour while its step is shown. */
 .av-run-view .av-edge[data-taken='true'] .av-edge-label {
   font-weight: 700;
-  fill: var(--av-active, #6d28d9);
+  fill: var(--av-active, #d9480f);
 }
 .av-run-view[data-moving] .av-edge[data-taken='true'] .av-edge-label {
   transform-box: fill-box;

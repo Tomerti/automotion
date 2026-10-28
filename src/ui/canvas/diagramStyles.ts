@@ -35,17 +35,17 @@ export const diagramStyles = `
 .av-state[data-faded="true"], .av-edge[data-faded="true"] { opacity: 0.25; }
 .av-state[data-selected="true"] .av-state-body { stroke: var(--av-selected, #2563eb); stroke-width: 3; }
 .av-state[data-selected="true"] .av-state-ring { stroke: var(--av-selected, #2563eb); }
-.av-state[data-active="true"] .av-state-body { fill: var(--av-active-fill, #ede9fe); stroke: var(--av-active-stroke, #6d28d9); stroke-width: 2.25; }
-.av-state[data-active="true"] .av-state-ring { stroke: var(--av-active-stroke, #6d28d9); }
+.av-state[data-active="true"] .av-state-body { fill: var(--av-active-fill, #fff0e1); stroke: var(--av-active-stroke, #d9480f); stroke-width: 2.25; }
+.av-state[data-active="true"] .av-state-ring { stroke: var(--av-active-stroke, #d9480f); }
 .av-state[data-active="true"] .av-state-label { fill: var(--av-active-text, #1c2333); }
 .av-state[data-error="true"] .av-state-body { stroke: var(--av-error, #c42f36); stroke-width: 3; }
 .av-state[data-error="true"] .av-state-ring { stroke: var(--av-error, #c42f36); }
 
 .av-edge[data-selected="true"] .av-edge-path { stroke: var(--av-selected, #2563eb); stroke-width: 2.5; }
 .av-edge[data-selected="true"] .av-edge-head { fill: var(--av-selected, #2563eb); }
-.av-edge[data-taken="true"] .av-edge-hit { stroke: var(--av-taken-band, #8b5cf62e); stroke-width: 7; }
-.av-edge[data-taken="true"] .av-edge-path { stroke: var(--av-active, #6d28d9); stroke-width: 2.25; }
-.av-edge[data-taken="true"] .av-edge-head { fill: var(--av-active, #6d28d9); }
+.av-edge[data-taken="true"] .av-edge-hit { stroke: var(--av-taken-band, #f7670726); stroke-width: 7; }
+.av-edge[data-taken="true"] .av-edge-path { stroke: var(--av-active, #d9480f); stroke-width: 2.25; }
+.av-edge[data-taken="true"] .av-edge-head { fill: var(--av-active, #d9480f); }
 .av-edge[data-error="true"] .av-edge-path { stroke: var(--av-error, #c42f36); stroke-width: 2.5; }
 .av-edge[data-error="true"] .av-edge-head { fill: var(--av-error, #c42f36); }
 
