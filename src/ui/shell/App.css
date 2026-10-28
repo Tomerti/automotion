@@ -377,6 +377,10 @@ input.av-switcher-input {
   grid-template-columns: auto minmax(0, 1fr);
   min-height: 0;
 }
+/* Always the wide column: with the bar hidden, the first column is empty and collapses. */
+.av-body > .av-canvas-area {
+  grid-column: 2;
+}
 
 /* History bar: every automaton, newest edit first, each with a picture of its diagram. */
 .av-history {

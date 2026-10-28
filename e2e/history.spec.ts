@@ -30,7 +30,15 @@ test('the history bar lists automata newest edit first and switches between them
   // The History button hides the bar, and the choice survives a reload.
   await page.getByRole('button', { name: 'History' }).click();
   await expect(bar).toBeHidden();
+  // The canvas takes the bar's place: it fills the full width.
+  const fullWidth = async (): Promise<void> => {
+    const box = await page.getByTestId('canvas').boundingBox();
+    expect(box?.x).toBe(0);
+    expect(box?.width).toBe(page.viewportSize()?.width);
+  };
+  await fullWidth();
   await page.reload();
   await expect(page.getByTestId('canvas')).toBeVisible();
   await expect(bar).toBeHidden();
+  await fullWidth();
 });
