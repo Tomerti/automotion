@@ -34,6 +34,8 @@ Nothing in progress: pick the next task from the list below.
 - [x] Hiding the bar gives the canvas the full width
 - [x] Each entry has a ⋯ menu (Rename, Export JSON, Delete); double-click renames; Import / Export all at the bottom
 - [x] The top-bar automaton dropdown is gone; the name there still renames the open automaton
+- [x] Delete (or Backspace) on a clicked entry deletes that automaton after asking
+- [x] One-time cleanup: the first release's three seeded examples are removed from saved work if never changed
 
 ### Multiple start states
 

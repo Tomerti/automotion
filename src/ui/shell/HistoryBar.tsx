@@ -139,7 +139,8 @@ function EntryMenu(props: {
 
 /**
  * The left bar: every automaton, most recently edited first, with a picture of its diagram.
- * Clicking one opens it; its ⋯ menu renames, exports or deletes it. New, Import and Export all
+ * Clicking one opens it; Delete on it, or its ⋯ menu, deletes it after asking; the menu also
+ * renames and exports. New, Import and Export all
  * sit at the top and bottom.
  */
 export function HistoryBar(): React.JSX.Element {
@@ -209,8 +210,17 @@ export function HistoryBar(): React.JSX.Element {
                   className="av-history-item"
                   data-testid="history-item"
                   aria-current={current ? 'page' : undefined}
-                  onClick={() => appStore.getState().setActive(a.id)}
+                  onClick={(e) => {
+                    // Safari doesn't focus a clicked button; Delete needs it focused.
+                    e.currentTarget.focus();
+                    appStore.getState().setActive(a.id);
+                  }}
                   onDoubleClick={() => startRename(a.id)}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+                    e.preventDefault();
+                    deleteWithConfirm(a);
+                  }}
                 >
                   <span className="av-history-name">{a.name}</span>
                   {thumb}

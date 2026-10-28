@@ -65,3 +65,20 @@ test('rename and delete an automaton from its ⋯ menu in the history bar', asyn
   await expect(entries).toHaveCount(1);
   await expect(entries.first()).toContainText('Mine');
 });
+
+test('the Delete key deletes a clicked history entry after asking', async ({ page }) => {
+  await openApp(page, { clear: true });
+  const bar = page.getByRole('navigation', { name: 'History' });
+  const entries = bar.getByTestId('history-item');
+  await bar.getByRole('button', { name: 'New NFA' }).click();
+  await expect(entries).toHaveCount(2);
+
+  await entries.nth(1).click();
+  page.once('dialog', (d) => {
+    expect(d.message()).toBe('Delete "Untitled"?');
+    void d.accept();
+  });
+  await page.keyboard.press('Delete');
+  await expect(entries).toHaveCount(1);
+  await expect(entries.first()).toContainText('Untitled NFA');
+});

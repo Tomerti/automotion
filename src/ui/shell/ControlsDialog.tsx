@@ -83,6 +83,10 @@ const TABS: Tab[] = [
       { gesture: { keys: ['S'], on: 'selected state' }, action: 'Toggle start state' },
       { gesture: { keys: ['A'], on: 'selected state' }, action: 'Toggle accepting' },
       { gesture: { keys: ['Delete'] }, action: 'Delete the selection' },
+      {
+        gesture: { keys: ['Delete'], on: 'clicked history entry' },
+        action: 'Delete that automaton',
+      },
       { gesture: { keys: ['Ctrl', 'Z'] }, action: 'Undo' },
       { gesture: { keys: ['Ctrl', 'Y'] }, action: 'Redo' },
       { gesture: { keys: ['?'] }, action: 'Open this guide' },
