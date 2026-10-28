@@ -5,6 +5,7 @@ import { appStore, useAppStore } from '../../store/store';
 import type { Viewport } from '../../store/types';
 import { ContextMenu } from './ContextMenu';
 import { Diagram } from './Diagram';
+import { Arrowhead } from './EdgeView';
 import { InlineInput } from './InlineInput';
 import { DEFAULT_VIEWPORT, useCanvasEditing } from './useCanvasEditing';
 import { fitToView } from './viewport';
@@ -123,14 +124,14 @@ function EditableCanvas(props: {
           />
         ))}
         {rubberBand && (
-          <line
+          <g
             className="av-rubber-band"
             data-testid="rubber-band"
-            x1={rubberBand.from.x}
-            y1={rubberBand.from.y}
-            x2={rubberBand.to.x}
-            y2={rubberBand.to.y}
-          />
+            data-loop={String(rubberBand.loop)}
+          >
+            <path className="av-edge-path" d={rubberBand.d} />
+            <Arrowhead end={rubberBand.end} angle={rubberBand.endAngle} />
+          </g>
         )}
       </Diagram>
       {automaton.states.length === 0 && (

@@ -24,6 +24,7 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 - [x] Double-click adds a state; borderless in-place rename and symbol editing (commit on blur)
 - [x] Subscript labels (`q_1`, `q_{12}`); new states are named `q_0`, `q_1`, …
 - [x] Shift + drag draws a transition (the ring gesture is gone); drag an edge to bend it, drag a loop to rotate it
+- [x] The transition being drawn is a solid arrow; over a state it shows the edge (or self-loop) it will create
 - [x] Enter toggles accepting, Space toggles start on the selected state
 - [x] Alignment snapping with guides while dragging (Alt skips)
 - [x] `\epsilon` types ε; ε on a DFA turns it into an NFA

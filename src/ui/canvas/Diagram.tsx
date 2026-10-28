@@ -3,15 +3,7 @@ import type { Viewport } from '../../store/types';
 import { Arrowhead, EdgeView } from './EdgeView';
 import { StateNode } from './StateNode';
 import { diagramStyles } from './diagramStyles';
-import {
-  autoBend,
-  bestLoopAngle,
-  edgeGeometry,
-  selfLoopGeometry,
-  startArrowGeometry,
-  STATE_RADIUS,
-  type Point,
-} from './geometry';
+import { startArrowGeometry, STATE_RADIUS, transitionGeometry } from './geometry';
 
 export interface DiagramHighlight {
   active?: StateId[];
@@ -39,9 +31,6 @@ export interface DiagramProps {
   onContextMenu?: (e: React.MouseEvent<SVGSVGElement>) => void;
 }
 
-/** Distance of the virtual neighbor standing in for the start arrow. */
-const START_ARROW_CLEARANCE = 100;
-
 const has = (list: readonly string[] | undefined, id: string): boolean =>
   list !== undefined && list.includes(id);
 
@@ -63,9 +52,6 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
       (highlight.visibleTransitions === undefined || highlight.visibleTransitions.includes(t.id))
     );
   });
-
-  const hasEdge = (from: StateId, to: StateId): boolean =>
-    automaton.transitions.some((t) => t.from === from && t.to === to);
 
   const start = automaton.start === null ? undefined : stateById.get(automaton.start);
   const startVisible = start !== undefined && stateVisible(start.id);
@@ -93,20 +79,7 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
         {visibleTransitions.map((t) => {
           const from = stateById.get(t.from) as State;
           const to = stateById.get(t.to) as State;
-          let geometry;
-          if (t.from === t.to) {
-            const neighbors: Point[] = automaton.transitions
-              .filter((o) => o.from !== o.to && (o.from === t.from || o.to === t.from))
-              .map((o) => stateById.get(o.from === t.from ? o.to : o.from))
-              .filter((s): s is State => s !== undefined);
-            // The start arrow enters from the left: treat that direction as occupied.
-            if (automaton.start === t.from) {
-              neighbors.push({ x: from.x - START_ARROW_CLEARANCE, y: from.y });
-            }
-            geometry = selfLoopGeometry(from, t.loopAngle ?? bestLoopAngle(from, neighbors));
-          } else {
-            geometry = edgeGeometry(from, to, t.bend ?? autoBend(hasEdge(t.to, t.from)));
-          }
+          const geometry = transitionGeometry(automaton, from, to);
           return (
             <EdgeView
               key={t.id}

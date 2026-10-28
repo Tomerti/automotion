@@ -25,6 +25,8 @@ import {
   labelFontSize,
   loopAngleToward,
   STATE_RADIUS,
+  transitionGeometry,
+  type PathGeometry,
   type Point,
 } from './geometry';
 import { fitToView, screenToWorld, zoomAt } from './viewport';
@@ -55,6 +57,9 @@ type Gesture = { pointerId: number; start: Point; moved: boolean } & (
   | { kind: 'bend'; transitionId: string; from: Point; to: Point; grab: number }
   | { kind: 'loop'; transitionId: string; center: Point }
 );
+
+/** The arrow drawn while Shift-dragging a new transition, in world coordinates. */
+export type RubberBand = Pick<PathGeometry, 'd' | 'end' | 'endAngle'> & { loop: boolean };
 
 /** A dashed alignment guide, in world coordinates. */
 export interface Guide {
@@ -271,7 +276,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
   const nextKey = useRef(0);
   const locked = useAppStore((s) => s.trace !== null);
   const selection = useAppStore((s) => s.selection);
-  const [rubberBand, setRubberBand] = useState<{ from: Point; to: Point } | null>(null);
+  const [rubberBand, setRubberBand] = useState<RubberBand | null>(null);
   const [guides, setGuides] = useState<Guide[]>([]);
   const [inline, setInline] = useState<InlineEdit | null>(null);
   const [menu, setMenu] = useState<MenuView | null>(null);
@@ -461,12 +466,20 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     } else {
       const from = automaton.states.find((s) => s.id === g.from);
       if (!from) return;
+      // Over a state: show the edge (or self-loop) that releasing here would create.
+      const target = stateAt(p);
+      if (target) {
+        const { d, end, endAngle } = transitionGeometry(automaton, from, target);
+        setRubberBand({ loop: target.id === from.id, d, end, endAngle });
+        return;
+      }
       const len = Math.hypot(p.x - from.x, p.y - from.y) || 1;
       const edge = {
         x: from.x + ((p.x - from.x) / len) * STATE_RADIUS,
         y: from.y + ((p.y - from.y) / len) * STATE_RADIUS,
       };
-      setRubberBand({ from: edge, to: p });
+      const d = `M ${edge.x} ${edge.y} L ${p.x} ${p.y}`;
+      setRubberBand({ loop: false, d, end: p, endAngle: Math.atan2(p.y - from.y, p.x - from.x) });
     }
   };
 
