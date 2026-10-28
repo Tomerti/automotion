@@ -1,0 +1,46 @@
+import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { Issue } from '../../core/validate';
+import { IssuesList } from './IssuesList';
+
+afterEach(cleanup);
+
+const issues: Issue[] = [
+  { severity: 'warning', message: 'q1 is unreachable', stateId: 'q1' },
+  { severity: 'error', message: 'bad edge', transitionId: 't1' },
+  { severity: 'warning', message: 'No start state' },
+  { severity: 'error', message: 'dup', stateId: 'q0' },
+];
+
+describe('IssuesList', () => {
+  it('orders errors first, then warnings, keeping order otherwise', () => {
+    render(<IssuesList issues={issues} onSelect={() => {}} />);
+    const items = screen.getAllByRole('button');
+    expect(items.map((b) => b.textContent)).toEqual([
+      'bad edge',
+      'dup',
+      'q1 is unreachable',
+      'No start state',
+    ]);
+    expect(items[0]).toHaveAttribute('data-severity', 'error');
+    expect(items[2]).toHaveAttribute('data-severity', 'warning');
+  });
+
+  it('selects the offending element on click', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+    render(<IssuesList issues={issues} onSelect={onSelect} />);
+    await user.click(screen.getByRole('button', { name: 'bad edge' }));
+    expect(onSelect).toHaveBeenLastCalledWith({ states: [], transitions: ['t1'] });
+    await user.click(screen.getByRole('button', { name: 'dup' }));
+    expect(onSelect).toHaveBeenLastCalledWith({ states: ['q0'], transitions: [] });
+    await user.click(screen.getByRole('button', { name: 'No start state' }));
+    expect(onSelect).toHaveBeenLastCalledWith({ states: [], transitions: [] });
+  });
+
+  it('shows No issues when empty', () => {
+    render(<IssuesList issues={[]} onSelect={() => {}} />);
+    expect(screen.getByText('No issues')).toBeInTheDocument();
+  });
+});

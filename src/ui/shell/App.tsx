@@ -1,5 +1,6 @@
 import { Canvas } from '../canvas/Canvas';
 import { AutomatonList } from './AutomatonList';
+import { RightPanel } from './RightPanel';
 import { Toolbar } from './Toolbar';
 import './App.css';
 
@@ -16,7 +17,9 @@ export default function App(): React.JSX.Element {
       <main className="av-canvas-area">
         <Canvas />
       </main>
-      <aside className="av-right" data-testid="right-panel" />
+      <aside className="av-right" data-testid="right-panel">
+        <RightPanel />
+      </aside>
       <section className="av-bottom" data-testid="bottom-panel" />
     </div>
   );
