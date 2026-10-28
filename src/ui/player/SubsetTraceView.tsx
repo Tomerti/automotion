@@ -20,7 +20,7 @@ export function SubsetTraceView({ trace, stepIndex }: SubsetTraceViewProps): Rea
           <Diagram
             automaton={trace.source}
             viewport={nfaViewport}
-            highlight={{ active: step?.focus.states }}
+            highlight={{ active: step?.focus.states, taken: step?.focus.transitions }}
           />
         </div>
       </section>

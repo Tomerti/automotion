@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { appStore, resetAppStore } from '../../store/store';
 import { startSubset } from '../../store/traceActions';
-import { endsAb } from '../../store/traceActions.test';
+import { endsAb } from '../../store/testing/fixtures';
 import App from '../shell/App';
 
 beforeEach(() => resetAppStore());
@@ -30,6 +30,21 @@ describe('SubsetTraceView', () => {
     const first = dfaStates();
     lastStep();
     expect(dfaStates()).toBeGreaterThan(first);
+  });
+
+  it('marks the NFA transitions taken on an expand step', async () => {
+    await open();
+    const trace = appStore.getState().trace;
+    if (trace?.kind !== 'subset') throw new Error('no subset trace');
+    const i = trace.steps.findIndex(
+      (s) => s.phase === 'expand' && (s.focus.transitions?.length ?? 0) > 0,
+    );
+    expect(i).toBeGreaterThan(-1);
+    act(() => appStore.getState().setStep(i));
+    const taken = within(screen.getByTestId('subset-nfa'))
+      .getAllByTestId(/^edge-/)
+      .filter((e) => e.getAttribute('data-taken') === 'true');
+    expect(taken.length).toBeGreaterThan(0);
   });
 
   it('Save as new automaton adds "N → DFA" and closes the trace', async () => {
