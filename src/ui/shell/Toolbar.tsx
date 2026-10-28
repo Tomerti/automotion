@@ -4,7 +4,9 @@ import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, useAppStore } from '../../store/store';
 import { startMinimize, startSubset } from '../../store/traceActions';
+import { exportableSvg, svgToPng } from '../canvas/exportDiagram';
 import { fitActive, tidyActive } from '../canvas/useCanvasEditing';
+import { downloadBlob, downloadText, slug } from './download';
 import { FileMenu } from './FileMenu';
 import { toast } from './toastStore';
 
@@ -34,6 +36,24 @@ export function Toolbar(): React.JSX.Element {
       appStore.getState().edit(() => result.automaton);
     } else {
       toast(result.issues[0]?.message ?? 'Cannot change the kind', 'error');
+    }
+  };
+
+  const exportDiagram = async (format: 'svg' | 'png'): Promise<void> => {
+    const text = automaton ? exportableSvg(automaton) : null;
+    if (!automaton || text === null) {
+      toast('Nothing to export', 'error');
+      return;
+    }
+    const filename = `${slug(automaton.name)}.${format}`;
+    if (format === 'svg') {
+      downloadText(filename, text, 'image/svg+xml');
+      return;
+    }
+    try {
+      downloadBlob(filename, await svgToPng(text));
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not export the PNG', 'error');
     }
   };
 
@@ -91,6 +111,12 @@ export function Toolbar(): React.JSX.Element {
         title={minimizeReason ?? undefined}
       >
         Minimize
+      </button>
+      <button type="button" disabled={none || tracing} onClick={() => void exportDiagram('svg')}>
+        Export SVG
+      </button>
+      <button type="button" disabled={none || tracing} onClick={() => void exportDiagram('png')}>
+        Export PNG
       </button>
       <FileMenu />
     </div>
