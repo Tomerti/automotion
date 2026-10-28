@@ -73,12 +73,12 @@ it('the dock swaps the run pill for the trace player while a trace is open', asy
   expect(screen.getByLabelText('Word')).toBeVisible();
 });
 
-it('New DFA from the switcher shows its diagram', async () => {
+it('New DFA from the history bar shows its diagram', async () => {
   const user = userEvent.setup();
   render(<App />);
-  await user.click(screen.getByRole('button', { name: 'Automata' }));
-  await user.click(screen.getByRole('menuitem', { name: 'New DFA' }));
+  await user.click(screen.getByRole('button', { name: 'New DFA' }));
   expect(screen.getByTestId('diagram')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Untitled DFA' })).toBeInTheDocument();
 });
 
 it('a failed autosave shows an error toast', async () => {

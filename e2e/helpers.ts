@@ -52,15 +52,9 @@ export async function clickState(page: Page, label: string): Promise<void> {
   await page.mouse.click(c.x, c.y);
 }
 
-/** Run an item of the automaton switcher's menu (e.g. "New DFA", "Export all"). */
-export async function automataMenu(page: Page, name: string): Promise<void> {
-  await page.getByRole('button', { name: 'Automata' }).click();
-  await page.getByRole('menuitem', { name }).click();
-}
-
-/** An automaton in the switcher's list; opens the menu first. */
-export async function item(page: Page, name: string): Promise<Locator> {
-  const menu = page.getByRole('menu', { name: 'Automata' });
-  if (!(await menu.isVisible())) await page.getByRole('button', { name: 'Automata' }).click();
-  return page.getByTestId('automaton-item').filter({ hasText: name });
+/** An automaton's entry in the history bar. */
+export function item(page: Page, name: string): Locator {
+  return page.getByRole('navigation', { name: 'History' }).getByTestId('history-item').filter({
+    hasText: name,
+  });
 }

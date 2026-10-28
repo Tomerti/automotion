@@ -63,10 +63,12 @@ Layers, with dependencies pointing downward only:
     drag crosses 3 px, so double-clicks keep their real target. Pure math is in `geometry.ts` / `viewport.ts`.
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button.
-  - `shell/`: top bar (history toggle, automaton switcher, toolbar, issues chip, theme toggle, Controls
-    popup), the left history bar (`HistoryBar.tsx`: every automaton with a `canvas/Thumbnail.tsx`
-    picture, newest edit first; open/closed remembered in `historyPrefs.ts`), the bottom dock (run
-    pill / trace player), toasts, error boundary, import/export plumbing. Thumbnails are their own
+  - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip,
+    theme toggle, Controls popup), the left history bar (`HistoryBar.tsx`: every automaton with a
+    `canvas/Thumbnail.tsx` picture, newest edit first, a ⋯ menu per entry for rename / export /
+    delete, New DFA/NFA on top and Import / Export all below; open/closed remembered in
+    `historyPrefs.ts`), the bottom dock (run pill / trace player), toasts, error boundary,
+    import/export plumbing. Thumbnails are their own
     small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
   - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;

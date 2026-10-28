@@ -100,40 +100,6 @@
   color: var(--av-red);
 }
 
-/* Automata in the switcher menu: a small state circle marks the open one. */
-.av-menu-list {
-  display: flex;
-  flex-direction: column;
-  max-height: min(320px, 45vh);
-  overflow-y: auto;
-}
-.av-menu [role='menuitemradio']::before {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  content: '';
-  border: 1.5px solid transparent;
-  border-radius: 50%;
-}
-.av-menu [role='menuitemradio'][aria-checked='true'] {
-  font-weight: 600;
-}
-.av-menu [role='menuitemradio'][aria-checked='true']::before {
-  background: var(--av-highlighter);
-  border-color: var(--av-ink);
-}
-.av-menu-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.av-menu-kind {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--av-ink-muted);
-}
-
 /* Top bar */
 
 .av-topbar {
@@ -235,13 +201,6 @@ input.av-switcher-input {
   font-size: 17px;
   background: var(--av-surface-raised);
   border-color: var(--av-accent);
-}
-.av-switcher-toggle {
-  min-width: 26px;
-  padding: 0 3px;
-}
-.av-switcher-menu {
-  min-width: 260px;
 }
 
 /* Issues chip and its popover */
@@ -391,13 +350,20 @@ input.av-switcher-input {
   background: var(--av-surface);
   border-right: 1px solid var(--av-rule);
 }
-.av-history-new {
+.av-history-actions {
   display: flex;
   gap: 6px;
   padding: 10px 10px 6px;
 }
-.av-history-new button {
+.av-history-actions button {
   flex: 1;
+}
+.av-history-files {
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--av-rule);
+}
+.av-history-entry {
+  position: relative;
 }
 .av-history-list {
   display: flex;
@@ -450,9 +416,51 @@ input.av-switcher-input {
 }
 .av-history-name {
   overflow: hidden;
+  /* Clear of the ⋯ button that sits at the end of this row. */
+  padding-right: 26px;
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.av-history-rename {
+  min-width: 0;
+  padding: 1px 4px;
+  font-size: 13px;
+  border: 1px solid var(--av-accent);
+  border-radius: 5px;
+}
+
+/*
+ * The ⋯ button on an entry's name row (item padding + thumbnail + its margin). Shown on hover
+ * and focus, always on the open automaton and on touch screens.
+ */
+.av-history-more {
+  position: absolute;
+  top: 99px;
+  right: 4px;
+  opacity: 0;
+}
+.av-history-more .av-icon-button {
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0 4px;
+}
+.av-history-entry:hover .av-history-more,
+.av-history-entry:focus-within .av-history-more,
+.av-history-more[data-open='true'],
+.av-history-item[aria-current='page'] + .av-history-more {
+  opacity: 1;
+}
+@media (hover: none) {
+  .av-history-more {
+    opacity: 1;
+  }
+}
+/* Fixed to the viewport (placed by EntryMenu), so the scrolling list doesn't clip it. */
+.av-history-menu {
+  position: fixed;
+  top: auto;
+  min-width: 160px;
 }
 .av-history-item[aria-current='page'] .av-history-name {
   font-weight: 600;

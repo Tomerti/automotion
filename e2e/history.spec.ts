@@ -42,3 +42,26 @@ test('the history bar lists automata newest edit first and switches between them
   await expect(bar).toBeHidden();
   await fullWidth();
 });
+
+test('rename and delete an automaton from its ⋯ menu in the history bar', async ({ page }) => {
+  await openApp(page, { clear: true });
+  const bar = page.getByRole('navigation', { name: 'History' });
+  const entries = bar.getByTestId('history-item');
+  await bar.getByRole('button', { name: 'New NFA' }).click();
+  await expect(entries).toHaveCount(2);
+  // There is no dropdown in the top bar any more.
+  await expect(page.getByRole('button', { name: 'Automata' })).toHaveCount(0);
+
+  await bar.getByRole('button', { name: 'More actions for Untitled', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Rename' }).click();
+  await page.getByRole('textbox', { name: 'Automaton name' }).fill('Mine');
+  await page.keyboard.press('Enter');
+  await expect(entries.first()).toContainText('Mine');
+  await expect(page.locator('.av-switcher-name')).toHaveText('Mine');
+
+  page.once('dialog', (d) => void d.accept());
+  await bar.getByRole('button', { name: 'More actions for Untitled NFA' }).click();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
+  await expect(entries).toHaveCount(1);
+  await expect(entries.first()).toContainText('Mine');
+});

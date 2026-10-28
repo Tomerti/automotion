@@ -1,4 +1,4 @@
-import { AutomatonSwitcher } from './AutomatonSwitcher';
+import { AutomatonName } from './AutomatonName';
 import { HelpIcon, HistoryIcon } from './icons';
 import { IssuesChip } from './IssuesChip';
 import { ThemeToggle } from './ThemeToggle';
@@ -43,7 +43,7 @@ export function TopBar(props: {
         <span className="av-topbar-slash" aria-hidden="true">
           /
         </span>
-        <AutomatonSwitcher />
+        <AutomatonName />
         <IssuesChip />
       </div>
       <div className="av-topbar-end">
