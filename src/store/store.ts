@@ -47,7 +47,9 @@ function freeName(kind: AutomatonKind, automata: Automaton[]): string {
   return name;
 }
 
-function initialData(initial: Initial): Pick<
+function initialData(
+  initial: Initial,
+): Pick<
   AppState,
   'automata' | 'activeId' | 'selection' | 'viewports' | 'trace' | 'stepIndex' | 'history'
 > {
@@ -102,6 +104,8 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
             s.automata.push(a);
             s.activeId = a.id;
             s.selection = NO_SELECTION;
+            s.trace = null;
+            s.stepIndex = 0;
           });
           return a.id;
         },
@@ -111,6 +115,8 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
             s.automata.push(a);
             s.activeId = a.id;
             s.selection = NO_SELECTION;
+            s.trace = null;
+            s.stepIndex = 0;
           });
         },
 
@@ -134,6 +140,8 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           set((s) => {
             s.activeId = id;
             s.selection = NO_SELECTION;
+            s.trace = null;
+            s.stepIndex = 0;
           });
         },
 
@@ -213,6 +221,11 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
 
 export const appStore: StoreApi<AppState> = createAppStore();
 
+/**
+ * Subscribe to the app store. Selectors must return stable references: select existing state
+ * or primitives, and wrap derived objects/arrays with `useShallow` from `zustand/react/shallow`.
+ * A selector that builds a fresh object each call re-renders forever.
+ */
 export const useAppStore = <T>(selector: (s: AppState) => T): T => useStore(appStore, selector);
 
 export function resetAppStore(initial: Initial = {}): void {
