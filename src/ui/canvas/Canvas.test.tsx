@@ -3,12 +3,21 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Automaton } from '../../core/model';
 import { runWord } from '../../core/run';
+import { moveState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
 import { layoutAutomaton } from '../../layout/layout';
 import { appStore, resetAppStore } from '../../store/store';
 import { Toolbar } from '../shell/Toolbar';
+import { toastStore } from '../shell/toastStore';
 import { Canvas } from './Canvas';
 import { fitToView } from './viewport';
+
+// The real layout by default; Tidy tests make it fail or hold it at the await.
+vi.mock('../../layout/layout', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../layout/layout')>();
+  return { ...real, layoutAutomaton: vi.fn(real.layoutAutomaton) };
+});
+const layoutMock = vi.mocked(layoutAutomaton);
 
 // jsdom: getBoundingClientRect is all zeros, so at the default viewport world = client coords.
 // fixture() places states at x = 100 * index, y = 0.
@@ -546,6 +555,60 @@ describe('Fit and Tidy', () => {
       [0, 0],
       [100, 0],
     ]);
+  });
+
+  it('Tidy reports a layout failure and leaves no undo entry', async () => {
+    const user = userEvent.setup();
+    toastStore.setState({ toasts: [] });
+    load(two('DFA', 'a', [['q0', 'a', 'q1']]));
+    render(
+      <>
+        <Toolbar />
+        <Canvas />
+      </>,
+    );
+    const before = active();
+    layoutMock.mockRejectedValueOnce(new Error('elk exploded'));
+    await user.click(screen.getByRole('button', { name: 'Tidy' }));
+    await waitFor(() => expect(toastStore.getState().toasts).toHaveLength(1));
+    expect(toastStore.getState().toasts[0]).toMatchObject({
+      message: 'Could not lay out the automaton',
+      kind: 'error',
+    });
+    expect(active()).toBe(before);
+    expect(st().history.m?.past ?? []).toHaveLength(0);
+  });
+
+  it('Tidy drops its layout when the automaton changes during it', async () => {
+    const user = userEvent.setup();
+    load(two('DFA', 'a', [['q0', 'a', 'q1']]));
+    render(
+      <>
+        <Toolbar />
+        <Canvas />
+      </>,
+    );
+    let release = (): void => {};
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    layoutMock.mockClear();
+    layoutMock.mockImplementationOnce(async (a: Automaton) => {
+      await gate;
+      return { ...a, states: a.states.map((s) => ({ ...s, x: 999, y: 999 })) };
+    });
+    await user.click(screen.getByRole('button', { name: 'Tidy' }));
+    await waitFor(() => expect(layoutMock).toHaveBeenCalled());
+    act(() => st().edit((a) => moveState(a, 'q0', { x: 7, y: 7 })));
+    await act(async () => {
+      release();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(active().states.map((s) => [s.x, s.y])).toEqual([
+      [7, 7],
+      [100, 0],
+    ]);
+    expect(st().history.m?.past).toHaveLength(1);
   });
 
   it('Tidy and Fit are disabled while a trace is open', () => {

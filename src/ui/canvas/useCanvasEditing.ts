@@ -15,6 +15,7 @@ import { EPSILON } from '../../core/model';
 import type { Automaton, StateId } from '../../core/model';
 import { appStore, useAppStore } from '../../store/store';
 import type { Selection, Viewport } from '../../store/types';
+import { toast } from '../shell/toastStore';
 import type { MenuItem } from './ContextMenu';
 import { hitRing, STATE_RADIUS, type Point } from './geometry';
 import { fitToView, screenToWorld, zoomAt } from './viewport';
@@ -87,17 +88,28 @@ export function fitActive(): void {
   appStore.getState().setViewport(a.id, fitToView(a.states, size));
 }
 
-/** Auto-layout the active automaton as one undo step, then fit it. */
+/**
+ * Auto-layout the active automaton as one undo step, then fit it. A layout failure shows an
+ * error toast; if the automaton, the active automaton or the trace changes meanwhile, the layout
+ * is dropped.
+ */
 export async function tidyActive(): Promise<void> {
   const a = activeAutomaton();
   if (!a || appStore.getState().trace) return;
-  appStore.getState().checkpoint();
-  // elkjs is large: load it on first use so it stays out of the main bundle.
-  const { layoutAutomaton } = await import('../../layout/layout');
-  const laidOut = await layoutAutomaton(a);
+  let laidOut: Automaton;
+  try {
+    // elkjs is large: load it on first use so it stays out of the main bundle.
+    const { layoutAutomaton } = await import('../../layout/layout');
+    laidOut = await layoutAutomaton(a);
+  } catch {
+    toast('Could not lay out the automaton', 'error');
+    return;
+  }
   const now = appStore.getState();
-  if (now.activeId !== a.id || now.trace) return;
+  if (now.activeId !== a.id || activeAutomaton() !== a || now.trace) return;
   const pos = new Map(laidOut.states.map((s) => [s.id, s]));
+  // Checkpoint and edit together, after the await, so a dropped layout leaves no undo entry.
+  now.checkpoint();
   now.edit(
     (cur) => ({
       ...cur,
