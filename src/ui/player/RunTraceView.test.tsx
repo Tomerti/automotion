@@ -4,9 +4,13 @@ import { runWord } from '../../core/run';
 import { fixture } from '../../core/testing/fixtures';
 import type { RunTrace } from '../../core/trace';
 import { RunTraceView } from './RunTraceView';
+import { playRunSound } from './sound';
+
+vi.mock('./sound', () => ({ playRunSound: vi.fn(), playVerdictSound: vi.fn() }));
 
 afterEach(() => {
   cleanup();
+  vi.mocked(playRunSound).mockClear();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -216,5 +220,22 @@ describe('RunTraceView verdict', () => {
     const v = verdictOf(runWord(endsInA, 'ba'));
     expect(v).toHaveAttribute('data-accepted', 'true');
     expect(v).toHaveTextContent('Ended in {q0, q1}; q1 is accepting');
+  });
+});
+
+describe('RunTraceView sound', () => {
+  it('replays the Run chime when the run comes back to its first step', () => {
+    const trace = runWord(parity, 'ab');
+    const { rerender } = show(trace, 0);
+    // The Run button plays the chime that opens the run.
+    expect(playRunSound).not.toHaveBeenCalled();
+    rerender(<RunTraceView trace={trace} stepIndex={1} />);
+    rerender(<RunTraceView trace={trace} stepIndex={lastIndex(trace)} />);
+    expect(playRunSound).not.toHaveBeenCalled();
+    rerender(<RunTraceView trace={trace} stepIndex={0} />);
+    expect(playRunSound).toHaveBeenCalledTimes(1);
+    // A new run opens at its first step: that chime is the Run button's.
+    rerender(<RunTraceView trace={runWord(parity, 'a')} stepIndex={0} />);
+    expect(playRunSound).toHaveBeenCalledTimes(1);
   });
 });

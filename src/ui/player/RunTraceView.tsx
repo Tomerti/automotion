@@ -5,7 +5,7 @@ import { Diagram } from '../canvas/Diagram';
 import { STATE_RADIUS } from '../canvas/geometry';
 import { LabelText } from '../LabelText';
 import { moveDurationMs, prefersReducedMotion, usePlaybackSpeed } from './playback';
-import { playVerdictSound } from './sound';
+import { playRunSound, playVerdictSound } from './sound';
 import {
   cellState,
   readHead,
@@ -288,6 +288,15 @@ export function RunTraceView({ trace, stepIndex }: RunTraceViewProps): React.JSX
       forward && motion !== null && canAnimate() ? { stepIndex, wave: 0, done: false } : null,
     );
   }
+
+  // Back at the first step (a replay, First, the scrubber) the Run chime plays again, as the
+  // verdict does at the last; the Run button plays it when the run opens.
+  const shown = useRef({ trace, stepIndex });
+  useEffect(() => {
+    const prev = shown.current;
+    shown.current = { trace, stepIndex };
+    if (stepIndex === 0 && prev.trace === trace && prev.stepIndex !== 0) playRunSound();
+  }, [trace, stepIndex]);
 
   if (!step) return <div className="av-trace-view" />;
 
