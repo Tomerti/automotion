@@ -4,11 +4,10 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 
 ## Current
 
-- [~] Deploy to GitHub Pages: workflow is in place, waiting for Pages to be enabled
+Nothing in progress. v1 is live at https://tomerti.github.io/automaton-vis/; pick the next item from Next.
 
 ## Next
 
-- [ ] Enable GitHub Pages (Settings → Pages → Source: GitHub Actions)
 - [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; hide the transition table while a trace is open, and consider a more compact layout or pan/zoom in trace views
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
@@ -63,4 +62,6 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 - [x] Visual design pass (frontend-design)
 - [x] Playwright smoke tests
 - [x] CI (typecheck, lint, unit tests, e2e)
-- [x] Deploy workflow for GitHub Pages (`.github/workflows/deploy.yml`)
+- [x] Deploy job for GitHub Pages (in `.github/workflows/ci.yml`, runs after checks pass on `master`)
+- [x] Enable GitHub Pages and deploy v1: https://tomerti.github.io/automaton-vis/
+- [x] Bump GitHub Actions to current majors (removes the Node.js 20 deprecation warnings)
