@@ -137,6 +137,8 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
         },
 
         setActive(id) {
+          // Re-selecting the active automaton must not close an open trace.
+          if (id === get().activeId) return;
           set((s) => {
             s.activeId = id;
             s.selection = NO_SELECTION;

@@ -194,6 +194,7 @@ describe('store', () => {
       st().setStep(1);
     };
     const { st, active } = setup();
+    st().addAutomaton(dfa('a2'));
     open(st, active);
     st().setActive('a1');
     expect(st().trace).toBeNull();
@@ -207,6 +208,16 @@ describe('store', () => {
     st().addAutomaton(dfa('a2'));
     expect(st().trace).toBeNull();
     expect(st().stepIndex).toBe(0);
+  });
+
+  it('setActive on the already-active automaton keeps an open trace', () => {
+    const { st, active } = setup();
+    st().openTrace(runWord(active(), 'a'));
+    st().setStep(1);
+    const trace = st().trace;
+    st().setActive('a1');
+    expect(st().trace).toBe(trace);
+    expect(st().stepIndex).toBe(1);
   });
 
   describe('module store', () => {
