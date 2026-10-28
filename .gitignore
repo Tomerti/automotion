@@ -18,3 +18,9 @@ desktop.ini
 .idea/
 *.swp
 *~
+
+# Build and test output
+node_modules
+dist
+playwright-report
+test-results
