@@ -3,7 +3,7 @@ import type { AutomatonKind } from '../../core/model';
 import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, useAppStore } from '../../store/store';
-import { startMinimize } from '../../store/traceActions';
+import { startMinimize, startSubset } from '../../store/traceActions';
 import { FileMenu } from './FileMenu';
 import { toast } from './toastStore';
 
@@ -78,6 +78,7 @@ export function Toolbar(): React.JSX.Element {
         type="button"
         disabled={none || convertReason !== null}
         title={convertReason ?? undefined}
+        onClick={() => void startSubset()}
       >
         Convert to DFA
       </button>

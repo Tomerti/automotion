@@ -1,7 +1,7 @@
 import type { AnyTrace } from '../../core/trace';
 import { appStore } from '../../store/store';
 
-/** Trace-specific buttons shown in the player. */
+/** Extra player buttons for the open trace (rendered by TracePlayer's `extraActions`). */
 export function TraceExtraActions({
   trace,
   stepIndex,
@@ -9,15 +9,16 @@ export function TraceExtraActions({
   trace: AnyTrace;
   stepIndex: number;
 }): React.JSX.Element | null {
+  const isLast = stepIndex === trace.steps.length - 1;
   switch (trace.kind) {
+    case 'subset':
     case 'minimize':
-      if (stepIndex !== trace.steps.length - 1) return null;
-      return (
+      return isLast ? (
         <button type="button" onClick={() => appStore.getState().addAutomaton(trace.result)}>
           Save as new automaton
         </button>
-      );
-    default:
+      ) : null;
+    case 'run':
       return null;
   }
 }
