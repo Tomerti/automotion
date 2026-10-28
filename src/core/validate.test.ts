@@ -121,3 +121,17 @@ describe('validate', () => {
     expect(hasErrors([{ severity: 'error', message: 'e' }])).toBe(true);
   });
 });
+
+describe('start states', () => {
+  it('a DFA with two start states is an error', () => {
+    const d = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0', 'q1'], starts: ['q0', 'q1'] });
+    expect(validate(d)).toContainEqual(
+      expect.objectContaining({ severity: 'error', message: 'A DFA has exactly one start state' }),
+    );
+  });
+
+  it('states reachable from any start state are not unreachable', () => {
+    const n = fixture({ kind: 'NFA', alphabet: 'a', states: ['q0', 'q1'], starts: ['q0', 'q1'] });
+    expect(validate(n).some((i) => /unreachable/i.test(i.message))).toBe(false);
+  });
+});

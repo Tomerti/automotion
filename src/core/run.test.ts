@@ -162,3 +162,32 @@ describe('canRun', () => {
     expect(canRun(bad, 'a')).toBe('Fix the errors in the automaton first');
   });
 });
+
+describe('several start states', () => {
+  it('a multi-start NFA starts in every start state and accepts via any of them', () => {
+    const n = fixture({
+      kind: 'NFA',
+      alphabet: 'ab',
+      states: ['q0', 'q1', 'q2'],
+      starts: ['q0', 'q1'],
+      accepting: ['q2'],
+      edges: [['q1', 'b', 'q2']],
+    });
+    const t = runWord(n, 'b');
+    expect(t.steps[0]?.active).toEqual(['q0', 'q1']);
+    expect(t.accepted).toBe(true);
+    expect(accepts(n, 'b')).toBe(true);
+  });
+
+  it('overlapping start closures list each state once (Review Focus 4)', () => {
+    const n = fixture({
+      kind: 'NFA',
+      alphabet: 'a',
+      states: ['q0', 'q1'],
+      starts: ['q0', 'q1'],
+      edges: [['q0', 'ε', 'q1']],
+    });
+    const active = runWord(n, '').steps.at(-1)?.active ?? [];
+    expect(new Set(active).size).toBe(active.length);
+  });
+});

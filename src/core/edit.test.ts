@@ -10,6 +10,7 @@ import {
   parseSymbolInput,
   removeAlphabetSymbol,
   removeState,
+  toggleStart,
   removeSymbolFromEdge,
   removeTransition,
   renameAlphabetSymbol,
@@ -275,5 +276,30 @@ describe('derived alphabet and edge shape', () => {
     expect(bent.transitions[0]?.bend).toBe(20);
     expect('bend' in (setEdgeBend(bent, id, undefined).transitions[0] ?? {})).toBe(false);
     expect(setLoopAngle(a, id, 1).transitions[0]?.loopAngle).toBe(1);
+  });
+});
+
+describe('start states', () => {
+  it('toggleStart adds and removes NFA start states, never duplicating (Review Focus 3)', () => {
+    const n = fixture({ kind: 'NFA', alphabet: 'a', states: ['q0', 'q1'], start: 'q0' });
+    expect(toggleStart(n, 'q1').starts).toEqual(['q0', 'q1']);
+    expect(toggleStart(toggleStart(n, 'q1'), 'q1').starts).toEqual(['q0']);
+    expect(toggleStart(n, 'q0').starts).toEqual([]);
+  });
+
+  it('toggleStart on a DFA moves the start, or clears it on the current start', () => {
+    const d = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0', 'q1'], start: 'q0' });
+    expect(toggleStart(d, 'q1').starts).toEqual(['q1']);
+    expect(toggleStart(d, 'q0').starts).toEqual([]);
+  });
+
+  it('removing one of several start states keeps the others (Review Focus 2)', () => {
+    const n = fixture({
+      kind: 'NFA',
+      alphabet: 'a',
+      states: ['q0', 'q1', 'q2'],
+      starts: ['q0', 'q2'],
+    });
+    expect(removeState(n, 'q0').starts).toEqual(['q2']);
   });
 });

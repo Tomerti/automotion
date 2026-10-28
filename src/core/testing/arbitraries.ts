@@ -14,6 +14,7 @@ function build(
   n: number,
   accepting: boolean[],
   edges: Map<string, Set<string>>,
+  starts: string[] = ['q0'],
 ): Automaton {
   const ids = Array.from({ length: n }, (_, i) => `q${i}`);
   const transitions: Transition[] = [];
@@ -27,7 +28,7 @@ function build(
     kind,
     alphabet,
     states: ids.map((id, i) => ({ id, label: id, x: 100 * i, y: 0 })),
-    starts: ['q0'],
+    starts,
     accepting: ids.filter((_, i) => accepting[i]),
     transitions,
   };
@@ -57,13 +58,18 @@ export function arbNfa(opts: ArbOpts = {}): fc.Arbitrary<Automaton> {
       .record({
         accepting: fc.array(fc.boolean(), { minLength: n, maxLength: n }),
         triples: fc.array(triple, { maxLength: n * 3 }),
+        // One to three start states.
+        starts: fc.subarray(
+          Array.from({ length: n }, (_, i) => `q${i}`),
+          { minLength: 1, maxLength: Math.min(3, n) },
+        ),
       })
-      .map(({ accepting, triples }) => {
+      .map(({ accepting, triples, starts }) => {
         const edges = new Map<string, Set<string>>();
         for (const [f, t, s] of triples) {
           if (s !== null) addEdge(edges, f, t, s);
         }
-        return build('NFA', alpha, n, accepting, edges);
+        return build('NFA', alpha, n, accepting, edges, starts);
       });
   });
 }

@@ -76,6 +76,9 @@ export function validate(a: Automaton): Issue[] {
   }
 
   const starts = a.starts.filter((id) => byId.has(id));
+  if (a.kind === 'DFA' && starts.length > 1) {
+    issues.push({ severity: 'error', message: 'A DFA has exactly one start state' });
+  }
   if (starts.length === 0) {
     issues.push({ severity: 'warning', message: 'No start state' });
   } else {

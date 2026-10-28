@@ -45,6 +45,18 @@ export function setStart(a: Automaton, id: StateId | null): Automaton {
   return { ...a, starts: id === null ? [] : [id] };
 }
 
+/**
+ * The S key: on an NFA, add `id` as a start state or remove it; on a DFA, make it the only start
+ * state, or clear the start if it already was.
+ */
+export function toggleStart(a: Automaton, id: StateId): Automaton {
+  if (a.kind === 'DFA') return setStart(a, a.starts.includes(id) ? null : id);
+  return {
+    ...a,
+    starts: a.starts.includes(id) ? a.starts.filter((x) => x !== id) : [...a.starts, id],
+  };
+}
+
 export function toggleAccepting(a: Automaton, id: StateId): Automaton {
   return {
     ...a,
