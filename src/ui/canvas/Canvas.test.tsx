@@ -491,6 +491,12 @@ describe('Canvas editing', () => {
   });
 });
 
+/** jsdom lays nothing out: give the canvas element a size. */
+function sizeCanvas(width: number, height: number): void {
+  Object.defineProperty(canvas(), 'clientWidth', { value: width, configurable: true });
+  Object.defineProperty(canvas(), 'clientHeight', { value: height, configurable: true });
+}
+
 describe('Fit and Tidy', () => {
   it('Fit fits the states into the canvas', async () => {
     const user = userEvent.setup();
@@ -501,8 +507,22 @@ describe('Fit and Tidy', () => {
         <Canvas />
       </>,
     );
+    sizeCanvas(640, 480);
     await user.click(screen.getByRole('button', { name: 'Fit' }));
-    expect(st().viewports.m).toEqual(fitToView(active().states, { width: 0, height: 0 }));
+    expect(st().viewports.m).toEqual(fitToView(active().states, { width: 640, height: 480 }));
+  });
+
+  it('Fit does nothing while the canvas has no size', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(
+      <>
+        <Toolbar />
+        <Canvas />
+      </>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Fit' }));
+    expect(st().viewports.m).toEqual({ x: 0, y: 0, zoom: 1 });
   });
 
   it('Tidy lays the states out and undoes in one step', async () => {
@@ -515,11 +535,12 @@ describe('Fit and Tidy', () => {
         <Canvas />
       </>,
     );
+    sizeCanvas(640, 480);
     const expected = (await layoutAutomaton(active())).states;
     await user.click(screen.getByRole('button', { name: 'Tidy' }));
     await waitFor(() => expect(active().states).toEqual(expected));
     expect(st().history.m?.past).toHaveLength(1);
-    expect(st().viewports.m).toEqual(fitToView(expected, { width: 0, height: 0 }));
+    expect(st().viewports.m).toEqual(fitToView(expected, { width: 640, height: 480 }));
     act(() => st().undo());
     expect(active().states.map((s) => [s.x, s.y])).toEqual([
       [0, 0],
@@ -527,11 +548,11 @@ describe('Fit and Tidy', () => {
     ]);
   });
 
-  it('Tidy is disabled while a trace is open', () => {
+  it('Tidy and Fit are disabled while a trace is open', () => {
     load({ ...two('DFA', 'a', [['q0', 'a', 'q1']]), start: 'q0' });
     act(() => st().openTrace(runWord(active(), 'a')));
     render(<Toolbar />);
     expect(screen.getByRole('button', { name: 'Tidy' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Fit' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Fit' })).toBeDisabled();
   });
 });

@@ -79,10 +79,12 @@ function canvasSize(): { width: number; height: number } {
   return { width: el?.clientWidth ?? 0, height: el?.clientHeight ?? 0 };
 }
 
-/** Fit the active automaton's states into the canvas. */
+/** Fit the active automaton's states into the canvas (no-op while the canvas has no size). */
 export function fitActive(): void {
   const a = activeAutomaton();
-  if (a) appStore.getState().setViewport(a.id, fitToView(a.states, canvasSize()));
+  const size = canvasSize();
+  if (!a || size.width === 0 || size.height === 0) return;
+  appStore.getState().setViewport(a.id, fitToView(a.states, size));
 }
 
 /** Auto-layout the active automaton as one undo step, then fit it. */

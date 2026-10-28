@@ -65,7 +65,7 @@ export function Toolbar(): React.JSX.Element {
             key={k}
             type="button"
             aria-pressed={automaton?.kind === k}
-            disabled={none}
+            disabled={none || tracing}
             onClick={() => changeKind(k)}
           >
             {k}
@@ -75,7 +75,7 @@ export function Toolbar(): React.JSX.Element {
       <div className="av-toolbar-group">
         <button
           type="button"
-          disabled={undoCount === 0}
+          disabled={undoCount === 0 || tracing}
           onClick={() => {
             appStore.getState().undo();
           }}
@@ -84,7 +84,7 @@ export function Toolbar(): React.JSX.Element {
         </button>
         <button
           type="button"
-          disabled={redoCount === 0}
+          disabled={redoCount === 0 || tracing}
           onClick={() => {
             appStore.getState().redo();
           }}
@@ -93,7 +93,7 @@ export function Toolbar(): React.JSX.Element {
         </button>
       </div>
       <div className="av-toolbar-group">
-        <button type="button" disabled={none} onClick={fitActive}>
+        <button type="button" disabled={none || tracing} onClick={fitActive}>
           Fit
         </button>
         <button type="button" disabled={none || tracing} onClick={() => void tidyActive()}>

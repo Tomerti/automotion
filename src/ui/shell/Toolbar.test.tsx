@@ -2,6 +2,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { moveState } from '../../core/edit';
+import { runWord } from '../../core/run';
 import { fixture } from '../../core/testing/fixtures';
 import { serialize } from '../../persistence/fileFormat';
 import { appStore, resetAppStore } from '../../store/store';
@@ -120,6 +121,26 @@ describe('Toolbar', () => {
     await user.click(btn('Export all'));
     expect(names).toEqual(['my-auto.automaton.json', 'automata.automaton.json']);
     click.mockRestore();
+  });
+
+  it('kind toggle and Undo/Redo are disabled while a trace is open', () => {
+    const d = fixture({
+      kind: 'DFA',
+      alphabet: 'a',
+      states: ['q0', 'q1'],
+      start: 'q0',
+      edges: [['q0', 'a', 'q1']],
+      name: 'd',
+    });
+    resetAppStore({ automata: [d], activeId: 'd' });
+    const st = appStore.getState();
+    st.edit((a) => moveState(a, 'q0', { x: 5, y: 5 }));
+    st.edit((a) => moveState(a, 'q0', { x: 6, y: 6 }));
+    appStore.getState().undo();
+    const active = appStore.getState().automata[0]!;
+    appStore.getState().openTrace(runWord(active, 'a'));
+    render(<Toolbar />);
+    for (const n of ['DFA', 'NFA', 'Undo', 'Redo']) expect(btn(n)).toBeDisabled();
   });
 
   it('Undo/Redo call the store and follow history', async () => {
