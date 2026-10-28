@@ -35,8 +35,9 @@ export interface RunTrace {
 export type AnyTrace = RunTrace | SubsetTrace | MinimizeTrace;
 
 export interface SubsetStep extends StepBase {
-  phase: 'init' | 'expand' | 'done';
-  /** NFA states of the DFA state being expanded (init: the start closure). */
+  /** `starts`: several start states, so a single new one is added first. */
+  phase: 'starts' | 'init' | 'expand' | 'done';
+  /** NFA states of the DFA state being expanded (init: the start closure; starts: none). */
   subset: StateId[];
   symbol?: Sym;
   /** move(subset, symbol) */

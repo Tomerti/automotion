@@ -1,7 +1,7 @@
 import { epsilonClosure, move, transitionsTaken } from './analysis';
 import { formatSet, withSuffix } from './format';
 import { newId } from './id';
-import { startStates } from './model';
+import { EPSILON, startStates } from './model';
 import type { Automaton, State, StateId, Transition } from './model';
 import type { SubsetStep, SubsetTrace } from './trace';
 import { hasErrors, validate } from './validate';
@@ -17,14 +17,58 @@ export function canConvert(a: Automaton): string | null {
 /** Largest DFA the construction will build; beyond it the walkthrough and layout are unusable. */
 export const MAX_DFA_STATES = 64;
 
+/** How far left of the leftmost old start state the added single start state sits. */
+export const START_GAP = 120;
+
+/** `q_s`, or the first of `q_s'`, `q_s''`, … that no state of `a` uses. */
+function freeStartLabel(a: Automaton): string {
+  const taken = new Set(a.states.map((s) => s.label));
+  let label = 'q_s';
+  while (taken.has(label)) label += "'";
+  return label;
+}
+
+/**
+ * With several start states, the standard construction: a new state becomes the only start state,
+ * with an ε-transition to each old one (`added` is its id). Otherwise `nfa` is returned as is.
+ */
+export function withSingleStart(nfa: Automaton): { nfa: Automaton; added: StateId | null } {
+  const starts = startStates(nfa);
+  if (starts.length <= 1) return { nfa, added: null };
+  const old = nfa.states.filter((s) => starts.includes(s.id));
+  const id = newId();
+  const state: State = {
+    id,
+    label: freeStartLabel(nfa),
+    x: Math.min(...old.map((s) => s.x)) - START_GAP,
+    y: old.reduce((sum, s) => sum + s.y, 0) / old.length,
+  };
+  const edges: Transition[] = starts.map((to) => ({
+    id: newId(),
+    from: id,
+    to,
+    symbols: [EPSILON],
+  }));
+  return {
+    nfa: {
+      ...nfa,
+      states: [...nfa.states, state],
+      starts: [id],
+      transitions: [...nfa.transitions, ...edges],
+    },
+    added: id,
+  };
+}
+
 /** DFA state label: "{q0,q1}" without a space, or "∅". */
 function dfaLabel(nfa: Automaton, subset: StateId[]): string {
   return formatSet(nfa, subset).replaceAll(', ', ',');
 }
 
-export function subsetConstruction(nfa: Automaton): SubsetTrace {
-  const reason = canConvert(nfa);
+export function subsetConstruction(original: Automaton): SubsetTrace {
+  const reason = canConvert(original);
   if (reason !== null) throw new Error(reason);
+  const { nfa, added } = withSingleStart(original);
 
   const states: State[] = [];
   const transitions: Transition[] = [];
@@ -48,6 +92,22 @@ export function subsetConstruction(nfa: Automaton): SubsetTrace {
   };
 
   const starts = startStates(nfa);
+  if (added !== null) {
+    const label = nfa.states.find((s) => s.id === added)?.label ?? '';
+    steps.push({
+      phase: 'starts',
+      subset: [],
+      explanation: `Several start states: add a new start state ${label} with ε-transitions to ${formatSet(original, startStates(original))}`,
+      focus: {
+        states: [added],
+        transitions: nfa.transitions.filter((t) => t.from === added).map((t) => t.id),
+      },
+      dfaFocus: {},
+      revealedStates: [],
+      revealedTransitions: [],
+    });
+  }
+
   const startSubset = epsilonClosure(nfa, starts);
   const startEntry = addState(startSubset);
   steps.push({
