@@ -51,6 +51,19 @@ describe('MinimizeTraceView', () => {
     });
   });
 
+  it('tints the done step result to match the legend (result state i ↔ block i)', () => {
+    const trace = minimize(redundant);
+    const i = trace.steps.length - 1;
+    expect(trace.steps[i]?.phase).toBe('done');
+    render(<MinimizeTraceView trace={trace} stepIndex={i} />);
+    const legend = within(screen.getByTestId('block-legend')).getAllByRole('listitem');
+    trace.result.states.forEach((s, bi) => {
+      expect(screen.getByTestId(`state-${s.label}`)).toHaveAttribute('data-tint', String(bi % 8));
+      const swatch = legend[bi]?.querySelector('[data-tint]');
+      expect(swatch).toHaveAttribute('data-tint', String(bi % 8));
+    });
+  });
+
   it('fades removed states on the trim step', () => {
     const trace = minimize(withUnreachable);
     const i = trace.steps.findIndex((s) => s.phase === 'trim');
