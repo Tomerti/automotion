@@ -62,3 +62,31 @@
 .av-verdict[data-accepted='false'] {
   background: #b00020;
 }
+.av-block-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 6px 8px;
+  list-style: none;
+}
+.av-block-legend:empty {
+  display: none;
+}
+.av-block-swatch {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 6px;
+  border: 1px solid #94a3b8;
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+.av-block-swatch[data-tint="0"] { background: var(--av-tint-0, #dbeafe); }
+.av-block-swatch[data-tint="1"] { background: var(--av-tint-1, #fde68a); }
+.av-block-swatch[data-tint="2"] { background: var(--av-tint-2, #bbf7d0); }
+.av-block-swatch[data-tint="3"] { background: var(--av-tint-3, #fbcfe8); }
+.av-block-swatch[data-tint="4"] { background: var(--av-tint-4, #ddd6fe); }
+.av-block-swatch[data-tint="5"] { background: var(--av-tint-5, #fed7aa); }
+.av-block-swatch[data-tint="6"] { background: var(--av-tint-6, #a5f3fc); }
+.av-block-swatch[data-tint="7"] { background: var(--av-tint-7, #e5e7eb); }

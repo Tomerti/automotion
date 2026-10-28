@@ -1,4 +1,5 @@
 import type { AnyTrace } from '../../core/trace';
+import { MinimizeTraceView } from './MinimizeTraceView';
 import { RunTraceView } from './RunTraceView';
 
 /** Canvas-area view for an open trace. Subset and minimize views arrive with their tasks. */
@@ -13,7 +14,8 @@ export function TraceView({
     case 'run':
       return <RunTraceView trace={trace} stepIndex={stepIndex} />;
     case 'subset':
-    case 'minimize':
       return null;
+    case 'minimize':
+      return <MinimizeTraceView trace={trace} stepIndex={stepIndex} />;
   }
 }
