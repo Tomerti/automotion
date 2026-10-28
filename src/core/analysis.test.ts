@@ -10,6 +10,7 @@ import {
   removeUnreachable,
   transitionsTaken,
 } from './analysis';
+import type { Automaton } from './model';
 import { arbDfa, arbNfa, arbWord } from './testing/arbitraries';
 import { fixture } from './testing/fixtures';
 import { hasErrors, validate } from './validate';
@@ -160,6 +161,29 @@ describe('arbitraries', () => {
         expect(/^[xyz]*$/.test(w)).toBe(true);
       }),
     );
+  });
+  const targetCounts = (a: Automaton): number[] => {
+    const counts = new Map<string, number>();
+    for (const t of a.transitions) {
+      for (const s of t.symbols)
+        counts.set(`${t.from}|${s}`, (counts.get(`${t.from}|${s}`) ?? 0) + 1);
+    }
+    return [...counts.values()];
+  };
+  const hasEps = (a: Automaton): boolean => a.transitions.some((t) => t.symbols.includes('ε'));
+  it('arbDfa is deterministic and ε-free', () => {
+    fc.assert(
+      fc.property(arbDfa(), (a) => {
+        expect(targetCounts(a).every((n) => n === 1)).toBe(true);
+        expect(hasEps(a)).toBe(false);
+      }),
+    );
+  });
+  it('arbNfa generates ε and nondeterminism, and no ε when disabled', () => {
+    const samples = fc.sample(arbNfa(), { numRuns: 200, seed: 42 });
+    expect(samples.some(hasEps)).toBe(true);
+    expect(samples.some((a) => targetCounts(a).some((n) => n > 1))).toBe(true);
+    fc.assert(fc.property(arbNfa({ epsilon: false }), (a) => !hasEps(a)));
   });
   it('completing any DFA keeps its language on sampled words', () => {
     fc.assert(
