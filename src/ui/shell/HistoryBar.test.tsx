@@ -194,6 +194,28 @@ describe('HistoryBar actions', () => {
     expect(st().activeId).toBe(st().automata[0]?.id);
   });
 
+  it('the Delete key on a clicked entry asks and deletes it; keys in a rename field don’t', async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<HistoryBar />);
+    await user.click(items()[1]!);
+    expect(items()[1]).toHaveFocus();
+    await user.keyboard('{Delete}');
+    expect(confirm).toHaveBeenCalledWith('Delete "Blank"?');
+    expect(names()).toEqual(['Parity', 'Blank']);
+
+    confirm.mockReturnValue(true);
+    await user.keyboard('{Backspace}');
+    expect(names()).toEqual(['Parity']);
+    expect(st().activeId).toBe(parity.id);
+
+    confirm.mockClear();
+    await user.dblClick(items()[0]!);
+    await user.keyboard('{Backspace}{Delete}');
+    expect(confirm).not.toHaveBeenCalled();
+    expect(names()).toEqual(['Parity']);
+  });
+
   it('Export JSON downloads that automaton; Export all downloads every one', async () => {
     const user = userEvent.setup();
     URL.createObjectURL = vi.fn(() => 'blob:x');

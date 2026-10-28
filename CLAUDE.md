@@ -58,7 +58,9 @@ Layers, with dependencies pointing downward only:
   and the versioned JSON file format
   (`{ format: "automaton-vis", version, automata }`, version 2; `migrate()` turns v1's single `start`
   into `starts`). Every load goes through `migrate()` and the zod schema; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
-  built-in examples; e2e specs import `e2e/fixtures/automata.json`.
+  built-in examples; e2e specs import `e2e/fixtures/automata.json`. The first release seeded three:
+  the first load in a browser (flag `automaton-vis:old-examples-checked`) removes the ones never
+  changed (`oldExamples.ts`) and saves the result.
 - `src/ui/`:
   - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
     states, tints, visibility). Its `data-testid`s and `data-*` attributes are a contract used by tests,
@@ -69,7 +71,7 @@ Layers, with dependencies pointing downward only:
   - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip,
     theme toggle, Controls popup), the left history bar (`HistoryBar.tsx`: every automaton with a
     `canvas/Thumbnail.tsx` picture, newest edit first, a ⋯ menu per entry for rename / export /
-    delete, New DFA/NFA on top and Import / Export all below; open/closed remembered in
+    delete, Delete/Backspace on a focused entry deletes it (after a confirm), New DFA/NFA on top and Import / Export all below; open/closed remembered in
     `historyPrefs.ts`), the bottom dock (run pill / trace player), toasts, error boundary,
     import/export plumbing. Thumbnails are their own
     small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or

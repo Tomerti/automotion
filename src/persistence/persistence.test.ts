@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { fixture } from '../core/testing/fixtures';
 import { parseFile, serialize } from './fileFormat';
 import { migrate } from './migrate';
-import { BACKUP_KEY, STORAGE_KEY, loadFromStorage, saveToStorage } from './storage';
+import {
+  BACKUP_KEY,
+  OLD_EXAMPLES_CHECKED_KEY,
+  STORAGE_KEY,
+  loadFromStorage,
+  saveToStorage,
+} from './storage';
 import { memoryStorage } from './testing/memoryStorage';
 import { slug } from '../ui/shell/download';
 
@@ -137,6 +143,146 @@ describe('fileFormat', () => {
       error: 'This file is from a newer version of Automaton Vis',
     });
     expect(() => migrate({ format: 'automaton-vis', version: 9 })).toThrow(/newer version/);
+  });
+});
+
+/** What the first release stored after seeding its three examples (v1: a single `start`). */
+function oldSeededFile(): {
+  format: string;
+  version: number;
+  automata: Record<string, unknown>[];
+} {
+  const st = (id: string, x: number, y: number) => ({ id, label: id, x, y });
+  const tr = (from: string, to: string, symbols: string[]) => ({
+    id: `${from}->${to}`,
+    from,
+    to,
+    symbols,
+  });
+  return {
+    format: 'automaton-vis',
+    version: 1,
+    automata: [
+      {
+        id: 'example-ends-in-ab',
+        name: 'Ends in ab (NFA)',
+        kind: 'NFA',
+        alphabet: ['a', 'b'],
+        states: [st('q0', 100, 150), st('q1', 250, 150), st('q2', 400, 150), st('q3', 550, 150)],
+        start: 'q0',
+        accepting: ['q3'],
+        transitions: [
+          tr('q0', 'q0', ['a', 'b']),
+          tr('q0', 'q1', ['ε']),
+          tr('q1', 'q2', ['a']),
+          tr('q2', 'q3', ['b']),
+        ],
+      },
+      {
+        id: 'example-even-zeros',
+        name: 'Even number of 0s (DFA)',
+        kind: 'DFA',
+        alphabet: ['0', '1'],
+        states: [st('even', 150, 150), st('odd', 300, 150)],
+        start: 'even',
+        accepting: ['even'],
+        transitions: [
+          tr('even', 'odd', ['0']),
+          tr('odd', 'even', ['0']),
+          tr('even', 'even', ['1']),
+          tr('odd', 'odd', ['1']),
+        ],
+      },
+      {
+        id: 'example-redundant',
+        name: 'Redundant states (DFA)',
+        kind: 'DFA',
+        alphabet: ['a', 'b'],
+        states: [st('q0', 100, 100), st('q1', 250, 100), st('q2', 100, 250), st('q3', 250, 250)],
+        start: 'q0',
+        accepting: ['q0', 'q2'],
+        transitions: [
+          tr('q0', 'q1', ['a']),
+          tr('q0', 'q2', ['b']),
+          tr('q1', 'q0', ['a']),
+          tr('q1', 'q3', ['b']),
+          tr('q2', 'q3', ['a']),
+          tr('q2', 'q0', ['b']),
+          tr('q3', 'q2', ['a']),
+          tr('q3', 'q1', ['b']),
+        ],
+      },
+    ],
+  };
+}
+
+describe('old seeded examples', () => {
+  it('removes untouched ones once, saves the result and opens a blank DFA if none is left', () => {
+    const s = memoryStorage({ [STORAGE_KEY]: JSON.stringify(oldSeededFile()) });
+    const r = loadFromStorage(s);
+    expect(r.automata.map((a) => [a.name, a.states.length])).toEqual([['Untitled', 0]]);
+    expect(s.getItem(OLD_EXAMPLES_CHECKED_KEY)).not.toBeNull();
+    // Saved, so they don't come back on the next load.
+    expect(s.getItem(STORAGE_KEY)).not.toContain('example-');
+  });
+
+  it('keeps edited examples and the user’s own automata, in order', () => {
+    const file = oldSeededFile();
+    const [endsInAb, evenZeros, redundant] = file.automata;
+    const own = JSON.parse(serialize([sample()])).automata[0];
+    const moved = {
+      ...evenZeros,
+      states: [
+        { id: 'even', label: 'even', x: 160, y: 150 },
+        { id: 'odd', label: 'odd', x: 300, y: 150 },
+      ],
+    };
+    const renamed = { ...redundant, name: 'Mine now' };
+    const s = memoryStorage({
+      [STORAGE_KEY]: JSON.stringify({ ...file, automata: [own, endsInAb, moved, renamed] }),
+    });
+    expect(loadFromStorage(s).automata.map((a) => a.name)).toEqual([
+      'Sample',
+      'Even number of 0s (DFA)',
+      'Mine now',
+    ]);
+  });
+
+  it('also recognizes the subscripted labels and a v2 file', () => {
+    const file = oldSeededFile();
+    const endsInAb = { ...file.automata[0]! };
+    delete endsInAb.start;
+    const v2 = {
+      ...endsInAb,
+      starts: ['q0'],
+      states: (endsInAb.states as { id: string }[]).map((st) => ({
+        ...st,
+        label: st.id.replace(/^q(\d)$/, 'q_$1'),
+      })),
+    };
+    const s = memoryStorage({ [STORAGE_KEY]: wrap(v2) });
+    expect(loadFromStorage(s).automata.map((a) => a.name)).toEqual(['Untitled']);
+  });
+
+  it('runs only once: examples imported later stay', () => {
+    const s = memoryStorage();
+    loadFromStorage(s);
+    s.setItem(STORAGE_KEY, JSON.stringify(oldSeededFile()));
+    expect(loadFromStorage(s).automata).toHaveLength(3);
+  });
+
+  it('a bent edge counts as an edit', () => {
+    const file = oldSeededFile();
+    const evenZeros = file.automata[1]!;
+    const transitions = evenZeros.transitions as { bend?: number }[];
+    const bent = {
+      ...evenZeros,
+      transitions: [{ ...transitions[0], bend: 30 }, ...transitions.slice(1)],
+    };
+    const s = memoryStorage({
+      [STORAGE_KEY]: JSON.stringify({ ...file, automata: [bent] }),
+    });
+    expect(loadFromStorage(s).automata.map((a) => a.name)).toEqual(['Even number of 0s (DFA)']);
   });
 });
 
