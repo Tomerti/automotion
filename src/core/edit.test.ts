@@ -302,4 +302,12 @@ describe('start states', () => {
     });
     expect(removeState(n, 'q0').starts).toEqual(['q2']);
   });
+
+  it('ignores a start id that is not a state (e.g. from a menu left open across an undo)', () => {
+    const n = fixture({ kind: 'NFA', alphabet: 'a', states: ['q0'], start: 'q0' });
+    const d = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0'], start: 'q0' });
+    expect(toggleStart(n, 'gone').starts).toEqual(['q0']);
+    expect(toggleStart(d, 'gone').starts).toEqual(['q0']);
+    expect(setStart(d, 'gone').starts).toEqual(['q0']);
+  });
 });

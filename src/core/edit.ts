@@ -40,8 +40,14 @@ export function moveState(a: Automaton, id: StateId, pos: { x: number; y: number
   return { ...a, states: a.states.map((s) => (s.id === id ? { ...s, x: pos.x, y: pos.y } : s)) };
 }
 
-/** Make `id` the only start state (null: none). */
+const isState = (a: Automaton, id: StateId): boolean => a.states.some((s) => s.id === id);
+
+/**
+ * Make `id` the only start state (null: none). An id that is not a state (say, from a menu left
+ * open across an undo) changes nothing: saved files must only name existing start states.
+ */
 export function setStart(a: Automaton, id: StateId | null): Automaton {
+  if (id !== null && !isState(a, id)) return a;
   return { ...a, starts: id === null ? [] : [id] };
 }
 
@@ -50,6 +56,7 @@ export function setStart(a: Automaton, id: StateId | null): Automaton {
  * state, or clear the start if it already was.
  */
 export function toggleStart(a: Automaton, id: StateId): Automaton {
+  if (!isState(a, id)) return a;
   if (a.kind === 'DFA') return setStart(a, a.starts.includes(id) ? null : id);
   return {
     ...a,
