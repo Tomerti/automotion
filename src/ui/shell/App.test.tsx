@@ -1,10 +1,11 @@
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, it, expect } from 'vitest';
+import { afterEach, beforeEach, it, expect, vi } from 'vitest';
 import { fixture } from '../../core/testing/fixtures';
-import { resetAppStore } from '../../store/store';
+import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
 import App from './App';
+import { toastStore } from './toastStore';
 
 beforeEach(() => resetAppStore());
 afterEach(cleanup);
@@ -27,6 +28,23 @@ it('New DFA shows the diagram in place of the empty state', async () => {
   await user.click(screen.getByRole('button', { name: 'New DFA' }));
   expect(screen.getByTestId('diagram')).toBeInTheDocument();
   expect(screen.queryByText('Create an automaton to get started')).toBeNull();
+});
+
+it('a failed autosave shows an error toast', async () => {
+  const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new Error('full');
+  });
+  toastStore.setState({ toasts: [] });
+  render(<App />);
+  act(() => {
+    appStore.getState().createAutomaton('DFA');
+  });
+  await waitFor(() =>
+    expect(toastStore.getState().toasts).toEqual([
+      expect.objectContaining({ message: "Changes won't persist — export to save", kind: 'error' }),
+    ]),
+  );
+  setItem.mockRestore();
 });
 
 it('a new trace resets the player (paused, 1× speed)', async () => {

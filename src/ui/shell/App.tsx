@@ -9,6 +9,7 @@ import { TraceView } from '../player/TraceView';
 import { AutomatonList } from './AutomatonList';
 import { importFile } from './importFile';
 import { RightPanel } from './RightPanel';
+import { toast } from './toastStore';
 import { Toasts } from './Toasts';
 import { Toolbar } from './Toolbar';
 import '../player/player.css';
@@ -39,7 +40,7 @@ function BrandMark(): React.JSX.Element {
 }
 
 export default function App(): React.JSX.Element {
-  useAutosave();
+  useAutosave({ onFail: (m) => toast(m, 'error') });
   const trace = useAppStore((s) => s.trace);
   const stepIndex = useAppStore((s) => s.stepIndex);
   const setStep = useAppStore((s) => s.setStep);
