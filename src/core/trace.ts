@@ -32,8 +32,7 @@ export interface RunTrace {
   accepted: boolean;
 }
 
-// SubsetTrace (Task 6) and MinimizeTrace (Task 7) widen this union.
-export type AnyTrace = RunTrace | SubsetTrace;
+export type AnyTrace = RunTrace | SubsetTrace | MinimizeTrace;
 
 export interface SubsetStep extends StepBase {
   phase: 'init' | 'expand' | 'done';
@@ -59,4 +58,24 @@ export interface SubsetTrace {
   source: Automaton;
   result: Automaton;
   steps: SubsetStep[];
+}
+
+export interface MinimizeStep extends StepBase {
+  phase: 'trim' | 'complete' | 'partition' | 'split' | 'done';
+  /** The working DFA to draw at this step. */
+  automaton: Automaton;
+  /** 'trim': states fading out (still present in `automaton`). */
+  removed?: StateId[];
+  /** 'complete': the added dead state. */
+  deadState?: StateId;
+  /** Current partition; block i is named String.fromCharCode(65 + i). */
+  blocks: StateId[][];
+  split?: { block: number; parts: StateId[][]; witness: { p: StateId; q: StateId; symbol: Sym } };
+}
+
+export interface MinimizeTrace {
+  kind: 'minimize';
+  source: Automaton;
+  result: Automaton;
+  steps: MinimizeStep[];
 }
