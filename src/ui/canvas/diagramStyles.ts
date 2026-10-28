@@ -4,10 +4,14 @@ export const diagramStyles = `
 .av-state-body { fill: var(--av-state-fill, #fff); stroke: var(--av-state-stroke, #333); stroke-width: 2; transition: fill 0.2s, stroke 0.2s, opacity 0.2s; }
 .av-state-ring { fill: none; stroke: var(--av-state-stroke, #333); stroke-width: 2; transition: stroke 0.2s; }
 .av-state-label { fill: var(--av-text, #111); font-size: 14px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
-.av-state { transition: opacity 0.2s; }
+.av-state { transition: opacity 0.2s, transform 300ms ease; }
+.av-diagram[data-dragging] .av-state { transition: opacity 0.2s; }
+.av-state-hit { fill: transparent; stroke: none; }
+.av-edge-hit { fill: none; stroke: transparent; stroke-width: 12; }
+.av-rubber-band { stroke: var(--av-selected, #2563eb); stroke-width: 1.5; stroke-dasharray: 4 3; pointer-events: none; }
 .av-edge-path { fill: none; stroke: var(--av-edge-stroke, #333); stroke-width: 1.5; transition: stroke 0.2s, stroke-width 0.2s; }
 .av-edge-head { fill: var(--av-edge-stroke, #333); transition: fill 0.2s; }
-.av-edge-label { fill: var(--av-text, #111); font-size: 13px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.av-edge-label { fill: var(--av-text, #111); font-size: 13px; text-anchor: middle; dominant-baseline: central; }
 .av-start-arrow .av-edge-path { stroke: var(--av-edge-stroke, #333); }
 .av-start-arrow .av-edge-head { fill: var(--av-edge-stroke, #333); }
 

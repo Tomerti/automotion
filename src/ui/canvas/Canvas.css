@@ -1,0 +1,52 @@
+.av-canvas {
+  position: relative;
+  overflow: hidden;
+  outline: none;
+}
+
+.av-inline {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+}
+.av-inline input {
+  width: 7em;
+  font: inherit;
+  text-align: center;
+}
+.av-inline [role='alert'] {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: #b00020;
+  background: #fff;
+  border: 1px solid #e3b4bb;
+}
+
+.av-menu {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+}
+.av-menu button {
+  padding: 4px 12px;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.av-menu button:hover,
+.av-menu button:focus-visible {
+  background: #e4e8f0;
+}

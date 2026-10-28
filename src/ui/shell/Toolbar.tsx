@@ -4,6 +4,7 @@ import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, useAppStore } from '../../store/store';
 import { startMinimize, startSubset } from '../../store/traceActions';
+import { fitActive, tidyActive } from '../canvas/useCanvasEditing';
 import { FileMenu } from './FileMenu';
 import { toast } from './toastStore';
 
@@ -18,6 +19,7 @@ export function Toolbar(): React.JSX.Element {
   const redoCount = useAppStore((s) =>
     s.activeId ? (s.history[s.activeId]?.future.length ?? 0) : 0,
   );
+  const tracing = useAppStore((s) => s.trace !== null);
   const automaton = automata.find((a) => a.id === activeId);
   const none = automaton === undefined;
 
@@ -68,10 +70,10 @@ export function Toolbar(): React.JSX.Element {
       >
         Redo
       </button>
-      <button type="button" disabled={none}>
+      <button type="button" disabled={none} onClick={fitActive}>
         Fit
       </button>
-      <button type="button" disabled={none}>
+      <button type="button" disabled={none || tracing} onClick={() => void tidyActive()}>
         Tidy
       </button>
       <button

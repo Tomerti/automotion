@@ -39,6 +39,7 @@ export function EdgeView(props: EdgeViewProps): React.JSX.Element {
       data-selected={String(selected)}
       data-error={String(error)}
     >
+      <path className="av-edge-hit" d={geometry.d} />
       <path className="av-edge-path" d={geometry.d} />
       <Arrowhead end={geometry.end} angle={geometry.endAngle} />
       <text
