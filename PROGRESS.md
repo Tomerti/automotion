@@ -9,6 +9,9 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 ## Next
 
 - [ ] Enable GitHub Pages (Settings → Pages → Source: GitHub Actions)
+- [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; hide the transition table while a trace is open, and consider a more compact layout or pan/zoom in trace views
+- [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
+- [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
 
 ## Ideas (later)
 
