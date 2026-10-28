@@ -4,47 +4,63 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 
 ## Current
 
-- [ ] Choose the stack (e.g. web app with TypeScript and a graph-drawing library)
-- [ ] Define the automaton data model (states, alphabet, transitions, start state, accepting states; DFA vs NFA)
-- [ ] Choose a file format for saving and loading automata (e.g. JSON)
+- [~] Deploy to GitHub Pages: workflow is in place, waiting for Pages to be enabled
 
 ## Next
 
-### Automaton core
-- [ ] DFA: model and validation (deterministic, total or partial transition function)
-- [ ] NFA: model and validation, including ε-transitions
-- [ ] Run a word on a DFA, recording each step
-- [ ] Run a word on an NFA, recording the set of active states at each step (with ε-closure)
-- [ ] Tests for the core
-
-### Editing
-- [ ] Create a new automaton
-- [ ] Add, rename and remove states
-- [ ] Set the start state and toggle accepting states
-- [ ] Add, change and remove transitions
-- [ ] Delete an automaton
-
-### Drawing
-- [ ] Render the automaton as a state diagram
-- [ ] Drag states to reposition them
-- [ ] Draw states and transitions directly on the canvas
-
-### Running a word
-- [ ] Input box for a word
-- [ ] Step forward and back through the run, highlighting active states and the transition taken
-- [ ] Play the whole run automatically
-- [ ] Show accept or reject at the end
-
-### Persistence
-- [ ] Save and load automata
-- [ ] Import and export files
+- [ ] Enable GitHub Pages (Settings → Pages → Source: GitHub Actions)
+- [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; hide the transition table while a trace is open, and consider a more compact layout or pan/zoom in trace views
+- [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
+- [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
 
 ## Ideas (later)
 
-- [ ] NFA → DFA conversion (subset construction)
-- [ ] DFA minimization
 - [ ] Regex → NFA
 
 ## Done
 
+- [x] Design spec approved (`docs/superpowers/specs/2026-10-28-automaton-vis-design.md`)
+- [x] Write the implementation plan (21 tasks)
+- [x] Choose the stack: TypeScript, React, Vite, custom SVG renderer, elkjs, Zustand (see spec)
+- [x] Define the automaton data model (see spec §4)
+- [x] Choose a file format for saving and loading automata: versioned JSON (see spec §10)
 - [x] Create the project repo, README and this file
+
+### Automaton core
+- [x] DFA: model and validation (deterministic, total or partial transition function)
+- [x] NFA: model and validation, including ε-transitions
+- [x] Run a word on a DFA, recording each step
+- [x] Run a word on an NFA, recording the set of active states at each step (with ε-closure)
+- [x] Tests for the core
+
+### Editing
+- [x] Create a new automaton
+- [x] Add, rename and remove states
+- [x] Set the start state and toggle accepting states
+- [x] Add, change and remove transitions
+- [x] Delete an automaton
+
+### Drawing
+- [x] Render the automaton as a state diagram
+- [x] Drag states to reposition them
+- [x] Draw states and transitions directly on the canvas
+
+### Running a word
+- [x] Input box for a word
+- [x] Step forward and back through the run, highlighting active states and the transition taken
+- [x] Play the whole run automatically
+- [x] Show accept or reject at the end
+
+### Persistence
+- [x] Save and load automata
+- [x] Import and export files
+
+### Algorithms (step-by-step walkthroughs)
+- [x] NFA → DFA conversion (subset construction)
+- [x] DFA minimization (Moore's partition refinement)
+
+### Polish and deploy
+- [x] Visual design pass (frontend-design)
+- [x] Playwright smoke tests
+- [x] CI (typecheck, lint, unit tests, e2e)
+- [x] Deploy workflow for GitHub Pages (`.github/workflows/deploy.yml`)

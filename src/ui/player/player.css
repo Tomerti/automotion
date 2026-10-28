@@ -1,0 +1,278 @@
+/* Run panel, trace player and the per-trace views. Tokens live in ../theme.css. */
+
+.av-runpanel {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 16px;
+}
+.av-runpanel input {
+  flex: 1;
+  min-width: 0;
+  max-width: 360px;
+  min-height: 34px;
+  font-family: var(--av-font-math);
+  font-size: 17px;
+  letter-spacing: 0.06em;
+}
+.av-runpanel input::placeholder {
+  font-family: var(--av-font-ui);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.av-runpanel button {
+  min-width: 64px;
+  min-height: 34px;
+}
+
+/* Player */
+
+.av-player {
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--av-rule);
+}
+.av-player-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.av-player-controls .av-play {
+  min-width: 64px;
+  color: var(--av-surface-raised);
+  background: var(--av-ink);
+  border-color: var(--av-ink);
+}
+.av-player-controls .av-play:hover:not(:disabled) {
+  color: var(--av-surface-raised);
+  background: var(--av-ink);
+  filter: brightness(1.25);
+}
+.av-player-controls input[type='range'] {
+  flex: 1 1 140px;
+  max-width: 420px;
+  margin: 0 6px;
+}
+.av-player-controls [data-testid='step-counter'] {
+  min-width: 88px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--av-ink-muted);
+}
+.av-player-controls .av-player-close {
+  margin-left: auto;
+}
+.av-player-explanation {
+  min-height: 1.4em;
+  max-width: 72ch;
+  margin: 10px 0 0;
+  font-family: var(--av-font-math);
+  font-size: 19px;
+  line-height: 1.35;
+}
+
+/* Trace views (they replace the canvas while a trace is open) */
+
+.av-trace-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+.av-trace-diagram {
+  flex: 1;
+  min-height: 0;
+}
+
+.av-subset-view {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.av-subset-pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.av-subset-pane + .av-subset-pane {
+  border-left: 1px solid var(--av-rule-strong);
+}
+/* Stacked (NFA on top) when that fits both automata larger; chosen in SubsetTraceView. */
+.av-subset-view[data-layout='column'] {
+  flex-direction: column;
+}
+.av-subset-view[data-layout='column'] .av-subset-pane + .av-subset-pane {
+  border-top: 1px solid var(--av-rule-strong);
+  border-left: 0;
+}
+.av-subset-pane h3 {
+  padding: 12px 16px 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--av-ink-muted);
+}
+
+/* The input tape: one cell per symbol, a read head under the symbol being read. */
+
+.av-word {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 24px;
+  padding: 24px 28px 26px;
+}
+.av-word::before {
+  align-self: stretch;
+  width: 30px;
+  max-height: 56px;
+  content: '';
+  border-block: 1.5px solid var(--av-ink-muted);
+  opacity: 0.5;
+  mask-image: linear-gradient(to right, transparent, black);
+}
+.av-word-char,
+.av-word-empty {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: 46px;
+  height: 56px;
+  margin-left: -1.5px;
+  padding: 0 10px;
+  font-family: var(--av-font-math);
+  font-size: 30px;
+  line-height: 1;
+  background: var(--av-surface-raised);
+  border: 1.5px solid var(--av-ink);
+  transition:
+    background-color 160ms,
+    color 160ms;
+}
+.av-word-empty {
+  font-style: italic;
+  color: var(--av-ink-muted);
+}
+.av-word-char[data-state='consumed'] {
+  color: var(--av-ink-muted);
+  background: var(--av-hover);
+}
+.av-word-char[data-state='current'] {
+  z-index: 1;
+  font-weight: 600;
+  color: var(--av-active-text);
+  background: var(--av-highlighter);
+}
+.av-word-char[data-state='current']::after {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  content: '';
+  border: 7px solid transparent;
+  border-top: 0;
+  border-bottom: 10px solid var(--av-ink);
+  transform: translateX(-50%);
+}
+
+/* The verdict is stamped onto the page: the one orchestrated motion in the app. */
+.av-verdict {
+  margin-left: 26px;
+  padding: 5px 14px 6px;
+  font-family: var(--av-font-ui);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  border: 2.5px solid currentColor;
+  border-radius: 6px;
+  outline: 1px solid currentColor;
+  outline-offset: 3px;
+  transform: rotate(-4deg);
+  animation: av-stamp 420ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+.av-verdict[data-accepted='true'] {
+  color: var(--av-green);
+}
+.av-verdict[data-accepted='false'] {
+  color: var(--av-red);
+}
+@keyframes av-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.7) rotate(-12deg);
+  }
+  55% {
+    opacity: 1;
+  }
+}
+
+/* Minimization: one marker tint per block, mirrored in the legend. */
+
+.av-block-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 0;
+  padding: 12px 20px;
+  list-style: none;
+  font-family: var(--av-font-math);
+  font-size: 16px;
+  background: var(--av-surface);
+  border-top: 1px solid var(--av-rule);
+}
+.av-block-legend:empty {
+  display: none;
+}
+.av-block-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 7px;
+  vertical-align: -2px;
+  border: 1.5px solid var(--av-ink);
+  border-radius: 50%;
+}
+.av-block-swatch[data-tint='0'] {
+  background: var(--av-tint-0);
+}
+.av-block-swatch[data-tint='1'] {
+  background: var(--av-tint-1);
+}
+.av-block-swatch[data-tint='2'] {
+  background: var(--av-tint-2);
+}
+.av-block-swatch[data-tint='3'] {
+  background: var(--av-tint-3);
+}
+.av-block-swatch[data-tint='4'] {
+  background: var(--av-tint-4);
+}
+.av-block-swatch[data-tint='5'] {
+  background: var(--av-tint-5);
+}
+.av-block-swatch[data-tint='6'] {
+  background: var(--av-tint-6);
+}
+.av-block-swatch[data-tint='7'] {
+  background: var(--av-tint-7);
+}
+
+@media (max-width: 760px) {
+  .av-word {
+    padding: 14px 16px 18px;
+  }
+  .av-word-char,
+  .av-word-empty {
+    min-width: 34px;
+    height: 42px;
+    font-size: 21px;
+  }
+  .av-verdict {
+    margin-left: 16px;
+  }
+  .av-player-explanation {
+    font-size: 17px;
+  }
+}
