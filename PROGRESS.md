@@ -4,7 +4,7 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 
 ## Current
 
-- [~] v2 polish (arrow preview, Geist, controls tabs, orange run colour, auto-play), in review in PR #6 on branch `worktree-draft-transition-arrow`
+Nothing in progress: pick the next task from the list below.
 
 ## Next
 
@@ -19,7 +19,7 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 
 ## Done
 
-### v2 UX overhaul
+### v2 UX overhaul and polish (merged in PRs #5 and #6)
 
 - [x] Double-click adds a state; borderless in-place rename and symbol editing (commit on blur)
 - [x] Subscript labels (`q_1`, `q_{12}`); new states are named `q_0`, `q_1`, …
