@@ -33,4 +33,30 @@ export interface RunTrace {
 }
 
 // SubsetTrace (Task 6) and MinimizeTrace (Task 7) widen this union.
-export type AnyTrace = RunTrace;
+export type AnyTrace = RunTrace | SubsetTrace;
+
+export interface SubsetStep extends StepBase {
+  phase: 'init' | 'expand' | 'done';
+  /** NFA states of the DFA state being expanded (init: the start closure). */
+  subset: StateId[];
+  symbol?: Sym;
+  /** move(subset, symbol) */
+  moved?: StateId[];
+  /** ε-closure(moved) */
+  closure?: StateId[];
+  /** Id of the result DFA state reached. */
+  target?: StateId;
+  isNew?: boolean;
+  /** Highlights in the result DFA. */
+  dfaFocus: Highlight;
+  /** Result DFA states built so far (cumulative). */
+  revealedStates: StateId[];
+  revealedTransitions: string[];
+}
+
+export interface SubsetTrace {
+  kind: 'subset';
+  source: Automaton;
+  result: Automaton;
+  steps: SubsetStep[];
+}
