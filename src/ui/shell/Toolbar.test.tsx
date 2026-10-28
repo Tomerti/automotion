@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { moveState } from '../../core/edit';
 import { runWord } from '../../core/run';
 import { fixture, nthFromEnd } from '../../core/testing/fixtures';
-import { serialize } from '../../persistence/fileFormat';
 import { appStore, resetAppStore } from '../../store/store';
 import { Toolbar } from './Toolbar';
 import { toastStore } from './toastStore';
@@ -24,16 +23,38 @@ beforeEach(() => {
   resetAppStore();
   toastStore.setState({ toasts: [] });
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const btn = (name: string) => screen.getByRole('button', { name });
 
 describe('Toolbar', () => {
   it('disables everything without an active automaton', () => {
     render(<Toolbar />);
-    for (const n of ['DFA', 'NFA', 'Undo', 'Redo', 'Fit', 'Tidy', 'Convert to DFA', 'Minimize']) {
+    for (const n of [
+      'DFA',
+      'NFA',
+      'Undo',
+      'Redo',
+      'Fit',
+      'Tidy',
+      'Convert to DFA',
+      'Minimize',
+      'Export image',
+    ]) {
       expect(btn(n)).toBeDisabled();
     }
+  });
+
+  it('icon buttons have tooltips', () => {
+    resetAppStore({ automata: [nfa()], activeId: 'n' });
+    render(<Toolbar />);
+    expect(btn('Undo')).toHaveAttribute('title', 'Undo (Ctrl+Z)');
+    expect(btn('Fit')).toHaveAttribute('title', 'Fit to view');
+    expect(btn('Tidy')).toHaveAttribute('title', 'Tidy the layout');
+    expect(btn('Export image')).toHaveAttribute('title', 'Export image');
   });
 
   it('Minimize is disabled with a reason on an NFA', () => {
@@ -47,7 +68,7 @@ describe('Toolbar', () => {
     resetAppStore({ automata: [{ ...nfa(), kind: 'DFA' }], activeId: 'n' });
     render(<Toolbar />);
     expect(btn('Convert to DFA')).toBeDisabled();
-    expect(btn('Convert to DFA')).toHaveAttribute('title');
+    expect(btn('Convert to DFA')).toHaveAttribute('title', 'Conversion needs an NFA');
   });
 
   it('Convert to DFA shows an error toast when the DFA would be too large', async () => {
@@ -88,55 +109,42 @@ describe('Toolbar', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('Export and Export all are disabled without automata', () => {
-    render(<Toolbar />);
-    expect(btn('Export')).toBeDisabled();
-    expect(btn('Export all')).toBeDisabled();
-    expect(btn('Import')).toBeEnabled();
-  });
-
-  it('Import adds the file, activates the last automaton and toasts', async () => {
-    const user = userEvent.setup();
-    const a = { ...nfa(), id: 'imp1', name: 'one' };
-    const b = { ...nfa(), id: 'imp2', name: 'two' };
-    render(<Toolbar />);
-    const file = new File([serialize([a, b])], 'x.automaton.json', { type: 'application/json' });
-    await user.upload(screen.getByLabelText('Import file'), file);
-    await waitFor(() => expect(appStore.getState().automata).toHaveLength(2));
-    expect(appStore.getState().activeId).toBe('imp2');
-    expect(toastStore.getState().toasts[0]?.message).toBe('Imported 2 automata');
-  });
-
-  it('Import reports a bad file as an error toast', async () => {
-    const user = userEvent.setup();
-    render(<Toolbar />);
-    await user.upload(screen.getByLabelText('Import file'), new File(['{oops'], 'bad.json'));
-    await waitFor(() => expect(toastStore.getState().toasts).toHaveLength(1));
-    expect(toastStore.getState().toasts[0]).toMatchObject({
-      message: 'Not a valid JSON file',
-      kind: 'error',
-    });
-  });
-
-  it('Export downloads the current automaton as <slug>.automaton.json', async () => {
+  it('the export menu downloads SVG and closes; Escape closes it too', async () => {
     const user = userEvent.setup();
     URL.createObjectURL = vi.fn(() => 'blob:x');
     URL.revokeObjectURL = vi.fn();
     const names: string[] = [];
-    const click = vi
-      .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation(function (this: HTMLAnchorElement) {
-        names.push(this.download);
-      });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      names.push(this.download);
+    });
     resetAppStore({ automata: [{ ...nfa(), name: 'My Auto' }], activeId: 'n' });
-    render(<Toolbar />);
-    await user.click(btn('Export'));
-    await user.click(btn('Export all'));
-    expect(names).toEqual(['my-auto.automaton.json', 'automata.automaton.json']);
-    click.mockRestore();
+    render(
+      <>
+        <Toolbar />
+        <div data-testid="canvas">
+          <svg data-testid="diagram">
+            <g />
+          </svg>
+        </div>
+      </>,
+    );
+    await user.click(btn('Export image'));
+    expect(btn('Export image')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('menuitem', { name: 'Export SVG' })).toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: 'Export PNG' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(btn('Export image')).toHaveFocus();
+
+    await user.click(btn('Export image'));
+    await user.click(screen.getByRole('menuitem', { name: 'Export SVG' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    await waitFor(() => expect(names).toEqual(['my-auto.svg']));
   });
 
-  it('kind toggle and Undo/Redo are disabled while a trace is open', () => {
+  it('kind toggle, Undo/Redo and export are disabled while a trace is open', () => {
     const d = fixture({
       kind: 'DFA',
       alphabet: 'a',
@@ -153,7 +161,7 @@ describe('Toolbar', () => {
     const active = appStore.getState().automata[0]!;
     appStore.getState().openTrace(runWord(active, 'a'));
     render(<Toolbar />);
-    for (const n of ['DFA', 'NFA', 'Undo', 'Redo']) expect(btn(n)).toBeDisabled();
+    for (const n of ['DFA', 'NFA', 'Undo', 'Redo', 'Export image']) expect(btn(n)).toBeDisabled();
   });
 
   it('Undo/Redo call the store and follow history', async () => {

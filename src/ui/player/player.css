@@ -1,74 +1,138 @@
-/* Run panel, trace player and the per-trace views. Tokens live in ../theme.css. */
+/* Trace player and the per-trace views (the run pill is styled in ../shell/App.css). Tokens live in ../theme.css. */
 
-.av-runpanel {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding: 10px 16px;
-}
-.av-runpanel input {
-  flex: 1;
-  min-width: 0;
-  max-width: 360px;
-  min-height: 34px;
-  font-family: var(--av-font-math);
-  font-size: 17px;
-  letter-spacing: 0.06em;
-}
-.av-runpanel input::placeholder {
-  font-family: var(--av-font-ui);
-  font-size: 13px;
-  letter-spacing: 0;
-}
-.av-runpanel button {
-  min-width: 64px;
-  min-height: 34px;
-}
-
-/* Player */
+/*
+ * Player: a compact floating bar (the shell docks it over the bottom of the canvas). The step
+ * explanation sits on top, the transport below it.
+ */
 
 .av-player {
-  padding: 10px 16px 14px;
-  border-top: 1px solid var(--av-rule);
-}
-.av-player-controls {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-.av-player-controls .av-play {
-  min-width: 64px;
-  color: var(--av-surface-raised);
-  background: var(--av-ink);
-  border-color: var(--av-ink);
-}
-.av-player-controls .av-play:hover:not(:disabled) {
-  color: var(--av-surface-raised);
-  background: var(--av-ink);
-  filter: brightness(1.25);
-}
-.av-player-controls input[type='range'] {
-  flex: 1 1 140px;
-  max-width: 420px;
-  margin: 0 6px;
-}
-.av-player-controls [data-testid='step-counter'] {
-  min-width: 88px;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  color: var(--av-ink-muted);
-}
-.av-player-controls .av-player-close {
-  margin-left: auto;
+  flex-direction: column;
+  gap: 2px;
+  width: min(660px, calc(100vw - 32px));
+  padding: 6px 8px 8px;
+  color: var(--av-ink);
+  background: var(--av-surface-raised);
+  border: 1px solid var(--av-rule);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px var(--av-shadow),
+    0 12px 32px var(--av-shadow);
+  pointer-events: auto;
 }
 .av-player-explanation {
   min-height: 1.4em;
-  max-width: 72ch;
-  margin: 10px 0 0;
+  margin: 0;
+  padding: 4px 12px;
   font-family: var(--av-font-math);
-  font-size: 19px;
+  font-size: 17px;
   line-height: 1.35;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.av-player-explanation sub,
+.av-verdict-reason sub,
+.av-block-legend sub {
+  font-size: 0.7em;
+  line-height: 0;
+}
+.av-player-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.av-player-transport {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+.av-player-btn {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  color: var(--av-ink);
+  background: transparent;
+  border-color: transparent;
+  border-radius: 8px;
+}
+.av-player-btn:hover:not(:disabled) {
+  background: var(--av-hover);
+  border-color: transparent;
+}
+.av-player-icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.av-player-btn.av-player-play {
+  width: 36px;
+  height: 36px;
+  margin: 0 2px;
+  color: var(--av-surface-raised);
+  background: var(--av-ink);
+  border-color: var(--av-ink);
+  border-radius: 50%;
+}
+.av-player-btn.av-player-play:hover:not(:disabled) {
+  background: var(--av-ink);
+  border-color: var(--av-ink);
+  filter: brightness(1.25);
+}
+.av-player-play .av-player-icon {
+  stroke-width: 2;
+}
+.av-player-scrubber {
+  flex: 1 1 auto;
+  min-width: 60px;
+  margin: 0 6px;
+  accent-color: var(--av-ink);
+  cursor: pointer;
+}
+.av-player-counter {
+  flex: none;
+  min-width: 82px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--av-ink-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+select.av-player-speed {
+  flex: none;
+  min-height: 30px;
+  padding: 2px 4px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--av-ink-muted);
+  background: transparent;
+  border-color: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+select.av-player-speed:hover {
+  color: var(--av-ink);
+  background: var(--av-hover);
+}
+.av-player-extra {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+.av-player-extra:empty {
+  display: none;
+}
+.av-player-close {
+  margin-left: 2px;
+}
+.av-player-close .av-player-icon {
+  stroke-width: 1.8;
 }
 
 /* Trace views (they replace the canvas while a trace is open) */
@@ -80,6 +144,7 @@
   height: 100%;
 }
 .av-trace-diagram {
+  position: relative;
   flex: 1;
   min-height: 0;
 }
@@ -115,97 +180,255 @@
   color: var(--av-ink-muted);
 }
 
-/* The input tape: one cell per symbol, a read head under the symbol being read. */
+/*
+ * The input tape: one cell per symbol, a read head under the cell being read (faint while it
+ * waits under the next one). Consumed cells are dimmed. Long words scroll, keeping the head in view.
+ */
 
-.av-word {
+.av-tape {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  row-gap: 24px;
-  padding: 24px 28px 26px;
+  flex: none;
+  max-width: 100%;
+  padding: 18px 24px 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
-.av-word::before {
-  align-self: stretch;
-  width: 30px;
-  max-height: 56px;
-  content: '';
-  border-block: 1.5px solid var(--av-ink-muted);
-  opacity: 0.5;
-  mask-image: linear-gradient(to right, transparent, black);
+.av-word {
+  --av-cell: 44px;
+
+  position: relative;
+  display: flex;
+  flex: none;
+  /* Centred while it fits; once it overflows the auto margins collapse and it scrolls. */
+  margin-inline: auto;
+  padding: 0 0 16px 1.5px;
 }
 .av-word-char,
 .av-word-empty {
-  position: relative;
   display: inline-grid;
+  flex: none;
   place-items: center;
-  min-width: 46px;
-  height: 56px;
+  width: var(--av-cell);
+  height: 50px;
   margin-left: -1.5px;
-  padding: 0 10px;
   font-family: var(--av-font-math);
-  font-size: 30px;
+  font-size: 26px;
   line-height: 1;
   background: var(--av-surface-raised);
   border: 1.5px solid var(--av-ink);
   transition:
-    background-color 160ms,
-    color 160ms;
+    background-color 200ms,
+    color 200ms;
 }
 .av-word-empty {
   font-style: italic;
   color: var(--av-ink-muted);
+  border-style: dashed;
 }
 .av-word-char[data-state='consumed'] {
   color: var(--av-ink-muted);
   background: var(--av-hover);
 }
 .av-word-char[data-state='current'] {
+  position: relative;
   z-index: 1;
   font-weight: 600;
-  color: var(--av-active-text);
-  background: var(--av-highlighter);
+  color: var(--av-active-text, #1c2333);
+  background: var(--av-highlighter, #ffe14d);
 }
-.av-word-char[data-state='current']::after {
+.av-word-char[data-stuck='true'] {
+  color: var(--av-red);
+  background: color-mix(in srgb, var(--av-red) 16%, var(--av-surface-raised));
+}
+.av-run-view[data-moving] .av-word-char[data-state='current'] {
+  animation: av-pop 280ms ease-out;
+}
+@keyframes av-pop {
+  from {
+    transform: scale(1.12);
+  }
+}
+.av-tape-head {
   position: absolute;
-  top: calc(100% + 5px);
-  left: 50%;
-  content: '';
+  bottom: 0;
+  left: calc(var(--av-cell) / 2 - 7px);
+  width: 0;
+  height: 0;
   border: 7px solid transparent;
   border-top: 0;
   border-bottom: 10px solid var(--av-ink);
-  transform: translateX(-50%);
+  transform: translateX(calc(var(--av-head) * (var(--av-cell) - 1.5px)));
+}
+.av-tape-head[data-waiting='true'] {
+  opacity: 0.4;
+}
+/* The head glides only on a single step forward; jumps land at once. */
+.av-run-view[data-moving] .av-tape-head {
+  transition:
+    transform 320ms cubic-bezier(0.3, 0.7, 0.3, 1),
+    opacity 200ms;
 }
 
-/* The verdict is stamped onto the page: the one orchestrated motion in the app. */
-.av-verdict {
-  margin-left: 26px;
-  padding: 5px 14px 6px;
-  font-family: var(--av-font-ui);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  border: 2.5px solid currentColor;
-  border-radius: 6px;
-  outline: 1px solid currentColor;
-  outline-offset: 3px;
-  transform: rotate(-4deg);
-  animation: av-stamp 420ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+/* Run overlay inside the diagram: tokens resting on active states, moving tokens, dead ✕. */
+
+.av-run-overlay {
+  pointer-events: none;
 }
-.av-verdict[data-accepted='true'] {
+.av-run-halo {
+  fill: none;
+  stroke: var(--av-highlighter, #ffe14d);
+  stroke-width: 3.5;
+  opacity: 0.7;
+  filter: drop-shadow(0 0 4px var(--av-highlighter, #ffe14d));
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.av-run-halo[data-tone='accept'] {
+  stroke: var(--av-green, #1c7a47);
+  filter: drop-shadow(0 0 6px var(--av-green, #1c7a47));
+}
+.av-run-halo[data-tone='reject'] {
+  stroke: var(--av-red, #c42f36);
+  stroke-dasharray: 5 5;
+  opacity: 0.6;
+  filter: none;
+}
+.av-run-halo[data-arrived='true'] {
+  animation: av-halo-in 320ms ease-out both;
+}
+@keyframes av-halo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+.av-run-token {
+  filter: drop-shadow(0 0 6px var(--av-highlighter, #ffe14d));
+}
+.av-run-token-glow {
+  fill: var(--av-highlighter, #ffe14d);
+  opacity: 0.35;
+}
+.av-run-token-core {
+  fill: var(--av-highlighter, #ffe14d);
+  stroke: var(--av-active-stroke, #7a5600);
+  stroke-width: 1.75;
+}
+.av-run-dead-mark circle {
+  fill: var(--av-surface-raised, #ffffff);
+  stroke: var(--av-red, #c42f36);
+  stroke-width: 1.5;
+}
+.av-run-dead-mark path {
+  fill: none;
+  stroke: var(--av-red, #c42f36);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.av-run-dead[data-fading='true'] .av-run-dead-mark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: av-dead-fade var(--av-move-ms, 600ms) ease-in both;
+}
+@keyframes av-dead-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* The taken edge's label is marked with the highlighter while its step is shown. */
+.av-run-view .av-edge[data-taken='true'] .av-edge-label {
+  font-weight: 600;
+  fill: var(--av-active-text, #1c2333);
+  stroke: var(--av-highlighter, #ffe14d);
+  stroke-width: 11px;
+}
+.av-run-view[data-moving] .av-edge[data-taken='true'] .av-edge-label {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: av-pop 280ms ease-out;
+}
+
+/* The verdict: a banner over the top of the diagram, with the reason under it. */
+
+.av-verdict {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 12px 24px 12px 14px;
   color: var(--av-green);
+  background: color-mix(in srgb, currentColor 8%, var(--av-surface-raised));
+  border: 1.5px solid currentColor;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px var(--av-shadow);
+  transform: translateX(-50%);
+  animation: av-verdict-in 380ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
+  pointer-events: none;
 }
 .av-verdict[data-accepted='false'] {
   color: var(--av-red);
 }
-@keyframes av-stamp {
+@keyframes av-verdict-in {
   from {
     opacity: 0;
-    transform: scale(1.7) rotate(-12deg);
+    transform: translateX(-50%) translateY(-10px) scale(0.95);
   }
-  55% {
-    opacity: 1;
+}
+.av-verdict-mark {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 7px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.av-verdict-mark path {
+  stroke-dasharray: 30;
+  animation: av-verdict-draw 420ms 140ms ease-out both;
+}
+@keyframes av-verdict-draw {
+  from {
+    stroke-dashoffset: 30;
   }
+}
+.av-verdict-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.av-verdict-title {
+  font-family: var(--av-font-ui);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+.av-verdict-reason {
+  font-family: var(--av-font-math);
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--av-ink);
 }
 
 /* Minimization: one marker tint per block, mirrored in the legend. */
@@ -259,20 +482,78 @@
   background: var(--av-tint-7);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .av-run-view .av-tape-head,
+  .av-run-view .av-edge-label,
+  .av-word-char,
+  .av-run-halo,
+  .av-run-dead-mark,
+  .av-verdict,
+  .av-verdict-mark path {
+    transition: none;
+    animation: none;
+  }
+}
+
 @media (max-width: 760px) {
+  .av-tape {
+    padding: 12px 16px 6px;
+  }
   .av-word {
-    padding: 14px 16px 18px;
+    --av-cell: 36px;
   }
   .av-word-char,
   .av-word-empty {
-    min-width: 34px;
     height: 42px;
     font-size: 21px;
   }
-  .av-verdict {
-    margin-left: 16px;
+  .av-player-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .av-player-scrubber {
+    flex-basis: 100%;
+    order: -1;
+    margin: 2px 6px 4px;
+  }
+  .av-player-bar {
+    gap: 2px;
+  }
+  .av-player-btn {
+    width: 30px;
+  }
+  .av-player-counter {
+    min-width: 0;
+    padding: 0 4px;
+  }
+  /* Close moves up beside the explanation so the transport fits on one row. */
+  .av-player {
+    position: relative;
   }
   .av-player-explanation {
-    font-size: 17px;
+    padding-inline: 32px;
+  }
+  .av-player-close {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+  }
+  .av-player-explanation {
+    font-size: 15px;
+  }
+  .av-verdict {
+    gap: 10px;
+    padding: 9px 16px 9px 10px;
+  }
+  .av-verdict-mark {
+    width: 32px;
+    height: 32px;
+    padding: 5px;
+  }
+  .av-verdict-title {
+    font-size: 21px;
+  }
+  .av-verdict-reason {
+    font-size: 14px;
   }
 }

@@ -41,9 +41,38 @@ describe('Diagram', () => {
     const a = fixture({ kind: 'DFA', alphabet: 'a', states: ['{q0,q1,q2}', 'q1'] });
     render(<Diagram automaton={a} viewport={vp} />);
     const size = (id: string) =>
-      parseFloat(within(screen.getByTestId(id)).getByText(/q/).style.fontSize);
+      parseFloat(
+        (screen.getByTestId(id).querySelector('.av-state-label') as SVGTextElement).style.fontSize,
+      );
     expect(size('state-{q0,q1,q2}')).toBeLessThan(15);
     expect(size('state-q1')).toBe(15);
+  });
+
+  it('sets subscripts as smaller, lowered tspans and raises the text after them back', () => {
+    const a = fixture({ kind: 'DFA', alphabet: 'a', states: ['q_{12}x', 'p'] });
+    render(<Diagram automaton={a} viewport={vp} />);
+    // The test id keeps the raw label; the text reads as displayed.
+    const label = screen.getByTestId('state-q_{12}x').querySelector('.av-state-label');
+    expect(label).toHaveTextContent('q12x');
+    const spans = Array.from(label?.querySelectorAll('tspan') ?? []);
+    expect(spans.map((t) => t.textContent)).toEqual(['q', '12', 'x']);
+    const [plain, sub, after] = spans;
+    expect(plain).not.toHaveAttribute('dy');
+    expect(sub).toHaveClass('av-state-label-sub');
+    expect(sub).toHaveAttribute('font-size', '0.7em');
+    const shift = Number(sub?.getAttribute('dy'));
+    expect(shift).toBeGreaterThan(0);
+    expect(Number(after?.getAttribute('dy'))).toBe(-shift);
+    expect(after).not.toHaveAttribute('font-size');
+    const plainLabel = screen.getByTestId('state-p').querySelector('.av-state-label');
+    expect(plainLabel?.querySelectorAll('tspan')).toHaveLength(1);
+  });
+
+  it('hides the drawn label of the state or edge being edited in place', () => {
+    render(<Diagram automaton={abDfa} viewport={vp} highlight={{ editing: 'q0->q1' }} />);
+    expect(screen.getByTestId('edge-q0-q1')).toHaveAttribute('data-editing', 'true');
+    expect(screen.getByTestId('edge-q1-q0')).not.toHaveAttribute('data-editing');
+    expect(screen.getByTestId('state-q0')).not.toHaveAttribute('data-editing');
   });
 
   it('draws states, accepting rings, start arrow and edge labels', () => {

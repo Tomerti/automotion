@@ -1,8 +1,11 @@
+import { labelDisplayText } from '../../core/label';
+
 export type Point = { x: number; y: number };
 
 export const STATE_RADIUS = 24;
 export const ACCEPT_INSET = 4;
-export const RING_WIDTH = 8;
+/** Margin around a state's circle that still counts as hitting it. */
+export const HIT_MARGIN = 8;
 export const CURVE_OFFSET = 32;
 export const LOOP_SIZE = 28;
 
@@ -24,8 +27,33 @@ const polar = (c: Point, r: number, a: number): Point => ({
   y: c.y + r * Math.sin(a),
 });
 
-/** Edge from one state circle to another; curves bend to the left of from→to (screen view). */
-export function edgeGeometry(from: Point, to: Point, curved: boolean): PathGeometry {
+/** Bend of an edge without an explicit `bend`: curved only when the reverse edge also exists. */
+export function autoBend(hasReverse: boolean): number {
+  return hasReverse ? CURVE_OFFSET : 0;
+}
+
+/**
+ * Bend that puts an edge's apex at the perpendicular projection of `p`: the signed distance of `p`
+ * from the chord's line, positive to the left of from→to (screen view).
+ */
+export function bendThrough(from: Point, to: Point, p: Point): number {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+  return ((p.x - mid.x) * dy - (p.y - mid.y) * dx) / len;
+}
+
+/** Direction from a state's center to `p`, for placing a self-loop. */
+export function loopAngleToward(center: Point, p: Point): number {
+  return Math.atan2(p.y - center.y, p.x - center.x);
+}
+
+/**
+ * Edge from one state circle to another. `bend` is the apex's signed offset from the chord
+ * (0 = straight), positive to the left of from→to (screen view).
+ */
+export function edgeGeometry(from: Point, to: Point, bend: number): PathGeometry {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const len = Math.hypot(dx, dy) || 1;
@@ -33,7 +61,7 @@ export function edgeGeometry(from: Point, to: Point, curved: boolean): PathGeome
   const normal = { x: dy / len, y: -dx / len };
   const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
 
-  if (!curved) {
+  if (bend === 0) {
     const ux = dx / len;
     const uy = dy / len;
     const start = { x: from.x + ux * STATE_RADIUS, y: from.y + uy * STATE_RADIUS };
@@ -46,8 +74,9 @@ export function edgeGeometry(from: Point, to: Point, curved: boolean): PathGeome
     };
   }
 
-  // Quadratic control point placed so the curve's apex is CURVE_OFFSET from the chord.
-  const ctrl = { x: mid.x + normal.x * CURVE_OFFSET * 2, y: mid.y + normal.y * CURVE_OFFSET * 2 };
+  // Quadratic control point placed so the curve's apex is `bend` from the chord.
+  const ctrl = { x: mid.x + normal.x * bend * 2, y: mid.y + normal.y * bend * 2 };
+  const side = Math.sign(bend);
   const toward = (c: Point, target: Point): Point => {
     const vx = target.x - c.x;
     const vy = target.y - c.y;
@@ -62,7 +91,7 @@ export function edgeGeometry(from: Point, to: Point, curved: boolean): PathGeome
   };
   return {
     d: `M ${pt(start)} Q ${pt(ctrl)} ${pt(end)}`,
-    label: { x: apex.x + normal.x * LABEL_GAP, y: apex.y + normal.y * LABEL_GAP },
+    label: { x: apex.x + side * normal.x * LABEL_GAP, y: apex.y + side * normal.y * LABEL_GAP },
     end,
     endAngle: Math.atan2(end.y - ctrl.y, end.x - ctrl.x),
   };
@@ -116,9 +145,11 @@ export function bestLoopAngle(center: Point, neighbors: Point[]): number {
 /**
  * State label font size: the base size, shrunk so long labels stay inside the circle, but never
  * below LABEL_MIN_FONT_SIZE; longer labels overflow the circle (the label halo keeps them legible).
+ * Sized by the label as displayed, so `q_{12}` counts as three characters.
  */
 export function labelFontSize(label: string): number {
-  const fit = (2 * STATE_RADIUS * LABEL_FILL) / (LABEL_CHAR_WIDTH * Math.max(label.length, 1));
+  const chars = Array.from(labelDisplayText(label)).length;
+  const fit = (2 * STATE_RADIUS * LABEL_FILL) / (LABEL_CHAR_WIDTH * Math.max(chars, 1));
   return Math.max(LABEL_MIN_FONT_SIZE, Math.min(LABEL_FONT_SIZE, fit));
 }
 
@@ -130,10 +161,7 @@ export function startArrowGeometry(center: Point): { d: string } {
   };
 }
 
-/** body: within the circle; ring: the outer band used to start drawing a transition. */
-export function hitRing(center: Point, p: Point): 'body' | 'ring' | null {
-  const d = Math.hypot(p.x - center.x, p.y - center.y);
-  if (d <= STATE_RADIUS) return 'body';
-  if (d <= STATE_RADIUS + RING_WIDTH) return 'ring';
-  return null;
+/** Whether `p` hits the state at `center`: its circle plus HIT_MARGIN. */
+export function hitState(center: Point, p: Point): boolean {
+  return Math.hypot(p.x - center.x, p.y - center.y) <= STATE_RADIUS + HIT_MARGIN;
 }

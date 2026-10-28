@@ -22,8 +22,15 @@ function renderSvg(): SVGSVGElement {
     createElement(Diagram, {
       automaton: abDfa,
       viewport: { x: 50, y: 70, zoom: 2 },
-      highlight: { selectedStates: ['q0'], selectedTransitions: ['q0->q1'] },
-      children: createElement('line', { 'data-testid': 'rubber-band' }),
+      highlight: {
+        selectedStates: ['q0'],
+        selectedTransitions: ['q0->q1'],
+        editing: 'q1',
+      },
+      children: [
+        createElement('line', { key: 'band', 'data-testid': 'rubber-band' }),
+        createElement('line', { key: 'guide', 'data-testid': 'snap-guide' }),
+      ],
     }),
   );
   return getByTestId('diagram') as unknown as SVGSVGElement;
@@ -71,11 +78,22 @@ describe('diagramToSvgString', () => {
   it('drops interaction-only elements and selection highlights', () => {
     const text = diagramToSvgString(renderSvg(), abDfa);
     expect(text).not.toContain('rubber-band"');
+    expect(text).not.toContain('snap-guide"');
+    expect(text).not.toMatch(/<g [^>]*data-editing=/);
     expect(text).not.toContain('class="av-state-hit"');
     expect(text).not.toContain('class="av-edge-hit"');
     // The stylesheet legitimately mentions the selector; no element may carry it.
     expect(text).not.toMatch(/<g [^>]*data-selected="true"/);
     expect(text).toContain('data-selected="false"');
+  });
+
+  it('keeps subscript tspans in state labels', () => {
+    const a = fixture({ kind: 'DFA', alphabet: 'a', states: ['q_1'] });
+    const { getByTestId } = render(
+      createElement(Diagram, { automaton: a, viewport: { x: 0, y: 0, zoom: 1 } }),
+    );
+    const text = diagramToSvgString(getByTestId('diagram') as unknown as SVGSVGElement, a);
+    expect(text).toMatch(/<tspan[^>]*>q<\/tspan><tspan[^>]*font-size="0.7em"[^>]*>1<\/tspan>/);
   });
 
   it('does not modify the live svg', () => {

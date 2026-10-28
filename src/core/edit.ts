@@ -7,8 +7,8 @@ import type { Issue } from './validate';
 export function nextStateLabel(a: Automaton): string {
   const labels = new Set(a.states.map((s) => s.label));
   let i = 0;
-  while (labels.has(`q${i}`)) i++;
-  return `q${i}`;
+  while (labels.has(`q_${i}`)) i++;
+  return `q_${i}`;
 }
 
 export function addState(
@@ -91,6 +91,60 @@ export function removeSymbolFromEdge(
   );
 }
 
+/** Bend an edge (0 = straight); `undefined` restores the automatic shape. */
+export function setEdgeBend(
+  a: Automaton,
+  transitionId: string,
+  bend: number | undefined,
+): Automaton {
+  return {
+    ...a,
+    transitions: a.transitions.map((t) => {
+      if (t.id !== transitionId) return t;
+      if (bend !== undefined) return { ...t, bend };
+      const rest = { ...t };
+      delete rest.bend;
+      return rest;
+    }),
+  };
+}
+
+export function setLoopAngle(a: Automaton, transitionId: string, angle: number): Automaton {
+  return {
+    ...a,
+    transitions: a.transitions.map((t) => (t.id === transitionId ? { ...t, loopAngle: angle } : t)),
+  };
+}
+
+/**
+ * Keep the alphabet equal to the non-ε symbols used on transitions: symbols still in use keep
+ * their order, new ones follow in order of appearance. Returns `a` itself when nothing changes.
+ */
+export function syncAlphabet(a: Automaton): Automaton {
+  const used = new Set<Sym>();
+  for (const t of a.transitions) for (const s of t.symbols) if (s !== EPSILON) used.add(s);
+  const kept = a.alphabet.filter((s) => used.has(s));
+  const added = [...used].filter((s) => !kept.includes(s));
+  const next = [...kept, ...added];
+  if (next.length === a.alphabet.length && next.every((s, i) => s === a.alphabet[i])) return a;
+  return { ...a, alphabet: next };
+}
+
+/**
+ * Set the symbols of edge (from, to). Adding ε to a DFA turns it into an NFA (`promoted`).
+ * The alphabet is synced.
+ */
+export function commitEdgeSymbols(
+  a: Automaton,
+  from: StateId,
+  to: StateId,
+  syms: Sym[],
+): { automaton: Automaton; promoted: boolean } {
+  const promoted = a.kind === 'DFA' && syms.includes(EPSILON);
+  const base: Automaton = promoted ? { ...a, kind: 'NFA' } : a;
+  return { automaton: syncAlphabet(setEdgeSymbols(base, from, to, syms)), promoted };
+}
+
 export function removeTransition(a: Automaton, transitionId: string): Automaton {
   return { ...a, transitions: a.transitions.filter((t) => t.id !== transitionId) };
 }
@@ -140,6 +194,14 @@ export function renameAutomaton(a: Automaton, name: string): Automaton {
   return { ...a, name };
 }
 
+/** What a user may type for ε in a symbol input. */
+export const EPSILON_ALIASES = ['\\epsilon', 'eps', EPSILON];
+
+/** Live input normalization: `\epsilon` turns into ε as soon as it is typed. */
+export function normalizeSymbolText(text: string): string {
+  return text.replaceAll('\\epsilon', EPSILON);
+}
+
 export function parseSymbolInput(
   text: string,
   kind: AutomatonKind,
@@ -148,7 +210,7 @@ export function parseSymbolInput(
   for (const raw of text.split(',')) {
     const token = raw.trim();
     if (token === '') continue;
-    const sym = token === 'eps' || token === EPSILON ? EPSILON : token;
+    const sym = EPSILON_ALIASES.includes(token) ? EPSILON : token;
     if (sym === EPSILON) {
       if (kind === 'DFA') return { ok: false, error: "A DFA can't have ε-transitions" };
     } else if (Array.from(sym).length !== 1) {

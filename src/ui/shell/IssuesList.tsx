@@ -1,3 +1,4 @@
+import { parseLabel } from '../../core/label';
 import type { Issue } from '../../core/validate';
 import type { Selection } from '../../store/store';
 
@@ -6,6 +7,14 @@ interface Props {
   onSelect: (sel: Selection) => void;
 }
 
+/** Issue text with state labels' subscripts rendered (`q_1 is unreachable` reads q₁). */
+function Message({ text }: { text: string }): React.JSX.Element {
+  return (
+    <>{parseLabel(text).map((seg, i) => (seg.sub ? <sub key={i}>{seg.text}</sub> : seg.text))}</>
+  );
+}
+
+/** Validation issues, errors first; clicking one selects the state or transition it is about. */
 export function IssuesList({ issues, onSelect }: Props): React.JSX.Element {
   if (issues.length === 0) return <p className="av-issues-empty">No issues</p>;
   const ordered = [
@@ -26,7 +35,7 @@ export function IssuesList({ issues, onSelect }: Props): React.JSX.Element {
               })
             }
           >
-            {issue.message}
+            <Message text={issue.message} />
           </button>
         </li>
       ))}

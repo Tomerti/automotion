@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   CURVE_OFFSET,
-  RING_WIDTH,
+  HIT_MARGIN,
   STATE_RADIUS,
   bestLoopAngle,
   edgeGeometry,
-  hitRing,
+  hitState,
   labelFontSize,
   selfLoopGeometry,
   startArrowGeometry,
@@ -17,7 +17,7 @@ const B = { x: 200, y: 0 };
 
 describe('edgeGeometry', () => {
   it('straight edges start and end on the circle boundaries', () => {
-    const g = edgeGeometry(A, B, false);
+    const g = edgeGeometry(A, B, 0);
     expect(g.end.x).toBeCloseTo(200 - STATE_RADIUS);
     expect(g.end.y).toBeCloseTo(0);
     expect(g.endAngle).toBeCloseTo(0);
@@ -26,13 +26,13 @@ describe('edgeGeometry', () => {
     expect(Math.abs(g.label.y)).toBeCloseTo(14);
   });
   it('opposite curved edges put labels on opposite sides', () => {
-    const ab = edgeGeometry(A, B, true);
-    const ba = edgeGeometry(B, A, true);
+    const ab = edgeGeometry(A, B, CURVE_OFFSET);
+    const ba = edgeGeometry(B, A, CURVE_OFFSET);
     expect(ab.label.y).not.toBe(0);
     expect(Math.sign(ab.label.y)).toBe(-Math.sign(ba.label.y));
   });
   it('curved edges end on the target circle boundary', () => {
-    const g = edgeGeometry(A, B, true);
+    const g = edgeGeometry(A, B, CURVE_OFFSET);
     expect(Math.hypot(g.end.x - B.x, g.end.y - B.y)).toBeCloseTo(STATE_RADIUS);
     expect(Math.abs(g.label.y)).toBeGreaterThan(CURVE_OFFSET / 2);
   });
@@ -75,6 +75,10 @@ describe('labelFontSize', () => {
     expect(labelFontSize('{q0,q1,q2}')).toBe(10);
     for (let n = 1; n <= 40; n++) expect(labelFontSize('x'.repeat(n))).toBeGreaterThanOrEqual(10);
   });
+  it('sizes by the displayed text: subscript markup does not count', () => {
+    expect(labelFontSize('q_{1234}')).toBe(labelFontSize('q1234'));
+    expect(labelFontSize('q_0')).toBe(15);
+  });
 });
 
 describe('startArrowGeometry', () => {
@@ -84,11 +88,10 @@ describe('startArrowGeometry', () => {
   });
 });
 
-describe('hitRing', () => {
-  it('distinguishes body and ring', () => {
-    expect(hitRing(O, { x: STATE_RADIUS, y: 0 })).toBe('body');
-    expect(hitRing(O, { x: STATE_RADIUS + 1, y: 0 })).toBe('ring');
-    expect(hitRing(O, { x: STATE_RADIUS + RING_WIDTH, y: 0 })).toBe('ring');
-    expect(hitRing(O, { x: STATE_RADIUS + RING_WIDTH + 1, y: 0 })).toBeNull();
+describe('hitState', () => {
+  it('hits the circle and a margin around it', () => {
+    expect(hitState(O, { x: STATE_RADIUS, y: 0 })).toBe(true);
+    expect(hitState(O, { x: 0, y: STATE_RADIUS + HIT_MARGIN })).toBe(true);
+    expect(hitState(O, { x: STATE_RADIUS + HIT_MARGIN + 1, y: 0 })).toBe(false);
   });
 });

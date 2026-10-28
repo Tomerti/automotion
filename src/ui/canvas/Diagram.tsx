@@ -4,6 +4,7 @@ import { Arrowhead, EdgeView } from './EdgeView';
 import { StateNode } from './StateNode';
 import { diagramStyles } from './diagramStyles';
 import {
+  autoBend,
   bestLoopAngle,
   edgeGeometry,
   selfLoopGeometry,
@@ -24,6 +25,7 @@ export interface DiagramHighlight {
   errorTransitions?: string[];
   selectedStates?: StateId[];
   selectedTransitions?: string[];
+  editing?: string; // id of the state or transition whose label is being edited in place
 }
 
 export interface DiagramProps {
@@ -101,9 +103,9 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
             if (automaton.start === t.from) {
               neighbors.push({ x: from.x - START_ARROW_CLEARANCE, y: from.y });
             }
-            geometry = selfLoopGeometry(from, bestLoopAngle(from, neighbors));
+            geometry = selfLoopGeometry(from, t.loopAngle ?? bestLoopAngle(from, neighbors));
           } else {
-            geometry = edgeGeometry(from, to, hasEdge(t.to, t.from));
+            geometry = edgeGeometry(from, to, t.bend ?? autoBend(hasEdge(t.to, t.from)));
           }
           return (
             <EdgeView
@@ -116,6 +118,7 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
               taken={has(highlight.taken, t.id)}
               selected={has(highlight.selectedTransitions, t.id)}
               error={has(highlight.errorTransitions, t.id)}
+              editing={highlight.editing === t.id}
             />
           );
         })}
@@ -132,6 +135,7 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
               error={has(highlight.errorStates, s.id)}
               faded={has(highlight.faded, s.id)}
               tint={highlight.tints?.[s.id]}
+              editing={highlight.editing === s.id}
             />
           ))}
         {children}

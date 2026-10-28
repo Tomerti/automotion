@@ -18,6 +18,13 @@ export interface Transition {
   to: StateId;
   /** One edge per (from, to) pair, carrying all its symbols. */
   symbols: Sym[];
+  /**
+   * Signed offset of the curve's apex from the straight chord (world px), positive to the left of
+   * from→to on screen. Absent: automatic (straight, or curved when the reverse edge exists).
+   */
+  bend?: number;
+  /** Self-loops only: direction of the loop (radians, screen coordinates). Absent: automatic. */
+  loopAngle?: number;
 }
 
 export interface Automaton {

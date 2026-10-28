@@ -123,7 +123,7 @@ describe('completeWithDeadState', () => {
       states: partialDfa.states.map((s, i) => (i === 0 ? { ...s, label: '∅' } : s)),
     };
     const { automaton, deadState } = completeWithDeadState(taken);
-    expect(automaton.states.find((s) => s.id === deadState)?.label).toBe('q0');
+    expect(automaton.states.find((s) => s.id === deadState)?.label).toBe('q_0');
   });
 });
 

@@ -1,5 +1,6 @@
+import { parseLabel } from '../../core/label';
 import type { State } from '../../core/model';
-import { ACCEPT_INSET, labelFontSize, RING_WIDTH, STATE_RADIUS } from './geometry';
+import { ACCEPT_INSET, HIT_MARGIN, labelFontSize, STATE_RADIUS } from './geometry';
 
 export interface StateNodeProps {
   state: State;
@@ -10,10 +11,44 @@ export interface StateNodeProps {
   error: boolean;
   faded: boolean;
   tint?: number;
+  /** Its label is being edited in place: hide the drawn one under the input. */
+  editing?: boolean;
+}
+
+/** Subscripts are set at this share of the label size, lowered by SUB_SHIFT of the label size. */
+const SUB_SCALE = 0.7;
+const SUB_SHIFT = 0.25;
+
+/**
+ * Label text as tspans: subscript runs smaller and lowered, the run after one raised back.
+ * Shifts are in px of the label size, so lowering and raising cancel out exactly.
+ */
+function LabelText(props: { label: string; fontSize: number }): React.JSX.Element {
+  const { label, fontSize } = props;
+  const shift = fontSize * SUB_SHIFT;
+  const segments = parseLabel(label);
+  return (
+    <text className="av-state-label" style={{ fontSize }}>
+      {segments.map((seg, i) => {
+        const lowered = segments[i - 1]?.sub ?? false;
+        const dy = seg.sub === lowered ? undefined : seg.sub ? shift : -shift;
+        return (
+          <tspan
+            key={i}
+            className={seg.sub ? 'av-state-label-sub' : undefined}
+            dy={dy}
+            fontSize={seg.sub ? `${SUB_SCALE}em` : undefined}
+          >
+            {seg.text}
+          </tspan>
+        );
+      })}
+    </text>
+  );
 }
 
 export function StateNode(props: StateNodeProps): React.JSX.Element {
-  const { state, accepting, start, active, selected, error, faded, tint } = props;
+  const { state, accepting, start, active, selected, error, faded, tint, editing } = props;
   return (
     <g
       className="av-state"
@@ -26,15 +61,14 @@ export function StateNode(props: StateNodeProps): React.JSX.Element {
       data-error={String(error)}
       data-faded={String(faded)}
       data-tint={tint === undefined ? undefined : String(tint)}
+      data-editing={editing ? 'true' : undefined}
       transform={`translate(${state.x} ${state.y})`}
     >
-      {/* Invisible hit area for the outer ring that starts drawing a transition. */}
-      <circle className="av-state-hit" r={STATE_RADIUS + RING_WIDTH} />
+      {/* Invisible hit area a little larger than the circle. */}
+      <circle className="av-state-hit" r={STATE_RADIUS + HIT_MARGIN} />
       <circle className="av-state-body" r={STATE_RADIUS} />
       {accepting && <circle className="av-state-ring" r={STATE_RADIUS - ACCEPT_INSET} />}
-      <text className="av-state-label" style={{ fontSize: labelFontSize(state.label) }}>
-        {state.label}
-      </text>
+      <LabelText label={state.label} fontSize={labelFontSize(state.label)} />
     </g>
   );
 }

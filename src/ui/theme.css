@@ -8,7 +8,8 @@
  * explanations) is set in STIX Two Text, the face of scientific publishing; the interface
  * chrome is Schibsted Grotesk and stays quiet. The loud element is the run's input tape with
  * its read head; the one orchestrated motion is the verdict stamp. Light and dark follow
- * prefers-color-scheme. Diagram exports always use the light (paper) tokens via
+ * prefers-color-scheme unless the theme button forces one (`<html data-theme>`, set by
+ * src/ui/shell/theme.ts before the first render). Diagram exports always use the light (paper) tokens via
  * `.av-theme-light`, so an export taken in dark mode still reads on white.
  */
 
@@ -30,6 +31,9 @@
   --av-rule: #dde1d8;
   --av-rule-strong: #c2c8bd;
   --av-shadow: #1c23331f;
+  --av-shadow-float: 0 1px 2px var(--av-shadow), 0 10px 30px var(--av-shadow);
+  --av-backdrop: #1c233347;
+  --av-kbd: #f3f5f0;
 
   /* Pens and highlighter */
   --av-accent: #2d4fd0;
@@ -55,6 +59,7 @@
   --av-active-text: var(--av-ink);
   --av-taken-band: var(--av-highlighter-band);
   --av-error: var(--av-red);
+  --av-guide: var(--av-accent);
 
   /* Marker tints for partition blocks (diagram fills and legend swatches) */
   --av-tint-0: #c9dbff;
@@ -67,8 +72,14 @@
   --av-tint-7: #dadfe6;
 }
 
+/*
+ * Dark tokens. They apply when the system is dark unless the page forces light
+ * (`<html data-theme="light">`), and whenever the page forces dark. The two selectors must stay
+ * identical; `.av-theme-light` (the export probe) redeclares the light tokens on itself, so it
+ * reads light under either.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     color-scheme: dark;
 
     --av-paper: #151920;
@@ -103,13 +114,60 @@
     --av-tint-5: #1f5857;
     --av-tint-6: #6a2a48;
     --av-tint-7: #3b424e;
+
+    --av-backdrop: #05070bb3;
+    --av-kbd: #2a3140;
   }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --av-paper: #151920;
+  --av-paper-dot: #2b313d;
+  --av-surface: #1b2029;
+  --av-surface-raised: #222834;
+  --av-hover: #2a3140;
+  --av-ink: #e6e9ef;
+  --av-ink-muted: #9aa3b2;
+  --av-rule: #2c3340;
+  --av-rule-strong: #3d4656;
+  --av-shadow: #00000066;
+
+  --av-accent: #8fa7ff;
+  --av-on-accent: #10142a;
+  --av-red: #ff7b7b;
+  --av-green: #5ed39a;
+  --av-warn: #e8b85a;
+  --av-highlighter: #f2d24b;
+  --av-highlighter-band: #f2d24b55;
+  --av-highlighter-ink: #f2d24b;
+
+  --av-edge-stroke: #b9c0cc;
+  --av-active-stroke: #9c7a12;
+  --av-active-text: #1c2333;
+
+  --av-tint-0: #2a4680;
+  --av-tint-1: #6e3428;
+  --av-tint-2: #275c37;
+  --av-tint-3: #50306c;
+  --av-tint-4: #6b4b18;
+  --av-tint-5: #1f5857;
+  --av-tint-6: #6a2a48;
+  --av-tint-7: #3b424e;
+
+  --av-backdrop: #05070bb3;
+  --av-kbd: #2a3140;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* Components that set their own display must still honour the hidden attribute. */
+[hidden] {
+  display: none !important;
 }
 
 html,

@@ -60,8 +60,11 @@ Layers, with dependencies pointing downward only:
     drag crosses 3 px, so double-clicks keep their real target. Pure math is in `geometry.ts` / `viewport.ts`.
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button.
-  - `table/`: the transition table and issues list, a second editing view over the same edit ops.
-  - `shell/`: layout, toolbar, list, toasts, error boundary, import/export plumbing.
+  - `shell/`: top bar (automaton switcher, toolbar, issues chip, theme toggle, Controls popup), the
+    bottom dock (run pill / trace player), toasts, error boundary, import/export plumbing. There is
+    no table or alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
+  - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
+    the canvas uses `<tspan>`s).
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain
     fallbacks: SVG/PNG export resolves `var()` against a hidden `.av-theme-light` probe, so exports always
     use the light palette.

@@ -2,6 +2,7 @@ import { useStore } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
+import { syncAlphabet } from '../core/edit';
 import { emptyAutomaton } from '../core/model';
 import type { Automaton, AutomatonKind } from '../core/model';
 import type { AnyTrace } from '../core/trace';
@@ -163,7 +164,8 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           if (activeId === null || trace) return;
           const current = all.find((a) => a.id === activeId);
           if (!current) return;
-          const next = fn(current);
+          // The alphabet is derived from the transitions (there is no alphabet editor).
+          const next = syncAlphabet(fn(current));
           if (opts?.record ?? true) record(activeId, current);
           set((s) => {
             const i = s.automata.findIndex((a) => a.id === activeId);
