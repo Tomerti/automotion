@@ -1,5 +1,5 @@
 import { completeWithDeadState, removeUnreachable } from './analysis';
-import { formatSet } from './format';
+import { formatSet, withSuffix } from './format';
 import { newId } from './id';
 import type { Automaton, StateId, Sym, Transition } from './model';
 import type { MinimizeStep, MinimizeTrace } from './trace';
@@ -124,14 +124,19 @@ export function minimize(dfa: Automaton): MinimizeTrace {
   }
 
   const result = buildResult(dfa, work, blocks);
+  // Nothing unreachable and no two states merged: the result is the input (plus, at most, a
+  // dead state), so there is nothing worth saving.
+  const alreadyMinimal = trimmed.removed.length === 0 && blocks.every((b) => b.length === 1);
   steps.push({
     phase: 'done',
     automaton: work,
     blocks,
     focus: {},
-    explanation: `Done: ${dfa.states.length} → ${result.states.length} states`,
+    explanation: alreadyMinimal
+      ? 'Already minimal: no state is unreachable and no two states are equivalent'
+      : `Done: ${dfa.states.length} → ${result.states.length} states`,
   });
-  return { kind: 'minimize', source: dfa, result, steps };
+  return { kind: 'minimize', source: dfa, result, steps, alreadyMinimal };
 }
 
 function buildResult(dfa: Automaton, work: Automaton, blocks: StateId[][]): Automaton {
@@ -168,7 +173,7 @@ function buildResult(dfa: Automaton, work: Automaton, blocks: StateId[][]): Auto
 
   return {
     id: newId(),
-    name: `${dfa.name} (min)`,
+    name: withSuffix(dfa.name, ' (min)'),
     kind: 'DFA',
     alphabet: [...work.alphabet],
     states,

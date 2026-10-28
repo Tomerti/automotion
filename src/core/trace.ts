@@ -78,4 +78,6 @@ export interface MinimizeTrace {
   source: Automaton;
   result: Automaton;
   steps: MinimizeStep[];
+  /** Nothing was removed or merged: `result` is `source` (plus at most a dead state). */
+  alreadyMinimal: boolean;
 }

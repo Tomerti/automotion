@@ -9,7 +9,6 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 ## Next
 
 - [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; consider a more compact layout or pan/zoom in trace views (the transition table is gone in v2)
-- [ ] Trace views fit the diagram without the floating player: the bottom of the DFA pane (e.g. a self-loop) can sit behind it
 - [ ] Equal-spacing snap guides (Notability-style) in addition to center alignment
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
@@ -32,6 +31,8 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 - [x] Run and Convert to DFA play at once; Run has a chime, and an accept/reject cue when the verdict appears
 - [x] Run highlight is a slim orange ring and edge instead of the wide yellow highlighter; the Run button is orange too
 - [x] Theme toggle is light ↔ dark only, light by default (no longer follows the system)
+- [x] Trace views stop above the floating player, so nothing (e.g. a DFA self-loop) is drawn behind it
+- [x] Minimizing an already minimal DFA ends with "Already minimal" instead of Save; names never stack "(min)" or "→ DFA"
 - [x] A toggles accepting, S toggles start on the selected state (Enter/Space no longer do)
 - [x] Alignment snapping with guides while dragging (Alt skips)
 - [x] `\epsilon` types ε; ε on a DFA turns it into an NFA

@@ -371,6 +371,9 @@ input.av-switcher-input {
 /* Canvas area and the floating dock */
 
 .av-canvas-area {
+  /* How far the floating dock sits above the bottom edge; --av-dock-h is set by App. */
+  --av-dock-bottom: 18px;
+
   position: relative;
   min-width: 0;
   min-height: 0;
@@ -394,7 +397,7 @@ input.av-switcher-input {
  */
 .av-dock {
   position: absolute;
-  bottom: 18px;
+  bottom: var(--av-dock-bottom);
   left: 50%;
   z-index: 10;
   max-width: calc(100% - 32px);
@@ -752,8 +755,8 @@ kbd {
     min-width: 30px;
     padding: 0 5px;
   }
-  .av-dock {
-    bottom: 12px;
+  .av-canvas-area {
+    --av-dock-bottom: 12px;
   }
   .av-toasts {
     top: auto;

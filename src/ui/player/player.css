@@ -128,6 +128,17 @@ select.av-player-speed:hover {
 .av-player-extra:empty {
   display: none;
 }
+.av-player-note {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 11px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--av-ink-muted);
+  border: 1px dashed var(--av-rule-strong);
+  border-radius: 6px;
+}
 .av-player-close {
   margin-left: 2px;
 }
@@ -135,8 +146,15 @@ select.av-player-speed:hover {
   stroke-width: 1.8;
 }
 
-/* Trace views (they replace the canvas while a trace is open) */
+/*
+ * Trace views (they replace the canvas while a trace is open). They stop above the floating
+ * player, so the diagrams they fit to view are never drawn behind it.
+ */
 
+.av-trace-view,
+.av-subset-view {
+  padding-bottom: calc(var(--av-dock-h, 0px) + var(--av-dock-bottom, 18px) + 8px);
+}
 .av-trace-view {
   display: flex;
   flex-direction: column;
