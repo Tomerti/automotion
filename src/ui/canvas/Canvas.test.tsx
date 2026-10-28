@@ -396,6 +396,23 @@ describe('Canvas editing', () => {
     expect(stateEl('q0')).not.toHaveAttribute('data-editing');
   });
 
+  it('the symbol input for a new edge or self-loop sits where its label will be drawn', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(<Canvas />);
+    for (const [to, edge] of [
+      [[100, 0], 'edge-q0-q1'],
+      [[5, 5], 'edge-q0-q0'],
+    ] as const) {
+      drawEdge([...to]);
+      const box = screen.getByTestId('symbol-input').parentElement as HTMLElement;
+      const at = [box.style.left, box.style.top];
+      await user.type(screen.getByTestId('symbol-input'), 'a{Enter}');
+      const label = within(screen.getByTestId(edge)).getByTestId('edge-label');
+      expect(at).toEqual([`${label.getAttribute('x')}px`, `${label.getAttribute('y')}px`]);
+    }
+  });
+
   it('the rename input commits on blur; a duplicate name on blur is dropped', async () => {
     const user = userEvent.setup();
     load(two());

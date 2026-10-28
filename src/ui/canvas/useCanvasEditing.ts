@@ -36,8 +36,6 @@ export const DEFAULT_VIEWPORT: Viewport = { x: 0, y: 0, zoom: 1 };
 /** Screen pixels a press must travel before it becomes a drag. */
 const DRAG_THRESHOLD = 3;
 const ZOOM_STEP = 1.1;
-/** Where the symbol input for a new self-loop sits, above the state's center. */
-const LOOP_INPUT_OFFSET = STATE_RADIUS + 40;
 /** World distance from an edge label's anchor that still counts as hitting it. */
 const LABEL_HIT_RADIUS = 12;
 /** A dragged edge whose bend is within this many screen px of straight snaps straight. */
@@ -314,16 +312,13 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     const a = automaton.states.find((s) => s.id === from);
     const b = automaton.states.find((s) => s.id === to);
     if (!a || !b) return;
-    const at =
-      from === to
-        ? { x: a.x, y: a.y - LOOP_INPUT_OFFSET }
-        : { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    const { d, end, endAngle } = transitionGeometry(automaton, a, b);
+    // The input sits where the new edge's label will be drawn.
+    const { d, label, end, endAngle } = transitionGeometry(automaton, a, b);
     openInline({
       testId: 'symbol-input',
       label: 'Transition symbols',
       initial: '',
-      at,
+      at: label,
       fontSize: EDGE_LABEL_FONT_SIZE,
       draft: { loop: from === to, d, end, endAngle },
       normalize: normalizeSymbolText,
