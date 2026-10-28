@@ -3,6 +3,7 @@ import { Canvas } from '../canvas/Canvas';
 import { useAutosave } from '../../persistence/useAutosave';
 import { RunPanel } from '../player/RunPanel';
 import { TracePlayer } from '../player/TracePlayer';
+import { TraceExtraActions } from '../player/traceExtraActions';
 import { TraceView } from '../player/TraceView';
 import { AutomatonList } from './AutomatonList';
 import { importFile } from './importFile';
@@ -53,6 +54,7 @@ export default function App(): React.JSX.Element {
             onIndex={setStep}
             explanation={step.explanation}
             onClose={closeTrace}
+            extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
           />
         )}
       </section>
