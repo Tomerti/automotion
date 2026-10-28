@@ -4,6 +4,7 @@ import type { AutomatonKind } from '../../core/model';
 import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, useAppStore } from '../../store/store';
+import { fitActive, tidyActive } from '../canvas/useCanvasEditing';
 
 const KINDS: AutomatonKind[] = ['DFA', 'NFA'];
 
@@ -16,6 +17,7 @@ export function Toolbar(): React.JSX.Element {
   const redoCount = useAppStore((s) =>
     s.activeId ? (s.history[s.activeId]?.future.length ?? 0) : 0,
   );
+  const tracing = useAppStore((s) => s.trace !== null);
   const [error, setError] = useState<string | null>(null);
   const automaton = automata.find((a) => a.id === activeId);
   const none = automaton === undefined;
@@ -71,10 +73,10 @@ export function Toolbar(): React.JSX.Element {
       >
         Redo
       </button>
-      <button type="button" disabled={none}>
+      <button type="button" disabled={none} onClick={fitActive}>
         Fit
       </button>
-      <button type="button" disabled={none}>
+      <button type="button" disabled={none || tracing} onClick={() => void tidyActive()}>
         Tidy
       </button>
       <button
