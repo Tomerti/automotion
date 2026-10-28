@@ -6,6 +6,7 @@ import { loadFromStorage } from './persistence/storage';
 import { appStore } from './store/store';
 import App from './ui/shell/App';
 import { ErrorBoundary } from './ui/shell/ErrorBoundary';
+import { applyTheme, readTheme } from './ui/shell/theme';
 import { toast } from './ui/shell/toastStore';
 
 function browserStorage(): Storage | null {
@@ -15,6 +16,9 @@ function browserStorage(): Storage | null {
     return null;
   }
 }
+
+// Before the first render, so a forced theme never flashes the system one.
+applyTheme(readTheme());
 
 const loaded = loadFromStorage(browserStorage());
 appStore.getState().replaceAll(loaded.automata);

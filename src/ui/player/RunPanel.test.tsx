@@ -42,7 +42,7 @@ describe('RunPanel', () => {
     resetAppStore({ automata: [ab] });
     const user = userEvent.setup();
     render(<RunPanel />);
-    expect(screen.getByPlaceholderText('Word (empty = ε)')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Test a word…')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Word'), 'ac');
     const run = screen.getByRole('button', { name: 'Run' });
     expect(run).toBeDisabled();
@@ -69,13 +69,11 @@ describe('RunPanel', () => {
     const n = appStore.getState().trace?.steps.length ?? 0;
     for (let i = 1; i < n; i++) await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByTestId('verdict')).toHaveTextContent('Rejected');
-    // Re-running while a trace is open replaces it.
-    await user.clear(screen.getByLabelText('Word'));
-    await user.type(screen.getByLabelText('Word'), '00');
-    await user.click(screen.getByRole('button', { name: 'Run' }));
-    expect(appStore.getState().stepIndex).toBe(0);
+    // The trace player takes the dock until it is closed; the word is kept for the next run.
+    expect(screen.getByLabelText('Word')).not.toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(appStore.getState().trace).toBeNull();
+    expect(screen.getByLabelText('Word')).toHaveValue('0010');
   });
 
   it('marks consumed/current/pending chars and shows ε for the empty word', async () => {

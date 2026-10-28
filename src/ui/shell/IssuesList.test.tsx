@@ -43,4 +43,15 @@ describe('IssuesList', () => {
     render(<IssuesList issues={[]} onSelect={() => {}} />);
     expect(screen.getByText('No issues')).toBeInTheDocument();
   });
+
+  it('renders subscripts in state labels', () => {
+    render(
+      <IssuesList
+        issues={[{ severity: 'warning', message: 'q_{12} is unreachable', stateId: 'q' }]}
+        onSelect={() => {}}
+      />,
+    );
+    const button = screen.getByRole('button', { name: 'q12 is unreachable' });
+    expect(button.querySelector('sub')).toHaveTextContent('12');
+  });
 });
