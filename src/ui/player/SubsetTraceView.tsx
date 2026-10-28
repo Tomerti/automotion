@@ -1,6 +1,7 @@
 import type { SubsetTrace } from '../../core/trace';
 import { Diagram } from '../canvas/Diagram';
-import { useFittedViewport } from './useFittedViewport';
+import { chooseSplitLayout } from './splitLayout';
+import { useElementSize, useFittedViewport } from './useFittedViewport';
 
 export interface SubsetTraceViewProps {
   trace: SubsetTrace;
@@ -11,9 +12,11 @@ export function SubsetTraceView({ trace, stepIndex }: SubsetTraceViewProps): Rea
   const step = trace.steps[stepIndex];
   const { ref: nfaRef, viewport: nfaViewport } = useFittedViewport(trace.source.states);
   const { ref: dfaRef, viewport: dfaViewport } = useFittedViewport(trace.result.states);
+  const { ref, size } = useElementSize();
+  const layout = chooseSplitLayout(trace.source.states, trace.result.states, size);
 
   return (
-    <div className="av-subset-view">
+    <div className="av-subset-view" data-testid="subset-view" data-layout={layout} ref={ref}>
       <section className="av-subset-pane" data-testid="subset-nfa">
         <h3>NFA</h3>
         <div className="av-trace-diagram" ref={nfaRef}>

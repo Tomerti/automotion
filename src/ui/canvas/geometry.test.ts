@@ -64,11 +64,16 @@ describe('labelFontSize', () => {
       expect(sizes[i] ?? 0).toBeLessThanOrEqual(sizes[i - 1] ?? 0);
     }
   });
-  it('fits the text inside 85% of the diameter', () => {
-    const label = '{q0,q1,q2}';
+  it('fits the text inside 85% of the diameter while that keeps it at 10 or more', () => {
+    const label = '{q0q1}';
+    expect(labelFontSize(label)).toBeGreaterThan(10);
     expect(labelFontSize(label) * 0.6 * label.length).toBeLessThanOrEqual(
       2 * STATE_RADIUS * 0.85 + 1e-9,
     );
+  });
+  it('never goes below 10: longer labels overflow the circle instead', () => {
+    expect(labelFontSize('{q0,q1,q2}')).toBe(10);
+    for (let n = 1; n <= 40; n++) expect(labelFontSize('x'.repeat(n))).toBeGreaterThanOrEqual(10);
   });
 });
 

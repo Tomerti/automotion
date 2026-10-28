@@ -7,6 +7,7 @@ export const CURVE_OFFSET = 32;
 export const LOOP_SIZE = 28;
 
 const LABEL_FONT_SIZE = 15; // keep in sync with .av-state-label in diagramStyles.ts
+const LABEL_MIN_FONT_SIZE = 10;
 const LABEL_CHAR_WIDTH = 0.6; // average glyph width as a fraction of the font size
 const LABEL_FILL = 0.85; // share of the circle's diameter a label may span
 const LABEL_GAP = 14;
@@ -112,10 +113,13 @@ export function bestLoopAngle(center: Point, neighbors: Point[]): number {
   return Math.atan2(Math.sin(best), Math.cos(best));
 }
 
-/** State label font size: the base size, shrunk so long labels stay inside the circle. */
+/**
+ * State label font size: the base size, shrunk so long labels stay inside the circle, but never
+ * below LABEL_MIN_FONT_SIZE; longer labels overflow the circle (the label halo keeps them legible).
+ */
 export function labelFontSize(label: string): number {
   const fit = (2 * STATE_RADIUS * LABEL_FILL) / (LABEL_CHAR_WIDTH * Math.max(label.length, 1));
-  return Math.min(LABEL_FONT_SIZE, fit);
+  return Math.max(LABEL_MIN_FONT_SIZE, Math.min(LABEL_FONT_SIZE, fit));
 }
 
 /** Arrow entering the initial state from the left. */

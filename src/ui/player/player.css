@@ -99,6 +99,14 @@
 .av-subset-pane + .av-subset-pane {
   border-left: 1px solid var(--av-rule-strong);
 }
+/* Stacked (NFA on top) when that fits both automata larger; chosen in SubsetTraceView. */
+.av-subset-view[data-layout='column'] {
+  flex-direction: column;
+}
+.av-subset-view[data-layout='column'] .av-subset-pane + .av-subset-pane {
+  border-top: 1px solid var(--av-rule-strong);
+  border-left: 0;
+}
 .av-subset-pane h3 {
   padding: 12px 16px 0;
   font-size: 13px;
@@ -252,13 +260,6 @@
 }
 
 @media (max-width: 760px) {
-  .av-subset-view {
-    flex-direction: column;
-  }
-  .av-subset-pane + .av-subset-pane {
-    border-top: 1px solid var(--av-rule-strong);
-    border-left: 0;
-  }
   .av-word {
     padding: 14px 16px 18px;
   }

@@ -5,6 +5,7 @@ import { appStore, resetAppStore } from '../../store/store';
 import { startSubset } from '../../store/traceActions';
 import { endsAb } from '../../store/testing/fixtures';
 import App from '../shell/App';
+import { chooseSplitLayout } from './splitLayout';
 
 beforeEach(() => resetAppStore());
 afterEach(cleanup);
@@ -30,6 +31,18 @@ describe('SubsetTraceView', () => {
     const first = dfaStates();
     lastStep();
     expect(dfaStates()).toBeGreaterThan(first);
+  });
+
+  it('exposes the pane orientation chosen for the container size', async () => {
+    await open();
+    const trace = appStore.getState().trace;
+    if (trace?.kind !== 'subset') throw new Error('no subset trace');
+    // jsdom has no layout, so the view measures the 800 × 500 fallback size.
+    const expected = chooseSplitLayout(trace.source.states, trace.result.states, {
+      width: 800,
+      height: 500,
+    });
+    expect(screen.getByTestId('subset-view')).toHaveAttribute('data-layout', expected);
   });
 
   it('marks the NFA transitions taken on an expand step', async () => {
