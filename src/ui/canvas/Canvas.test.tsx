@@ -983,3 +983,49 @@ describe('Fit and Tidy', () => {
     expect(active()).toBe(before);
   });
 });
+
+describe('several start states', () => {
+  const nfa = () =>
+    fixture({ kind: 'NFA', alphabet: 'a', states: ['q0', 'q1'], start: 'q0', name: 'm' });
+  const arrows = () => screen.queryAllByTestId('start-arrow');
+
+  it('S adds and removes start states on an NFA, with one start arrow each', () => {
+    load(nfa());
+    render(<Canvas />);
+    click(stateEl('q1'), 100, 0);
+    fireEvent.keyDown(canvas(), { key: 's' });
+    expect(active().starts).toEqual(['q0', 'q1']);
+    expect(arrows().map((a) => a.getAttribute('data-state-id'))).toEqual(['q0', 'q1']);
+    fireEvent.keyDown(canvas(), { key: 's' });
+    expect(active().starts).toEqual(['q0']);
+    expect(arrows()).toHaveLength(1);
+  });
+
+  it('S moves the start on a DFA', () => {
+    load({ ...two(), starts: ['q0'] });
+    render(<Canvas />);
+    click(stateEl('q1'), 100, 0);
+    fireEvent.keyDown(canvas(), { key: 's' });
+    expect(active().starts).toEqual(['q1']);
+  });
+
+  it('the state menu reads "Toggle start" on an NFA and "Set as start" on a DFA', async () => {
+    const user = userEvent.setup();
+    load(nfa());
+    const { unmount } = render(<Canvas />);
+    fireEvent.contextMenu(stateEl('q1'), { clientX: 100, clientY: 0 });
+    expect(within(screen.getByRole('menu')).getAllByRole('menuitem')[0]).toHaveTextContent(
+      'Toggle start',
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Toggle start' }));
+    expect(active().starts).toEqual(['q0', 'q1']);
+    unmount();
+
+    load({ ...two(), starts: ['q0'] });
+    render(<Canvas />);
+    fireEvent.contextMenu(stateEl('q0'), { clientX: 0, clientY: 0 });
+    // On the DFA's current start, "Set as start" keeps it (it never clears).
+    await user.click(screen.getByRole('menuitem', { name: 'Set as start' }));
+    expect(active().starts).toEqual(['q0']);
+  });
+});

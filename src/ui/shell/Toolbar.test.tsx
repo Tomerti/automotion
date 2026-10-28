@@ -179,3 +179,26 @@ describe('Toolbar', () => {
     expect(appStore.getState().automata[0]?.states[0]?.x).toBe(5);
   });
 });
+
+describe('Toolbar with several start states', () => {
+  it('disables DFA for an NFA with several start states, and says why', () => {
+    const two = fixture({
+      kind: 'NFA',
+      alphabet: 'a',
+      states: ['q0', 'q1'],
+      starts: ['q0', 'q1'],
+      name: 'two',
+    });
+    resetAppStore({ automata: [two], activeId: two.id });
+    const { unmount } = render(<Toolbar />);
+    expect(btn('DFA')).toBeDisabled();
+    expect(btn('DFA')).toHaveAttribute(
+      'title',
+      "An NFA with several start states can't be a DFA: use Convert to DFA",
+    );
+    unmount();
+    resetAppStore({ automata: [nfa()], activeId: 'n' });
+    render(<Toolbar />);
+    expect(btn('DFA')).toBeEnabled();
+  });
+});
