@@ -1,5 +1,5 @@
 import type { State } from '../../core/model';
-import { ACCEPT_INSET, RING_WIDTH, STATE_RADIUS } from './geometry';
+import { ACCEPT_INSET, labelFontSize, RING_WIDTH, STATE_RADIUS } from './geometry';
 
 export interface StateNodeProps {
   state: State;
@@ -32,7 +32,9 @@ export function StateNode(props: StateNodeProps): React.JSX.Element {
       <circle className="av-state-hit" r={STATE_RADIUS + RING_WIDTH} />
       <circle className="av-state-body" r={STATE_RADIUS} />
       {accepting && <circle className="av-state-ring" r={STATE_RADIUS - ACCEPT_INSET} />}
-      <text className="av-state-label">{state.label}</text>
+      <text className="av-state-label" style={{ fontSize: labelFontSize(state.label) }}>
+        {state.label}
+      </text>
     </g>
   );
 }

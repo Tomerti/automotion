@@ -53,6 +53,50 @@ describe('fitToView', () => {
     expect(10 * vp.zoom + vp.x).toBeCloseTo(400);
     expect(20 * vp.zoom + vp.y).toBeCloseTo(300);
   });
+  it('caps auto-fit zoom at 1.5 by default', () => {
+    const vp = fitToView(
+      [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ],
+      { width: 1600, height: 1000 },
+    );
+    expect(vp.zoom).toBe(1.5);
+    expect(
+      fitToView(
+        [
+          { x: 0, y: 0 },
+          { x: 100, y: 0 },
+        ],
+        { width: 1600, height: 1000 },
+        48,
+        3,
+      ).zoom,
+    ).toBe(3);
+  });
+  it('shrinks for a big spread', () => {
+    expect(
+      fitToView(
+        [
+          { x: 0, y: 0 },
+          { x: 3000, y: 0 },
+        ],
+        size,
+      ).zoom,
+    ).toBeLessThan(1);
+  });
+  it('treats coincident points like a single point', () => {
+    const vp = fitToView(
+      [
+        { x: 10, y: 20 },
+        { x: 10, y: 20 },
+      ],
+      size,
+    );
+    expect(vp.zoom).toBeLessThanOrEqual(1.5);
+    expect(10 * vp.zoom + vp.x).toBeCloseTo(400);
+    expect(20 * vp.zoom + vp.y).toBeCloseTo(300);
+  });
   it('clamps zoom', () => {
     const vp = fitToView(
       [

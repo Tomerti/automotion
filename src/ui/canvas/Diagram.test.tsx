@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, it, expect } from 'vitest';
 import { fixture } from '../../core/testing/fixtures';
 import { Diagram } from './Diagram';
+import { selfLoopGeometry } from './geometry';
 
 const vp = { x: 0, y: 0, zoom: 1 };
 const abDfa = fixture({
@@ -20,6 +21,31 @@ const abDfa = fixture({
 afterEach(cleanup);
 
 describe('Diagram', () => {
+  it('keeps the start state self-loop off the start arrow', () => {
+    const a = fixture({
+      kind: 'DFA',
+      alphabet: 'ab',
+      states: ['q0', 'q1'],
+      start: 'q0',
+      edges: [
+        ['q0', 'a', 'q0'],
+        ['q0', 'b', 'q1'],
+      ],
+    });
+    render(<Diagram automaton={a} viewport={vp} />);
+    const d = screen.getByTestId('edge-q0-q0').querySelector('.av-edge-path')?.getAttribute('d');
+    expect(d).toBe(selfLoopGeometry({ x: 0, y: 0 }, -Math.PI / 2).d);
+  });
+
+  it('shrinks long state labels to fit the circle', () => {
+    const a = fixture({ kind: 'DFA', alphabet: 'a', states: ['{q0,q1,q2}', 'q1'] });
+    render(<Diagram automaton={a} viewport={vp} />);
+    const size = (id: string) =>
+      parseFloat(within(screen.getByTestId(id)).getByText(/q/).style.fontSize);
+    expect(size('state-{q0,q1,q2}')).toBeLessThan(15);
+    expect(size('state-q1')).toBe(15);
+  });
+
   it('draws states, accepting rings, start arrow and edge labels', () => {
     render(<Diagram automaton={abDfa} viewport={vp} />);
     expect(screen.getByTestId('diagram')).toBeInTheDocument();

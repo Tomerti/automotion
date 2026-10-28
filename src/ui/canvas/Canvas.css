@@ -54,5 +54,8 @@
 .av-menu button:hover:not(:disabled),
 .av-menu button:focus-visible {
   background: var(--av-hover);
-  outline: none;
+}
+.av-menu button:focus-visible {
+  outline: 2px solid var(--av-accent);
+  outline-offset: -2px;
 }

@@ -4,7 +4,7 @@ import { STATE_RADIUS, type Point } from './geometry';
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 
-const clampZoom = (z: number): number => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+const clampZoom = (z: number, max = MAX_ZOOM): number => Math.min(max, Math.max(MIN_ZOOM, z));
 
 /** screen = world * zoom + (x, y), measured from the canvas element's top-left corner. */
 export function screenToWorld(p: Point, rect: { left: number; top: number }, vp: Viewport): Point {
@@ -19,11 +19,15 @@ export function zoomAt(vp: Viewport, screenPoint: Point, factor: number): Viewpo
   return { x: screenPoint.x - wx * zoom, y: screenPoint.y - wy * zoom, zoom };
 }
 
-/** Viewport that centers and fits all state centers (padded by the state radius and `padding`). */
+/**
+ * Viewport that centers and fits all state centers (padded by the state radius and `padding`).
+ * Auto-fit zoom is capped at `maxZoom` so small automata are not blown up.
+ */
 export function fitToView(
   points: Point[],
   size: { width: number; height: number },
   padding = 48,
+  maxZoom = 1.5,
 ): Viewport {
   if (points.length === 0) return { x: 0, y: 0, zoom: 1 };
   const xs = points.map((p) => p.x);
@@ -36,7 +40,7 @@ export function fitToView(
   const zoom =
     points.length === 1
       ? 1
-      : clampZoom(Math.min(size.width / (maxX - minX), size.height / (maxY - minY)));
+      : clampZoom(Math.min(size.width / (maxX - minX), size.height / (maxY - minY)), maxZoom);
   return {
     x: size.width / 2 - ((minX + maxX) / 2) * zoom,
     y: size.height / 2 - ((minY + maxY) / 2) * zoom,

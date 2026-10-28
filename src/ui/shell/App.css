@@ -256,6 +256,11 @@
 .av-list li button:focus-visible {
   opacity: 1;
 }
+@media (hover: none) {
+  .av-list li button {
+    opacity: 1;
+  }
+}
 .av-list li button:hover:not(:disabled) {
   color: var(--av-red);
   background: var(--av-surface-raised);

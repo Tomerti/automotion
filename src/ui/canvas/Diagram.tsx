@@ -9,6 +9,7 @@ import {
   selfLoopGeometry,
   startArrowGeometry,
   STATE_RADIUS,
+  type Point,
 } from './geometry';
 
 export interface DiagramHighlight {
@@ -34,6 +35,9 @@ export interface DiagramProps {
   onDoubleClick?: (e: React.MouseEvent<SVGSVGElement>) => void;
   onContextMenu?: (e: React.MouseEvent<SVGSVGElement>) => void;
 }
+
+/** Distance of the virtual neighbor standing in for the start arrow. */
+const START_ARROW_CLEARANCE = 100;
 
 const has = (list: readonly string[] | undefined, id: string): boolean =>
   list !== undefined && list.includes(id);
@@ -88,10 +92,14 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
           const to = stateById.get(t.to) as State;
           let geometry;
           if (t.from === t.to) {
-            const neighbors = automaton.transitions
+            const neighbors: Point[] = automaton.transitions
               .filter((o) => o.from !== o.to && (o.from === t.from || o.to === t.from))
               .map((o) => stateById.get(o.from === t.from ? o.to : o.from))
               .filter((s): s is State => s !== undefined);
+            // The start arrow enters from the left: treat that direction as occupied.
+            if (automaton.start === t.from) {
+              neighbors.push({ x: from.x - START_ARROW_CLEARANCE, y: from.y });
+            }
             geometry = selfLoopGeometry(from, bestLoopAngle(from, neighbors));
           } else {
             geometry = edgeGeometry(from, to, hasEdge(t.to, t.from));

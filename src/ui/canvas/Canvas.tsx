@@ -1,13 +1,17 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { Automaton } from '../../core/model';
 import { validate } from '../../core/validate';
-import { useAppStore } from '../../store/store';
+import { appStore, useAppStore } from '../../store/store';
 import type { Viewport } from '../../store/types';
 import { ContextMenu } from './ContextMenu';
 import { Diagram } from './Diagram';
 import { InlineInput } from './InlineInput';
 import { DEFAULT_VIEWPORT, useCanvasEditing } from './useCanvasEditing';
+import { fitToView } from './viewport';
 import './Canvas.css';
+
+/** Same fallback the trace views use when the element has no measurable size (jsdom). */
+const FALLBACK_SIZE = { width: 800, height: 500 };
 
 export function Canvas(): React.JSX.Element {
   const automata = useAppStore((s) => s.automata);
@@ -36,12 +40,17 @@ export function Canvas(): React.JSX.Element {
       key={automaton.id}
       automaton={automaton}
       viewport={stored ?? DEFAULT_VIEWPORT}
+      hasViewport={stored !== undefined}
     />
   );
 }
 
-function EditableCanvas(props: { automaton: Automaton; viewport: Viewport }): React.JSX.Element {
-  const { automaton, viewport } = props;
+function EditableCanvas(props: {
+  automaton: Automaton;
+  viewport: Viewport;
+  hasViewport: boolean;
+}): React.JSX.Element {
+  const { automaton, viewport, hasViewport } = props;
   const {
     containerRef,
     svgRef,
@@ -53,6 +62,17 @@ function EditableCanvas(props: { automaton: Automaton; viewport: Viewport }): Re
     menu,
     closeMenu,
   } = useCanvasEditing(automaton, viewport);
+
+  // First time this automaton is shown: fit it once; later pans and zooms are kept.
+  useEffect(() => {
+    if (hasViewport || automaton.states.length === 0) return;
+    const el = containerRef.current;
+    const width = el && el.clientWidth > 0 ? el.clientWidth : FALLBACK_SIZE.width;
+    const height = el && el.clientHeight > 0 ? el.clientHeight : FALLBACK_SIZE.height;
+    appStore.getState().setViewport(automaton.id, fitToView(automaton.states, { width, height }));
+    // Intentionally once per mount (the canvas is keyed by automaton id).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const errors = useMemo(() => {
     const issues = validate(automaton).filter((i) => i.severity === 'error');

@@ -28,7 +28,9 @@ const two = (
 ) => fixture({ kind, alphabet, states: ['q0', 'q1'], edges, name: 'm' });
 
 function load(a: Automaton): void {
+  // A stored viewport (the default one) keeps the canvas from fitting on first show.
   resetAppStore({ automata: [a], activeId: a.id });
+  st().setViewport(a.id, { x: 0, y: 0, zoom: 1 });
 }
 
 const diagram = () => screen.getByTestId('diagram');
@@ -54,6 +56,25 @@ function drawEdge(to: [number, number] = [100, 0]): void {
 
 beforeEach(() => resetAppStore());
 afterEach(cleanup);
+
+describe('fit on first show', () => {
+  afterEach(cleanup);
+  it('stores a fitted viewport when none exists', () => {
+    const a = two();
+    resetAppStore({ automata: [a], activeId: a.id });
+    render(<Canvas />);
+    const vp = st().viewports.m;
+    expect(vp).toBeDefined();
+    expect(vp).not.toEqual({ x: 0, y: 0, zoom: 1 });
+    expect(vp).toEqual(fitToView(active().states, { width: 800, height: 500 }));
+  });
+  it('leaves an existing viewport alone', () => {
+    load(two());
+    act(() => st().setViewport('m', { x: 5, y: 6, zoom: 1 }));
+    render(<Canvas />);
+    expect(st().viewports.m).toEqual({ x: 5, y: 6, zoom: 1 });
+  });
+});
 
 describe('Canvas editing', () => {
   it('double-click on empty space adds q0', () => {

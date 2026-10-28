@@ -6,6 +6,7 @@ import {
   bestLoopAngle,
   edgeGeometry,
   hitRing,
+  labelFontSize,
   selfLoopGeometry,
   startArrowGeometry,
 } from './geometry';
@@ -51,6 +52,23 @@ describe('bestLoopAngle', () => {
   it('defaults to up and avoids neighbors', () => {
     expect(bestLoopAngle(O, [])).toBeCloseTo(-Math.PI / 2);
     expect(Math.abs(bestLoopAngle(O, [{ x: 100, y: 0 }]))).toBeCloseTo(Math.PI);
+  });
+});
+
+describe('labelFontSize', () => {
+  it('keeps short labels at the base size and shrinks long ones', () => {
+    expect(labelFontSize('q0')).toBe(15);
+    expect(labelFontSize('{q0,q1,q2}')).toBeLessThan(15);
+    const sizes = ['a', 'abcd', 'abcdef', 'abcdefghi', 'abcdefghijklmnop'].map(labelFontSize);
+    for (let i = 1; i < sizes.length; i++) {
+      expect(sizes[i] ?? 0).toBeLessThanOrEqual(sizes[i - 1] ?? 0);
+    }
+  });
+  it('fits the text inside 85% of the diameter', () => {
+    const label = '{q0,q1,q2}';
+    expect(labelFontSize(label) * 0.6 * label.length).toBeLessThanOrEqual(
+      2 * STATE_RADIUS * 0.85 + 1e-9,
+    );
   });
 });
 
