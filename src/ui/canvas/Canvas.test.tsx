@@ -7,9 +7,9 @@ import { moveState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
 import { layoutAutomaton } from '../../layout/layout';
 import { appStore, resetAppStore } from '../../store/store';
-import { Toolbar } from '../shell/Toolbar';
 import { toastStore } from '../shell/toastStore';
 import { Canvas } from './Canvas';
+import { fitActive, tidyActive } from './useCanvasEditing';
 import { fitToView } from './viewport';
 
 // The real layout by default; Tidy tests make it fail or hold it at the await.
@@ -46,22 +46,36 @@ const diagram = () => screen.getByTestId('diagram');
 const canvas = () => screen.getByTestId('canvas');
 const stateEl = (label: string) => screen.getByTestId(`state-${label}`);
 
-const at = (x: number, y: number) => ({ clientX: x, clientY: y, pointerId: 1, button: 0 });
+type Mods = { shiftKey?: boolean; altKey?: boolean };
+const at = (x: number, y: number, mods: Mods = {}) => ({
+  clientX: x,
+  clientY: y,
+  pointerId: 1,
+  button: 0,
+  ...mods,
+});
 
 /** Press on `target` at (x, y), optionally move through `path`, release at the last point. */
-function drag(target: Element, from: [number, number], path: [number, number][] = []): void {
-  fireEvent.pointerDown(target, at(...from));
-  for (const p of path) fireEvent.pointerMove(diagram(), at(...p));
+function drag(
+  target: Element,
+  from: [number, number],
+  path: [number, number][] = [],
+  mods: Mods = {},
+): void {
+  fireEvent.pointerDown(target, at(...from, mods));
+  for (const p of path) fireEvent.pointerMove(diagram(), at(...p, mods));
   const end = path[path.length - 1] ?? from;
-  fireEvent.pointerUp(diagram(), at(...end));
+  fireEvent.pointerUp(diagram(), at(...end, mods));
 }
 
 const click = (target: Element, x: number, y: number) => drag(target, [x, y]);
 
-/** Drag from q0's ring (radius 28 to its right) to the center of the state at `to`. */
+/** Shift-drag from q0's center to the center of the state at `to`. */
 function drawEdge(to: [number, number] = [100, 0]): void {
-  drag(stateEl('q0'), [28, 0], [[60, 0], to]);
+  drag(stateEl('q0'), [0, 0], [[40, 0], to], { shiftKey: true });
 }
+
+const toasts = () => toastStore.getState().toasts;
 
 beforeEach(() => resetAppStore());
 afterEach(cleanup);
@@ -86,12 +100,22 @@ describe('fit on first show', () => {
 });
 
 describe('Canvas editing', () => {
-  it('double-click on empty space adds q0', () => {
+  it('double-click on empty space adds q_0', () => {
     load(fixture({ kind: 'DFA', alphabet: 'a', states: [], name: 'm' }));
     render(<Canvas />);
     fireEvent.doubleClick(diagram(), { clientX: 200, clientY: 150 });
-    expect(active().states).toEqual([expect.objectContaining({ label: 'q0', x: 200, y: 150 })]);
-    expect(stateEl('q0')).toBeInTheDocument();
+    expect(active().states).toEqual([expect.objectContaining({ label: 'q_0', x: 200, y: 150 })]);
+    expect(stateEl('q_0')).toBeInTheDocument();
+  });
+
+  it('shows a hint while the automaton has no states', () => {
+    load(fixture({ kind: 'DFA', alphabet: 'a', states: [], name: 'm' }));
+    render(<Canvas />);
+    expect(screen.getByTestId('canvas-hint')).toHaveTextContent(
+      'Double-click to add a state · Press ? for controls',
+    );
+    fireEvent.doubleClick(diagram(), { clientX: 200, clientY: 150 });
+    expect(screen.queryByTestId('canvas-hint')).toBeNull();
   });
 
   it('clicking a state selects it; clicking the background clears the selection', () => {
@@ -104,7 +128,22 @@ describe('Canvas editing', () => {
     expect(st().selection).toEqual({ states: [], transitions: [] });
   });
 
-  it('S and A keys set start and accepting on the selected state', () => {
+  it('Enter toggles accepting and Space toggles start on the selected state', () => {
+    load(two());
+    render(<Canvas />);
+    click(stateEl('q1'), 100, 0);
+    fireEvent.keyDown(canvas(), { key: 'Enter' });
+    expect(active().accepting).toEqual(['q1']);
+    fireEvent.keyDown(canvas(), { key: 'Enter' });
+    expect(active().accepting).toEqual([]);
+    // Default prevented: the page does not scroll.
+    expect(fireEvent.keyDown(canvas(), { key: ' ' })).toBe(false);
+    expect(active().start).toBe('q1');
+    fireEvent.keyDown(canvas(), { key: ' ' });
+    expect(active().start).toBeNull();
+  });
+
+  it('S and A remain aliases for start and accepting', () => {
     load(two());
     render(<Canvas />);
     click(stateEl('q1'), 100, 0);
@@ -114,13 +153,15 @@ describe('Canvas editing', () => {
     expect(active().accepting).toEqual(['q1']);
     fireEvent.keyDown(canvas(), { key: 'A' });
     expect(active().accepting).toEqual([]);
+    fireEvent.keyDown(canvas(), { key: 'S' });
+    expect(active().start).toBeNull();
   });
 
   it('S and A ignore a selected state that undo removed', () => {
     load(fixture({ kind: 'DFA', alphabet: 'a', states: [], name: 'm' }));
     render(<Canvas />);
     fireEvent.doubleClick(diagram(), { clientX: 10, clientY: 10 });
-    click(stateEl('q0'), 10, 10);
+    click(stateEl('q_0'), 10, 10);
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
     fireEvent.keyDown(canvas(), { key: 's' });
     fireEvent.keyDown(canvas(), { key: 'a' });
@@ -148,12 +189,12 @@ describe('Canvas editing', () => {
     expect(active().states).toHaveLength(2);
   });
 
-  it('dragging from the ring to another state opens the symbol input; "a, b" creates an edge', async () => {
+  it('Shift-dragging from a state to another opens the symbol input; "a, b" creates an edge', async () => {
     const user = userEvent.setup();
     load(two());
     render(<Canvas />);
-    fireEvent.pointerDown(stateEl('q0'), at(28, 0));
-    fireEvent.pointerMove(diagram(), at(60, 10));
+    fireEvent.pointerDown(stateEl('q0'), at(0, 0, { shiftKey: true }));
+    fireEvent.pointerMove(diagram(), at(60, 10, { shiftKey: true }));
     expect(screen.getByTestId('rubber-band')).toBeInTheDocument();
     fireEvent.pointerUp(diagram(), at(100, 0));
     expect(screen.queryByTestId('rubber-band')).toBeNull();
@@ -170,17 +211,18 @@ describe('Canvas editing', () => {
     ]);
   });
 
-  it('dragging from the ring back onto the same state draws a self-loop', async () => {
+  it('Shift-dragging from a state back onto itself draws a self-loop', async () => {
     const user = userEvent.setup();
     load(two());
     render(<Canvas />);
     drag(
       stateEl('q0'),
-      [28, 0],
+      [0, 0],
       [
         [60, -40],
         [5, 5],
       ],
+      { shiftKey: true },
     );
     await user.type(screen.getByTestId('symbol-input'), 'a{Enter}');
     expect(active().transitions).toEqual([
@@ -196,17 +238,17 @@ describe('Canvas editing', () => {
     expect(screen.queryByTestId('rubber-band')).toBeNull();
   });
 
-  it('a new symbol typed on an edge is added to the alphabet', async () => {
+  it('the alphabet follows the symbols on the edges, in one undo step', async () => {
     const user = userEvent.setup();
-    load(two('DFA', 'a'));
+    load(two('DFA', 'a', [['q1', 'a', 'q0']]));
     render(<Canvas />);
     drawEdge();
     await user.type(screen.getByTestId('symbol-input'), 'c{Enter}');
     expect(active().alphabet).toEqual(['a', 'c']);
-    expect(active().transitions[0]?.symbols).toEqual(['c']);
+    expect(active().transitions[1]?.symbols).toEqual(['c']);
     act(() => st().undo());
     expect(active().alphabet).toEqual(['a']);
-    expect(active().transitions).toEqual([]);
+    expect(active().transitions).toHaveLength(1);
   });
 
   it('a new edge onto an existing one merges the symbols', async () => {
@@ -231,14 +273,50 @@ describe('Canvas editing', () => {
     expect(active().transitions).toEqual([]);
   });
 
-  it('ε typed on a DFA edge shows an error', async () => {
+  it('typing \\epsilon turns into ε as it is typed', async () => {
     const user = userEvent.setup();
+    load(two('NFA'));
+    render(<Canvas />);
+    drawEdge();
+    const input = screen.getByTestId('symbol-input');
+    await user.type(input, 'a, \\epsilo');
+    expect(input).toHaveValue('a, \\epsilo');
+    await user.type(input, 'n');
+    expect(input).toHaveValue('a, ε');
+    await user.type(input, ', b{Enter}');
+    expect(active().transitions[0]?.symbols).toEqual(['a', 'ε', 'b']);
+  });
+
+  it('ε on a DFA edge switches the automaton to an NFA with a toast', async () => {
+    const user = userEvent.setup();
+    toastStore.setState({ toasts: [] });
     load(two());
     render(<Canvas />);
     drawEdge();
     await user.type(screen.getByTestId('symbol-input'), 'eps{Enter}');
-    expect(screen.getByRole('alert')).toHaveTextContent("A DFA can't have ε-transitions");
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(active().kind).toBe('NFA');
+    expect(active().transitions[0]?.symbols).toEqual(['ε']);
+    expect(toasts()).toEqual([
+      expect.objectContaining({
+        message: 'Switched to NFA: ε-transitions need an NFA',
+        kind: 'info',
+      }),
+    ]);
+    act(() => st().undo());
+    expect(active().kind).toBe('DFA');
     expect(active().transitions).toEqual([]);
+  });
+
+  it('ε on an NFA edge switches nothing and shows no toast', async () => {
+    const user = userEvent.setup();
+    toastStore.setState({ toasts: [] });
+    load(two('NFA'));
+    render(<Canvas />);
+    drawEdge();
+    await user.type(screen.getByTestId('symbol-input'), 'ε{Enter}');
+    expect(active().transitions[0]?.symbols).toEqual(['ε']);
+    expect(toasts()).toEqual([]);
   });
 
   it('an empty symbol list or Escape cancels the new edge', async () => {
@@ -270,6 +348,47 @@ describe('Canvas editing', () => {
     await user.type(input, 'start{Enter}');
     expect(active().states[0]?.label).toBe('start');
     expect(screen.queryByTestId('rename-input')).toBeNull();
+  });
+
+  it('the rename input sits on the state in its label font and hides the drawn label', () => {
+    load(two());
+    st().setViewport('m', { x: 10, y: 20, zoom: 2 });
+    render(<Canvas />);
+    fireEvent.doubleClick(stateEl('q1'), { clientX: 210, clientY: 20 });
+    const box = screen.getByTestId('rename-input').parentElement as HTMLElement;
+    expect(box).toHaveClass('av-inline');
+    expect(box.style).toMatchObject({ left: '210px', top: '20px', fontSize: '30px' });
+    expect(stateEl('q1')).toHaveAttribute('data-editing', 'true');
+    expect(stateEl('q0')).not.toHaveAttribute('data-editing');
+  });
+
+  it('the rename input commits on blur; a duplicate name on blur is dropped', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(<Canvas />);
+    fireEvent.doubleClick(stateEl('q0'), { clientX: 0, clientY: 0 });
+    await user.type(screen.getByTestId('rename-input'), 'x');
+    act(() => screen.getByTestId('rename-input').blur());
+    expect(screen.queryByTestId('rename-input')).toBeNull();
+    expect(active().states[0]?.label).toBe('q0x');
+
+    fireEvent.doubleClick(stateEl('q0x'), { clientX: 0, clientY: 0 });
+    const input = screen.getByTestId('rename-input');
+    await user.clear(input);
+    await user.type(input, 'q1');
+    act(() => input.blur());
+    expect(screen.queryByTestId('rename-input')).toBeNull();
+    expect(active().states.map((s) => s.label)).toEqual(['q0x', 'q1']);
+  });
+
+  it('a new edge typed and then left by blur is created', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(<Canvas />);
+    drawEdge();
+    await user.type(screen.getByTestId('symbol-input'), 'b');
+    act(() => screen.getByTestId('symbol-input').blur());
+    expect(active().transitions).toEqual([expect.objectContaining({ symbols: ['b'] })]);
   });
 
   it('double-click an edge label replaces its symbols; empty deletes the edge', async () => {
@@ -318,7 +437,7 @@ describe('Canvas editing', () => {
     expect(active().states).toHaveLength(2);
   });
 
-  it('the state context menu sets start, toggles accepting and deletes', async () => {
+  it('the state context menu sets start, toggles accepting, renames and deletes', async () => {
     const user = userEvent.setup();
     load(two());
     render(<Canvas />);
@@ -327,7 +446,12 @@ describe('Canvas editing', () => {
       return screen.getByRole('menu');
     };
     const items = within(menuOn('q1')).getAllByRole('menuitem');
-    expect(items.map((i) => i.textContent)).toEqual(['Set as start', 'Toggle accepting', 'Delete']);
+    expect(items.map((i) => i.textContent)).toEqual([
+      'Set as start',
+      'Toggle accepting',
+      'Rename',
+      'Delete',
+    ]);
     await user.click(screen.getByRole('menuitem', { name: 'Set as start' }));
     expect(active().start).toBe('q1');
     expect(screen.queryByRole('menu')).toBeNull();
@@ -335,8 +459,35 @@ describe('Canvas editing', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Toggle accepting' }));
     expect(active().accepting).toEqual(['q1']);
     menuOn('q1');
+    await user.click(screen.getByRole('menuitem', { name: 'Rename' }));
+    const input = screen.getByTestId('rename-input');
+    expect(input).toHaveFocus();
+    await user.type(input, 'x{Enter}');
+    expect(active().states[1]?.label).toBe('q1x');
+    menuOn('q1x');
     await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
     expect(active().states.map((s) => s.id)).toEqual(['q0']);
+  });
+
+  it('Straighten in the edge menu straightens a bent edge and resets a self-loop', async () => {
+    const user = userEvent.setup();
+    const a = two('DFA', 'ab', [
+      ['q0', 'a', 'q1'],
+      ['q1', 'b', 'q1'],
+    ]);
+    load({
+      ...a,
+      transitions: a.transitions.map((t) =>
+        t.from === t.to ? { ...t, loopAngle: 1 } : { ...t, bend: 30 },
+      ),
+    });
+    render(<Canvas />);
+    fireEvent.contextMenu(screen.getByTestId('edge-q0-q1'), { clientX: 50, clientY: -30 });
+    await user.click(screen.getByRole('menuitem', { name: 'Straighten' }));
+    expect(active().transitions[0]?.bend).toBe(0);
+    fireEvent.contextMenu(screen.getByTestId('edge-q1-q1'), { clientX: 100, clientY: -60 });
+    await user.click(screen.getByRole('menuitem', { name: 'Straighten' }));
+    expect(active().transitions[1]).not.toHaveProperty('loopAngle');
   });
 
   it('the edge context menu edits symbols and deletes; Escape and outside clicks close it', async () => {
@@ -349,7 +500,7 @@ describe('Canvas editing', () => {
       within(screen.getByRole('menu'))
         .getAllByRole('menuitem')
         .map((i) => i.textContent),
-    ).toEqual(['Edit symbols', 'Delete']);
+    ).toEqual(['Edit symbols', 'Straighten', 'Delete']);
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).toBeNull();
 
@@ -416,7 +567,7 @@ describe('Canvas editing', () => {
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
     fireEvent.keyDown(window, { key: 'y', ctrlKey: true });
     expect(active().states).toHaveLength(1);
-    fireEvent.doubleClick(stateEl('q0'), { clientX: 10, clientY: 10 });
+    fireEvent.doubleClick(stateEl('q_0'), { clientX: 10, clientY: 10 });
     fireEvent.keyDown(screen.getByTestId('rename-input'), { key: 'z', ctrlKey: true });
     expect(active().states).toHaveLength(1);
   });
@@ -501,14 +652,154 @@ describe('Canvas editing', () => {
     expect(st().viewports.m?.zoom).toBeCloseTo(1);
   });
 
-  it('Space+drag on a state pans instead of moving it', () => {
+  it('a plain drag from the rim of a state moves it (no draw gesture, no rubber band)', () => {
     load(two());
     render(<Canvas />);
-    fireEvent.keyDown(canvas(), { key: ' ' });
-    drag(stateEl('q1'), [100, 0], [[150, 0]]);
-    fireEvent.keyUp(canvas(), { key: ' ' });
-    expect(active().states[1]).toMatchObject({ x: 100, y: 0 });
-    expect(st().viewports.m).toEqual({ x: 50, y: 0, zoom: 1 });
+    fireEvent.pointerDown(stateEl('q0'), at(28, 0));
+    fireEvent.pointerMove(diagram(), at(60, 40));
+    expect(screen.queryByTestId('rubber-band')).toBeNull();
+    fireEvent.pointerUp(diagram(), at(60, 40));
+    expect(active().states[0]).toMatchObject({ x: 32, y: 40 });
+    expect(screen.queryByTestId('symbol-input')).toBeNull();
+    expect(active().transitions).toEqual([]);
+  });
+
+  it('holding Space and dragging a state still moves it (no Space panning)', () => {
+    load(two());
+    render(<Canvas />);
+    fireEvent.keyDown(window, { key: ' ' });
+    drag(stateEl('q1'), [100, 0], [[150, 30]]);
+    fireEvent.keyUp(window, { key: ' ' });
+    expect(active().states[1]).toMatchObject({ x: 150, y: 30 });
+    expect(st().viewports.m).toEqual({ x: 0, y: 0, zoom: 1 });
+  });
+
+  it('dragging an edge bends it through the pointer, in one undo step', () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q1']]));
+    render(<Canvas />);
+    const edge = screen.getByTestId('edge-q0-q1');
+    fireEvent.pointerDown(edge, at(50, 0));
+    fireEvent.pointerMove(diagram(), at(50, -20));
+    fireEvent.pointerMove(diagram(), at(60, -40));
+    // Positive bends go left of q0 → q1, i.e. up on screen.
+    expect(active().transitions[0]?.bend).toBeCloseTo(40);
+    fireEvent.pointerUp(diagram(), at(60, -40));
+    expect(st().selection).toEqual({ states: [], transitions: ['q0->q1'] });
+    expect(st().history.m?.past).toHaveLength(1);
+    act(() => st().undo());
+    expect(active().transitions[0]).not.toHaveProperty('bend');
+  });
+
+  it('a dragged edge snaps straight within 6 screen px', () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q1']]));
+    st().setViewport('m', { x: 0, y: 0, zoom: 2 });
+    render(<Canvas />);
+    // World q1 is at screen (200, 0) now; the press grabs the edge where it is (bend 0).
+    drag(
+      screen.getByTestId('edge-q0-q1'),
+      [100, 0],
+      [
+        [100, 40],
+        [100, 11],
+      ],
+    );
+    expect(active().transitions[0]?.bend).toBeCloseTo(-5.5);
+    drag(
+      screen.getByTestId('edge-q0-q1'),
+      [100, 11],
+      [
+        [100, 40],
+        [100, 2],
+      ],
+    );
+    expect(active().transitions[0]?.bend).toBe(0);
+  });
+
+  it('dragging an edge keeps the grab point: an already bent edge does not jump', () => {
+    const a = two('DFA', 'a', [['q0', 'a', 'q1']]);
+    load({ ...a, transitions: a.transitions.map((t) => ({ ...t, bend: 30 })) });
+    render(<Canvas />);
+    // Grab the label (14 px beyond the apex) and move it up by 10.
+    drag(
+      screen.getByTestId('edge-q0-q1'),
+      [50, -44],
+      [
+        [50, -50],
+        [50, -54],
+      ],
+    );
+    expect(active().transitions[0]?.bend).toBeCloseTo(40);
+  });
+
+  it('dragging a self-loop rotates it toward the pointer', () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q0']]));
+    render(<Canvas />);
+    drag(
+      screen.getByTestId('edge-q0-q0'),
+      [0, -60],
+      [
+        [30, -60],
+        [80, 0],
+      ],
+    );
+    expect(active().transitions[0]?.loopAngle).toBeCloseTo(0);
+    drag(
+      screen.getByTestId('edge-q0-q0'),
+      [60, 0],
+      [
+        [60, 30],
+        [0, 70],
+      ],
+    );
+    expect(active().transitions[0]?.loopAngle).toBeCloseTo(Math.PI / 2);
+    expect(st().history.m?.past).toHaveLength(2);
+  });
+
+  it('a dragged state snaps to another state’s x and y with dashed guides', () => {
+    load(two());
+    render(<Canvas />);
+    fireEvent.pointerDown(stateEl('q1'), at(100, 0));
+    fireEvent.pointerMove(diagram(), at(205, 6));
+    expect(active().states[1]).toMatchObject({ x: 205, y: 0 });
+    const guides = () => screen.queryAllByTestId('snap-guide');
+    expect(guides()).toHaveLength(1);
+    expect(guides()[0]).toHaveClass('av-snap-guide');
+    // Horizontal, spanning both states.
+    expect(guides()[0]).toHaveAttribute('y1', '0');
+    expect(guides()[0]).toHaveAttribute('y2', '0');
+    expect(Number(guides()[0]?.getAttribute('x1'))).toBeLessThan(0);
+    expect(Number(guides()[0]?.getAttribute('x2'))).toBeGreaterThan(205);
+
+    fireEvent.pointerMove(diagram(), at(-7, 100));
+    expect(active().states[1]).toMatchObject({ x: 0, y: 100 });
+    expect(guides()).toHaveLength(1);
+    expect(guides()[0]).toHaveAttribute('x1', '0');
+
+    fireEvent.pointerMove(diagram(), at(5, -4));
+    expect(active().states[1]).toMatchObject({ x: 0, y: 0 });
+    expect(guides()).toHaveLength(2);
+
+    fireEvent.pointerMove(diagram(), at(150, 50));
+    expect(guides()).toHaveLength(0);
+    fireEvent.pointerMove(diagram(), at(205, 6));
+    fireEvent.pointerUp(diagram(), at(205, 6));
+    expect(guides()).toHaveLength(0);
+  });
+
+  it('snapping works in screen px under zoom, and Alt turns it off', () => {
+    load(two());
+    st().setViewport('m', { x: 0, y: 0, zoom: 2 });
+    render(<Canvas />);
+    // 6 world px off q0's y is 12 screen px at zoom 2, too far to snap; 3 world px (6 screen) snaps.
+    drag(stateEl('q1'), [200, 0], [[400, 12]]);
+    expect(active().states[1]).toMatchObject({ x: 200, y: 6 });
+    drag(stateEl('q1'), [400, 12], [[400, 6]]);
+    expect(active().states[1]).toMatchObject({ x: 200, y: 0 });
+    fireEvent.pointerDown(stateEl('q1'), at(400, 0));
+    fireEvent.pointerMove(diagram(), at(400, 6, { altKey: true }));
+    expect(active().states[1]).toMatchObject({ x: 200, y: 3 });
+    expect(screen.queryAllByTestId('snap-guide')).toHaveLength(0);
+    fireEvent.pointerUp(diagram(), at(400, 6, { altKey: true }));
   });
 
   it('gestures use world coordinates under a panned and zoomed viewport', () => {
@@ -555,47 +846,29 @@ function sizeCanvas(width: number, height: number): void {
 }
 
 describe('Fit and Tidy', () => {
-  it('Fit fits the states into the canvas', async () => {
-    const user = userEvent.setup();
+  it('Fit fits the states into the canvas', () => {
     load(two());
-    render(
-      <>
-        <Toolbar />
-        <Canvas />
-      </>,
-    );
+    render(<Canvas />);
     sizeCanvas(640, 480);
-    await user.click(screen.getByRole('button', { name: 'Fit' }));
+    act(() => fitActive());
     expect(st().viewports.m).toEqual(fitToView(active().states, { width: 640, height: 480 }));
   });
 
-  it('Fit does nothing while the canvas has no size', async () => {
-    const user = userEvent.setup();
+  it('Fit does nothing while the canvas has no size', () => {
     load(two());
-    render(
-      <>
-        <Toolbar />
-        <Canvas />
-      </>,
-    );
-    await user.click(screen.getByRole('button', { name: 'Fit' }));
+    render(<Canvas />);
+    act(() => fitActive());
     expect(st().viewports.m).toEqual({ x: 0, y: 0, zoom: 1 });
   });
 
   it('Tidy lays the states out and undoes in one step', async () => {
-    const user = userEvent.setup();
     const a = two('DFA', 'a', [['q1', 'a', 'q0']]);
     load({ ...a, start: 'q1' });
-    render(
-      <>
-        <Toolbar />
-        <Canvas />
-      </>,
-    );
+    render(<Canvas />);
     sizeCanvas(640, 480);
     const expected = (await layoutAutomaton(active())).states;
-    await user.click(screen.getByRole('button', { name: 'Tidy' }));
-    await waitFor(() => expect(active().states).toEqual(expected));
+    await act(() => tidyActive());
+    expect(active().states).toEqual(expected);
     expect(st().history.m?.past).toHaveLength(1);
     expect(st().viewports.m).toEqual(fitToView(expected, { width: 640, height: 480 }));
     act(() => st().undo());
@@ -606,36 +879,22 @@ describe('Fit and Tidy', () => {
   });
 
   it('Tidy reports a layout failure and leaves no undo entry', async () => {
-    const user = userEvent.setup();
     toastStore.setState({ toasts: [] });
     load(two('DFA', 'a', [['q0', 'a', 'q1']]));
-    render(
-      <>
-        <Toolbar />
-        <Canvas />
-      </>,
-    );
+    render(<Canvas />);
     const before = active();
     layoutMock.mockRejectedValueOnce(new Error('elk exploded'));
-    await user.click(screen.getByRole('button', { name: 'Tidy' }));
-    await waitFor(() => expect(toastStore.getState().toasts).toHaveLength(1));
-    expect(toastStore.getState().toasts[0]).toMatchObject({
-      message: 'Could not lay out the automaton',
-      kind: 'error',
-    });
+    await act(() => tidyActive());
+    expect(toasts()).toEqual([
+      expect.objectContaining({ message: 'Could not lay out the automaton', kind: 'error' }),
+    ]);
     expect(active()).toBe(before);
     expect(st().history.m?.past ?? []).toHaveLength(0);
   });
 
   it('Tidy drops its layout when the automaton changes during it', async () => {
-    const user = userEvent.setup();
     load(two('DFA', 'a', [['q0', 'a', 'q1']]));
-    render(
-      <>
-        <Toolbar />
-        <Canvas />
-      </>,
-    );
+    render(<Canvas />);
     let release = (): void => {};
     const gate = new Promise<void>((r) => {
       release = r;
@@ -645,12 +904,15 @@ describe('Fit and Tidy', () => {
       await gate;
       return { ...a, states: a.states.map((s) => ({ ...s, x: 999, y: 999 })) };
     });
-    await user.click(screen.getByRole('button', { name: 'Tidy' }));
+    let done: Promise<void> = Promise.resolve();
+    act(() => {
+      done = tidyActive();
+    });
     await waitFor(() => expect(layoutMock).toHaveBeenCalled());
     act(() => st().edit((a) => moveState(a, 'q0', { x: 7, y: 7 })));
     await act(async () => {
       release();
-      await new Promise((r) => setTimeout(r, 0));
+      await done;
     });
     expect(active().states.map((s) => [s.x, s.y])).toEqual([
       [7, 7],
@@ -659,11 +921,14 @@ describe('Fit and Tidy', () => {
     expect(st().history.m?.past).toHaveLength(1);
   });
 
-  it('Tidy and Fit are disabled while a trace is open', () => {
+  it('Tidy does nothing while a trace is open', async () => {
     load({ ...two('DFA', 'a', [['q0', 'a', 'q1']]), start: 'q0' });
     act(() => st().openTrace(runWord(active(), 'a')));
-    render(<Toolbar />);
-    expect(screen.getByRole('button', { name: 'Tidy' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Fit' })).toBeDisabled();
+    render(<Canvas />);
+    const before = active();
+    layoutMock.mockClear();
+    await act(() => tidyActive());
+    expect(layoutMock).not.toHaveBeenCalled();
+    expect(active()).toBe(before);
   });
 });

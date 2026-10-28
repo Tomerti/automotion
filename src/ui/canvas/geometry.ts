@@ -1,8 +1,11 @@
+import { labelDisplayText } from '../../core/label';
+
 export type Point = { x: number; y: number };
 
 export const STATE_RADIUS = 24;
 export const ACCEPT_INSET = 4;
-export const RING_WIDTH = 8;
+/** Margin around a state's circle that still counts as hitting it. */
+export const HIT_MARGIN = 8;
 export const CURVE_OFFSET = 32;
 export const LOOP_SIZE = 28;
 
@@ -142,9 +145,11 @@ export function bestLoopAngle(center: Point, neighbors: Point[]): number {
 /**
  * State label font size: the base size, shrunk so long labels stay inside the circle, but never
  * below LABEL_MIN_FONT_SIZE; longer labels overflow the circle (the label halo keeps them legible).
+ * Sized by the label as displayed, so `q_{12}` counts as three characters.
  */
 export function labelFontSize(label: string): number {
-  const fit = (2 * STATE_RADIUS * LABEL_FILL) / (LABEL_CHAR_WIDTH * Math.max(label.length, 1));
+  const chars = Array.from(labelDisplayText(label)).length;
+  const fit = (2 * STATE_RADIUS * LABEL_FILL) / (LABEL_CHAR_WIDTH * Math.max(chars, 1));
   return Math.max(LABEL_MIN_FONT_SIZE, Math.min(LABEL_FONT_SIZE, fit));
 }
 
@@ -156,10 +161,7 @@ export function startArrowGeometry(center: Point): { d: string } {
   };
 }
 
-/** body: within the circle; ring: the outer band used to start drawing a transition. */
-export function hitRing(center: Point, p: Point): 'body' | 'ring' | null {
-  const d = Math.hypot(p.x - center.x, p.y - center.y);
-  if (d <= STATE_RADIUS) return 'body';
-  if (d <= STATE_RADIUS + RING_WIDTH) return 'ring';
-  return null;
+/** Whether `p` hits the state at `center`: its circle plus HIT_MARGIN. */
+export function hitState(center: Point, p: Point): boolean {
+  return Math.hypot(p.x - center.x, p.y - center.y) <= STATE_RADIUS + HIT_MARGIN;
 }

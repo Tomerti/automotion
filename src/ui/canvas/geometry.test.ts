@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   CURVE_OFFSET,
-  RING_WIDTH,
+  HIT_MARGIN,
   STATE_RADIUS,
   bestLoopAngle,
   edgeGeometry,
-  hitRing,
+  hitState,
   labelFontSize,
   selfLoopGeometry,
   startArrowGeometry,
@@ -75,6 +75,10 @@ describe('labelFontSize', () => {
     expect(labelFontSize('{q0,q1,q2}')).toBe(10);
     for (let n = 1; n <= 40; n++) expect(labelFontSize('x'.repeat(n))).toBeGreaterThanOrEqual(10);
   });
+  it('sizes by the displayed text: subscript markup does not count', () => {
+    expect(labelFontSize('q_{1234}')).toBe(labelFontSize('q1234'));
+    expect(labelFontSize('q_0')).toBe(15);
+  });
 });
 
 describe('startArrowGeometry', () => {
@@ -84,11 +88,10 @@ describe('startArrowGeometry', () => {
   });
 });
 
-describe('hitRing', () => {
-  it('distinguishes body and ring', () => {
-    expect(hitRing(O, { x: STATE_RADIUS, y: 0 })).toBe('body');
-    expect(hitRing(O, { x: STATE_RADIUS + 1, y: 0 })).toBe('ring');
-    expect(hitRing(O, { x: STATE_RADIUS + RING_WIDTH, y: 0 })).toBe('ring');
-    expect(hitRing(O, { x: STATE_RADIUS + RING_WIDTH + 1, y: 0 })).toBeNull();
+describe('hitState', () => {
+  it('hits the circle and a margin around it', () => {
+    expect(hitState(O, { x: STATE_RADIUS, y: 0 })).toBe(true);
+    expect(hitState(O, { x: 0, y: STATE_RADIUS + HIT_MARGIN })).toBe(true);
+    expect(hitState(O, { x: STATE_RADIUS + HIT_MARGIN + 1, y: 0 })).toBe(false);
   });
 });

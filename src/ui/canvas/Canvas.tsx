@@ -30,7 +30,9 @@ export function Canvas(): React.JSX.Element {
           <circle cx="104" cy="32" r="12" strokeDasharray="3 5" />
         </svg>
         <p className="av-empty-title">Create an automaton to get started</p>
-        <p className="av-empty-hint">Start with New DFA or New NFA, or import a file.</p>
+        <p className="av-empty-hint">
+          Use the automaton menu in the top bar: New DFA, New NFA, Load examples or Import.
+        </p>
       </div>
     );
   }
@@ -58,7 +60,9 @@ function EditableCanvas(props: {
     svgProps,
     selection,
     rubberBand,
+    guides,
     inline,
+    editing,
     menu,
     closeMenu,
   } = useCanvasEditing(automaton, viewport);
@@ -87,8 +91,9 @@ function EditableCanvas(props: {
       ...errors,
       selectedStates: selection.states,
       selectedTransitions: selection.transitions,
+      editing,
     }),
-    [errors, selection],
+    [errors, selection, editing],
   );
 
   return (
@@ -106,6 +111,17 @@ function EditableCanvas(props: {
         svgRef={svgRef}
         {...svgProps}
       >
+        {guides.map((g) => (
+          <line
+            key={g.x1 === g.x2 ? 'vertical' : 'horizontal'}
+            className="av-snap-guide"
+            data-testid="snap-guide"
+            x1={g.x1}
+            y1={g.y1}
+            x2={g.x2}
+            y2={g.y2}
+          />
+        ))}
         {rubberBand && (
           <line
             className="av-rubber-band"
@@ -117,6 +133,11 @@ function EditableCanvas(props: {
           />
         )}
       </Diagram>
+      {automaton.states.length === 0 && (
+        <div className="av-canvas-hint" data-testid="canvas-hint">
+          Double-click to add a state · Press ? for controls
+        </div>
+      )}
       {inline && (
         <InlineInput
           key={inline.key}
@@ -124,6 +145,8 @@ function EditableCanvas(props: {
           label={inline.label}
           initial={inline.initial}
           at={inline.at}
+          fontSize={inline.fontSize}
+          normalize={inline.normalize}
           onSubmit={inline.onSubmit}
           onCancel={inline.onCancel}
           onBlur={inline.onBlur}
