@@ -35,6 +35,15 @@ Nothing in progress: pick the next task from the list below.
 - [x] Each entry has a ⋯ menu (Rename, Export JSON, Delete); double-click renames; Import / Export all at the bottom
 - [x] The top-bar automaton dropdown is gone; the name there still renames the open automaton
 
+### Multiple start states
+
+- [x] An NFA can have several start states (accepting when a run from any of them does); a DFA has one
+- [x] S and "Toggle start" add or remove a start state on an NFA; on a DFA S moves it and "Set as start" sets it
+- [x] One start arrow per start state, on the canvas, in thumbnails and in exports
+- [x] The DFA toggle is disabled while an NFA has several start states (use Convert to DFA)
+- [x] Convert to DFA opens with a step that adds a single start state q_s with ε-transitions to the old ones
+- [x] File format version 2 (`starts`); version-1 files and saved work migrate on load
+
 ### v2 UX overhaul and polish (merged in PRs #5 and #6)
 
 - [x] Double-click adds a state; borderless in-place rename and symbol editing (commit on blur)
