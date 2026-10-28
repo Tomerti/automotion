@@ -1,9 +1,12 @@
 import type { Automaton } from '../core/model';
 import { emptyAutomaton } from '../core/model';
 import { parseFile, serialize } from './fileFormat';
+import { isUntouchedOldExample } from './oldExamples';
 
 export const STORAGE_KEY = 'automaton-vis:v1';
 export const BACKUP_KEY = 'automaton-vis:v1:corrupt-backup';
+/** Set once the first release's untouched example automata have been removed. */
+export const OLD_EXAMPLES_CHECKED_KEY = 'automaton-vis:old-examples-checked';
 
 export const NO_PERSIST_WARNING = "Changes won't persist — export to save";
 const CORRUPT_WARNING =
@@ -12,6 +15,29 @@ const CORRUPT_WARNING =
 /** First launch (or unreadable data): one blank DFA to draw on. Examples load only on request. */
 function blank(): Automaton[] {
   return [emptyAutomaton('Untitled', 'DFA')];
+}
+
+/**
+ * True the first time this browser loads since the old-example cleanup shipped, and marks it done,
+ * so the cleanup runs once: examples imported later are left alone. Without storage, never.
+ */
+function claimOldExampleCleanup(storage: Storage): boolean {
+  try {
+    if (storage.getItem(OLD_EXAMPLES_CHECKED_KEY) !== null) return false;
+    storage.setItem(OLD_EXAMPLES_CHECKED_KEY, '1');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Remove the first release's seeded examples that were never changed, and save the result. */
+function dropOldExamples(storage: Storage, automata: Automaton[]): Automaton[] {
+  const kept = automata.filter((a) => !isUntouchedOldExample(a));
+  if (kept.length === automata.length) return automata;
+  const out = kept.length > 0 ? kept : blank();
+  saveToStorage(storage, out);
+  return out;
 }
 
 export function loadFromStorage(storage: Storage | null): {
@@ -25,9 +51,12 @@ export function loadFromStorage(storage: Storage | null): {
   } catch {
     return { automata: blank(), warning: NO_PERSIST_WARNING };
   }
+  const cleanup = claimOldExampleCleanup(storage);
   if (raw === null) return { automata: blank() };
   const parsed = parseFile(raw, new Set());
-  if (parsed.ok) return { automata: parsed.automata };
+  if (parsed.ok) {
+    return { automata: cleanup ? dropOldExamples(storage, parsed.automata) : parsed.automata };
+  }
   try {
     storage.setItem(BACKUP_KEY, raw);
   } catch {
