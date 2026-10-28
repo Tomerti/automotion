@@ -1,7 +1,13 @@
 import { EPSILON } from '../core/model';
 import type { Automaton, State, Transition } from '../core/model';
 
-const st = (id: string, x: number, y: number): State => ({ id, label: id, x, y });
+/** `q0` is shown as q₀: numbered labels use the subscript syntax. */
+const st = (id: string, x: number, y: number): State => ({
+  id,
+  label: id.replace(/^q(\d+)$/, 'q_$1'),
+  x,
+  y,
+});
 const tr = (from: string, to: string, symbols: string[]): Transition => ({
   id: `${from}->${to}`,
   from,
@@ -35,7 +41,12 @@ export function exampleAutomata(): Automaton[] {
     states: [st('even', 150, 150), st('odd', 300, 150)],
     start: 'even',
     accepting: ['even'],
-    transitions: [tr('even', 'odd', ['0']), tr('odd', 'even', ['0']), tr('even', 'even', ['1']), tr('odd', 'odd', ['1'])],
+    transitions: [
+      tr('even', 'odd', ['0']),
+      tr('odd', 'even', ['0']),
+      tr('even', 'even', ['1']),
+      tr('odd', 'odd', ['1']),
+    ],
   };
 
   // Words over {a,b} with an even number of a's; q0/q2 and q1/q3 are pairwise equivalent.

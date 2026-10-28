@@ -5,6 +5,18 @@ export interface Point {
   y: number;
 }
 
+/** Open the app with the first-visit Controls popup already dismissed. */
+export async function openApp(page: Page, opts: { clear?: boolean } = {}): Promise<void> {
+  await page.addInitScript((clear) => {
+    if (clear && !sessionStorage.getItem('e2e-cleared')) {
+      localStorage.clear();
+      sessionStorage.setItem('e2e-cleared', '1');
+    }
+    localStorage.setItem('automaton-vis:seen-help', '1');
+  }, opts.clear ?? false);
+  await page.goto('./');
+}
+
 /** Screen-space center of a state's circle. */
 export async function stateCenter(page: Page, label: string): Promise<Point> {
   const box = await page.getByTestId(`state-${label}`).locator('.av-state-body').boundingBox();
@@ -19,14 +31,16 @@ export async function addStateAt(page: Page, dx: number, dy: number): Promise<vo
   await page.mouse.dblclick(svg.x + dx, svg.y + dy);
 }
 
-/** Draw a transition by dragging from a state's outer ring onto another state. */
-export async function ringDrag(page: Page, from: string, to: string): Promise<void> {
+/** Draw a transition: Shift + drag from one state onto another. */
+export async function shiftDrag(page: Page, from: string, to: string): Promise<void> {
   const a = await stateCenter(page, from);
   const b = await stateCenter(page, to);
-  await page.mouse.move(a.x + 28, a.y);
+  await page.keyboard.down('Shift');
+  await page.mouse.move(a.x, a.y);
   await page.mouse.down();
   await page.mouse.move(b.x, b.y, { steps: 12 });
   await page.mouse.up();
+  await page.keyboard.up('Shift');
 }
 
 export async function clickState(page: Page, label: string): Promise<void> {
@@ -34,6 +48,15 @@ export async function clickState(page: Page, label: string): Promise<void> {
   await page.mouse.click(c.x, c.y);
 }
 
-export function item(page: Page, name: string): Locator {
+/** Run an item of the automaton switcher's menu (e.g. "New DFA", "Load examples"). */
+export async function automataMenu(page: Page, name: string): Promise<void> {
+  await page.getByRole('button', { name: 'Automata' }).click();
+  await page.getByRole('menuitem', { name }).click();
+}
+
+/** An automaton in the switcher's list; opens the menu first. */
+export async function item(page: Page, name: string): Promise<Locator> {
+  const menu = page.getByRole('menu', { name: 'Automata' });
+  if (!(await menu.isVisible())) await page.getByRole('button', { name: 'Automata' }).click();
   return page.getByTestId('automaton-item').filter({ hasText: name });
 }

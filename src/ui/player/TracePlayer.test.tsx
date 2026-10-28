@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { playbackStore } from './playback';
 import { TracePlayer } from './TracePlayer';
 
 afterEach(() => {
@@ -41,7 +42,51 @@ describe('TracePlayer', () => {
     expect(screen.getByText('Step 4 / 4')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('Step 4 / 4')).toBeInTheDocument();
-    expect(screen.getByText('explain 3')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByText('explain 3').closest('[aria-live]')).toHaveAttribute(
+      'aria-live',
+      'polite',
+    );
+  });
+
+  it('First and Last jump to the ends and are disabled there', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    expect(screen.getByRole('button', { name: 'First' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Last' }));
+    expect(screen.getByText('Step 4 / 4')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Last' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'First' }));
+    expect(screen.getByText('Step 1 / 4')).toBeInTheDocument();
+  });
+
+  it('jumping back pauses playback; Next keeps it going', () => {
+    vi.useFakeTimers();
+    render(<Harness n={6} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
+    fireEvent.change(screen.getByLabelText('Step'), { target: { value: '4' } });
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    expect(screen.getByText('Step 5 / 6')).toBeInTheDocument();
+  });
+
+  it('renders label subscripts in the explanation', () => {
+    render(
+      <TracePlayer
+        stepCount={1}
+        index={0}
+        onIndex={() => {}}
+        explanation="Read 'a': {q_0} → {q_{12}}"
+        onClose={() => {}}
+      />,
+    );
+    const line = screen.getByText((_, el) => el?.getAttribute('aria-live') === 'polite');
+    expect(line).toHaveTextContent("Read 'a': {q0} → {q12}");
+    expect([...line.querySelectorAll('sub')].map((s) => s.textContent)).toEqual(['0', '12']);
   });
 
   it('autoplay advances and stops at the end', () => {
@@ -59,10 +104,12 @@ describe('TracePlayer', () => {
     expect(screen.getByText('Step 1 / 3')).toBeInTheDocument();
   });
 
-  it('speed changes the interval', () => {
+  it('speed changes the interval and is shared with the views', () => {
     vi.useFakeTimers();
     render(<Harness n={5} />);
+    expect(playbackStore.getState().speed).toBe(1);
     fireEvent.change(screen.getByLabelText('Speed'), { target: { value: '2' } });
+    expect(playbackStore.getState().speed).toBe(2);
     fireEvent.click(screen.getByRole('button', { name: 'Play' }));
     act(() => void vi.advanceTimersByTime(400));
     expect(screen.getByText('Step 2 / 5')).toBeInTheDocument();
