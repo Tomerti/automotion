@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Automaton } from '../../core/model';
 import { runWord } from '../../core/run';
 import { fixture } from '../../core/testing/fixtures';
@@ -257,6 +257,35 @@ describe('Canvas editing', () => {
     await user.clear(screen.getByTestId('symbol-input'));
     await user.keyboard('{Enter}');
     expect(active().transitions).toEqual([]);
+  });
+
+  it('captures the pointer only once a press becomes a drag', () => {
+    load(two());
+    render(<Canvas />);
+    const capture = vi.fn();
+    Object.assign(diagram(), { setPointerCapture: capture });
+    click(stateEl('q1'), 100, 0);
+    click(diagram(), 300, 200);
+    expect(capture).not.toHaveBeenCalled();
+    drag(stateEl('q1'), [100, 0], [[110, 0]]);
+    expect(capture).toHaveBeenCalledWith(1);
+  });
+
+  // Chromium delivers dblclick to the <svg> when the pointer was captured; hit-test geometrically.
+  it('a double-click delivered to the svg over a state renames it instead of adding a state', () => {
+    load(two());
+    render(<Canvas />);
+    fireEvent.doubleClick(diagram(), { clientX: 3, clientY: 2 });
+    expect(screen.getByTestId('rename-input')).toHaveValue('q0');
+    expect(active().states).toHaveLength(2);
+  });
+
+  it('a double-click delivered to the svg over an edge label edits its symbols', () => {
+    load(two('DFA', 'ab', [['q0', 'ab', 'q1']]));
+    render(<Canvas />);
+    fireEvent.doubleClick(diagram(), { clientX: 52, clientY: -12 });
+    expect(screen.getByTestId('symbol-input')).toHaveValue('a, b');
+    expect(active().states).toHaveLength(2);
   });
 
   it('the state context menu sets start, toggles accepting and deletes', async () => {

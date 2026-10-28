@@ -26,6 +26,8 @@ const DRAG_THRESHOLD = 3;
 const ZOOM_STEP = 1.1;
 /** Where the symbol input for a new self-loop sits, above the state's center. */
 const LOOP_INPUT_OFFSET = STATE_RADIUS + 40;
+/** World distance from an edge label's anchor that still counts as hitting it. */
+const LABEL_HIT_RADIUS = 12;
 
 const NO_SELECTION: Selection = { states: [], transitions: [] };
 
@@ -227,6 +229,12 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     });
   };
 
+  const edgeLabelAt = (p: Point): Element | null =>
+    Array.from(svgRef.current?.querySelectorAll('[data-transition-id]') ?? []).find((el) => {
+      const at = edgeLabelPoint(el, { x: NaN, y: NaN });
+      return Math.hypot(at.x - p.x, at.y - p.y) <= LABEL_HIT_RADIUS;
+    }) ?? null;
+
   const targets = (target: EventTarget | null) => {
     const el = target instanceof Element ? target : null;
     return {
@@ -247,7 +255,6 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     if (e.button !== 0) return;
     containerRef.current?.focus();
     setMenu(null);
-    svgRef.current?.setPointerCapture?.(e.pointerId);
     const base = { pointerId: e.pointerId, start: { x: e.clientX, y: e.clientY }, moved: false };
     const { stateEl, edgeEl } = targets(e.target);
     const store = appStore.getState();
@@ -281,6 +288,8 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     if (!g.moved) {
       if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
       g.moved = true;
+      // Capture only now: capturing on press would retarget click/dblclick to the <svg>.
+      svgRef.current?.setPointerCapture?.(g.pointerId);
       if (g.kind === 'move') {
         appStore.getState().checkpoint();
         svgRef.current?.setAttribute('data-dragging', '');
@@ -334,15 +343,16 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
 
   const onDoubleClick = (e: React.MouseEvent<SVGSVGElement>): void => {
     if (locked) return;
-    const { stateEl, edgeEl } = targets(e.target);
-    const stateId = stateEl?.getAttribute('data-state-id');
+    const p = toWorld(e);
+    // The target can be the <svg> itself (e.g. after pointer capture), so fall back to geometry.
+    const hit = targets(e.target);
+    const stateId =
+      hit.stateEl?.getAttribute('data-state-id') ?? (hit.edgeEl ? undefined : stateAt(p)?.id);
+    const edgeEl = stateId ? null : (hit.edgeEl ?? edgeLabelAt(p));
     const transitionId = edgeEl?.getAttribute('data-transition-id');
     if (stateId) openRename(stateId);
     else if (edgeEl && transitionId) openEdgeEdit(transitionId, edgeEl);
-    else {
-      const p = toWorld(e);
-      edit((a) => addState(a, p));
-    }
+    else edit((a) => addState(a, p));
   };
 
   const onContextMenu = (e: React.MouseEvent<SVGSVGElement>): void => {
