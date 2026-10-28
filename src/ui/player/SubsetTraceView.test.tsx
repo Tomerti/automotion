@@ -105,3 +105,36 @@ describe('SubsetTraceView', () => {
     expect(s.automata.find((a) => a.id === s.activeId)?.kind).toBe('DFA');
   });
 });
+
+describe('SubsetTraceView with several start states', () => {
+  it('opens on the extended NFA with the new start state lit and an empty DFA', async () => {
+    const nfa = fixture({
+      kind: 'NFA',
+      alphabet: 'ab',
+      states: ['q0', 'q1', 'q2'],
+      starts: ['q0', 'q2'],
+      accepting: ['q1'],
+      edges: [
+        ['q0', 'a', 'q1'],
+        ['q2', 'b', 'q1'],
+      ],
+      name: 'two starts',
+    });
+    appStore.getState().addAutomaton(nfa);
+    render(<App />);
+    await act(async () => {
+      await startSubset();
+    });
+    const trace = appStore.getState().trace;
+    if (trace?.kind !== 'subset') throw new Error('no subset trace');
+    const added = trace.source.states.find((s) => s.label === 'q_s');
+    const pane = within(screen.getByTestId('subset-nfa'));
+    expect(pane.getAllByTestId(/^state-/)).toHaveLength(4);
+    const lit = pane
+      .getAllByTestId(/^state-/)
+      .filter((el) => el.getAttribute('data-active') === 'true')
+      .map((el) => el.getAttribute('data-state-id'));
+    expect(lit).toEqual([added?.id]);
+    expect(dfaStates()).toBe(0);
+  });
+});

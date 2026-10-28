@@ -24,7 +24,9 @@ export const Thumbnail = memo(function Thumbnail(props: {
   const { automaton, width, height } = props;
   const vp = fitToView(automaton.states, { width, height }, FIT_PADDING, MAX_ZOOM);
   const byId = new Map<string, State>(automaton.states.map((s) => [s.id, s]));
-  const start = automaton.start === null ? undefined : byId.get(automaton.start);
+  const starts = automaton.starts
+    .map((id) => byId.get(id))
+    .filter((s): s is State => s !== undefined);
 
   return (
     <svg
@@ -37,12 +39,12 @@ export const Thumbnail = memo(function Thumbnail(props: {
       focusable="false"
     >
       <g transform={`translate(${vp.x} ${vp.y}) scale(${vp.zoom})`}>
-        {start && (
-          <g className="av-thumb-start">
+        {starts.map((start) => (
+          <g key={start.id} className="av-thumb-start">
             <path className="av-thumb-edge-path" d={startArrowGeometry(start).d} />
             <Arrowhead end={{ x: start.x - STATE_RADIUS, y: start.y }} angle={0} />
           </g>
-        )}
+        ))}
         {automaton.transitions.map((t) => {
           const from = byId.get(t.from);
           const to = byId.get(t.to);

@@ -27,7 +27,7 @@ describe('layoutAutomaton', () => {
   it('places the start state leftmost', async () => {
     const dfa = subsetConstruction(endsInAb).result;
     const out = await layoutAutomaton(dfa);
-    const start = out.states.find((s) => s.id === out.start);
+    const start = out.states.find((s) => out.starts.includes(s.id));
     expect(start).toBeDefined();
     for (const s of out.states) expect(start!.x).toBeLessThanOrEqual(s.x);
   });
@@ -39,7 +39,7 @@ describe('layoutAutomaton', () => {
     expect(dfa).toEqual(before);
     expect(out.transitions).toEqual(dfa.transitions);
     expect(out.accepting).toEqual(dfa.accepting);
-    expect(out.start).toBe(dfa.start);
+    expect(out.starts).toEqual(dfa.starts);
     const strip = (a: typeof dfa) => a.states.map((s) => ({ id: s.id, label: s.label }));
     expect(strip(out)).toEqual(strip(dfa));
   });

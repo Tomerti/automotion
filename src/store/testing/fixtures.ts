@@ -11,7 +11,7 @@ export const endsAb: Automaton = {
     { id: 'q1', label: 'q1', x: 0, y: 0 },
     { id: 'q2', label: 'q2', x: 0, y: 0 },
   ],
-  start: 'q0',
+  starts: ['q0'],
   accepting: ['q2'],
   transitions: [
     { id: 't1', from: 'q0', to: 'q0', symbols: ['a', 'b'] },

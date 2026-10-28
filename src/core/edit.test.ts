@@ -10,6 +10,7 @@ import {
   parseSymbolInput,
   removeAlphabetSymbol,
   removeState,
+  toggleStart,
   removeSymbolFromEdge,
   removeTransition,
   renameAlphabetSymbol,
@@ -61,7 +62,7 @@ describe('states', () => {
 
   it('removing the start state clears start and accepting and its edges', () => {
     const a = removeState({ ...dfa(), accepting: ['q0', 'q1'] }, 'q0');
-    expect(a.start).toBeNull();
+    expect(a.starts).toEqual([]);
     expect(a.accepting).toEqual(['q1']);
     expect(a.states.map((s) => s.id)).toEqual(['q1']);
     expect(a.transitions.every((t) => t.from !== 'q0' && t.to !== 'q0')).toBe(true);
@@ -71,7 +72,7 @@ describe('states', () => {
   it('removing an accepting state removes it from accepting', () => {
     const a = removeState(dfa(), 'q1');
     expect(a.accepting).toEqual([]);
-    expect(a.start).toBe('q0');
+    expect(a.starts).toEqual(['q0']);
   });
 
   it('renames, moves, sets start and toggles accepting', () => {
@@ -80,8 +81,8 @@ describe('states', () => {
     a = moveState(a, 'q1', { x: 7, y: 8 });
     expect(a.states.find((s) => s.id === 'q1')).toMatchObject({ x: 7, y: 8 });
     a = setStart(a, 'q1');
-    expect(a.start).toBe('q1');
-    expect(setStart(a, null).start).toBeNull();
+    expect(a.starts).toEqual(['q1']);
+    expect(setStart(a, null).starts).toEqual([]);
     expect(toggleAccepting(a, 'q1').accepting).toEqual([]);
     expect(toggleAccepting(a, 'q0').accepting).toEqual(['q1', 'q0']);
   });
@@ -275,5 +276,38 @@ describe('derived alphabet and edge shape', () => {
     expect(bent.transitions[0]?.bend).toBe(20);
     expect('bend' in (setEdgeBend(bent, id, undefined).transitions[0] ?? {})).toBe(false);
     expect(setLoopAngle(a, id, 1).transitions[0]?.loopAngle).toBe(1);
+  });
+});
+
+describe('start states', () => {
+  it('toggleStart adds and removes NFA start states, never duplicating (Review Focus 3)', () => {
+    const n = fixture({ kind: 'NFA', alphabet: 'a', states: ['q0', 'q1'], start: 'q0' });
+    expect(toggleStart(n, 'q1').starts).toEqual(['q0', 'q1']);
+    expect(toggleStart(toggleStart(n, 'q1'), 'q1').starts).toEqual(['q0']);
+    expect(toggleStart(n, 'q0').starts).toEqual([]);
+  });
+
+  it('toggleStart on a DFA moves the start, or clears it on the current start', () => {
+    const d = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0', 'q1'], start: 'q0' });
+    expect(toggleStart(d, 'q1').starts).toEqual(['q1']);
+    expect(toggleStart(d, 'q0').starts).toEqual([]);
+  });
+
+  it('removing one of several start states keeps the others (Review Focus 2)', () => {
+    const n = fixture({
+      kind: 'NFA',
+      alphabet: 'a',
+      states: ['q0', 'q1', 'q2'],
+      starts: ['q0', 'q2'],
+    });
+    expect(removeState(n, 'q0').starts).toEqual(['q2']);
+  });
+
+  it('ignores a start id that is not a state (e.g. from a menu left open across an undo)', () => {
+    const n = fixture({ kind: 'NFA', alphabet: 'a', states: ['q0'], start: 'q0' });
+    const d = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0'], start: 'q0' });
+    expect(toggleStart(n, 'gone').starts).toEqual(['q0']);
+    expect(toggleStart(d, 'gone').starts).toEqual(['q0']);
+    expect(setStart(d, 'gone').starts).toEqual(['q0']);
   });
 });

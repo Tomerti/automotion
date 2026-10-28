@@ -19,7 +19,7 @@ const evenZeros: Automaton = {
     { id: 'q0', label: 'q0', x: 100, y: 100 },
     { id: 'q1', label: 'q1', x: 300, y: 100 },
   ],
-  start: 'q0',
+  starts: ['q0'],
   accepting: ['q0'],
   transitions: [
     { id: 't1', from: 'q0', to: 'q1', symbols: ['0'] },

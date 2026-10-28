@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { setKind } from '../../core/edit';
+import { startStates } from '../../core/model';
 import type { Automaton, AutomatonKind } from '../../core/model';
 import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
@@ -134,6 +135,8 @@ export function Toolbar(): React.JSX.Element {
   const none = automaton === undefined;
 
   const convertReason = automaton ? canConvert(automaton) : null;
+  /** An NFA with several start states only becomes a DFA through Convert to DFA. */
+  const manyStarts = automaton?.kind === 'NFA' && startStates(automaton).length > 1;
   const minimizeReason = automaton ? canMinimize(automaton) : null;
 
   const changeKind = (kind: AutomatonKind): void => {
@@ -154,7 +157,12 @@ export function Toolbar(): React.JSX.Element {
             key={k}
             type="button"
             aria-pressed={automaton?.kind === k}
-            disabled={none || tracing}
+            disabled={none || tracing || (k === 'DFA' && manyStarts)}
+            title={
+              k === 'DFA' && manyStarts
+                ? "An NFA with several start states can't be a DFA: use Convert to DFA"
+                : undefined
+            }
             onClick={() => changeKind(k)}
           >
             {k}

@@ -12,6 +12,7 @@ import {
   setLoopAngle,
   setStart,
   toggleAccepting,
+  toggleStart,
 } from '../../core/edit';
 import type { Automaton, StateId } from '../../core/model';
 import { appStore, useAppStore } from '../../store/store';
@@ -536,7 +537,9 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       setMenu({
         at,
         items: [
-          item('Set as start', () => edit((a) => setStart(a, stateId))),
+          automaton.kind === 'NFA'
+            ? item('Toggle start', () => edit((a) => toggleStart(a, stateId)))
+            : item('Set as start', () => edit((a) => setStart(a, stateId))),
           item('Toggle accepting', () => edit((a) => toggleAccepting(a, stateId))),
           item('Rename', () => openRename(stateId)),
           item('Delete', () => {
@@ -575,7 +578,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     const key = e.key.toLowerCase();
     if (key === 's' && stateId) {
       e.preventDefault();
-      edit((a) => setStart(a, a.start === stateId ? null : stateId));
+      edit((a) => toggleStart(a, stateId));
     } else if (key === 'a' && stateId) {
       e.preventDefault();
       edit((a) => toggleAccepting(a, stateId));

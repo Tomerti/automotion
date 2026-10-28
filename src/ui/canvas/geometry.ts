@@ -161,7 +161,7 @@ export function transitionGeometry(a: Automaton, from: State, to: State): PathGe
     .map((t) => a.states.find((s) => s.id === (t.from === from.id ? t.to : t.from)))
     .filter((s): s is State => s !== undefined);
   // The start arrow enters from the left: treat that direction as occupied.
-  if (a.start === from.id) neighbors.push({ x: from.x - START_ARROW_CLEARANCE, y: from.y });
+  if (a.starts.includes(from.id)) neighbors.push({ x: from.x - START_ARROW_CLEARANCE, y: from.y });
   return selfLoopGeometry(from, bestLoopAngle(from, neighbors));
 }
 

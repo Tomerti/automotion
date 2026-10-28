@@ -238,3 +238,19 @@ describe('HistoryBar actions', () => {
     });
   });
 });
+
+describe('HistoryBar thumbnails with several start states', () => {
+  it('draws a start arrow for each start state', () => {
+    const n = fixture({
+      kind: 'NFA',
+      alphabet: 'a',
+      states: ['q0', 'q1'],
+      starts: ['q0', 'q1'],
+      name: 'Two',
+    });
+    resetAppStore({ automata: [n], activeId: n.id });
+    render(<HistoryBar />);
+    const thumb = within(items()[0]!).getByTestId('history-thumbnail');
+    expect(thumb.querySelectorAll('.av-thumb-start')).toHaveLength(2);
+  });
+});

@@ -26,7 +26,7 @@ export function removeState(a: Automaton, id: StateId): Automaton {
   return {
     ...a,
     states: a.states.filter((s) => s.id !== id),
-    start: a.start === id ? null : a.start,
+    starts: a.starts.filter((x) => x !== id),
     accepting: a.accepting.filter((x) => x !== id),
     transitions: a.transitions.filter((t) => t.from !== id && t.to !== id),
   };
@@ -40,8 +40,28 @@ export function moveState(a: Automaton, id: StateId, pos: { x: number; y: number
   return { ...a, states: a.states.map((s) => (s.id === id ? { ...s, x: pos.x, y: pos.y } : s)) };
 }
 
+const isState = (a: Automaton, id: StateId): boolean => a.states.some((s) => s.id === id);
+
+/**
+ * Make `id` the only start state (null: none). An id that is not a state (say, from a menu left
+ * open across an undo) changes nothing: saved files must only name existing start states.
+ */
 export function setStart(a: Automaton, id: StateId | null): Automaton {
-  return { ...a, start: id };
+  if (id !== null && !isState(a, id)) return a;
+  return { ...a, starts: id === null ? [] : [id] };
+}
+
+/**
+ * The S key: on an NFA, add `id` as a start state or remove it; on a DFA, make it the only start
+ * state, or clear the start if it already was.
+ */
+export function toggleStart(a: Automaton, id: StateId): Automaton {
+  if (!isState(a, id)) return a;
+  if (a.kind === 'DFA') return setStart(a, a.starts.includes(id) ? null : id);
+  return {
+    ...a,
+    starts: a.starts.includes(id) ? a.starts.filter((x) => x !== id) : [...a.starts, id],
+  };
 }
 
 export function toggleAccepting(a: Automaton, id: StateId): Automaton {

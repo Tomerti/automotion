@@ -193,3 +193,20 @@ describe('Diagram', () => {
     expect(ref).toBe(screen.getByTestId('diagram'));
   });
 });
+
+describe('Diagram start arrows', () => {
+  it('draws one start arrow per start state', () => {
+    const n = fixture({ kind: 'NFA', alphabet: 'a', states: ['q0', 'q1'], starts: ['q0', 'q1'] });
+    render(<Diagram automaton={n} viewport={vp} />);
+    expect(
+      screen.getAllByTestId('start-arrow').map((a) => a.getAttribute('data-state-id')),
+    ).toEqual(['q0', 'q1']);
+  });
+
+  it('skips a start id with no state (Review Focus 5)', () => {
+    const n = fixture({ kind: 'NFA', alphabet: 'a', states: ['q0'], starts: ['ghost'] });
+    render(<Diagram automaton={n} viewport={vp} />);
+    expect(screen.queryByTestId('start-arrow')).toBeNull();
+    expect(screen.getByTestId('state-q0')).toHaveAttribute('data-start', 'false');
+  });
+});

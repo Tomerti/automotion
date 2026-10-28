@@ -5,6 +5,8 @@ export interface FixtureSpec {
   alphabet: string;
   states: string[];
   start?: string;
+  /** Several start states (wins over `start`). */
+  starts?: string[];
   accepting?: string[];
   edges?: [from: string, symbols: string, to: string][];
   name?: string;
@@ -32,7 +34,7 @@ export function fixture(spec: FixtureSpec): Automaton {
     kind: spec.kind,
     alphabet: splitSymbols(spec.alphabet),
     states: spec.states.map((label, i) => ({ id: label, label, x: 100 * i, y: 0 })),
-    start: spec.start ?? null,
+    starts: spec.starts ?? (spec.start === undefined ? [] : [spec.start]),
     accepting: spec.accepting ?? [],
     transitions,
   };

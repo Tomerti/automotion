@@ -22,7 +22,9 @@ export async function layoutAutomaton(a: Automaton): Promise<Automaton> {
       id: s.id,
       width: NODE_SIZE,
       height: NODE_SIZE,
-      ...(s.id === a.start ? { layoutOptions: { 'elk.layered.layering.layerConstraint': 'FIRST' } } : {}),
+      ...(a.starts.includes(s.id)
+        ? { layoutOptions: { 'elk.layered.layering.layerConstraint': 'FIRST' } }
+        : {}),
     })),
     edges: a.transitions
       .filter((t) => t.from !== t.to)

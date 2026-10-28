@@ -1,7 +1,13 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { accepts, isComplete } from './analysis';
-import { canConvert, MAX_DFA_STATES, subsetConstruction } from './subset';
+import {
+  canConvert,
+  MAX_DFA_STATES,
+  START_GAP,
+  subsetConstruction,
+  withSingleStart,
+} from './subset';
 import { arbNfa, arbWord } from './testing/arbitraries';
 import { fixture, nthFromEnd } from './testing/fixtures';
 import { hasErrors, validate } from './validate';
@@ -91,8 +97,8 @@ describe('subsetConstruction', () => {
     expect([...(last?.revealedTransitions ?? [])].sort()).toEqual(
       result.transitions.map((t) => t.id).sort(),
     );
-    expect(steps[0]?.revealedStates).toEqual([result.start]);
-    expect(steps[0]?.dfaFocus).toEqual({ states: [result.start] });
+    expect(steps[0]?.revealedStates).toEqual(result.starts);
+    expect(steps[0]?.dfaFocus).toEqual({ states: result.starts });
     expect(last?.dfaFocus).toEqual({});
   });
 
@@ -125,7 +131,7 @@ describe('subsetConstruction', () => {
 
   it('canConvert rejects DFAs, missing start and errors', () => {
     expect(canConvert(evenZeros)).toBe('Conversion needs an NFA');
-    expect(canConvert({ ...endsInAb, start: null })).toBe('Set a start state first');
+    expect(canConvert({ ...endsInAb, starts: [] })).toBe('Set a start state first');
     expect(canConvert({ ...endsInAb, alphabet: ['a'] })).toBe(
       'Fix the errors in the automaton first',
     );
@@ -142,4 +148,55 @@ describe('subsetConstruction', () => {
         );
       }),
     ));
+});
+
+describe('several start states', () => {
+  const twoStarts = fixture({
+    kind: 'NFA',
+    alphabet: 'ab',
+    states: ['q0', 'q1', 'q2'],
+    starts: ['q0', 'q2'],
+    accepting: ['q1'],
+    edges: [
+      ['q0', 'a', 'q1'],
+      ['q2', 'b', 'q1'],
+    ],
+  });
+
+  it('withSingleStart adds q_s with ε-edges to the old starts, left of them', () => {
+    const { nfa, added } = withSingleStart(twoStarts);
+    const s = nfa.states.find((x) => x.id === added);
+    expect(s?.label).toBe('q_s');
+    expect(nfa.starts).toEqual([added]);
+    // The leftmost old start, q0, is at x 0; both old starts are at y 0.
+    expect(s?.x).toBe(0 - START_GAP);
+    expect(s?.y).toBe(0);
+    expect(nfa.transitions.filter((t) => t.from === added).map((t) => [t.to, t.symbols])).toEqual([
+      ['q0', ['ε']],
+      ['q2', ['ε']],
+    ]);
+    const single = fixture({ kind: 'NFA', alphabet: 'a', states: ['q0'], start: 'q0' });
+    expect(withSingleStart(single).added).toBeNull();
+  });
+
+  it("picks q_s' when q_s is taken", () => {
+    const taken = {
+      ...twoStarts,
+      states: twoStarts.states.map((s, i) => (i === 1 ? { ...s, label: 'q_s' } : s)),
+    };
+    expect(withSingleStart(taken).nfa.states.at(-1)?.label).toBe("q_s'");
+  });
+
+  it('a multi-start conversion opens with the starts step on the extended NFA', () => {
+    const t = subsetConstruction(twoStarts);
+    expect(t.steps[0]).toMatchObject({
+      phase: 'starts',
+      revealedStates: [],
+      explanation: 'Several start states: add a new start state q_s with ε-transitions to {q0, q2}',
+    });
+    expect(t.source.states).toHaveLength(4);
+    expect(t.steps[1]?.phase).toBe('init');
+    // The saved NFA is untouched.
+    expect(twoStarts.states).toHaveLength(3);
+  });
 });

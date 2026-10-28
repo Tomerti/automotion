@@ -66,8 +66,8 @@ const splitter = fixture({
 describe('canMinimize', () => {
   it('checks DFA, start, errors in order', () => {
     expect(canMinimize({ ...redundant, kind: 'NFA' })).toBe('Minimization needs a DFA');
-    expect(canMinimize({ ...redundant, start: null })).toBe('Set a start state first');
-    expect(canMinimize({ ...redundant, start: 'zzz' })).toBe('Set a start state first');
+    expect(canMinimize({ ...redundant, starts: [] })).toBe('Set a start state first');
+    expect(canMinimize({ ...redundant, starts: ['zzz'] })).toBe('Set a start state first');
     expect(
       canMinimize({
         ...redundant,
@@ -77,7 +77,7 @@ describe('canMinimize', () => {
     expect(canMinimize(redundant)).toBeNull();
   });
   it('minimize throws the reason', () => {
-    expect(() => minimize({ ...redundant, start: null })).toThrow('Set a start state first');
+    expect(() => minimize({ ...redundant, starts: [] })).toThrow('Set a start state first');
   });
 });
 
@@ -179,7 +179,7 @@ describe('minimize', () => {
     const merged = result.states.find((s) => s.label === '{q1,q2}');
     expect(merged?.x).toBe(150);
     expect(merged?.y).toBe(0);
-    expect(result.start).toBe(result.states.find((s) => s.label === 'q0')?.id);
+    expect(result.starts).toEqual([result.states.find((s) => s.label === 'q0')?.id]);
   });
 
   it('property: same language and no more states than the trimmed, completed input', () =>
@@ -207,7 +207,7 @@ describe('minimize', () => {
         const { result } = minimize(d);
         // Distinct states of an n-state DFA, if distinguishable, differ on a word shorter than n.
         const words = wordsUpTo(result.alphabet, result.states.length);
-        const from = (p: string, w: string): boolean => accepts({ ...result, start: p }, w);
+        const from = (p: string, w: string): boolean => accepts({ ...result, starts: [p] }, w);
         return result.states.every((p, i) =>
           result.states
             .slice(i + 1)

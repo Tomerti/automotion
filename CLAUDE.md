@@ -33,7 +33,10 @@ Layers, with dependencies pointing downward only:
 - `src/core/`: pure TypeScript, no React. Must not import from `layout/`, `store/`, `persistence/` or `ui/`.
   - `model.ts`: one `Automaton` type for DFAs and NFAs (`kind` selects the rules). States carry their own
     `x`/`y`; at most one `Transition` per (from, to) pair, holding all its `symbols`. `EPSILON = 'ε'`
-    never appears in `alphabet`; the symbol type is `Sym` (not `Symbol`).
+    never appears in `alphabet`; the symbol type is `Sym` (not `Symbol`). `starts` lists the start
+    states: at most one on a DFA, any number on an NFA (accepting when a run from any of them does);
+    `startStates(a)` ignores stale ids. Converting a multi-start NFA first adds a single start state
+    `q_s` with ε-transitions to the old ones (`withSingleStart` in `subset.ts`).
   - `validate.ts` returns `Issue[]` (errors/warnings) and never throws; the UI disables actions with the
     reason instead. DFAs may be partial (a missing transition rejects).
   - `edit.ts`: every edit is a pure `Automaton → Automaton` function, shared by the canvas and the table.
@@ -53,8 +56,8 @@ Layers, with dependencies pointing downward only:
   or React 19 loops. `traceActions.ts` opens traces (`startRun`, `startSubset`, `startMinimize`).
 - `src/persistence/`: localStorage autosave (key `automaton-vis:v1`, 500 ms debounce, flush on `pagehide`),
   and the versioned JSON file format
-  (`{ format: "automaton-vis", version, automata }`). Every load goes through `migrate()` and the zod
-  schema; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
+  (`{ format: "automaton-vis", version, automata }`, version 2; `migrate()` turns v1's single `start`
+  into `starts`). Every load goes through `migrate()` and the zod schema; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
   built-in examples; e2e specs import `e2e/fixtures/automata.json`.
 - `src/ui/`:
   - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
