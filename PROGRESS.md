@@ -24,6 +24,16 @@ Nothing in progress: pick the next task from the list below.
 - [x] Replaying a run (Play at the end, First, scrubbing to step 1) plays the Run chime again
 - [x] A new transition's arrow stays on screen while its symbols are typed
 - [x] A new transition's symbol input opens where its label will be drawn, not on the arrow
+- [x] A rejected word's cue is one falling note (the two-note version sounded like it played twice)
+
+### History bar
+
+- [x] Left history bar: every automaton with a thumbnail, name, kind and state count; click to open
+- [x] Automata are kept most recently edited first (also in exports and on reload)
+- [x] History button in the top bar hides/shows it (remembered; starts hidden on phones, where it overlays the canvas)
+- [x] Hiding the bar gives the canvas the full width
+- [x] Each entry has a ⋯ menu (Rename, Export JSON, Delete); double-click renames; Import / Export all at the bottom
+- [x] The top-bar automaton dropdown is gone; the name there still renames the open automaton
 
 ### v2 UX overhaul and polish (merged in PRs #5 and #6)
 

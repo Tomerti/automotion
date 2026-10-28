@@ -100,40 +100,6 @@
   color: var(--av-red);
 }
 
-/* Automata in the switcher menu: a small state circle marks the open one. */
-.av-menu-list {
-  display: flex;
-  flex-direction: column;
-  max-height: min(320px, 45vh);
-  overflow-y: auto;
-}
-.av-menu [role='menuitemradio']::before {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  content: '';
-  border: 1.5px solid transparent;
-  border-radius: 50%;
-}
-.av-menu [role='menuitemradio'][aria-checked='true'] {
-  font-weight: 600;
-}
-.av-menu [role='menuitemradio'][aria-checked='true']::before {
-  background: var(--av-highlighter);
-  border-color: var(--av-ink);
-}
-.av-menu-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.av-menu-kind {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--av-ink-muted);
-}
-
 /* Top bar */
 
 .av-topbar {
@@ -235,13 +201,6 @@ input.av-switcher-input {
   font-size: 17px;
   background: var(--av-surface-raised);
   border-color: var(--av-accent);
-}
-.av-switcher-toggle {
-  min-width: 26px;
-  padding: 0 3px;
-}
-.av-switcher-menu {
-  min-width: 260px;
 }
 
 /* Issues chip and its popover */
@@ -369,6 +328,172 @@ input.av-switcher-input {
 }
 
 /* Canvas area and the floating dock */
+
+/* Under the top bar: the history bar (when open) and the canvas beside it. */
+.av-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 0;
+}
+/* Always the wide column: with the bar hidden, the first column is empty and collapses. */
+.av-body > .av-canvas-area {
+  grid-column: 2;
+}
+
+/* History bar: every automaton, newest edit first, each with a picture of its diagram. */
+.av-history {
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+  min-height: 0;
+  background: var(--av-surface);
+  border-right: 1px solid var(--av-rule);
+}
+.av-history-actions {
+  display: flex;
+  gap: 6px;
+  padding: 10px 10px 6px;
+}
+.av-history-actions button {
+  flex: 1;
+}
+.av-history-files {
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--av-rule);
+}
+.av-history-entry {
+  position: relative;
+}
+.av-history-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  margin: 0;
+  padding: 4px 10px 12px;
+  overflow-y: auto;
+  list-style: none;
+}
+.av-history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: stretch;
+  width: 100%;
+  padding: 7px;
+  font-weight: 400;
+  text-align: left;
+  white-space: normal;
+  background: transparent;
+  border-color: transparent;
+  border-radius: 10px;
+}
+.av-history-item:hover:not(:disabled) {
+  border-color: transparent;
+}
+.av-history-item[aria-current='page'],
+.av-history-item[aria-current='page']:hover {
+  background: var(--av-surface-raised);
+  border-color: var(--av-accent);
+  box-shadow: 0 1px 2px var(--av-shadow);
+}
+/* The picture leads visually; the name stays first in the DOM, so it leads the button's name. */
+.av-history-thumb {
+  display: grid;
+  order: -1;
+  place-items: center;
+  height: 92px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  background: var(--av-paper);
+  border-radius: 7px;
+}
+.av-history-empty {
+  font-size: 12px;
+  color: var(--av-ink-muted);
+}
+.av-history-name {
+  overflow: hidden;
+  /* Clear of the ⋯ button that sits at the end of this row. */
+  padding-right: 26px;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.av-history-rename {
+  min-width: 0;
+  padding: 1px 4px;
+  font-size: 13px;
+  border: 1px solid var(--av-accent);
+  border-radius: 5px;
+}
+
+/*
+ * The ⋯ button on an entry's name row (item padding + thumbnail + its margin). Shown on hover
+ * and focus, always on the open automaton and on touch screens.
+ */
+.av-history-more {
+  position: absolute;
+  top: 99px;
+  right: 4px;
+  opacity: 0;
+}
+.av-history-more .av-icon-button {
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0 4px;
+}
+.av-history-entry:hover .av-history-more,
+.av-history-entry:focus-within .av-history-more,
+.av-history-more[data-open='true'],
+.av-history-item[aria-current='page'] + .av-history-more {
+  opacity: 1;
+}
+@media (hover: none) {
+  .av-history-more {
+    opacity: 1;
+  }
+}
+/* Fixed to the viewport (placed by EntryMenu), so the scrolling list doesn't clip it. */
+.av-history-menu {
+  position: fixed;
+  top: auto;
+  min-width: 160px;
+}
+.av-history-item[aria-current='page'] .av-history-name {
+  font-weight: 600;
+}
+.av-history-meta {
+  font-size: 11.5px;
+  color: var(--av-ink-muted);
+}
+
+.av-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.av-thumb-edge-path {
+  fill: none;
+  stroke: var(--av-edge-stroke, #3a4356);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.av-thumb .av-edge-head {
+  fill: var(--av-edge-stroke, #3a4356);
+}
+.av-thumb-state,
+.av-thumb-accept {
+  fill: var(--av-state-fill, #ffffff);
+  stroke: var(--av-state-stroke, #1c2333);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.av-thumb-accept {
+  fill: none;
+}
 
 .av-canvas-area {
   /* How far the floating dock sits above the bottom edge; --av-dock-h is set by App. */
@@ -722,6 +847,13 @@ kbd {
 }
 
 @media (max-width: 760px) {
+  /* On a phone the bar floats over the canvas instead of squeezing it. */
+  .av-history {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 15;
+    box-shadow: var(--av-shadow-float);
+  }
   .av-topbar {
     flex-wrap: wrap;
     gap: 4px;

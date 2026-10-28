@@ -119,19 +119,41 @@ describe('store', () => {
     expect(st().trace).toBeNull();
   });
 
-  it('createAutomaton picks a free name, returns id, becomes active', () => {
+  it('createAutomaton picks a free name, returns id, becomes active, goes first', () => {
     const s = createAppStore();
     const id1 = s.getState().createAutomaton('DFA');
     const id2 = s.getState().createAutomaton('DFA');
     s.getState().createAutomaton('NFA');
     expect(s.getState().automata.map((a) => a.name)).toEqual([
-      'Untitled DFA',
-      'Untitled DFA 2',
       'Untitled NFA',
+      'Untitled DFA 2',
+      'Untitled DFA',
     ]);
     expect(id1).not.toBe(id2);
     expect(s.getState().automata[1]?.id).toBe(id2);
-    expect(s.getState().activeId).toBe(s.getState().automata[2]?.id);
+    expect(s.getState().activeId).toBe(s.getState().automata[0]?.id);
+  });
+
+  it('keeps automata most recently edited first; switching alone does not reorder', () => {
+    const s = createAppStore({ automata: [dfa('a1'), dfa('a2'), dfa('a3')], activeId: 'a1' });
+    const st = () => s.getState();
+    const order = () => st().automata.map((a) => a.id);
+    st().setActive('a3');
+    expect(order()).toEqual(['a1', 'a2', 'a3']);
+    st().edit((a) => moveState(a, 'q0', { x: 1, y: 0 }));
+    expect(order()).toEqual(['a3', 'a1', 'a2']);
+    st().setActive('a2');
+    st().checkpoint();
+    expect(order()).toEqual(['a3', 'a1', 'a2']);
+    st().setActive('a3');
+    st().undo();
+    st().setActive('a1');
+    st().edit((a) => moveState(a, 'q0', { x: 2, y: 0 }), { record: false });
+    st().setActive('a3');
+    st().redo();
+    expect(order()).toEqual(['a3', 'a1', 'a2']);
+    st().addAutomaton(dfa('a4'));
+    expect(order()).toEqual(['a4', 'a3', 'a1', 'a2']);
   });
 
   it('addAutomaton activates; setActive clears selection', () => {
@@ -150,10 +172,12 @@ describe('store', () => {
     const st = () => s.getState();
     st().edit((a) => moveState(a, 'q0', { x: 1, y: 0 }));
     st().setViewport('a2', { x: 1, y: 2, zoom: 1 });
+    // The edit moved a2 to the front: a2, a1, a3.
     st().deleteAutomaton('a2');
-    expect(st().activeId).toBe('a3');
+    expect(st().activeId).toBe('a1');
     expect(st().history['a2']).toBeUndefined();
     expect(st().viewports['a2']).toBeUndefined();
+    st().setActive('a3');
     st().deleteAutomaton('a3');
     expect(st().activeId).toBe('a1');
     st().deleteAutomaton('a1');

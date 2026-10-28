@@ -14,6 +14,7 @@ const HISTORY_CAP = 100;
 const NO_SELECTION: Selection = { states: [], transitions: [] };
 
 export interface AppState {
+  /** Most recently edited first: edits, undo/redo, creating and adding move one to the front. */
   automata: Automaton[];
   activeId: string | null;
   selection: Selection;
@@ -46,6 +47,12 @@ function freeName(kind: AutomatonKind, automata: Automaton[]): string {
   let name = base;
   for (let n = 2; taken.has(name); n++) name = `${base} ${n}`;
   return name;
+}
+
+/** Put automaton `i` first with `next` as its content (the history bar lists newest first). */
+function toFront(automata: Automaton[], i: number, next: Automaton): void {
+  automata.splice(i, 1);
+  automata.unshift(next);
 }
 
 function initialData(
@@ -91,8 +98,11 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           if (!h) return;
           h[from].pop();
           h[to].push(current);
-          const i = s.automata.findIndex((a) => a.id === activeId);
-          s.automata[i] = target;
+          toFront(
+            s.automata,
+            s.automata.findIndex((a) => a.id === activeId),
+            target,
+          );
         });
       };
 
@@ -102,7 +112,7 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
         createAutomaton(kind) {
           const a = emptyAutomaton(freeName(kind, get().automata), kind);
           set((s) => {
-            s.automata.push(a);
+            s.automata.unshift(a);
             s.activeId = a.id;
             s.selection = NO_SELECTION;
             s.trace = null;
@@ -113,7 +123,7 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
 
         addAutomaton(a) {
           set((s) => {
-            s.automata.push(a);
+            s.automata.unshift(a);
             s.activeId = a.id;
             s.selection = NO_SELECTION;
             s.trace = null;
@@ -168,8 +178,11 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           const next = syncAlphabet(fn(current));
           if (opts?.record ?? true) record(activeId, current);
           set((s) => {
-            const i = s.automata.findIndex((a) => a.id === activeId);
-            s.automata[i] = next;
+            toFront(
+              s.automata,
+              s.automata.findIndex((a) => a.id === activeId),
+              next,
+            );
           });
         },
 
