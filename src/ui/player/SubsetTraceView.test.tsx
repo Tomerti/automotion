@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { startSubset } from '../../store/traceActions';
 import { endsAb } from '../../store/testing/fixtures';
@@ -43,6 +44,38 @@ describe('SubsetTraceView', () => {
       height: 500,
     });
     expect(screen.getByTestId('subset-view')).toHaveAttribute('data-layout', expected);
+  });
+
+  it('labels DFA edges only with the symbols built so far', async () => {
+    const nfa = fixture({
+      kind: 'NFA',
+      alphabet: 'ab',
+      states: ['q0', 'q1'],
+      start: 'q0',
+      accepting: ['q1'],
+      edges: [['q0', 'a', 'q1']],
+      name: 'dead',
+    });
+    appStore.getState().addAutomaton(nfa);
+    render(<App />);
+    await act(async () => {
+      await startSubset();
+    });
+    const trace = appStore.getState().trace;
+    if (trace?.kind !== 'subset') throw new Error('no subset trace');
+    // The ∅ state's self-loop appears on 'a'; 'b' joins it one step later.
+    const i = trace.steps.findIndex(
+      (s) => s.phase === 'expand' && s.subset.length === 0 && s.symbol === 'a',
+    );
+    expect(i).toBeGreaterThan(-1);
+    const loopLabel = () =>
+      within(within(screen.getByTestId('subset-dfa')).getByTestId('edge-∅-∅')).getByTestId(
+        'edge-label',
+      );
+    act(() => appStore.getState().setStep(i));
+    expect(loopLabel()).toHaveTextContent(/^a$/);
+    lastStep();
+    expect(loopLabel()).toHaveTextContent(/^a,b$/);
   });
 
   it('marks the NFA transitions taken on an expand step', async () => {

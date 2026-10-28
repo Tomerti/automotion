@@ -1,4 +1,4 @@
-import type { Automaton, State, StateId } from '../../core/model';
+import type { Automaton, State, StateId, Sym } from '../../core/model';
 import type { Viewport } from '../../store/types';
 import { Arrowhead, EdgeView } from './EdgeView';
 import { StateNode } from './StateNode';
@@ -19,6 +19,7 @@ export interface DiagramHighlight {
   tints?: Record<StateId, number>; // partition block index
   visibleStates?: StateId[];
   visibleTransitions?: string[]; // subset reveal; undefined = all
+  edgeSymbols?: Record<string, Sym[]>; // label override per transition id (subset: built so far)
   errorStates?: StateId[];
   errorTransitions?: string[];
   selectedStates?: StateId[];
@@ -110,7 +111,7 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
               transitionId={t.id}
               fromLabel={from.label}
               toLabel={to.label}
-              symbols={t.symbols}
+              symbols={highlight.edgeSymbols?.[t.id] ?? t.symbols}
               geometry={geometry}
               taken={has(highlight.taken, t.id)}
               selected={has(highlight.selectedTransitions, t.id)}
