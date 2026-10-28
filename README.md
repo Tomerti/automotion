@@ -2,7 +2,7 @@
 
 Visualize finite automata (DFA, NFA): build them, draw them, and step through their run on a word.
 
-**Live:** https://tomerti.github.io/automaton-vis/
+**Live site (once GitHub Pages is enabled):** https://tomerti.github.io/automaton-vis/
 
 ![Automaton Vis running the "Ends in ab" NFA on the word aab](docs/screenshot.png)
 
@@ -28,4 +28,4 @@ The first `npm run e2e` needs a browser: `npx playwright install chromium`.
 
 ## Status
 
-v1 is implemented and deployed to GitHub Pages on every push to `master`. See [PROGRESS.md](PROGRESS.md) for current and upcoming tasks.
+v1 is implemented. CI (typecheck, lint, unit and end-to-end tests) runs on every push and pull request. Once GitHub Pages is enabled for the repository (Settings → Pages → Source: GitHub Actions), the CI workflow deploys `master` to the address above after those checks pass. See [PROGRESS.md](PROGRESS.md) for current and upcoming tasks.
