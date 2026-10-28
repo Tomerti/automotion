@@ -1,6 +1,7 @@
 import { epsilonClosure, move, transitionsTaken } from './analysis';
 import { formatSet, withSuffix } from './format';
 import { newId } from './id';
+import { startStates } from './model';
 import type { Automaton, State, StateId, Transition } from './model';
 import type { SubsetStep, SubsetTrace } from './trace';
 import { hasErrors, validate } from './validate';
@@ -8,9 +9,7 @@ import { hasErrors, validate } from './validate';
 /** Why `a` can't be converted to a DFA, or null when it can. */
 export function canConvert(a: Automaton): string | null {
   if (a.kind !== 'NFA') return 'Conversion needs an NFA';
-  if (a.start === null || !a.states.some((s) => s.id === a.start)) {
-    return 'Set a start state first';
-  }
+  if (startStates(a).length === 0) return 'Set a start state first';
   if (hasErrors(validate(a))) return 'Fix the errors in the automaton first';
   return null;
 }
@@ -48,12 +47,13 @@ export function subsetConstruction(nfa: Automaton): SubsetTrace {
     return entry;
   };
 
-  const startSubset = epsilonClosure(nfa, [nfa.start as StateId]);
+  const starts = startStates(nfa);
+  const startSubset = epsilonClosure(nfa, starts);
   const startEntry = addState(startSubset);
   steps.push({
     phase: 'init',
     subset: startSubset,
-    explanation: `Start state: ε-closure(${formatSet(nfa, [nfa.start as StateId])}) = ${formatSet(nfa, startSubset)}`,
+    explanation: `Start state: ε-closure(${formatSet(nfa, starts)}) = ${formatSet(nfa, startSubset)}`,
     focus: { states: startSubset },
     dfaFocus: { states: [startEntry.id] },
     revealedStates: [...revealedStates],
@@ -121,7 +121,7 @@ export function subsetConstruction(nfa: Automaton): SubsetTrace {
     kind: 'DFA',
     alphabet: [...nfa.alphabet],
     states,
-    start: startEntry.id,
+    starts: [startEntry.id],
     accepting,
     transitions,
   };

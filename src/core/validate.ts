@@ -75,11 +75,12 @@ export function validate(a: Automaton): Issue[] {
     seenLabels.add(st.label);
   }
 
-  if (a.start === null || !byId.has(a.start)) {
+  const starts = a.starts.filter((id) => byId.has(id));
+  if (starts.length === 0) {
     issues.push({ severity: 'warning', message: 'No start state' });
   } else {
-    const reached = new Set<StateId>([a.start]);
-    const queue: StateId[] = [a.start];
+    const reached = new Set<StateId>(starts);
+    const queue: StateId[] = [...starts];
     while (queue.length > 0) {
       const cur = queue.pop();
       for (const t of a.transitions) {

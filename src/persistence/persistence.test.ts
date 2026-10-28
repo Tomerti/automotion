@@ -17,7 +17,7 @@ const sample = () =>
     name: 'Sample',
   });
 
-const wrap = (x: unknown) => JSON.stringify({ format: 'automaton-vis', version: 1, automata: [x] });
+const wrap = (x: unknown) => JSON.stringify({ format: 'automaton-vis', version: 2, automata: [x] });
 
 describe('fileFormat', () => {
   it('round-trips serialize → parseFile', () => {
@@ -28,7 +28,7 @@ describe('fileFormat', () => {
   it('serializes with the format header and 2-space indent', () => {
     const text = serialize([sample()]);
     expect(text).toContain('\n  "format": "automaton-vis"');
-    expect(JSON.parse(text).version).toBe(1);
+    expect(JSON.parse(text).version).toBe(2);
   });
 
   it('renames colliding ids on import (existing and within the file)', () => {
@@ -49,6 +49,48 @@ describe('fileFormat', () => {
     if (!r.ok) throw new Error('expected ok');
     expect(r.automata[0]?.id).toBe(a.id);
     expect(r.automata[1]?.id).not.toBe(a.id);
+  });
+
+  it('migrates a v1 file: start becomes starts, a missing start becomes []', () => {
+    const oneStateV1 = {
+      id: 'v1',
+      name: 'Old',
+      kind: 'DFA',
+      alphabet: [],
+      states: [{ id: 'q0', label: 'q0', x: 0, y: 0 }],
+      accepting: [],
+      transitions: [],
+    };
+    const v1 = (start: string | null) =>
+      JSON.stringify({ format: 'automaton-vis', version: 1, automata: [{ ...oneStateV1, start }] });
+    expect(parseFile(v1('q0'), new Set())).toMatchObject({
+      ok: true,
+      automata: [{ starts: ['q0'] }],
+    });
+    expect(parseFile(v1(null), new Set())).toMatchObject({ ok: true, automata: [{ starts: [] }] });
+    // Review Focus 1: v1 never checked the start; a dangling one is dropped, not fatal.
+    expect(parseFile(v1('gone'), new Set())).toMatchObject({
+      ok: true,
+      automata: [{ starts: [] }],
+    });
+  });
+
+  it('v2 files: round-trip several NFA starts; reject an unknown start or a two-start DFA', () => {
+    const nfa = fixture({
+      kind: 'NFA',
+      alphabet: 'a',
+      states: ['q0', 'q1'],
+      starts: ['q0', 'q1'],
+    });
+    expect(parseFile(serialize([nfa]), new Set())).toMatchObject({
+      ok: true,
+      automata: [{ starts: ['q0', 'q1'] }],
+    });
+    expect(JSON.parse(serialize([nfa])).version).toBe(2);
+    expect(parseFile(wrap({ ...nfa, starts: ['nope'] }), new Set()).ok).toBe(false);
+    expect(parseFile(wrap({ ...nfa, kind: 'DFA', starts: ['q0', 'q1'] }), new Set()).ok).toBe(
+      false,
+    );
   });
 
   it('rejects a dangling transition with a specific message', () => {
@@ -89,7 +131,7 @@ describe('fileFormat', () => {
   });
 
   it('rejects a newer version', () => {
-    const r = parseFile('{"format":"automaton-vis","version":2,"automata":[]}', new Set());
+    const r = parseFile('{"format":"automaton-vis","version":3,"automata":[]}', new Set());
     expect(r).toEqual({
       ok: false,
       error: 'This file is from a newer version of Automaton Vis',

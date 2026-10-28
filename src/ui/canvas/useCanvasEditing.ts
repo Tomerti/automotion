@@ -575,7 +575,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     const key = e.key.toLowerCase();
     if (key === 's' && stateId) {
       e.preventDefault();
-      edit((a) => setStart(a, a.start === stateId ? null : stateId));
+      edit((a) => setStart(a, a.starts.includes(stateId) ? null : stateId));
     } else if (key === 'a' && stateId) {
       e.preventDefault();
       edit((a) => toggleAccepting(a, stateId));

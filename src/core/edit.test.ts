@@ -61,7 +61,7 @@ describe('states', () => {
 
   it('removing the start state clears start and accepting and its edges', () => {
     const a = removeState({ ...dfa(), accepting: ['q0', 'q1'] }, 'q0');
-    expect(a.start).toBeNull();
+    expect(a.starts).toEqual([]);
     expect(a.accepting).toEqual(['q1']);
     expect(a.states.map((s) => s.id)).toEqual(['q1']);
     expect(a.transitions.every((t) => t.from !== 'q0' && t.to !== 'q0')).toBe(true);
@@ -71,7 +71,7 @@ describe('states', () => {
   it('removing an accepting state removes it from accepting', () => {
     const a = removeState(dfa(), 'q1');
     expect(a.accepting).toEqual([]);
-    expect(a.start).toBe('q0');
+    expect(a.starts).toEqual(['q0']);
   });
 
   it('renames, moves, sets start and toggles accepting', () => {
@@ -80,8 +80,8 @@ describe('states', () => {
     a = moveState(a, 'q1', { x: 7, y: 8 });
     expect(a.states.find((s) => s.id === 'q1')).toMatchObject({ x: 7, y: 8 });
     a = setStart(a, 'q1');
-    expect(a.start).toBe('q1');
-    expect(setStart(a, null).start).toBeNull();
+    expect(a.starts).toEqual(['q1']);
+    expect(setStart(a, null).starts).toEqual([]);
     expect(toggleAccepting(a, 'q1').accepting).toEqual([]);
     expect(toggleAccepting(a, 'q0').accepting).toEqual(['q1', 'q0']);
   });

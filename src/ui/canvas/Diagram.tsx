@@ -53,8 +53,9 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
     );
   });
 
-  const start = automaton.start === null ? undefined : stateById.get(automaton.start);
-  const startVisible = start !== undefined && stateVisible(start.id);
+  const starts = automaton.starts
+    .map((id) => stateById.get(id))
+    .filter((s): s is State => s !== undefined && stateVisible(s.id));
 
   return (
     <svg
@@ -70,12 +71,17 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
     >
       <style>{diagramStyles}</style>
       <g transform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`}>
-        {startVisible && (
-          <g className="av-start-arrow" data-testid="start-arrow">
+        {starts.map((start) => (
+          <g
+            key={start.id}
+            className="av-start-arrow"
+            data-testid="start-arrow"
+            data-state-id={start.id}
+          >
             <path className="av-edge-path" d={startArrowGeometry(start).d} />
             <Arrowhead end={{ x: start.x - STATE_RADIUS, y: start.y }} angle={0} />
           </g>
-        )}
+        ))}
         {visibleTransitions.map((t) => {
           const from = stateById.get(t.from) as State;
           const to = stateById.get(t.to) as State;
@@ -102,7 +108,7 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
               key={s.id}
               state={s}
               accepting={automaton.accepting.includes(s.id)}
-              start={automaton.start === s.id}
+              start={automaton.starts.includes(s.id)}
               active={has(highlight.active, s.id)}
               selected={has(highlight.selectedStates, s.id)}
               error={has(highlight.errorStates, s.id)}

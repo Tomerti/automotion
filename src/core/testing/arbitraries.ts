@@ -27,7 +27,7 @@ function build(
     kind,
     alphabet,
     states: ids.map((id, i) => ({ id, label: id, x: 100 * i, y: 0 })),
-    start: 'q0',
+    starts: ['q0'],
     accepting: ids.filter((_, i) => accepting[i]),
     transitions,
   };

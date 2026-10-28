@@ -26,7 +26,7 @@ export function removeState(a: Automaton, id: StateId): Automaton {
   return {
     ...a,
     states: a.states.filter((s) => s.id !== id),
-    start: a.start === id ? null : a.start,
+    starts: a.starts.filter((x) => x !== id),
     accepting: a.accepting.filter((x) => x !== id),
     transitions: a.transitions.filter((t) => t.from !== id && t.to !== id),
   };
@@ -40,8 +40,9 @@ export function moveState(a: Automaton, id: StateId, pos: { x: number; y: number
   return { ...a, states: a.states.map((s) => (s.id === id ? { ...s, x: pos.x, y: pos.y } : s)) };
 }
 
+/** Make `id` the only start state (null: none). */
 export function setStart(a: Automaton, id: StateId | null): Automaton {
-  return { ...a, start: id };
+  return { ...a, starts: id === null ? [] : [id] };
 }
 
 export function toggleAccepting(a: Automaton, id: StateId): Automaton {

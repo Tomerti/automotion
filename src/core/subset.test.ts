@@ -91,8 +91,8 @@ describe('subsetConstruction', () => {
     expect([...(last?.revealedTransitions ?? [])].sort()).toEqual(
       result.transitions.map((t) => t.id).sort(),
     );
-    expect(steps[0]?.revealedStates).toEqual([result.start]);
-    expect(steps[0]?.dfaFocus).toEqual({ states: [result.start] });
+    expect(steps[0]?.revealedStates).toEqual(result.starts);
+    expect(steps[0]?.dfaFocus).toEqual({ states: result.starts });
     expect(last?.dfaFocus).toEqual({});
   });
 
@@ -125,7 +125,7 @@ describe('subsetConstruction', () => {
 
   it('canConvert rejects DFAs, missing start and errors', () => {
     expect(canConvert(evenZeros)).toBe('Conversion needs an NFA');
-    expect(canConvert({ ...endsInAb, start: null })).toBe('Set a start state first');
+    expect(canConvert({ ...endsInAb, starts: [] })).toBe('Set a start state first');
     expect(canConvert({ ...endsInAb, alphabet: ['a'] })).toBe(
       'Fix the errors in the automaton first',
     );

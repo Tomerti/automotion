@@ -135,7 +135,7 @@ describe('Canvas editing', () => {
     fireEvent.keyDown(canvas(), { key: 'Enter' });
     fireEvent.keyDown(canvas(), { key: ' ' });
     expect(active().accepting).toEqual([]);
-    expect(active().start).toBeNull();
+    expect(active().starts).toEqual([]);
   });
 
   it('S toggles start and A toggles accepting on the selected state', () => {
@@ -143,13 +143,13 @@ describe('Canvas editing', () => {
     render(<Canvas />);
     click(stateEl('q1'), 100, 0);
     fireEvent.keyDown(canvas(), { key: 's' });
-    expect(active().start).toBe('q1');
+    expect(active().starts).toEqual(['q1']);
     fireEvent.keyDown(canvas(), { key: 'a' });
     expect(active().accepting).toEqual(['q1']);
     fireEvent.keyDown(canvas(), { key: 'A' });
     expect(active().accepting).toEqual([]);
     fireEvent.keyDown(canvas(), { key: 'S' });
-    expect(active().start).toBeNull();
+    expect(active().starts).toEqual([]);
   });
 
   it('S and A ignore a selected state that undo removed', () => {
@@ -160,7 +160,7 @@ describe('Canvas editing', () => {
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
     fireEvent.keyDown(canvas(), { key: 's' });
     fireEvent.keyDown(canvas(), { key: 'a' });
-    expect(active().start).toBeNull();
+    expect(active().starts).toEqual([]);
     expect(active().accepting).toEqual([]);
   });
 
@@ -504,7 +504,7 @@ describe('Canvas editing', () => {
       'Delete',
     ]);
     await user.click(screen.getByRole('menuitem', { name: 'Set as start' }));
-    expect(active().start).toBe('q1');
+    expect(active().starts).toEqual(['q1']);
     expect(screen.queryByRole('menu')).toBeNull();
     menuOn('q1');
     await user.click(screen.getByRole('menuitem', { name: 'Toggle accepting' }));
@@ -630,7 +630,7 @@ describe('Canvas editing', () => {
     click(stateEl('q1'), 100, 0);
     fireEvent.doubleClick(stateEl('q1'), { clientX: 100, clientY: 0 });
     await user.type(screen.getByTestId('rename-input'), 'sa{Backspace}');
-    expect(active().start).toBeNull();
+    expect(active().starts).toEqual([]);
     expect(active().accepting).toEqual([]);
     expect(active().states).toHaveLength(2);
   });
@@ -652,7 +652,7 @@ describe('Canvas editing', () => {
     expect(screen.queryByTestId('rename-input')).toBeNull();
     expect(canvas()).toHaveFocus();
     await user.keyboard('s');
-    expect(active().start).toBe('q1');
+    expect(active().starts).toEqual(['q1']);
   });
 
   it('closing the symbol input refocuses the canvas', async () => {
@@ -674,7 +674,7 @@ describe('Canvas editing', () => {
     expect(screen.queryByRole('menu')).toBeNull();
     expect(canvas()).toHaveFocus();
     await user.keyboard('s');
-    expect(active().start).toBe('q1');
+    expect(active().starts).toEqual(['q1']);
 
     (document.activeElement as HTMLElement).blur();
     fireEvent.contextMenu(stateEl('q1'), { clientX: 100, clientY: 0 });
@@ -914,7 +914,7 @@ describe('Fit and Tidy', () => {
 
   it('Tidy lays the states out and undoes in one step', async () => {
     const a = two('DFA', 'a', [['q1', 'a', 'q0']]);
-    load({ ...a, start: 'q1' });
+    load({ ...a, starts: ['q1'] });
     render(<Canvas />);
     sizeCanvas(640, 480);
     const expected = (await layoutAutomaton(active())).states;
@@ -973,7 +973,7 @@ describe('Fit and Tidy', () => {
   });
 
   it('Tidy does nothing while a trace is open', async () => {
-    load({ ...two('DFA', 'a', [['q0', 'a', 'q1']]), start: 'q0' });
+    load({ ...two('DFA', 'a', [['q0', 'a', 'q1']]), starts: ['q0'] });
     act(() => st().openTrace(runWord(active(), 'a')));
     render(<Canvas />);
     const before = active();

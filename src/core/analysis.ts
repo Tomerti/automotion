@@ -1,6 +1,6 @@
 import { nextStateLabel } from './edit';
 import { newId } from './id';
-import { EPSILON } from './model';
+import { EPSILON, startStates } from './model';
 import type { Automaton, StateId, Sym } from './model';
 
 function inOrder(a: Automaton, set: ReadonlySet<StateId>): StateId[] {
@@ -37,9 +37,9 @@ export function transitionsTaken(a: Automaton, ids: Iterable<StateId>, sym: Sym)
 }
 
 export function reachableStates(a: Automaton): StateId[] {
-  if (a.start === null || !a.states.some((s) => s.id === a.start)) return [];
-  const seen = new Set<StateId>([a.start]);
-  const stack: StateId[] = [a.start];
+  const starts = startStates(a);
+  const seen = new Set<StateId>(starts);
+  const stack: StateId[] = [...starts];
   while (stack.length > 0) {
     const cur = stack.pop();
     for (const t of a.transitions) {
@@ -53,7 +53,7 @@ export function reachableStates(a: Automaton): StateId[] {
 }
 
 export function removeUnreachable(a: Automaton): { automaton: Automaton; removed: StateId[] } {
-  if (a.start === null) return { automaton: a, removed: [] };
+  if (startStates(a).length === 0) return { automaton: a, removed: [] };
   const keep = new Set(reachableStates(a));
   const removed = a.states.filter((s) => !keep.has(s.id)).map((s) => s.id);
   if (removed.length === 0) return { automaton: a, removed };
@@ -109,8 +109,9 @@ export function completeWithDeadState(a: Automaton): {
 }
 
 export function accepts(a: Automaton, word: string): boolean {
-  if (a.start === null || !a.states.some((s) => s.id === a.start)) return false;
-  let current = epsilonClosure(a, [a.start]);
+  const starts = startStates(a);
+  if (starts.length === 0) return false;
+  let current = epsilonClosure(a, starts);
   for (const ch of [...word]) {
     current = epsilonClosure(a, move(a, current, ch));
     if (current.length === 0) return false;

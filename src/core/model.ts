@@ -34,7 +34,11 @@ export interface Automaton {
   /** Explicit and editable; never contains ε. */
   alphabet: Sym[];
   states: State[];
-  start: StateId | null;
+  /**
+   * Start states, in the order they became one, without duplicates. A DFA has at most one; an
+   * NFA accepts when a run from any of them does.
+   */
+  starts: StateId[];
   accepting: StateId[];
   transitions: Transition[];
 }
@@ -46,8 +50,13 @@ export function emptyAutomaton(name: string, kind: AutomatonKind): Automaton {
     kind,
     alphabet: [],
     states: [],
-    start: null,
+    starts: [],
     accepting: [],
     transitions: [],
   };
+}
+
+/** The start states that exist (a stale id in `starts` is ignored). */
+export function startStates(a: Automaton): StateId[] {
+  return a.starts.filter((id) => a.states.some((s) => s.id === id));
 }

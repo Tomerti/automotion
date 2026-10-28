@@ -93,7 +93,7 @@ describe('reachability', () => {
     expect(automaton.transitions.map((t) => t.id)).toEqual(['q0->q1']);
   });
   it('with no start there is nothing reachable and nothing removed', () => {
-    const noStart = { ...a, start: null };
+    const noStart = { ...a, starts: [] };
     expect(reachableStates(noStart)).toEqual([]);
     expect(removeUnreachable(noStart)).toEqual({ automaton: noStart, removed: [] });
   });
@@ -113,7 +113,7 @@ describe('completeWithDeadState', () => {
     expect(completeWithDeadState(evenZeros)).toEqual({ automaton: evenZeros, deadState: null });
   });
   it('returns null for no states or an empty alphabet', () => {
-    const empty = { ...partialDfa, states: [], start: null, accepting: [], transitions: [] };
+    const empty = { ...partialDfa, states: [], starts: [], accepting: [], transitions: [] };
     expect(completeWithDeadState(empty).deadState).toBeNull();
     expect(completeWithDeadState({ ...partialDfa, alphabet: [] }).deadState).toBeNull();
   });
@@ -142,7 +142,7 @@ describe('accepts', () => {
     expect(accepts(epsCycle, '')).toBe(true);
   });
   it('rejects with no start', () => {
-    expect(accepts({ ...evenZeros, start: null }, '')).toBe(false);
+    expect(accepts({ ...evenZeros, starts: [] }, '')).toBe(false);
   });
 });
 

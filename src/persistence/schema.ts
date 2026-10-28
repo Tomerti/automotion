@@ -24,12 +24,22 @@ export const automatonSchema = z
     kind: z.enum(['DFA', 'NFA']),
     alphabet: z.array(z.string()),
     states: z.array(stateSchema),
-    start: z.string().nullable(),
+    starts: z.array(z.string()),
     accepting: z.array(z.string()),
     transitions: z.array(transitionSchema),
   })
   .superRefine((a, ctx) => {
     const ids = new Set(a.states.map((s) => s.id));
+    for (const s of a.starts) {
+      if (!ids.has(s)) {
+        ctx.addIssue({ code: 'custom', message: `Start state ${s} is not a state` });
+        return;
+      }
+    }
+    if (a.kind === 'DFA' && a.starts.length > 1) {
+      ctx.addIssue({ code: 'custom', message: 'A DFA has exactly one start state' });
+      return;
+    }
     for (const t of a.transitions) {
       for (const end of [t.from, t.to]) {
         if (!ids.has(end)) {
