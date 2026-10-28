@@ -4,9 +4,8 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 
 ## Current
 
-- [ ] Choose the stack (e.g. web app with TypeScript and a graph-drawing library)
-- [ ] Define the automaton data model (states, alphabet, transitions, start state, accepting states; DFA vs NFA)
-- [ ] Choose a file format for saving and loading automata (e.g. JSON)
+- [ ] Review the design spec (`docs/superpowers/specs/2026-10-28-automaton-vis-design.md`)
+- [ ] Write the implementation plan
 
 ## Next
 
@@ -39,12 +38,22 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 - [ ] Save and load automata
 - [ ] Import and export files
 
+### Algorithms (step-by-step walkthroughs)
+- [ ] NFA → DFA conversion (subset construction)
+- [ ] DFA minimization (Moore's partition refinement)
+
+### Polish and deploy
+- [ ] Visual design pass (frontend-design)
+- [ ] Playwright smoke tests
+- [ ] CI and deploy to GitHub Pages
+
 ## Ideas (later)
 
-- [ ] NFA → DFA conversion (subset construction)
-- [ ] DFA minimization
 - [ ] Regex → NFA
 
 ## Done
 
+- [x] Choose the stack: TypeScript, React, Vite, custom SVG renderer, elkjs, Zustand (see spec)
+- [x] Define the automaton data model (see spec §4)
+- [x] Choose a file format for saving and loading automata: versioned JSON (see spec §10)
 - [x] Create the project repo, README and this file
