@@ -13,6 +13,18 @@ import { Toolbar } from './Toolbar';
 import '../player/player.css';
 import './App.css';
 
+/** A start arrow into an accepting state: the smallest complete automaton. */
+function BrandMark(): React.JSX.Element {
+  return (
+    <svg className="av-brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M2 16h7" />
+      <path className="av-brand-head" d="M7 12.5l3.5 3.5-3.5 3.5z" />
+      <circle className="av-brand-state" cx="20" cy="16" r="9" />
+      <circle cx="20" cy="16" r="5.75" />
+    </svg>
+  );
+}
+
 export default function App(): React.JSX.Element {
   useAutosave();
   const trace = useAppStore((s) => s.trace);
@@ -33,7 +45,13 @@ export default function App(): React.JSX.Element {
       }}
     >
       <aside className="av-sidebar">
-        <h1>Automaton Vis</h1>
+        <div className="av-brand">
+          <h1>
+            <BrandMark />
+            Automaton Vis
+          </h1>
+          <p className="av-tagline">Build finite automata and watch them run.</p>
+        </div>
         <AutomatonList />
       </aside>
       <header className="av-toolbar-area">

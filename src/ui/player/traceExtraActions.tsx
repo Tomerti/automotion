@@ -14,7 +14,11 @@ export function TraceExtraActions({
     case 'subset':
     case 'minimize':
       return isLast ? (
-        <button type="button" onClick={() => appStore.getState().addAutomaton(trace.result)}>
+        <button
+          type="button"
+          className="av-primary"
+          onClick={() => appStore.getState().addAutomaton(trace.result)}
+        >
           Save as new automaton
         </button>
       ) : null;

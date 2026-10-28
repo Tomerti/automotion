@@ -72,52 +72,60 @@ export function Toolbar(): React.JSX.Element {
           </button>
         ))}
       </div>
-      <button
-        type="button"
-        disabled={undoCount === 0}
-        onClick={() => {
-          appStore.getState().undo();
-        }}
-      >
-        Undo
-      </button>
-      <button
-        type="button"
-        disabled={redoCount === 0}
-        onClick={() => {
-          appStore.getState().redo();
-        }}
-      >
-        Redo
-      </button>
-      <button type="button" disabled={none} onClick={fitActive}>
-        Fit
-      </button>
-      <button type="button" disabled={none || tracing} onClick={() => void tidyActive()}>
-        Tidy
-      </button>
-      <button
-        type="button"
-        disabled={none || convertReason !== null}
-        title={convertReason ?? undefined}
-        onClick={() => void startSubset()}
-      >
-        Convert to DFA
-      </button>
-      <button
-        type="button"
-        disabled={none || minimizeReason !== null}
-        onClick={startMinimize}
-        title={minimizeReason ?? undefined}
-      >
-        Minimize
-      </button>
-      <button type="button" disabled={none || tracing} onClick={() => void exportDiagram('svg')}>
-        Export SVG
-      </button>
-      <button type="button" disabled={none || tracing} onClick={() => void exportDiagram('png')}>
-        Export PNG
-      </button>
+      <div className="av-toolbar-group">
+        <button
+          type="button"
+          disabled={undoCount === 0}
+          onClick={() => {
+            appStore.getState().undo();
+          }}
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          disabled={redoCount === 0}
+          onClick={() => {
+            appStore.getState().redo();
+          }}
+        >
+          Redo
+        </button>
+      </div>
+      <div className="av-toolbar-group">
+        <button type="button" disabled={none} onClick={fitActive}>
+          Fit
+        </button>
+        <button type="button" disabled={none || tracing} onClick={() => void tidyActive()}>
+          Tidy
+        </button>
+      </div>
+      <div className="av-toolbar-group">
+        <button
+          type="button"
+          disabled={none || convertReason !== null}
+          title={convertReason ?? undefined}
+          onClick={() => void startSubset()}
+        >
+          Convert to DFA
+        </button>
+        <button
+          type="button"
+          disabled={none || minimizeReason !== null}
+          onClick={startMinimize}
+          title={minimizeReason ?? undefined}
+        >
+          Minimize
+        </button>
+      </div>
+      <div className="av-toolbar-group">
+        <button type="button" disabled={none || tracing} onClick={() => void exportDiagram('svg')}>
+          Export SVG
+        </button>
+        <button type="button" disabled={none || tracing} onClick={() => void exportDiagram('png')}>
+          Export PNG
+        </button>
+      </div>
       <FileMenu />
     </div>
   );

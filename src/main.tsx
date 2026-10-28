@@ -1,3 +1,5 @@
+// Shared tokens and base styles first, so component stylesheets can override them.
+import './ui/theme.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { loadFromStorage } from './persistence/storage';

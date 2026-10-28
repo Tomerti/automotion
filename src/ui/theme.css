@@ -1,0 +1,237 @@
+/*
+ * Automaton Vis theme: a marked-up problem set.
+ *
+ * The canvas is dotted engineering paper and the diagram is ink on it. Processes are marked
+ * up the way a student would: highlighter yellow for the active states and taken edges, red
+ * pen for errors and rejections, blue pen for your own selection, and marker tints for the
+ * blocks of a minimization. Mathematical text (state labels, symbols, the input tape, step
+ * explanations) is set in STIX Two Text, the face of scientific publishing; the interface
+ * chrome is Schibsted Grotesk and stays quiet. The loud element is the run's input tape with
+ * its read head; the one orchestrated motion is the verdict stamp. Light and dark follow
+ * prefers-color-scheme. Diagram exports always use the light (paper) tokens via
+ * `.av-theme-light`, so an export taken in dark mode still reads on white.
+ */
+
+:root,
+.av-theme-light {
+  color-scheme: light;
+
+  --av-font-ui: 'Schibsted Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --av-font-math: 'STIX Two Text', 'Cambria Math', Cambria, Georgia, serif;
+
+  /* Surfaces and ink */
+  --av-paper: #f3f5f0;
+  --av-paper-dot: #cfd6ca;
+  --av-surface: #fcfcfa;
+  --av-surface-raised: #ffffff;
+  --av-hover: #ebeee7;
+  --av-ink: #1c2333;
+  --av-ink-muted: #5a6375;
+  --av-rule: #dde1d8;
+  --av-rule-strong: #c2c8bd;
+  --av-shadow: #1c23331f;
+
+  /* Pens and highlighter */
+  --av-accent: #2d4fd0;
+  --av-on-accent: #ffffff;
+  --av-red: #c42f36;
+  --av-green: #1c7a47;
+  --av-warn: #8a5a00;
+  --av-highlighter: #ffe14d;
+  --av-highlighter-band: #ffe14dc0;
+  --av-highlighter-ink: #7a5600;
+
+  /* Diagram tokens, consumed by src/ui/canvas/diagramStyles.ts */
+  --av-font: var(--av-font-math);
+  --av-state-fill: var(--av-surface-raised);
+  --av-state-stroke: var(--av-ink);
+  --av-edge-stroke: #3a4356;
+  --av-text: var(--av-ink);
+  --av-label-halo: var(--av-paper);
+  --av-selected: var(--av-accent);
+  --av-active: var(--av-highlighter-ink);
+  --av-active-stroke: var(--av-highlighter-ink);
+  --av-active-fill: var(--av-highlighter);
+  --av-active-text: var(--av-ink);
+  --av-taken-band: var(--av-highlighter-band);
+  --av-error: var(--av-red);
+
+  /* Marker tints for partition blocks (diagram fills and legend swatches) */
+  --av-tint-0: #c9dbff;
+  --av-tint-1: #ffcfc0;
+  --av-tint-2: #c3e9c7;
+  --av-tint-3: #e4cdf5;
+  --av-tint-4: #ffdfa6;
+  --av-tint-5: #bfe7e6;
+  --av-tint-6: #f8c8dc;
+  --av-tint-7: #dadfe6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --av-paper: #151920;
+    --av-paper-dot: #2b313d;
+    --av-surface: #1b2029;
+    --av-surface-raised: #222834;
+    --av-hover: #2a3140;
+    --av-ink: #e6e9ef;
+    --av-ink-muted: #9aa3b2;
+    --av-rule: #2c3340;
+    --av-rule-strong: #3d4656;
+    --av-shadow: #00000066;
+
+    --av-accent: #8fa7ff;
+    --av-on-accent: #10142a;
+    --av-red: #ff7b7b;
+    --av-green: #5ed39a;
+    --av-warn: #e8b85a;
+    --av-highlighter: #f2d24b;
+    --av-highlighter-band: #f2d24b55;
+    --av-highlighter-ink: #f2d24b;
+
+    --av-edge-stroke: #b9c0cc;
+    --av-active-stroke: #9c7a12;
+    --av-active-text: #1c2333;
+
+    --av-tint-0: #2a4680;
+    --av-tint-1: #6e3428;
+    --av-tint-2: #275c37;
+    --av-tint-3: #50306c;
+    --av-tint-4: #6b4b18;
+    --av-tint-5: #1f5857;
+    --av-tint-6: #6a2a48;
+    --av-tint-7: #3b424e;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--av-font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--av-ink);
+  background: var(--av-surface);
+  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Controls */
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 11px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  background: var(--av-surface-raised);
+  border: 1px solid var(--av-rule-strong);
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 120ms,
+    border-color 120ms,
+    color 120ms;
+}
+button:hover:not(:disabled) {
+  background: var(--av-hover);
+  border-color: var(--av-ink-muted);
+}
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+button[aria-pressed='true'],
+button[aria-pressed='true']:hover:not(:disabled) {
+  color: var(--av-surface-raised);
+  background: var(--av-ink);
+  border-color: var(--av-ink);
+}
+
+.av-primary,
+button.av-primary:hover:not(:disabled) {
+  color: var(--av-on-accent);
+  background: var(--av-accent);
+  border-color: var(--av-accent);
+}
+button.av-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+input:not([type]),
+input[type='text'],
+select {
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 13px;
+  background: var(--av-surface-raised);
+  border: 1px solid var(--av-rule-strong);
+  border-radius: 6px;
+}
+input::placeholder {
+  color: var(--av-ink-muted);
+  opacity: 0.8;
+}
+input[type='range'],
+input[type='checkbox'] {
+  accent-color: var(--av-accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--av-accent);
+  outline-offset: 2px;
+}
+input:focus-visible,
+select:focus-visible {
+  outline-offset: 0;
+  border-color: var(--av-accent);
+}
+
+[role='alert'] {
+  color: var(--av-red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

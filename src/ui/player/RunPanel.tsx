@@ -23,7 +23,13 @@ export function RunPanel(): React.JSX.Element {
           if (e.key === 'Enter') run();
         }}
       />
-      <button type="button" disabled={reason !== null} title={reason ?? undefined} onClick={run}>
+      <button
+        type="button"
+        className="av-primary"
+        disabled={reason !== null}
+        title={reason ?? undefined}
+        onClick={run}
+      >
         Run
       </button>
     </div>

@@ -80,7 +80,7 @@ export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
         <button type="button" onClick={() => onIndex(index - 1)} disabled={index <= 0}>
           Previous
         </button>
-        <button type="button" onClick={togglePlay}>
+        <button type="button" className="av-play" onClick={togglePlay}>
           {playing ? 'Pause' : 'Play'}
         </button>
         <button type="button" onClick={() => onIndex(index + 1)} disabled={index >= last}>
@@ -95,11 +95,7 @@ export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
           onChange={(e) => onIndex(Number(e.target.value))}
         />
         <span data-testid="step-counter">{`Step ${index + 1} / ${stepCount}`}</span>
-        <select
-          aria-label="Speed"
-          value={speed}
-          onChange={(e) => setSpeed(Number(e.target.value))}
-        >
+        <select aria-label="Speed" value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
           {SPEEDS.map((s) => (
             <option key={s.value} value={s.value}>
               {s.label}
@@ -107,7 +103,7 @@ export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
           ))}
         </select>
         {extraActions}
-        <button type="button" onClick={onClose}>
+        <button type="button" className="av-player-close" onClick={onClose}>
           Close
         </button>
       </div>

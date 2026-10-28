@@ -18,7 +18,15 @@ export function Canvas(): React.JSX.Element {
   if (!automaton) {
     return (
       <div className="av-canvas av-canvas-empty" data-testid="canvas">
-        Create an automaton to get started
+        <svg className="av-empty-mark" viewBox="0 0 120 64" aria-hidden="true">
+          <path d="M4 32h22" />
+          <path className="av-empty-head" d="M20 26l7 6-7 6z" />
+          <circle cx="52" cy="32" r="22" />
+          <path d="M74 32h18" strokeDasharray="3 5" />
+          <circle cx="104" cy="32" r="12" strokeDasharray="3 5" />
+        </svg>
+        <p className="av-empty-title">Create an automaton to get started</p>
+        <p className="av-empty-hint">Start with New DFA or New NFA, or import a file.</p>
       </div>
     );
   }

@@ -8,15 +8,29 @@ const LOOP_ALLOWANCE = 28; // room for self-loops and edge labels around a state
 /** Elements that exist only for pointer interaction. */
 const INTERACTION_ONLY = '[data-testid="rubber-band"], .av-state-hit, .av-edge-hit';
 
+/**
+ * Replace each var() with its light-theme value: a hidden probe carrying `.av-theme-light`
+ * (see src/ui/theme.css) resolves the tokens, so an export taken in dark mode still reads on
+ * white. Tokens the probe doesn't define fall back to the root's value, then to the fallback.
+ */
 function resolveCustomProperties(css: string): string {
-  const root = getComputedStyle(document.documentElement);
-  return css.replace(
-    /var\(\s*(--[\w-]+)\s*(?:,\s*([^)]*))?\)/g,
-    (_m, name: string, fb?: string) => {
-      const value = root.getPropertyValue(name).trim();
-      return value !== '' ? value : (fb ?? '').trim();
-    },
-  );
+  const probe = document.createElement('div');
+  probe.className = 'av-theme-light';
+  probe.hidden = true;
+  document.body.appendChild(probe);
+  try {
+    const light = getComputedStyle(probe);
+    const root = getComputedStyle(document.documentElement);
+    return css.replace(
+      /var\(\s*(--[\w-]+)\s*(?:,\s*([^)]*))?\)/g,
+      (_m, name: string, fb?: string) => {
+        const value = light.getPropertyValue(name).trim() || root.getPropertyValue(name).trim();
+        return value !== '' ? value : (fb ?? '').trim();
+      },
+    );
+  } finally {
+    probe.remove();
+  }
 }
 
 /** Standalone SVG text of the diagram: fitted viewBox, resolved colours, no interaction chrome. */
