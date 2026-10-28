@@ -3,7 +3,8 @@
  * is missing (jsdom, old browsers) or the browser refuses to start it.
  */
 
-type Note = { freq: number; at: number; length: number };
+/** `to`: a pitch the note glides to over its length. */
+type Note = { freq: number; at: number; length: number; to?: number };
 
 let context: AudioContext | null = null;
 /** Audio time the last queued cue ends, so a verdict right after Run waits for the chime. */
@@ -30,6 +31,7 @@ function play(notes: Note[], type: OscillatorType, volume: number): void {
     const gain = ctx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(n.freq, t);
+    if (n.to !== undefined) osc.frequency.exponentialRampToValueAtTime(n.to, t + n.length);
     // Quick attack and an exponential tail: a soft pluck instead of a click.
     gain.gain.setValueAtTime(0.0001, t);
     gain.gain.exponentialRampToValueAtTime(volume, t + 0.012);
@@ -53,7 +55,10 @@ export function playRunSound(): void {
   );
 }
 
-/** A bright major arpeggio for an accepted word, a low falling pair for a rejected one. */
+/**
+ * A bright major arpeggio for an accepted word; for a rejected one, a single low note that slides
+ * down (two separate notes read as the cue playing twice).
+ */
 export function playVerdictSound(accepted: boolean): void {
   if (accepted) {
     play(
@@ -66,13 +71,6 @@ export function playVerdictSound(accepted: boolean): void {
       0.13,
     );
   } else {
-    play(
-      [
-        { freq: 311.13, at: 0, length: 0.18 },
-        { freq: 233.08, at: 0.11, length: 0.34 },
-      ],
-      'sine',
-      0.18,
-    );
+    play([{ freq: 311.13, to: 196, at: 0, length: 0.42 }], 'sine', 0.18);
   }
 }

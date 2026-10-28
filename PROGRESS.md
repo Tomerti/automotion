@@ -24,6 +24,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Replaying a run (Play at the end, First, scrubbing to step 1) plays the Run chime again
 - [x] A new transition's arrow stays on screen while its symbols are typed
 - [x] A new transition's symbol input opens where its label will be drawn, not on the arrow
+- [x] A rejected word's cue is one falling note (the two-note version sounded like it played twice)
 
 ### History bar
 
