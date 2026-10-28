@@ -102,3 +102,31 @@ body,
   color: #666;
   font-size: 0.75rem;
 }
+
+.av-toasts {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+.av-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid #888;
+  border-radius: 4px;
+  background: #fff;
+}
+.av-toast-error {
+  border-color: #b00020;
+  color: #b00020;
+}
+.av-file {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+}

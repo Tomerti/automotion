@@ -1,10 +1,12 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { moveState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
+import { serialize } from '../../persistence/fileFormat';
 import { appStore, resetAppStore } from '../../store/store';
 import { Toolbar } from './Toolbar';
+import { toastStore } from './toastStore';
 
 const nfa = () => fixture({ kind: 'NFA', alphabet: 'a', states: ['q0'], start: 'q0', name: 'n' });
 const nfaEps = () =>
@@ -17,7 +19,10 @@ const nfaEps = () =>
     name: 'e',
   });
 
-beforeEach(() => resetAppStore());
+beforeEach(() => {
+  resetAppStore();
+  toastStore.setState({ toasts: [] });
+});
 afterEach(cleanup);
 
 const btn = (name: string) => screen.getByRole('button', { name });
@@ -56,15 +61,65 @@ describe('Toolbar', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('switching an NFA with ε to DFA shows an alert, cleared by the next success', async () => {
+  it('switching an NFA with ε to DFA shows an error toast', async () => {
     const user = userEvent.setup();
     resetAppStore({ automata: [nfaEps()], activeId: 'e' });
     render(<Toolbar />);
     await user.click(btn('DFA'));
-    expect(screen.getByRole('alert')).not.toBeEmptyDOMElement();
+    const toasts = toastStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.kind).toBe('error');
+    expect(toasts[0]?.message).not.toBe('');
     expect(appStore.getState().automata[0]?.kind).toBe('NFA');
-    await user.click(btn('NFA'));
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('Export and Export all are disabled without automata', () => {
+    render(<Toolbar />);
+    expect(btn('Export')).toBeDisabled();
+    expect(btn('Export all')).toBeDisabled();
+    expect(btn('Import')).toBeEnabled();
+  });
+
+  it('Import adds the file, activates the last automaton and toasts', async () => {
+    const user = userEvent.setup();
+    const a = { ...nfa(), id: 'imp1', name: 'one' };
+    const b = { ...nfa(), id: 'imp2', name: 'two' };
+    render(<Toolbar />);
+    const file = new File([serialize([a, b])], 'x.automaton.json', { type: 'application/json' });
+    await user.upload(screen.getByLabelText('Import file'), file);
+    await waitFor(() => expect(appStore.getState().automata).toHaveLength(2));
+    expect(appStore.getState().activeId).toBe('imp2');
+    expect(toastStore.getState().toasts[0]?.message).toBe('Imported 2 automata');
+  });
+
+  it('Import reports a bad file as an error toast', async () => {
+    const user = userEvent.setup();
+    render(<Toolbar />);
+    await user.upload(screen.getByLabelText('Import file'), new File(['{oops'], 'bad.json'));
+    await waitFor(() => expect(toastStore.getState().toasts).toHaveLength(1));
+    expect(toastStore.getState().toasts[0]).toMatchObject({
+      message: 'Not a valid JSON file',
+      kind: 'error',
+    });
+  });
+
+  it('Export downloads the current automaton as <slug>.automaton.json', async () => {
+    const user = userEvent.setup();
+    URL.createObjectURL = vi.fn(() => 'blob:x');
+    URL.revokeObjectURL = vi.fn();
+    const names: string[] = [];
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function (this: HTMLAnchorElement) {
+        names.push(this.download);
+      });
+    resetAppStore({ automata: [{ ...nfa(), name: 'My Auto' }], activeId: 'n' });
+    render(<Toolbar />);
+    await user.click(btn('Export'));
+    await user.click(btn('Export all'));
+    expect(names).toEqual(['my-auto.automaton.json', 'automata.automaton.json']);
+    click.mockRestore();
   });
 
   it('Undo/Redo call the store and follow history', async () => {

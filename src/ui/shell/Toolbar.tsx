@@ -1,9 +1,10 @@
-import { useState } from 'react';
 import { setKind } from '../../core/edit';
 import type { AutomatonKind } from '../../core/model';
 import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, useAppStore } from '../../store/store';
+import { FileMenu } from './FileMenu';
+import { toast } from './toastStore';
 
 const KINDS: AutomatonKind[] = ['DFA', 'NFA'];
 
@@ -16,7 +17,6 @@ export function Toolbar(): React.JSX.Element {
   const redoCount = useAppStore((s) =>
     s.activeId ? (s.history[s.activeId]?.future.length ?? 0) : 0,
   );
-  const [error, setError] = useState<string | null>(null);
   const automaton = automata.find((a) => a.id === activeId);
   const none = automaton === undefined;
 
@@ -25,14 +25,12 @@ export function Toolbar(): React.JSX.Element {
 
   const changeKind = (kind: AutomatonKind): void => {
     if (!automaton) return;
-    setError(null);
     if (automaton.kind === kind) return;
     const result = setKind(automaton, kind);
     if (result.ok) {
-      setError(null);
       appStore.getState().edit(() => result.automaton);
     } else {
-      setError(result.issues[0]?.message ?? 'Cannot change the kind');
+      toast(result.issues[0]?.message ?? 'Cannot change the kind', 'error');
     }
   };
 
@@ -55,7 +53,6 @@ export function Toolbar(): React.JSX.Element {
         type="button"
         disabled={undoCount === 0}
         onClick={() => {
-          setError(null);
           appStore.getState().undo();
         }}
       >
@@ -65,7 +62,6 @@ export function Toolbar(): React.JSX.Element {
         type="button"
         disabled={redoCount === 0}
         onClick={() => {
-          setError(null);
           appStore.getState().redo();
         }}
       >
@@ -91,7 +87,7 @@ export function Toolbar(): React.JSX.Element {
       >
         Minimize
       </button>
-      {error !== null && <span role="alert">{error}</span>}
+      <FileMenu />
     </div>
   );
 }
