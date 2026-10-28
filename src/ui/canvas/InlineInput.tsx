@@ -9,12 +9,15 @@ export interface InlineInputProps {
   at: Point;
   /** Returns an error to show (the input stays open) or null when done. */
   onSubmit(text: string): string | null;
+  /** Escape pressed. */
   onCancel(): void;
+  /** Focus left the input (it is cancelled too). */
+  onBlur(): void;
 }
 
 /** Small text input floating over the canvas: Enter submits, Escape or blur cancels. */
 export function InlineInput(props: InlineInputProps): React.JSX.Element {
-  const { testId, label, initial, at, onSubmit, onCancel } = props;
+  const { testId, label, initial, at, onSubmit, onCancel, onBlur } = props;
   const [value, setValue] = useState(initial);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +45,7 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
           setError(null);
         }}
         onKeyDown={onKeyDown}
-        onBlur={onCancel}
+        onBlur={onBlur}
       />
       {error !== null && <div role="alert">{error}</div>}
     </div>

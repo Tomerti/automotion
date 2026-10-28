@@ -126,6 +126,7 @@ function EditableCanvas(props: {
           at={inline.at}
           onSubmit={inline.onSubmit}
           onCancel={inline.onCancel}
+          onBlur={inline.onBlur}
         />
       )}
       {menu && <ContextMenu at={menu.at} items={menu.items} onClose={closeMenu} />}

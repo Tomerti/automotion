@@ -433,6 +433,54 @@ describe('Canvas editing', () => {
     expect(active().states).toHaveLength(2);
   });
 
+  it('closing the rename input with Enter or Escape refocuses the canvas for S/A/Delete', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(<Canvas />);
+    click(stateEl('q1'), 100, 0);
+    fireEvent.doubleClick(stateEl('q1'), { clientX: 100, clientY: 0 });
+    await user.type(screen.getByTestId('rename-input'), 'x{Enter}');
+    expect(screen.queryByTestId('rename-input')).toBeNull();
+    expect(canvas()).toHaveFocus();
+    await user.keyboard('a');
+    expect(active().accepting).toEqual(['q1']);
+
+    fireEvent.doubleClick(stateEl('q1x'), { clientX: 100, clientY: 0 });
+    await user.type(screen.getByTestId('rename-input'), '{Escape}');
+    expect(screen.queryByTestId('rename-input')).toBeNull();
+    expect(canvas()).toHaveFocus();
+    await user.keyboard('s');
+    expect(active().start).toBe('q1');
+  });
+
+  it('closing the symbol input refocuses the canvas', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(<Canvas />);
+    drawEdge();
+    await user.type(screen.getByTestId('symbol-input'), 'a{Enter}');
+    expect(screen.queryByTestId('symbol-input')).toBeNull();
+    expect(canvas()).toHaveFocus();
+  });
+
+  it('choosing a context-menu item or pressing Escape refocuses the canvas', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(<Canvas />);
+    fireEvent.contextMenu(stateEl('q1'), { clientX: 100, clientY: 0 });
+    await user.click(screen.getByRole('menuitem', { name: 'Toggle accepting' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(canvas()).toHaveFocus();
+    await user.keyboard('s');
+    expect(active().start).toBe('q1');
+
+    (document.activeElement as HTMLElement).blur();
+    fireEvent.contextMenu(stateEl('q1'), { clientX: 100, clientY: 0 });
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(canvas()).toHaveFocus();
+  });
+
   it('dragging the background pans; the wheel zooms by 1.1 per notch at the pointer', () => {
     load(two());
     render(<Canvas />);

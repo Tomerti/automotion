@@ -50,7 +50,10 @@ interface InlineEdit {
 
 export interface InlineView extends Omit<InlineEdit, 'submit'> {
   onSubmit(text: string): string | null;
+  /** Escape: close and hand the keyboard back to the canvas. */
   onCancel(): void;
+  /** Focus moved elsewhere: close and leave focus where the user put it. */
+  onBlur(): void;
 }
 
 export interface MenuView {
@@ -181,8 +184,17 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
   const [inline, setInline] = useState<InlineEdit | null>(null);
   const [menu, setMenu] = useState<MenuView | null>(null);
 
-  const closeMenu = useCallback(() => setMenu(null), []);
-  const cancelInline = useCallback(() => setInline(null), []);
+  /** Give the keyboard back to the canvas so S/A/Delete work without another click. */
+  const refocus = useCallback(() => containerRef.current?.focus(), []);
+  const closeMenu = useCallback(() => {
+    setMenu(null);
+    refocus();
+  }, [refocus]);
+  const cancelInline = useCallback(() => {
+    setInline(null);
+    refocus();
+  }, [refocus]);
+  const blurInline = useCallback(() => setInline(null), []);
 
   const rect = (): { left: number; top: number } =>
     svgRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 };
@@ -382,7 +394,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     const item = (label: string, run: () => void): MenuItem => ({
       label,
       onSelect: () => {
-        setMenu(null);
+        closeMenu();
         run();
       },
     });
@@ -524,10 +536,11 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
           at: toScreen(inline.at),
           onSubmit: (text) => {
             const error = inline.submit(text);
-            if (error === null) setInline(null);
+            if (error === null) cancelInline();
             return error;
           },
           onCancel: cancelInline,
+          onBlur: blurInline,
         };
 
   return {
