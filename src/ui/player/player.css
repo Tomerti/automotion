@@ -128,6 +128,17 @@ select.av-player-speed:hover {
 .av-player-extra:empty {
   display: none;
 }
+.av-player-note {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 11px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--av-ink-muted);
+  border: 1px dashed var(--av-rule-strong);
+  border-radius: 6px;
+}
 .av-player-close {
   margin-left: 2px;
 }
@@ -135,8 +146,15 @@ select.av-player-speed:hover {
   stroke-width: 1.8;
 }
 
-/* Trace views (they replace the canvas while a trace is open) */
+/*
+ * Trace views (they replace the canvas while a trace is open). They stop above the floating
+ * player, so the diagrams they fit to view are never drawn behind it.
+ */
 
+.av-trace-view,
+.av-subset-view {
+  padding-bottom: calc(var(--av-dock-h, 0px) + var(--av-dock-bottom, 18px) + 8px);
+}
 .av-trace-view {
   display: flex;
   flex-direction: column;
@@ -211,8 +229,9 @@ select.av-player-speed:hover {
   width: var(--av-cell);
   height: 50px;
   margin-left: -1.5px;
-  font-family: var(--av-font-math);
-  font-size: 26px;
+  font-family: var(--av-font-mono);
+  font-size: 24px;
+  font-weight: 500;
   line-height: 1;
   background: var(--av-surface-raised);
   border: 1.5px solid var(--av-ink);
@@ -221,7 +240,6 @@ select.av-player-speed:hover {
     color 200ms;
 }
 .av-word-empty {
-  font-style: italic;
   color: var(--av-ink-muted);
   border-style: dashed;
 }
@@ -233,8 +251,9 @@ select.av-player-speed:hover {
   position: relative;
   z-index: 1;
   font-weight: 600;
-  color: var(--av-active-text, #1c2333);
-  background: var(--av-highlighter, #ffe14d);
+  color: var(--av-highlighter-ink, #d9480f);
+  background: var(--av-highlighter-soft, #fff0e1);
+  box-shadow: inset 0 -3px 0 var(--av-highlighter, #f76707);
 }
 .av-word-char[data-stuck='true'] {
   color: var(--av-red);
@@ -276,16 +295,16 @@ select.av-player-speed:hover {
 }
 .av-run-halo {
   fill: none;
-  stroke: var(--av-highlighter, #ffe14d);
-  stroke-width: 3.5;
-  opacity: 0.7;
-  filter: drop-shadow(0 0 4px var(--av-highlighter, #ffe14d));
+  stroke: var(--av-highlighter, #f76707);
+  stroke-width: 2;
+  opacity: 0.55;
   transform-box: fill-box;
   transform-origin: center;
 }
 .av-run-halo[data-tone='accept'] {
   stroke: var(--av-green, #1c7a47);
-  filter: drop-shadow(0 0 6px var(--av-green, #1c7a47));
+  stroke-width: 2.5;
+  opacity: 0.8;
 }
 .av-run-halo[data-tone='reject'] {
   stroke: var(--av-red, #c42f36);
@@ -302,17 +321,14 @@ select.av-player-speed:hover {
     transform: scale(0.82);
   }
 }
-.av-run-token {
-  filter: drop-shadow(0 0 6px var(--av-highlighter, #ffe14d));
-}
 .av-run-token-glow {
-  fill: var(--av-highlighter, #ffe14d);
-  opacity: 0.35;
+  fill: var(--av-highlighter, #f76707);
+  opacity: 0.22;
 }
 .av-run-token-core {
-  fill: var(--av-highlighter, #ffe14d);
-  stroke: var(--av-active-stroke, #7a5600);
-  stroke-width: 1.75;
+  fill: var(--av-highlighter, #f76707);
+  stroke: var(--av-surface-raised, #ffffff);
+  stroke-width: 1.5;
 }
 .av-run-dead-mark circle {
   fill: var(--av-surface-raised, #ffffff);
@@ -346,12 +362,10 @@ select.av-player-speed:hover {
     opacity: 0;
   }
 }
-/* The taken edge's label is marked with the highlighter while its step is shown. */
+/* The taken edge's label takes the run's colour while its step is shown. */
 .av-run-view .av-edge[data-taken='true'] .av-edge-label {
-  font-weight: 600;
-  fill: var(--av-active-text, #1c2333);
-  stroke: var(--av-highlighter, #ffe14d);
-  stroke-width: 11px;
+  font-weight: 700;
+  fill: var(--av-active, #d9480f);
 }
 .av-run-view[data-moving] .av-edge[data-taken='true'] .av-edge-label {
   transform-box: fill-box;

@@ -24,10 +24,10 @@ test('build a DFA, rename a state, and run a word', async ({ page }) => {
   await expect(page.getByTestId('state-end')).toBeVisible();
 
   await clickState(page, 'q_0');
-  await page.keyboard.press('Space');
+  await page.keyboard.press('s');
   await expect(page.getByTestId('state-q_0')).toHaveAttribute('data-start', 'true');
   await clickState(page, 'end');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('a');
   await expect(page.getByTestId('state-end')).toHaveAttribute('data-accepting', 'true');
 
   await page.getByLabel('Word').fill('a');

@@ -1,4 +1,5 @@
 import { labelDisplayText } from '../../core/label';
+import type { Automaton, State } from '../../core/model';
 
 export type Point = { x: number; y: number };
 
@@ -17,8 +18,10 @@ const LABEL_GAP = 14;
 const START_ARROW_LENGTH = 32;
 const LOOP_HALF_SPREAD = 0.5; // radians either side of the loop angle
 const LOOP_ANGLE_STEPS = 16;
+/** Distance of the virtual neighbor standing in for the start arrow. */
+const START_ARROW_CLEARANCE = 100;
 
-type PathGeometry = { d: string; label: Point; end: Point; endAngle: number };
+export type PathGeometry = { d: string; label: Point; end: Point; endAngle: number };
 
 const fmt = (n: number): string => String(Math.round(n * 100) / 100);
 const pt = (p: Point): string => `${fmt(p.x)} ${fmt(p.y)}`;
@@ -140,6 +143,26 @@ export function bestLoopAngle(center: Point, neighbors: Point[]): number {
     }
   }
   return Math.atan2(Math.sin(best), Math.cos(best));
+}
+
+/**
+ * The transition from → to as the diagram draws it: its own `bend` / `loopAngle` when it exists,
+ * else the automatic one. A preview of a new edge uses this too, so it matches the edge it creates.
+ */
+export function transitionGeometry(a: Automaton, from: State, to: State): PathGeometry {
+  const own = a.transitions.find((t) => t.from === from.id && t.to === to.id);
+  if (from.id !== to.id) {
+    const hasReverse = a.transitions.some((t) => t.from === to.id && t.to === from.id);
+    return edgeGeometry(from, to, own?.bend ?? autoBend(hasReverse));
+  }
+  if (own?.loopAngle !== undefined) return selfLoopGeometry(from, own.loopAngle);
+  const neighbors: Point[] = a.transitions
+    .filter((t) => t.from !== t.to && (t.from === from.id || t.to === from.id))
+    .map((t) => a.states.find((s) => s.id === (t.from === from.id ? t.to : t.from)))
+    .filter((s): s is State => s !== undefined);
+  // The start arrow enters from the left: treat that direction as occupied.
+  if (a.start === from.id) neighbors.push({ x: from.x - START_ARROW_CLEARANCE, y: from.y });
+  return selfLoopGeometry(from, bestLoopAngle(from, neighbors));
 }
 
 /**

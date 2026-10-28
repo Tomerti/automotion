@@ -13,9 +13,11 @@ afterEach(() => {
 function Harness({
   n = 4,
   onClose = () => {},
+  autoPlay,
 }: {
   n?: number;
   onClose?: () => void;
+  autoPlay?: boolean;
 }): React.JSX.Element {
   const [i, setI] = useState(0);
   return (
@@ -25,6 +27,7 @@ function Harness({
       onIndex={(k) => setI(Math.min(Math.max(k, 0), n - 1))}
       explanation={`explain ${i}`}
       onClose={onClose}
+      autoPlay={autoPlay}
     />
   );
 }
@@ -72,6 +75,17 @@ describe('TracePlayer', () => {
     fireEvent.change(screen.getByLabelText('Step'), { target: { value: '4' } });
     expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
     expect(screen.getByText('Step 5 / 6')).toBeInTheDocument();
+  });
+
+  it('autoPlay starts playing as soon as it opens; a single step has nothing to play', () => {
+    vi.useFakeTimers();
+    const { unmount } = render(<Harness n={3} autoPlay />);
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+    act(() => void vi.advanceTimersByTime(800));
+    expect(screen.getByText('Step 2 / 3')).toBeInTheDocument();
+    unmount();
+    render(<Harness n={1} autoPlay />);
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
   });
 
   it('renders label subscripts in the explanation', () => {

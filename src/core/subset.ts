@@ -1,5 +1,5 @@
 import { epsilonClosure, move, transitionsTaken } from './analysis';
-import { formatSet } from './format';
+import { formatSet, withSuffix } from './format';
 import { newId } from './id';
 import type { Automaton, State, StateId, Transition } from './model';
 import type { SubsetStep, SubsetTrace } from './trace';
@@ -117,7 +117,7 @@ export function subsetConstruction(nfa: Automaton): SubsetTrace {
 
   const result: Automaton = {
     id: newId(),
-    name: `${nfa.name} → DFA`,
+    name: withSuffix(nfa.name, ' → DFA'),
     kind: 'DFA',
     alphabet: [...nfa.alphabet],
     states,

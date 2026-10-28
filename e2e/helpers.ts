@@ -1,4 +1,8 @@
+import { fileURLToPath } from 'node:url';
 import type { Locator, Page } from '@playwright/test';
+
+/** An NFA ("Ends in ab (NFA)") and a DFA ("Even number of 0s (DFA)") to import. */
+export const FIXTURES = fileURLToPath(new URL('./fixtures/automata.json', import.meta.url));
 
 export interface Point {
   x: number;
@@ -48,7 +52,7 @@ export async function clickState(page: Page, label: string): Promise<void> {
   await page.mouse.click(c.x, c.y);
 }
 
-/** Run an item of the automaton switcher's menu (e.g. "New DFA", "Load examples"). */
+/** Run an item of the automaton switcher's menu (e.g. "New DFA", "Export all"). */
 export async function automataMenu(page: Page, name: string): Promise<void> {
   await page.getByRole('button', { name: 'Automata' }).click();
   await page.getByRole('menuitem', { name }).click();

@@ -9,7 +9,10 @@ import {
   labelFontSize,
   selfLoopGeometry,
   startArrowGeometry,
+  transitionGeometry,
 } from './geometry';
+import type { State } from '../../core/model';
+import { fixture } from '../../core/testing/fixtures';
 
 const O = { x: 0, y: 0 };
 const A = { x: 0, y: 0 };
@@ -52,6 +55,38 @@ describe('bestLoopAngle', () => {
   it('defaults to up and avoids neighbors', () => {
     expect(bestLoopAngle(O, [])).toBeCloseTo(-Math.PI / 2);
     expect(Math.abs(bestLoopAngle(O, [{ x: 100, y: 0 }]))).toBeCloseTo(Math.PI);
+  });
+});
+
+describe('transitionGeometry', () => {
+  const m = fixture({
+    kind: 'NFA',
+    alphabet: 'ab',
+    states: ['q0', 'q1'],
+    edges: [
+      ['q0', 'a', 'q1'],
+      ['q1', 'b', 'q0'],
+    ],
+    start: 'q0',
+    name: 'm',
+  });
+  const [q0, q1] = m.states as [State, State];
+
+  it('curves an edge whose reverse exists and keeps an explicit bend', () => {
+    expect(transitionGeometry(m, q0, q1)).toEqual(edgeGeometry(q0, q1, CURVE_OFFSET));
+    const bent = {
+      ...m,
+      transitions: m.transitions.map((t) => (t.from === 'q0' ? { ...t, bend: -10 } : t)),
+    };
+    expect(transitionGeometry(bent, q0, q1)).toEqual(edgeGeometry(q0, q1, -10));
+  });
+  it('places a new self-loop away from neighbors and the start arrow', () => {
+    // q1's only neighbor is to its left, so its loop goes right; q0's left is the start arrow.
+    expect(transitionGeometry(m, q1, q1)).toEqual(selfLoopGeometry(q1, bestLoopAngle(q1, [q0])));
+    expect(bestLoopAngle(q1, [q0])).toBeCloseTo(0);
+    expect(transitionGeometry(m, q0, q0)).toEqual(
+      selfLoopGeometry(q0, bestLoopAngle(q0, [q1, { x: q0.x - 100, y: q0.y }])),
+    );
   });
 });
 

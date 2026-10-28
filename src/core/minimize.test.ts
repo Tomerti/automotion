@@ -223,4 +223,22 @@ describe('minimize', () => {
         return minimize(once).result.states.length === once.states.length;
       }),
     ));
+
+  it('flags a DFA that minimizes to itself as already minimal', () => {
+    const trace = minimize(redundant);
+    expect(trace.alreadyMinimal).toBe(false);
+    expect(trace.result.name).toBe('red (min)');
+    const again = minimize(trace.result);
+    expect(again.alreadyMinimal).toBe(true);
+    expect(again.steps.at(-1)?.explanation).toMatch(/^Already minimal/);
+    // The name never stacks suffixes.
+    expect(again.result.name).toBe('red (min)');
+  });
+
+  it('removing unreachable states is not already minimal', () => {
+    expect(minimize(partialWithUnreachable).alreadyMinimal).toBe(false);
+  });
+
+  it('property: minimizing a minimized DFA is always already minimal', () =>
+    fc.assert(fc.property(arbDfa(), (d) => minimize(minimize(d).result).alreadyMinimal)));
 });

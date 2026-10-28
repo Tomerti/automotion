@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { accepts } from '../core/analysis';
-import { minimize } from '../core/minimize';
-import { hasErrors, validate } from '../core/validate';
 import { fixture } from '../core/testing/fixtures';
 import { parseFile, serialize } from './fileFormat';
-import { exampleAutomata } from './examples';
 import { migrate } from './migrate';
 import { BACKUP_KEY, STORAGE_KEY, loadFromStorage, saveToStorage } from './storage';
 import { memoryStorage } from './testing/memoryStorage';
@@ -147,29 +143,6 @@ describe('storage', () => {
     expect(saveToStorage(throwing, [])).toBe(false);
     expect(loadFromStorage(null).warning).toBe("Changes won't persist — export to save");
     expect(saveToStorage(null, [])).toBe(false);
-  });
-});
-
-describe('examples', () => {
-  it('languages and minimization', () => {
-    const [endsInAb, evenZeros, redundant] = exampleAutomata();
-    if (!endsInAb || !evenZeros || !redundant) throw new Error('missing');
-    expect(['ab', 'aab', 'bab'].every((w) => accepts(endsInAb, w))).toBe(true);
-    expect(['', 'a', 'ba', 'abb', 'b'].some((w) => accepts(endsInAb, w))).toBe(false);
-    expect(endsInAb.transitions.some((t) => t.symbols.includes('ε'))).toBe(true);
-    expect(accepts(evenZeros, '')).toBe(true);
-    expect(accepts(evenZeros, '1010')).toBe(true);
-    expect(accepts(evenZeros, '10')).toBe(false);
-    expect(minimize(redundant).result.states.length).toBeLessThan(redundant.states.length);
-    expect(exampleAutomata().every((a) => !hasErrors(validate(a)))).toBe(true);
-  });
-
-  it('has stable ids', () => {
-    expect(exampleAutomata().map((a) => a.id)).toEqual([
-      'example-ends-in-ab',
-      'example-even-zeros',
-      'example-redundant',
-    ]);
   });
 });
 

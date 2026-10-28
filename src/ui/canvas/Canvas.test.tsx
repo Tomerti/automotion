@@ -128,22 +128,17 @@ describe('Canvas editing', () => {
     expect(st().selection).toEqual({ states: [], transitions: [] });
   });
 
-  it('Enter toggles accepting and Space toggles start on the selected state', () => {
+  it('Enter and Space do not toggle accepting or start', () => {
     load(two());
     render(<Canvas />);
     click(stateEl('q1'), 100, 0);
     fireEvent.keyDown(canvas(), { key: 'Enter' });
-    expect(active().accepting).toEqual(['q1']);
-    fireEvent.keyDown(canvas(), { key: 'Enter' });
-    expect(active().accepting).toEqual([]);
-    // Default prevented: the page does not scroll.
-    expect(fireEvent.keyDown(canvas(), { key: ' ' })).toBe(false);
-    expect(active().start).toBe('q1');
     fireEvent.keyDown(canvas(), { key: ' ' });
+    expect(active().accepting).toEqual([]);
     expect(active().start).toBeNull();
   });
 
-  it('S and A remain aliases for start and accepting', () => {
+  it('S toggles start and A toggles accepting on the selected state', () => {
     load(two());
     render(<Canvas />);
     click(stateEl('q1'), 100, 0);
@@ -228,6 +223,27 @@ describe('Canvas editing', () => {
     expect(active().transitions).toEqual([
       expect.objectContaining({ from: 'q0', to: 'q0', symbols: ['a'] }),
     ]);
+  });
+
+  it('the rubber band is an arrow that previews the edge, or a self-loop over its own state', () => {
+    load(two());
+    render(<Canvas />);
+    fireEvent.pointerDown(stateEl('q0'), at(0, 0, { shiftKey: true }));
+    fireEvent.pointerMove(diagram(), at(60, 40, { shiftKey: true }));
+    const band = () => screen.getByTestId('rubber-band');
+    const path = () => band().querySelector('.av-edge-path')?.getAttribute('d');
+    const head = () => band().querySelector('.av-edge-head')?.getAttribute('transform');
+    expect(band()).toHaveAttribute('data-loop', 'false');
+    expect(head()).toBe('translate(60 40) rotate(33.690067525979785)');
+    // Over another state: the arrow ends on its circle, as the created edge will.
+    fireEvent.pointerMove(diagram(), at(105, 5, { shiftKey: true }));
+    expect(path()).toBe('M 24 0 L 76 0');
+    // Back over the source state: the self-loop the release would create.
+    fireEvent.pointerMove(diagram(), at(5, 5, { shiftKey: true }));
+    expect(band()).toHaveAttribute('data-loop', 'true');
+    expect(path()).toMatch(/^M .* C /);
+    fireEvent.pointerUp(diagram(), at(5, 5));
+    expect(screen.queryByTestId('rubber-band')).toBeNull();
   });
 
   it('releasing the rubber band on empty space opens nothing', () => {

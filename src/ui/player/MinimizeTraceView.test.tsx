@@ -99,6 +99,17 @@ describe('MinimizeTraceView', () => {
     expect(s.trace).toBeNull();
   });
 
+  it('an already minimal DFA shows a note instead of Save', () => {
+    const minimal = { ...minimize(redundant).result, id: 'm' };
+    resetAppStore({ automata: [minimal], activeId: 'm' });
+    startMinimize();
+    const trace = appStore.getState().trace;
+    appStore.getState().setStep(trace!.steps.length - 1);
+    render(<App />);
+    expect(screen.getByTestId('already-minimal')).toHaveTextContent('Already minimal');
+    expect(screen.queryByRole('button', { name: 'Save as new automaton' })).toBeNull();
+  });
+
   it('startMinimize is a no-op when not minimizable', () => {
     startMinimize();
     expect(appStore.getState().trace).toBeNull();

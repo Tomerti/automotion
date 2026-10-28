@@ -5,6 +5,7 @@ import { Diagram } from '../canvas/Diagram';
 import { STATE_RADIUS } from '../canvas/geometry';
 import { LabelText } from '../LabelText';
 import { moveDurationMs, prefersReducedMotion, usePlaybackSpeed } from './playback';
+import { playVerdictSound } from './sound';
 import {
   cellState,
   readHead,
@@ -219,7 +220,7 @@ function RunOverlay(props: {
             data-arrived={stayed && !stayed.has(id) ? 'true' : undefined}
             cx={s.x}
             cy={s.y}
-            r={STATE_RADIUS + 5}
+            r={STATE_RADIUS + 4}
           />
         );
       })}
@@ -240,8 +241,8 @@ function RunOverlay(props: {
               else tokens.current.delete(i);
             }}
           >
-            <circle className="av-run-token-glow" r={13} />
-            <circle className="av-run-token-core" r={7} />
+            <circle className="av-run-token-glow" r={10} />
+            <circle className="av-run-token-core" r={6} />
           </g>
         ))}
     </g>
@@ -249,6 +250,7 @@ function RunOverlay(props: {
 }
 
 function VerdictBanner({ trace }: { trace: RunTrace }): React.JSX.Element {
+  useEffect(() => playVerdictSound(trace.accepted), [trace]);
   return (
     <div
       className="av-verdict"

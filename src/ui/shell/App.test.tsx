@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, it, expect, vi } from 'vitest';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
-import { startRun } from '../../store/traceActions';
+import { startMinimize, startRun, startSubset } from '../../store/traceActions';
 import App from './App';
 import { toastStore } from './toastStore';
 
@@ -79,15 +79,41 @@ it('a failed autosave shows an error toast', async () => {
   setItem.mockRestore();
 });
 
-it('a new trace resets the player (paused, 1× speed)', async () => {
+it('a run plays at once, and a new run starts again at 1× speed', async () => {
   const user = userEvent.setup();
   resetAppStore({ automata: [loop()], activeId: 'd' });
   render(<App />);
   act(() => startRun('aaaaaa'));
-  await user.selectOptions(screen.getByRole('combobox', { name: 'Speed' }), '2');
-  await user.click(screen.getByRole('button', { name: 'Play' }));
   expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+  await user.selectOptions(screen.getByRole('combobox', { name: 'Speed' }), '2');
   act(() => startRun('aaa'));
-  expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
   expect(screen.getByRole('combobox', { name: 'Speed' })).toHaveValue('1');
+});
+
+it('a conversion to DFA plays at once', async () => {
+  const nfa = fixture({
+    kind: 'NFA',
+    alphabet: 'a',
+    states: ['q0', 'q1'],
+    start: 'q0',
+    accepting: ['q1'],
+    edges: [
+      ['q0', 'a', 'q0'],
+      ['q0', 'a', 'q1'],
+    ],
+    name: 'n',
+  });
+  resetAppStore({ automata: [nfa], activeId: 'n' });
+  render(<App />);
+  await act(() => startSubset());
+  expect(appStore.getState().trace?.kind).toBe('subset');
+  expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+});
+
+it('a minimization walkthrough opens paused', () => {
+  resetAppStore({ automata: [loop()], activeId: 'd' });
+  render(<App />);
+  act(() => startMinimize());
+  expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
 });

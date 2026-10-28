@@ -14,18 +14,16 @@ test('the controls popup opens on the first visit only', async ({ page }) => {
   await expect(dialog).toBeVisible();
 });
 
-test('the theme toggle switches to light and dark', async ({ page }) => {
+test('the theme starts light even on a dark system, and toggles light ↔ dark', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
   await openApp(page, { clear: true });
   const html = page.locator('html');
   const toggle = page.getByRole('button', { name: /^Theme:/ });
-  for (let i = 0; i < 3 && (await html.getAttribute('data-theme')) !== 'light'; i++) {
-    await toggle.click();
-  }
   await expect(html).toHaveAttribute('data-theme', 'light');
-  await page.reload();
-  await expect(html).toHaveAttribute('data-theme', 'light');
-  for (let i = 0; i < 3 && (await html.getAttribute('data-theme')) !== 'dark'; i++) {
-    await toggle.click();
-  }
+  await toggle.click();
   await expect(html).toHaveAttribute('data-theme', 'dark');
+  await page.reload();
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+  await toggle.click();
+  await expect(html).toHaveAttribute('data-theme', 'light');
 });

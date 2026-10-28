@@ -2,7 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { accepts } from './analysis';
 import { removeState } from './edit';
-import { canRun, runWord } from './run';
+import { canRun, readWord, runWord } from './run';
 import { arbNfa, arbWord } from './testing/arbitraries';
 import { fixture } from './testing/fixtures';
 
@@ -122,9 +122,17 @@ describe('runWord', () => {
   });
 
   it('property: verdict equals accepts()', () => {
-    fc.assert(
-      fc.property(arbNfa(), arbWord(), (a, w) => runWord(a, w).accepted === accepts(a, w)),
-    );
+    fc.assert(fc.property(arbNfa(), arbWord(), (a, w) => runWord(a, w).accepted === accepts(a, w)));
+  });
+});
+
+describe('readWord', () => {
+  it('reads ε and \\epsilon as the empty word', () => {
+    expect(readWord('ε')).toBe('');
+    expect(readWord('\\epsilon')).toBe('');
+    expect(readWord('aεb')).toBe('ab');
+    expect(readWord('a\\epsilonb')).toBe('ab');
+    expect(readWord('0010')).toBe('0010');
   });
 });
 

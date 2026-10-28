@@ -16,16 +16,11 @@ afterEach(() => {
 });
 
 describe('ThemeToggle', () => {
-  it('cycles system → light → dark → system, persisting and applying each', async () => {
+  it('starts light and switches light ↔ dark, persisting and applying each', async () => {
     const user = userEvent.setup();
     render(<ThemeToggle />);
-    const button = screen.getByRole('button', { name: 'Theme: system' });
-    expect(root).not.toHaveAttribute('data-theme');
-
-    await user.click(button);
-    expect(button).toHaveAccessibleName('Theme: light');
-    expect(root).toHaveAttribute('data-theme', 'light');
-    expect(localStorage.getItem(THEME_KEY)).toBe('light');
+    const button = screen.getByRole('button', { name: 'Theme: light' });
+    expect(button).toHaveAttribute('title', 'Theme: light (switch to dark)');
 
     await user.click(button);
     expect(button).toHaveAccessibleName('Theme: dark');
@@ -33,9 +28,9 @@ describe('ThemeToggle', () => {
     expect(localStorage.getItem(THEME_KEY)).toBe('dark');
 
     await user.click(button);
-    expect(button).toHaveAccessibleName('Theme: system');
-    expect(root).not.toHaveAttribute('data-theme');
-    expect(localStorage.getItem(THEME_KEY)).toBeNull();
+    expect(button).toHaveAccessibleName('Theme: light');
+    expect(root).toHaveAttribute('data-theme', 'light');
+    expect(localStorage.getItem(THEME_KEY)).toBe('light');
   });
 
   it('starts from the stored choice', () => {
@@ -43,23 +38,25 @@ describe('ThemeToggle', () => {
     render(<ThemeToggle />);
     expect(screen.getByRole('button', { name: 'Theme: dark' })).toHaveAttribute(
       'title',
-      'Theme: dark (switch to system)',
+      'Theme: dark (switch to light)',
     );
   });
 });
 
 describe('theme storage', () => {
-  it('reads unknown or missing values as system', () => {
-    expect(readTheme()).toBe('system');
+  it('defaults to light: nothing stored, an old "system" choice or anything unknown', () => {
+    expect(readTheme()).toBe('light');
+    localStorage.setItem(THEME_KEY, 'system');
+    expect(readTheme()).toBe('light');
     localStorage.setItem(THEME_KEY, 'sepia');
-    expect(readTheme()).toBe('system');
+    expect(readTheme()).toBe('light');
   });
 
-  it('applyTheme sets or clears data-theme on <html>', () => {
+  it('applyTheme sets data-theme on <html>', () => {
     applyTheme('dark');
     expect(root).toHaveAttribute('data-theme', 'dark');
-    applyTheme('system');
-    expect(root).not.toHaveAttribute('data-theme');
+    applyTheme('light');
+    expect(root).toHaveAttribute('data-theme', 'light');
   });
 
   it('survives storage that throws', () => {
@@ -69,8 +66,8 @@ describe('theme storage', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('denied');
     });
-    expect(readTheme()).toBe('system');
-    expect(() => saveTheme('light')).not.toThrow();
-    expect(root).toHaveAttribute('data-theme', 'light');
+    expect(readTheme()).toBe('light');
+    expect(() => saveTheme('dark')).not.toThrow();
+    expect(root).toHaveAttribute('data-theme', 'dark');
   });
 });

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { AnyTrace } from '../../core/trace';
 import { useAppStore } from '../../store/store';
 import { Canvas } from '../canvas/Canvas';
@@ -27,6 +28,25 @@ function traceKey(trace: AnyTrace): number {
   return key;
 }
 
+/**
+ * Height of the floating dock (run pill or player), kept current as it changes. Trace views pad
+ * their bottom by it (`--av-dock-h`), so nothing they fit to view ends up behind the player.
+ */
+function useDockHeight(): [React.RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const measure = (): void => setHeight(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, height];
+}
+
 export default function App(): React.JSX.Element {
   useAutosave({ onFail: (m) => toast(m, 'error') });
   const trace = useAppStore((s) => s.trace);
@@ -35,6 +55,7 @@ export default function App(): React.JSX.Element {
   const closeTrace = useAppStore((s) => s.closeTrace);
   const [helpOpen, setHelpOpen] = useControlsHelp();
   const step = trace?.steps[stepIndex];
+  const [dockRef, dockHeight] = useDockHeight();
 
   return (
     <div
@@ -48,9 +69,17 @@ export default function App(): React.JSX.Element {
       }}
     >
       <TopBar onHelp={() => setHelpOpen(true)} />
-      <main className="av-canvas-area">
+      <main
+        className="av-canvas-area"
+        style={{ '--av-dock-h': `${dockHeight}px` } as React.CSSProperties}
+      >
         {trace ? <TraceView trace={trace} stepIndex={stepIndex} /> : <Canvas />}
-        <div className="av-dock" data-testid="dock" data-mode={trace ? 'trace' : 'run'}>
+        <div
+          ref={dockRef}
+          className="av-dock"
+          data-testid="dock"
+          data-mode={trace ? 'trace' : 'run'}
+        >
           <RunPanel hidden={trace !== null} />
           {trace && step && (
             <TracePlayer
@@ -60,6 +89,7 @@ export default function App(): React.JSX.Element {
               onIndex={setStep}
               explanation={step.explanation}
               onClose={closeTrace}
+              autoPlay={trace.kind === 'run' || trace.kind === 'subset'}
               extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
             />
           )}

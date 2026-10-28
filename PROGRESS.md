@@ -4,7 +4,7 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 
 ## Current
 
-- [~] v2 UX overhaul (spec: `docs/superpowers/specs/2026-10-28-v2-ux-overhaul-design.md`), in review on branch `worktree-v2-ux-overhaul`
+- [~] v2 polish (arrow preview, Geist, controls tabs, orange run colour, auto-play), in review in PR #6 on branch `worktree-draft-transition-arrow`
 
 ## Next
 
@@ -24,13 +24,22 @@ Legend: `[ ]` to do · `[~]` in progress · `[x]` done
 - [x] Double-click adds a state; borderless in-place rename and symbol editing (commit on blur)
 - [x] Subscript labels (`q_1`, `q_{12}`); new states are named `q_0`, `q_1`, …
 - [x] Shift + drag draws a transition (the ring gesture is gone); drag an edge to bend it, drag a loop to rotate it
-- [x] Enter toggles accepting, Space toggles start on the selected state
+- [x] The transition being drawn is a solid arrow; over a state it shows the edge (or self-loop) it will create
+- [x] Geist / Geist Mono instead of STIX Two and Schibsted Grotesk; upright labels
+- [x] Controls popup as tabs (Build, Arrange, Run, Keys) with gesture chips instead of sentences; sized to the tallest tab
+- [x] ε or `\epsilon` in the word is the empty word
+- [x] Run and Convert to DFA play at once; Run has a chime, and an accept/reject cue when the verdict appears
+- [x] Run highlight is a slim orange ring and edge instead of the wide yellow highlighter; the Run button is orange too
+- [x] Theme toggle is light ↔ dark only, light by default (no longer follows the system)
+- [x] Trace views stop above the floating player, so nothing (e.g. a DFA self-loop) is drawn behind it
+- [x] Minimizing an already minimal DFA ends with "Already minimal" instead of Save; names never stack "(min)" or "→ DFA"
+- [x] A toggles accepting, S toggles start on the selected state (Enter/Space no longer do)
 - [x] Alignment snapping with guides while dragging (Alt skips)
 - [x] `\epsilon` types ε; ε on a DFA turns it into an NFA
 - [x] Remove the transition table, issues panel and sidebar; derived alphabet; issues chip
-- [x] Minimal top bar with automaton switcher; floating run pill; light/dark/system theme toggle
+- [x] Minimal top bar with automaton switcher; floating run pill; light/dark theme toggle
 - [x] Controls popup (help button, `?`, first visit)
-- [x] No seeded examples: first launch is one blank automaton; "Load examples" in the menu
+- [x] No examples at all: first launch is one blank automaton (e2e imports `e2e/fixtures/automata.json`)
 - [x] Run animation: tape with read head, tokens along edges, dead-branch ✕, verdict banner with a reason
 - [x] e2e specs rewritten for the new gestures and shell
 

@@ -1,36 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { renameAutomaton } from '../../core/edit';
-import { newId } from '../../core/id';
 import { emptyAutomaton } from '../../core/model';
 import type { Automaton } from '../../core/model';
-import { exampleAutomata } from '../../persistence/examples';
 import { serialize } from '../../persistence/fileFormat';
 import { appStore, useAppStore } from '../../store/store';
 import { downloadText, slug } from './download';
 import { ChevronIcon } from './icons';
 import { importFile } from './importFile';
-import { toast } from './toastStore';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
 
 const MIME = 'application/json';
-
-/** A workspace holding only an untouched blank automaton (the first-launch state). */
-function isPristine(automata: readonly Automaton[]): boolean {
-  const only = automata.length === 1 ? automata[0] : undefined;
-  return only !== undefined && only.states.length === 0 && only.transitions.length === 0;
-}
-
-/** Add the examples under fresh ids (loading twice never clashes), replacing a pristine blank. */
-function loadExamples(): void {
-  const st = appStore.getState();
-  const pristine = isPristine(st.automata) ? st.automata[0] : undefined;
-  const examples = exampleAutomata().map((a) => ({ ...a, id: newId() }));
-  for (const a of examples) st.addAutomaton(a);
-  if (pristine) st.deleteAutomaton(pristine.id);
-  const first = examples[0];
-  if (first) st.setActive(first.id);
-  toast(`Loaded ${examples.length} examples`);
-}
 
 /** Delete the active automaton after confirming; the canvas is never left without one. */
 function deleteActive(current: Automaton): void {
@@ -149,7 +128,6 @@ export function AutomatonSwitcher(): React.JSX.Element {
           <div role="separator" className="av-menu-sep" />
           {item('New DFA', () => appStore.getState().createAutomaton('DFA'))}
           {item('New NFA', () => appStore.getState().createAutomaton('NFA'))}
-          {item('Load examples', loadExamples)}
           <div role="separator" className="av-menu-sep" />
           <button
             type="button"
