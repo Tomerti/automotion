@@ -51,6 +51,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Automata are kept most recently edited first (also in exports and on reload)
 - [x] History button in the top bar hides/shows it (remembered; starts hidden on phones, where it overlays the canvas)
 - [x] Hiding the bar gives the canvas the full width
+- [x] The bar floats over the canvas, so the run pill, kind switch, tape, verdict, welcome and fitted diagrams stay centred on the window with it open too; fits keep clear of it on both sides
 - [x] Each entry has a ⋯ menu (Rename, Export JSON, Delete); double-click renames; Import / Export all at the bottom
 - [x] The top-bar automaton dropdown is gone; the name there still renames the open automaton
 - [x] Delete (or Backspace) on a clicked entry deletes that automaton after asking

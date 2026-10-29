@@ -33,7 +33,7 @@ import {
   type PathGeometry,
   type Point,
 } from './geometry';
-import { fitToView, screenToWorld, zoomAt } from './viewport';
+import { fitToViewInset, screenToWorld, zoomAt } from './viewport';
 
 export const DEFAULT_VIEWPORT: Viewport = { x: 0, y: 0, zoom: 1 };
 
@@ -127,12 +127,19 @@ function canvasSize(): { width: number; height: number } {
   return { width: el?.clientWidth ?? 0, height: el?.clientHeight ?? 0 };
 }
 
+/** How far a fit keeps clear of each side: the open history bar's width (`--av-history-inset`). */
+export function historyInset(el: Element | null): number {
+  if (!el) return 0;
+  return parseFloat(getComputedStyle(el).getPropertyValue('--av-history-inset')) || 0;
+}
+
 /** Fit the active automaton's states into the canvas (no-op while the canvas has no size). */
 export function fitActive(): void {
   const a = activeAutomaton();
   const size = canvasSize();
   if (!a || size.width === 0 || size.height === 0) return;
-  appStore.getState().setViewport(a.id, fitToView(a.states, size));
+  const inset = historyInset(document.querySelector('[data-testid="canvas"]'));
+  appStore.getState().setViewport(a.id, fitToViewInset(a.states, size, inset));
 }
 
 /**

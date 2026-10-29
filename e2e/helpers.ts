@@ -28,11 +28,17 @@ export async function stateCenter(page: Page, label: string): Promise<Point> {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-/** Double-click an empty spot of the canvas, offset from the svg's top-left corner. */
+/**
+ * Double-click an empty spot of the canvas, offset from the top-left corner of its visible part
+ * (right of the history bar, which floats over the canvas's left edge).
+ */
 export async function addStateAt(page: Page, dx: number, dy: number): Promise<void> {
   const svg = await page.getByTestId('diagram').boundingBox();
   if (!svg) throw new Error('diagram not visible');
-  await page.mouse.dblclick(svg.x + dx, svg.y + dy);
+  const bar = page.getByRole('navigation', { name: 'History' });
+  const barBox = (await bar.isVisible()) ? await bar.boundingBox() : null;
+  const left = Math.max(svg.x, barBox ? barBox.x + barBox.width : 0);
+  await page.mouse.dblclick(left + dx, svg.y + dy);
 }
 
 /** Draw a transition: Shift + drag from one state onto another. */

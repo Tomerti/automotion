@@ -74,7 +74,8 @@ Layers, with dependencies pointing downward only:
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button.
   - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip,
-    theme toggle, Controls popup), the left history bar (`HistoryBar.tsx`: every automaton with a
+    theme toggle, Controls popup), the left history bar (`HistoryBar.tsx`, floating over the full-width canvas so everything stays
+    centred on the window; fits keep `--av-history-inset` clear on both sides: every automaton with a
     `canvas/Thumbnail.tsx` picture, newest edit first, a ⋯ menu per entry for rename / export /
     delete, Delete/Backspace on a focused entry deletes it (after a confirm), Create (a blank DFA
     named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in

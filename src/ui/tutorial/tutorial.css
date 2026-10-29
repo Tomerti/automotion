@@ -253,17 +253,13 @@
 .av-modal.av-welcome {
   width: min(420px, 100%);
 }
-/* Centred on the canvas, in line with the run pill: the padding takes in the bars around it. */
+/* Centred over the canvas, under the top bar, in line with the run pill. */
 .av-modal-backdrop.av-welcome-backdrop {
   padding-top: calc(16px + var(--av-topbar-h));
 }
-.av-modal-backdrop.av-welcome-backdrop[data-beside-history='true'] {
-  padding-left: calc(16px + var(--av-history-w));
-}
 @media (max-width: 760px) {
-  /* The top bar wraps and the history bar floats over the canvas: centre on the window. */
-  .av-modal-backdrop.av-welcome-backdrop,
-  .av-modal-backdrop.av-welcome-backdrop[data-beside-history='true'] {
+  /* The top bar wraps: centre on the window. */
+  .av-modal-backdrop.av-welcome-backdrop {
     padding: 16px;
   }
 }
