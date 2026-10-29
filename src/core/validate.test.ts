@@ -142,6 +142,14 @@ describe('validate', () => {
       "DFA is incomplete: no 'a' transition from q1",
     );
     expect(hasErrors(ignoringIncomplete(validate(oneMissing)))).toBe(false);
+    const noTransitions = fixture({ kind: 'DFA', alphabet: '', states: ['q0', 'q1'], start: 'q0' });
+    expect(validate(noTransitions)).toContainEqual({
+      severity: 'error',
+      code: 'incomplete-dfa',
+      message: 'DFA is incomplete: it has no transitions yet',
+    });
+    const blank = fixture({ kind: 'DFA', alphabet: '', states: [] });
+    expect(validate(blank).some((i) => i.code === 'incomplete-dfa')).toBe(false);
     expect(validate({ ...oneMissing, kind: 'NFA' }).some((i) => i.severity === 'error')).toBe(
       false,
     );

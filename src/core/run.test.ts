@@ -154,7 +154,7 @@ describe('canRun', () => {
     expect(() => runWord(abDfa, 'a')).toThrow('Complete the DFA first');
   });
   it('prints an empty alphabet as {}', () => {
-    const a = fixture({ kind: 'DFA', alphabet: '', states: ['q0'], start: 'q0' });
+    const a = fixture({ kind: 'NFA', alphabet: '', states: ['q0'], start: 'q0' });
     expect(canRun(a, 'x')).toBe("'x' is not in the alphabet {}");
   });
   it('rejects automata with errors', () => {
