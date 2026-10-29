@@ -140,8 +140,7 @@ function EntryMenu(props: {
 /**
  * The left bar: every automaton, most recently edited first, with a picture of its diagram.
  * Clicking one opens it; Delete on it, or its ⋯ menu, deletes it after asking; the menu also
- * renames and exports. New, Import and Export all
- * sit at the top and bottom.
+ * renames and exports. Create sits at the top, Import and Export all at the bottom.
  */
 export function HistoryBar(): React.JSX.Element {
   const automata = useAppStore((s) => s.automata);
@@ -169,11 +168,12 @@ export function HistoryBar(): React.JSX.Element {
   return (
     <nav className="av-history" aria-label="History">
       <div className="av-history-actions">
-        <button type="button" onClick={() => appStore.getState().createAutomaton('DFA')}>
-          New DFA
-        </button>
-        <button type="button" onClick={() => appStore.getState().createAutomaton('NFA')}>
-          New NFA
+        <button
+          type="button"
+          title="Create a new automaton (switch it between DFA and NFA above the canvas)"
+          onClick={() => appStore.getState().createAutomaton()}
+        >
+          Create
         </button>
       </div>
       <ul className="av-history-list">

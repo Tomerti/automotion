@@ -12,16 +12,20 @@ test('the history bar lists automata newest edit first and switches between them
   await expect(entries.first()).toContainText('Untitled');
   await expect(entries.first()).toContainText('Empty');
 
-  await bar.getByRole('button', { name: 'New NFA' }).click();
+  // Create makes a DFA; the pill at the top of the canvas switches it to an NFA.
+  await bar.getByRole('button', { name: 'Create' }).click();
   await expect(entries).toHaveCount(2);
-  await expect(entries.first()).toContainText('Untitled NFA');
+  await expect(entries.first()).toContainText('Untitled 2');
+  await expect(entries.first()).toContainText('DFA');
   await expect(entries.first()).toHaveAttribute('aria-current', 'page');
-  await expect(name).toHaveText('Untitled NFA');
+  await expect(name).toHaveText('Untitled 2');
+  await page.getByRole('group', { name: 'Kind' }).getByRole('button', { name: 'NFA' }).click();
+  await expect(entries.first()).toContainText('NFA · 0 states');
 
   // Opening the older one doesn't reorder; editing it moves it to the top with a picture.
   await entries.nth(1).click();
   await expect(name).toHaveText('Untitled');
-  await expect(entries.first()).toContainText('Untitled NFA');
+  await expect(entries.first()).toContainText('Untitled 2');
   await addStateAt(page, 300, 200);
   await expect(entries.first()).toContainText('Untitled');
   await expect(entries.first()).toContainText('DFA · 1 state');
@@ -47,7 +51,7 @@ test('rename and delete an automaton from its ⋯ menu in the history bar', asyn
   await openApp(page, { clear: true });
   const bar = page.getByRole('navigation', { name: 'History' });
   const entries = bar.getByTestId('history-item');
-  await bar.getByRole('button', { name: 'New NFA' }).click();
+  await bar.getByRole('button', { name: 'Create' }).click();
   await expect(entries).toHaveCount(2);
   // There is no dropdown in the top bar any more.
   await expect(page.getByRole('button', { name: 'Automata' })).toHaveCount(0);
@@ -60,7 +64,7 @@ test('rename and delete an automaton from its ⋯ menu in the history bar', asyn
   await expect(page.locator('.av-switcher-name')).toHaveText('Mine');
 
   page.once('dialog', (d) => void d.accept());
-  await bar.getByRole('button', { name: 'More actions for Untitled NFA' }).click();
+  await bar.getByRole('button', { name: 'More actions for Untitled 2' }).click();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
   await expect(entries).toHaveCount(1);
   await expect(entries.first()).toContainText('Mine');
@@ -70,7 +74,7 @@ test('the Delete key deletes a clicked history entry after asking', async ({ pag
   await openApp(page, { clear: true });
   const bar = page.getByRole('navigation', { name: 'History' });
   const entries = bar.getByTestId('history-item');
-  await bar.getByRole('button', { name: 'New NFA' }).click();
+  await bar.getByRole('button', { name: 'Create' }).click();
   await expect(entries).toHaveCount(2);
 
   await entries.nth(1).click();
@@ -80,5 +84,5 @@ test('the Delete key deletes a clicked history entry after asking', async ({ pag
   });
   await page.keyboard.press('Delete');
   await expect(entries).toHaveCount(1);
-  await expect(entries.first()).toContainText('Untitled NFA');
+  await expect(entries.first()).toContainText('Untitled 2');
 });

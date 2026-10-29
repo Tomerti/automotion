@@ -73,12 +73,16 @@ it('the dock swaps the run pill for the trace player while a trace is open', asy
   expect(screen.getByLabelText('Word')).toBeVisible();
 });
 
-it('New DFA from the history bar shows its diagram', async () => {
+it('Create from the history bar shows its diagram, and the kind pill switches it to an NFA', async () => {
   const user = userEvent.setup();
   render(<App />);
-  await user.click(screen.getByRole('button', { name: 'New DFA' }));
+  await user.click(screen.getByRole('button', { name: 'Create' }));
   expect(screen.getByTestId('diagram')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Untitled DFA' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Untitled' })).toBeInTheDocument();
+  const pill = screen.getByRole('group', { name: 'Kind' });
+  expect(within(pill).getByRole('button', { name: 'DFA' })).toHaveAttribute('aria-pressed', 'true');
+  await user.click(within(pill).getByRole('button', { name: 'NFA' }));
+  expect(appStore.getState().automata[0]?.kind).toBe('NFA');
 });
 
 it('a failed autosave shows an error toast', async () => {

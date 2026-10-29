@@ -23,7 +23,8 @@ export interface AppState {
   stepIndex: number;
   history: Record<string, { past: Automaton[]; future: Automaton[] }>;
 
-  createAutomaton(kind: AutomatonKind): string;
+  /** A blank automaton named "Untitled" (or "Untitled 2", …); a DFA unless `kind` says NFA. */
+  createAutomaton(kind?: AutomatonKind): string;
   addAutomaton(a: Automaton): void;
   deleteAutomaton(id: string): void;
   setActive(id: string): void;
@@ -41,9 +42,10 @@ export interface AppState {
 
 type Initial = Partial<Pick<AppState, 'automata' | 'activeId'>>;
 
-function freeName(kind: AutomatonKind, automata: Automaton[]): string {
+/** No kind in the name: the kind can be switched right after creating it. */
+function freeName(automata: Automaton[]): string {
   const taken = new Set(automata.map((a) => a.name));
-  const base = `Untitled ${kind}`;
+  const base = 'Untitled';
   let name = base;
   for (let n = 2; taken.has(name); n++) name = `${base} ${n}`;
   return name;
@@ -109,8 +111,8 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
       return {
         ...initialData(initial),
 
-        createAutomaton(kind) {
-          const a = emptyAutomaton(freeName(kind, get().automata), kind);
+        createAutomaton(kind = 'DFA') {
+          const a = emptyAutomaton(freeName(get().automata), kind);
           set((s) => {
             s.automata.unshift(a);
             s.activeId = a.id;

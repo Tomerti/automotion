@@ -12,6 +12,7 @@ import { useControlsHelp } from './help';
 import { HistoryBar } from './HistoryBar';
 import { useHistoryOpen } from './historyPrefs';
 import { importFile } from './importFile';
+import { KindPill } from './KindPill';
 import { toast } from './toastStore';
 import { Toasts } from './Toasts';
 import { TopBar } from './TopBar';
@@ -87,6 +88,7 @@ export default function App(): React.JSX.Element {
           style={{ '--av-dock-h': `${dockHeight}px` } as React.CSSProperties}
         >
           {trace ? <TraceView trace={trace} stepIndex={stepIndex} /> : <Canvas />}
+          <KindPill />
           <div
             ref={dockRef}
             className="av-dock"

@@ -69,15 +69,14 @@ describe('HistoryBar', () => {
     expect(items()[1]).toHaveAttribute('aria-current', 'page');
   });
 
-  it('New DFA and New NFA create an automaton at the top and open it', async () => {
+  it('Create adds a DFA at the top and opens it', async () => {
     const user = userEvent.setup();
     render(<HistoryBar />);
-    await user.click(screen.getByRole('button', { name: 'New NFA' }));
+    expect(screen.queryByRole('button', { name: /New [DN]FA/ })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Create' }));
     expect(items()).toHaveLength(3);
-    expect(items()[0]).toHaveTextContent('Untitled NFA');
+    expect(items()[0]).toHaveTextContent('Untitled');
     expect(items()[0]).toHaveAttribute('aria-current', 'page');
-    await user.click(screen.getByRole('button', { name: 'New DFA' }));
-    expect(items()[0]).toHaveTextContent('Untitled DFA');
     expect(st().automata[0]?.kind).toBe('DFA');
   });
 
