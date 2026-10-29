@@ -33,7 +33,11 @@ const TABS: Tab[] = [
         action: 'Add a transition',
         hint: 'Drop it on the same state for a self-loop',
       },
-      { gesture: { mouse: 'double', on: 'a state' }, action: 'Rename the state' },
+      {
+        gesture: { mouse: 'double', on: 'a state' },
+        action: 'Rename the state',
+        hint: 'Type \\emptyset for ∅',
+      },
       {
         gesture: { mouse: 'double', on: 'an arrow' },
         action: 'Edit its symbols',

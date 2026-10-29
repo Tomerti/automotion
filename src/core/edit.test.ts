@@ -6,6 +6,7 @@ import {
   commitEdgeSymbols,
   moveState,
   nextStateLabel,
+  normalizeStateLabel,
   normalizeSymbolText,
   parseSymbolInput,
   removeAlphabetSymbol,
@@ -249,6 +250,12 @@ describe('parseSymbolInput', () => {
 describe('normalizeSymbolText', () => {
   it('replaces \\epsilon with ε while typing', () =>
     expect(normalizeSymbolText('a,\\epsilon')).toBe('a,ε'));
+});
+
+describe('normalizeStateLabel', () => {
+  it('replaces \\emptyset with ∅ while typing', () =>
+    expect(normalizeStateLabel('\\emptyset')).toBe('∅'));
+  it('leaves other text alone', () => expect(normalizeStateLabel('q_1')).toBe('q_1'));
 });
 
 describe('derived alphabet and edge shape', () => {

@@ -3,6 +3,7 @@ import {
   addState,
   commitEdgeSymbols,
   moveState,
+  normalizeStateLabel,
   normalizeSymbolText,
   parseSymbolInput,
   removeState,
@@ -354,6 +355,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       at: { x: state.x, y: state.y },
       fontSize: labelFontSize(state.label),
       covers: id,
+      normalize: normalizeStateLabel,
       submit: (text) => commitRename(id, text),
     });
   };

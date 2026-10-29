@@ -19,7 +19,7 @@
 ### Build
 
 - Double-click the canvas to add a state; Shift + drag from one state to another to add a transition (drop it on the same state for a self-loop).
-- Double-click a state to rename it, or an arrow to edit its symbols. Labels like `q_1` and `q_{12}` show as subscripts, and `\epsilon` types ε.
+- Double-click a state to rename it, or an arrow to edit its symbols. Labels like `q_1` and `q_{12}` show as subscripts, `\epsilon` types ε and, in a state name, `\emptyset` types ∅.
 - Select a state and press **S** to toggle start, **A** to toggle accepting. An NFA can have several start states.
 - Switch an automaton between DFA and NFA. Adding an ε-transition to a DFA makes it an NFA. DFAs may be partial: a missing transition rejects.
 - The issues chip in the top bar explains what is wrong (no start state, two transitions on one symbol in a DFA, unreachable states, …), and actions that need a valid automaton say why they are disabled.
