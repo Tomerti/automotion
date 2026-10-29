@@ -41,7 +41,7 @@ export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.El
       />
       <button
         type="submit"
-        className="av-primary"
+        className="av-go"
         disabled={reason !== null}
         title={reason ?? 'Run the word, step by step'}
       >

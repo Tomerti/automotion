@@ -213,6 +213,19 @@ button.av-primary:hover:not(:disabled) {
   filter: brightness(1.08);
 }
 
+/* A pill in the run's own colour: Run, and the buttons that start and finish the tutorial. */
+.av-go,
+button.av-go:hover:not(:disabled) {
+  font-weight: 600;
+  color: var(--av-on-run);
+  background: var(--av-run);
+  border-color: var(--av-run);
+  border-radius: 999px;
+}
+button.av-go:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
 input:not([type]),
 input[type='text'],
 select {

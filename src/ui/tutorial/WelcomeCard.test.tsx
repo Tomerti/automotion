@@ -22,6 +22,7 @@ it('opens by itself on a first visit, instead of the Controls popup', () => {
   expect(welcome()).not.toBeNull();
   expect(welcome()).toHaveAttribute('aria-modal', 'true');
   expect(screen.queryByRole('dialog', { name: 'Controls' })).toBeNull();
+  expect(within(welcome()!).getByText('Watch automata come to life.')).toBeInTheDocument();
   expect(within(welcome()!).getByText(/Press \? at any time/)).toBeInTheDocument();
   expect(localStorage.getItem(SEEN_HELP_KEY)).not.toBeNull();
 });

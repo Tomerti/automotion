@@ -89,3 +89,25 @@ test('the first visit offers the tutorial, which walks through building and chan
   await expect(page.getByTestId('edge-q_0-q_0').getByTestId('edge-label')).toHaveText('0,1');
   await expect(page.getByRole('navigation', { name: 'History' })).toContainText('Tutorial');
 });
+
+test('quitting the tutorial midway asks first, then removes it from the history', async ({
+  page,
+}) => {
+  await page.goto('./');
+  const welcome = page.getByRole('dialog', { name: 'Welcome' });
+  await welcome.getByRole('button', { name: 'Start tutorial' }).click();
+  const card = page.getByTestId('tutorial-card');
+  const history = page.getByRole('navigation', { name: 'History' });
+  await addStateAt(page, 150, 220);
+  await expect(card).toHaveAttribute('data-step', '2');
+  await expect(history).toContainText('Tutorial');
+
+  await card.getByRole('button', { name: 'End tutorial' }).click();
+  await card.getByRole('button', { name: 'Keep going' }).click();
+  await expect(card).toHaveAttribute('data-step', '2');
+
+  await card.getByRole('button', { name: 'End tutorial' }).click();
+  await card.getByRole('button', { name: 'Quit' }).click();
+  await expect(card).toHaveCount(0);
+  await expect(history).not.toContainText('Tutorial');
+});

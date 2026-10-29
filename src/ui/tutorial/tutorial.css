@@ -1,6 +1,8 @@
 /*
  * The tutorial: a coach card floating in the canvas's top-right corner, like the run and kind
- * pills, and a ring in the selection pen around whatever the step uses.
+ * pills, holding a checklist that grows as the user goes, and orange corner brackets (the run's
+ * colour) around whatever the step uses. Brackets, not a ring: a ring round a state reads as
+ * accepting, or as a run's active state.
  */
 
 .av-tutorial {
@@ -9,8 +11,10 @@
   right: var(--av-dock-bottom);
   z-index: 12;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 10px;
   width: 300px;
+  max-height: calc(100% - 2 * var(--av-dock-bottom) - 64px);
   padding: 12px 14px 14px;
   color: var(--av-ink);
   background: var(--av-surface-raised);
@@ -24,7 +28,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: -4px -6px -2px 0;
+  margin: -4px -6px -4px 0;
 }
 .av-tutorial-count {
   font-size: 11px;
@@ -34,13 +38,73 @@
   color: var(--av-ink-muted);
 }
 
-.av-tutorial-live {
+/* The checklist */
+
+.av-tutorial-steps {
   display: grid;
-  gap: 10px;
+  align-content: start;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
 }
+.av-tutorial-part {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--av-ink-muted);
+}
+.av-tutorial-step {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  font-size: 13px;
+  line-height: 18px;
+}
+.av-tutorial-step[data-done='true'] .av-tutorial-step-text {
+  color: var(--av-ink-muted);
+}
+.av-tutorial-part-done {
+  font-weight: 600;
+}
+/* The step to do now, set off from the ticked lines above it. */
+.av-tutorial-now {
+  padding-top: 9px;
+  border-top: 1px solid var(--av-rule);
+}
+.av-tutorial-now:first-child,
+.av-tutorial-part + .av-tutorial-now {
+  padding-top: 0;
+  border-top: 0;
+}
+/* The closing card has no box. */
+.av-tutorial-now:not(:has(.av-tutorial-box)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.av-tutorial-box {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--av-surface-raised);
+  border: 1.5px solid var(--av-ink-muted);
+  border-radius: 5px;
+}
+.av-tutorial-box[data-done='true'] {
+  background: var(--av-green);
+  border-color: var(--av-green);
+  animation: av-tutorial-tick 260ms ease-out;
+}
+
 .av-tutorial-body {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   justify-items: start;
   animation: av-tutorial-step 220ms ease-out;
 }
@@ -48,6 +112,9 @@
   margin: 0;
   font-size: 14px;
   line-height: 1.45;
+}
+.av-tutorial-now .av-tutorial-text {
+  margin-top: -1px;
 }
 .av-tutorial code {
   padding: 0 4px;
@@ -58,19 +125,11 @@
   border-radius: 4px;
 }
 
-.av-tutorial-hint,
-.av-tutorial-done {
+.av-tutorial-hint {
   margin: 0;
-  padding-top: 8px;
   font-size: 13px;
   line-height: 1.4;
-  border-top: 1px solid var(--av-rule);
-}
-.av-tutorial-hint {
   color: var(--av-red);
-}
-.av-tutorial-done {
-  color: var(--av-green);
 }
 .av-tutorial-link,
 .av-tutorial-link:hover:not(:disabled) {
@@ -86,18 +145,71 @@
 
 .av-tutorial-actions {
   display: flex;
+  gap: 8px;
   justify-content: flex-end;
 }
+.av-tutorial-quit {
+  display: grid;
+  gap: 12px;
+  animation: av-tutorial-step 160ms ease-out;
+}
+.av-tutorial-quit-button,
+.av-tutorial-quit-button:hover:not(:disabled) {
+  font-weight: 600;
+  color: var(--av-red);
+}
+
+/* The pointer: four corners framing the target, breathing outward. */
 
 .av-tutorial-pointer {
   position: fixed;
   /* Over the canvas and the card, under the phone's history overlay (15) and dialogs. */
   z-index: 13;
   pointer-events: none;
-  border: 2px solid var(--av-accent);
-  border-radius: 999px;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--av-accent) 18%, transparent);
-  animation: av-tutorial-pulse 1.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--av-run) 45%, transparent));
+}
+.av-tutorial-corner {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border: 0 solid var(--av-run);
+  animation: av-tutorial-breathe 1.4s ease-in-out infinite;
+}
+.av-tutorial-corner[data-corner='tl'] {
+  --dx: -1;
+  --dy: -1;
+  top: 0;
+  left: 0;
+  border-top-width: 2.5px;
+  border-left-width: 2.5px;
+  border-top-left-radius: 4px;
+}
+.av-tutorial-corner[data-corner='tr'] {
+  --dx: 1;
+  --dy: -1;
+  top: 0;
+  right: 0;
+  border-top-width: 2.5px;
+  border-right-width: 2.5px;
+  border-top-right-radius: 4px;
+}
+.av-tutorial-corner[data-corner='bl'] {
+  --dx: -1;
+  --dy: 1;
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 2.5px;
+  border-left-width: 2.5px;
+  border-bottom-left-radius: 4px;
+}
+.av-tutorial-corner[data-corner='br'] {
+  --dx: 1;
+  --dy: 1;
+  right: 0;
+  bottom: 0;
+  border-right-width: 2.5px;
+  border-bottom-width: 2.5px;
+  border-bottom-right-radius: 4px;
 }
 
 @keyframes av-tutorial-step {
@@ -107,9 +219,18 @@
   }
 }
 
-@keyframes av-tutorial-pulse {
+@keyframes av-tutorial-tick {
+  from {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes av-tutorial-breathe {
   50% {
-    box-shadow: 0 0 0 9px color-mix(in srgb, var(--av-accent) 0%, transparent);
+    transform: translate(calc(var(--dx) * 3px), calc(var(--dy) * 3px));
   }
 }
 
@@ -119,27 +240,74 @@
     left: 12px;
     right: 12px;
     width: auto;
+    max-height: 45%;
   }
 }
 
-/* The first visit's welcome dialog (on the shared .av-modal surface). */
+/*
+ * The first visit's welcome dialog, on the shared .av-modal surface (two classes, to beat
+ * .av-modal's width, which loads later).
+ */
 
-.av-welcome {
+.av-modal.av-welcome {
   width: min(420px, 100%);
 }
-.av-welcome-text {
-  margin: 4px 0 18px;
+.av-welcome-tagline {
+  margin: -2px 0 14px;
   font-size: 14px;
-  line-height: 1.5;
   color: var(--av-ink-muted);
+}
+.av-welcome-text {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--av-ink-muted);
+}
+.av-welcome-plan {
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+.av-welcome-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 2px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.av-welcome-row + .av-welcome-row {
+  border-top: 1px solid var(--av-rule);
+}
+.av-welcome-row b {
+  font-weight: 600;
+}
+.av-welcome-num {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--av-run);
+  border: 1.5px solid var(--av-run);
+  border-radius: 999px;
 }
 .av-welcome-actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
 }
+.av-welcome-actions button {
+  min-height: 34px;
+  padding: 4px 16px;
+  border-radius: 999px;
+}
 .av-welcome-note {
-  margin: 16px 0 0;
+  margin: 14px 0 0;
   font-size: 12px;
   color: var(--av-ink-muted);
 }

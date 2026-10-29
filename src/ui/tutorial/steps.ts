@@ -49,6 +49,12 @@ export interface Step {
 
 export const COUNTED_STEPS = 12;
 
+/** What each part builds, as the checklist's headings. */
+export const PART_TITLES: Record<1 | 2, string> = {
+  1: 'An even number of 0s',
+  2: 'Accept every word',
+};
+
 /** q0 is the start state (or the first state before there is one); q1 is the first other state. */
 export function roles(a: Automaton): { q0?: State; q1?: State } {
   const startId = startStates(a)[0];
@@ -245,8 +251,7 @@ const SPECS: StepSpec[] = [
   {
     id: 'delete-q1',
     part: 2,
-    instruction: (l) =>
-      `Part 2: accept every word. Delete ${l.q1}: click it, then press Delete. Its arrows go with it.`,
+    instruction: (l) => `Delete ${l.q1}: click it, then press Delete. Its arrows go with it.`,
     gesture: () => ({ keys: ['Delete'], on: 'selected state' }),
     confirmation: (l) => `${l.q1} is gone`,
     done: (ctx) =>
@@ -375,8 +380,6 @@ export interface Progress {
   /** The step to show: the earliest one of `progress`'s part that isn't done. */
   current: number;
   latched: ReadonlySet<StepId>;
-  /** The step that just completed in this call, if any (the last one, when several did). */
-  completed: StepId | null;
 }
 
 const LAST = SPECS.length - 1;
@@ -397,8 +400,7 @@ export function advance(
   /** The step on the card now: kept as it is while another automaton is open. */
   current: number = progress,
 ): Progress {
-  let completed: StepId | null = null;
-  if (!ctx.isActive || !ctx.automaton) return { progress, current, latched, completed };
+  if (!ctx.isActive || !ctx.automaton) return { progress, current, latched };
   let held = latched;
   for (;;) {
     const isDone = (i: number): boolean => {
@@ -416,13 +418,11 @@ export function advance(
       const s = STEPS[undone]!;
       if (s.run && runSucceeded(s, ctx)) {
         held = new Set([...held, s.id]);
-        if (undone === progress) completed = s.id;
         continue;
       }
-      return { progress, current: undone, latched: held, completed };
+      return { progress, current: undone, latched: held };
     }
-    if (progress === LAST) return { progress, current: LAST, latched: held, completed };
-    completed = STEPS[progress]!.id;
+    if (progress === LAST) return { progress, current: LAST, latched: held };
     progress += 1;
   }
 }

@@ -158,18 +158,13 @@ describe('runSucceeded', () => {
 
 describe('advance', () => {
   it('stays on the first step of an empty automaton', () => {
-    expect(advance(0, none, ctx(tut({})))).toMatchObject({
-      progress: 0,
-      current: 0,
-      completed: null,
-    });
+    expect(advance(0, none, ctx(tut({})))).toMatchObject({ progress: 0, current: 0 });
   });
 
   it('moves through every step already done at once, up to the first run', () => {
     const p = advance(0, none, ctx(evenZeros()));
     expect(p.progress).toBe(idx('run-1010'));
     expect(p.current).toBe(idx('run-1010'));
-    expect(p.completed).toBe('loops');
   });
 
   it('falls back to a step that came undone, keeping the furthest point', () => {
@@ -177,7 +172,6 @@ describe('advance', () => {
     const p = advance(idx('loops'), none, ctx(a));
     expect(p.current).toBe(idx('start'));
     expect(p.progress).toBe(idx('loops'));
-    expect(p.completed).toBeNull();
   });
 
   it('latches a run once its verdict shows, and moves on', () => {
@@ -185,7 +179,6 @@ describe('advance', () => {
     const p = advance(idx('run-1010'), none, ctx(a, ran(a, '1010')));
     expect(p.latched.has('run-1010')).toBe(true);
     expect(p.current).toBe(idx('run-10'));
-    expect(p.completed).toBe('run-1010');
     // Closing the trace keeps it done.
     expect(advance(p.progress, p.latched, ctx(a)).current).toBe(idx('run-10'));
   });
@@ -220,13 +213,13 @@ describe('advance', () => {
 
   it('never moves on while the tutorial automaton is not the active one', () => {
     const p = advance(0, none, ctx(evenZeros(), { isActive: false }));
-    expect(p).toMatchObject({ progress: 0, current: 0, completed: null });
+    expect(p).toMatchObject({ progress: 0, current: 0 });
   });
 
   it('keeps the step it fell back to while another automaton is open', () => {
     const a = { ...evenZeros(), starts: [] };
     const p = advance(idx('loops'), none, ctx(a, { isActive: false }), idx('start'));
-    expect(p).toMatchObject({ progress: idx('loops'), current: idx('start'), completed: null });
+    expect(p).toMatchObject({ progress: idx('loops'), current: idx('start') });
   });
 });
 
