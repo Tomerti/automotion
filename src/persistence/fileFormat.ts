@@ -1,12 +1,16 @@
 import { newId } from '../core/id';
 import type { Automaton } from '../core/model';
 import { CURRENT_VERSION, migrate } from './migrate';
-import { fileSchema } from './schema';
+import { FORMAT, LEGACY_FORMAT, fileSchema } from './schema';
 
 export type ParseResult = { ok: true; automata: Automaton[] } | { ok: false; error: string };
 
 export function serialize(automata: Automaton[]): string {
-  return JSON.stringify({ format: 'automaton-vis', version: CURRENT_VERSION, automata }, null, 2);
+  return JSON.stringify({ format: FORMAT, version: CURRENT_VERSION, automata }, null, 2);
+}
+
+function isOurFormat(format: unknown): boolean {
+  return format === FORMAT || format === LEGACY_FORMAT;
 }
 
 export function parseFile(text: string, existingIds: Set<string>): ParseResult {
@@ -19,9 +23,9 @@ export function parseFile(text: string, existingIds: Set<string>): ParseResult {
   if (
     typeof json !== 'object' ||
     json === null ||
-    (json as { format?: unknown }).format !== 'automaton-vis'
+    !isOurFormat((json as { format?: unknown }).format)
   ) {
-    return { ok: false, error: 'Not an Automaton Vis file' };
+    return { ok: false, error: 'Not an AutoMotion file' };
   }
   let migrated: unknown;
   try {
@@ -31,7 +35,7 @@ export function parseFile(text: string, existingIds: Set<string>): ParseResult {
   }
   const result = fileSchema.safeParse(migrated);
   if (!result.success) {
-    return { ok: false, error: result.error.issues[0]?.message ?? 'Not an Automaton Vis file' };
+    return { ok: false, error: result.error.issues[0]?.message ?? 'Not an AutoMotion file' };
   }
   const seen = new Set(existingIds);
   const automata = result.data.automata.map((a) => {

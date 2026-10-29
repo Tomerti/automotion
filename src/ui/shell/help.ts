@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 /** Set once the controls popup has been shown, so it opens by itself only on the first visit. */
-export const SEEN_HELP_KEY = 'automaton-vis:seen-help';
+export const SEEN_HELP_KEY = 'automotion:seen-help';
 
 export function hasSeenHelp(): boolean {
   try {

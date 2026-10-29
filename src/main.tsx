@@ -2,7 +2,7 @@
 import './ui/theme.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { loadFromStorage } from './persistence/storage';
+import { loadFromStorage, migrateLegacyKeys } from './persistence/storage';
 import { appStore } from './store/store';
 import App from './ui/shell/App';
 import { ErrorBoundary } from './ui/shell/ErrorBoundary';
@@ -16,6 +16,9 @@ function browserStorage(): Storage | null {
     return null;
   }
 }
+
+// First, so the theme, prefs and automata saved under the old name are found below.
+migrateLegacyKeys(browserStorage());
 
 // Before the first render, so a forced theme never flashes the system one.
 applyTheme(readTheme());

@@ -1,4 +1,4 @@
-# Automaton Vis v2: interaction and UI overhaul
+# AutoMotion v2: interaction and UI overhaul
 
 Approved 2026-10-28. Supersedes the v1 spec where they disagree (editing gestures, layout, run view).
 
@@ -53,10 +53,10 @@ The outer-ring draw gesture and hold-Space panning are removed.
 - First launch (no stored data, or no storage) starts with one blank DFA named "Untitled" and a
   faint hint "Double-click to add a state · ? for controls". Examples load only on request. A
   corrupt store is still backed up; the app then starts blank.
-- Theme: system / light / dark toggle stored in localStorage `automaton-vis:theme`, applied as
+- Theme: system / light / dark toggle stored in localStorage `automotion:theme`, applied as
   `data-theme` on `<html>`. Exports always use the light palette.
 - Controls popup: modal listing the gesture table above; opens from the help button or `?`, and
-  once automatically on first visit (`automaton-vis:seen-help`).
+  once automatically on first visit (`automotion:seen-help`).
 
 ## Run view (`src/ui/player/`)
 

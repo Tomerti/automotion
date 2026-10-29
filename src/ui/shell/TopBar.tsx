@@ -48,7 +48,7 @@ export function TopBar(props: {
         </button>
         <h1 className="av-brand">
           <BrandMark />
-          <span className="av-brand-name">Automaton Vis</span>
+          <span className="av-brand-name">AutoMotion</span>
         </h1>
         <span className="av-topbar-slash" aria-hidden="true">
           /

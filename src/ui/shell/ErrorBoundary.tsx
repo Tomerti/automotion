@@ -15,7 +15,7 @@ export class ErrorBoundary extends Component<{ children: React.ReactNode }, Stat
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
-    console.error('Automaton Vis crashed', error, info.componentStack);
+    console.error('AutoMotion crashed', error, info.componentStack);
   }
 
   render(): React.ReactNode {

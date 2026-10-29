@@ -1,6 +1,6 @@
 # Multiple start states for NFAs
 
-Approved in chat 2026-10-28. Extends the v1 spec (`2026-10-28-automaton-vis-design.md`) and the v2
+Approved in chat 2026-10-28. Extends the v1 spec (`2026-10-28-automotion-design.md`) and the v2
 spec (`2026-10-28-v2-ux-overhaul-design.md`); this document wins where they disagree.
 
 ## Goal

@@ -16,7 +16,7 @@ export async function openApp(page: Page, opts: { clear?: boolean } = {}): Promi
       localStorage.clear();
       sessionStorage.setItem('e2e-cleared', '1');
     }
-    localStorage.setItem('automaton-vis:seen-help', '1');
+    localStorage.setItem('automotion:seen-help', '1');
   }, opts.clear ?? false);
   await page.goto('./');
 }

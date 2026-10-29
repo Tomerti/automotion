@@ -1,10 +1,10 @@
-# Automaton Vis — Design
+# AutoMotion — Design
 
 Date: 2026-10-28 · Status: draft for review
 
 ## 1. Goal and scope
 
-Automaton Vis is a browser app for building finite automata (DFA, NFA), drawing them as state
+AutoMotion is a browser app for building finite automata (DFA, NFA), drawing them as state
 diagrams, and stepping through processes on them: running a word, converting an NFA to a DFA,
 and minimizing a DFA.
 
@@ -275,8 +275,9 @@ grouped into one entry, committed on pointer-up. Undo history is not persisted.
   - a DFA with redundant states that minimizes visibly
 - **File format** (JSON):
   ```json
-  { "format": "automaton-vis", "version": 1, "automata": [ /* Automaton[] */ ] }
+  { "format": "automotion", "version": 1, "automata": [ /* Automaton[] */ ] }
   ```
+  Files from before the rename to AutoMotion carry `"format": "automaton-vis"` and still import.
 - **Export**: the current automaton or all of them, as a `.json` download.
 - **Import**: by file picker or by dropping a file on the window. If an imported automaton's id
   collides with an existing one, it gets a new id.
