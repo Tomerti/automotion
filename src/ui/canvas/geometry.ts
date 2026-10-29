@@ -16,6 +16,8 @@ const LABEL_CHAR_WIDTH = 0.6; // average glyph width as a fraction of the font s
 const LABEL_FILL = 0.85; // share of the circle's diameter a label may span
 const LABEL_GAP = 14;
 const START_ARROW_LENGTH = 32;
+/** Where a start arrow comes from when its state has no `startAngle`: the left. */
+export const START_ANGLE = Math.PI;
 const LOOP_HALF_SPREAD = 0.5; // radians either side of the loop angle
 const LOOP_ANGLE_STEPS = 16;
 /** Distance of the virtual neighbor standing in for the start arrow. */
@@ -47,9 +49,17 @@ export function bendThrough(from: Point, to: Point, p: Point): number {
   return ((p.x - mid.x) * dy - (p.y - mid.y) * dx) / len;
 }
 
-/** Direction from a state's center to `p`, for placing a self-loop. */
+/** Direction from a state's center to `p`, for placing a self-loop or a start arrow. */
 export function loopAngleToward(center: Point, p: Point): number {
   return Math.atan2(p.y - center.y, p.x - center.x);
+}
+
+/** `angle` snapped to the nearest multiple of `step` when within `tolerance` of it (radians). */
+export function snapAngle(angle: number, step: number, tolerance: number): number {
+  const snapped = Math.round(angle / step) * step;
+  if (Math.abs(angle - snapped) > tolerance) return angle;
+  // Keep the result in (-π, π], like atan2.
+  return snapped <= -Math.PI ? snapped + 2 * Math.PI : snapped;
 }
 
 /**
@@ -160,8 +170,10 @@ export function transitionGeometry(a: Automaton, from: State, to: State): PathGe
     .filter((t) => t.from !== t.to && (t.from === from.id || t.to === from.id))
     .map((t) => a.states.find((s) => s.id === (t.from === from.id ? t.to : t.from)))
     .filter((s): s is State => s !== undefined);
-  // The start arrow enters from the left: treat that direction as occupied.
-  if (a.starts.includes(from.id)) neighbors.push({ x: from.x - START_ARROW_CLEARANCE, y: from.y });
+  // Treat the direction the start arrow comes from as occupied.
+  if (a.starts.includes(from.id)) {
+    neighbors.push(polar(from, START_ARROW_CLEARANCE, from.startAngle ?? START_ANGLE));
+  }
   return selfLoopGeometry(from, bestLoopAngle(from, neighbors));
 }
 
@@ -176,12 +188,18 @@ export function labelFontSize(label: string): number {
   return Math.max(LABEL_MIN_FONT_SIZE, Math.min(LABEL_FONT_SIZE, fit));
 }
 
-/** Arrow entering the initial state from the left. */
-export function startArrowGeometry(center: Point): { d: string } {
-  const endX = center.x - STATE_RADIUS;
-  return {
-    d: `M ${fmt(endX - START_ARROW_LENGTH)} ${fmt(center.y)} L ${fmt(endX)} ${fmt(center.y)}`,
-  };
+/**
+ * Arrow into a start state, coming from `angle` (radians, screen coordinates, toward the tail) and
+ * ending on its circle.
+ */
+export function startArrowGeometry(
+  center: Point,
+  angle: number = START_ANGLE,
+): Pick<PathGeometry, 'd' | 'end' | 'endAngle'> {
+  const end = polar(center, STATE_RADIUS, angle);
+  const tail = polar(center, STATE_RADIUS + START_ARROW_LENGTH, angle);
+  const endAngle = angle > 0 ? angle - Math.PI : angle + Math.PI;
+  return { d: `M ${pt(tail)} L ${pt(end)}`, end, endAngle };
 }
 
 /** Whether `p` hits the state at `center`: its circle plus HIT_MARGIN. */

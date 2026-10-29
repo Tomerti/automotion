@@ -821,6 +821,52 @@ describe('Canvas editing', () => {
     expect(st().history.m?.past).toHaveLength(2);
   });
 
+  it('dragging the start arrow turns it around its state, snapping to 45° unless Alt is held', () => {
+    load({ ...two(), starts: ['q0'] });
+    render(<Canvas />);
+    const arrow = () => screen.getByTestId('start-arrow');
+    // From the left round to just off straight up: snaps to up.
+    drag(
+      arrow(),
+      [-40, 0],
+      [
+        [-40, -30],
+        [5, -80],
+      ],
+    );
+    expect(active().states[0]?.startAngle).toBeCloseTo(-Math.PI / 2);
+    expect(active().states[0]).toMatchObject({ x: 0, y: 0 });
+    expect(st().selection).toEqual({ states: ['q0'], transitions: [] });
+    // Round to the right, with Alt: kept as dragged.
+    drag(
+      arrow(),
+      [0, -40],
+      [
+        [30, -30],
+        [80, 5],
+      ],
+      { altKey: true },
+    );
+    expect(active().states[0]?.startAngle).toBeCloseTo(Math.atan2(5, 80));
+    expect(st().history.m?.past).toHaveLength(2);
+  });
+
+  it('the state menu turns a turned start arrow back to the left', async () => {
+    const user = userEvent.setup();
+    const a = two();
+    load({
+      ...a,
+      starts: ['q0'],
+      states: a.states.map((s) => (s.id === 'q0' ? { ...s, startAngle: 0 } : s)),
+    });
+    render(<Canvas />);
+    fireEvent.contextMenu(stateEl('q1'), { clientX: 100, clientY: 0 });
+    expect(screen.queryByRole('menuitem', { name: 'Start arrow from the left' })).toBeNull();
+    fireEvent.contextMenu(stateEl('q0'), { clientX: 0, clientY: 0 });
+    await user.click(screen.getByRole('menuitem', { name: 'Start arrow from the left' }));
+    expect(active().states[0]).not.toHaveProperty('startAngle');
+  });
+
   it('a dragged state snaps to another state’s x and y with dashed guides', () => {
     load(two());
     render(<Canvas />);

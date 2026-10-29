@@ -8,6 +8,7 @@ import {
   hitState,
   labelFontSize,
   selfLoopGeometry,
+  snapAngle,
   startArrowGeometry,
   transitionGeometry,
 } from './geometry';
@@ -88,6 +89,18 @@ describe('transitionGeometry', () => {
       selfLoopGeometry(q0, bestLoopAngle(q0, [q1, { x: q0.x - 100, y: q0.y }])),
     );
   });
+  it('places a new self-loop away from a turned start arrow', () => {
+    // Arrow from above: the loop leaves up only when the arrow is elsewhere.
+    expect(bestLoopAngle(q0, [q1, { x: q0.x - 100, y: q0.y }])).toBeCloseTo(-Math.PI / 2);
+    const turned = {
+      ...m,
+      states: m.states.map((s) => (s.id === 'q0' ? { ...s, startAngle: -Math.PI / 2 } : s)),
+    };
+    const q0Turned = turned.states[0] as State;
+    const loop = transitionGeometry(turned, q0Turned, q0Turned);
+    expect(loop).toEqual(selfLoopGeometry(q0, bestLoopAngle(q0, [q1, { x: q0.x, y: q0.y - 100 }])));
+    expect(loop.end.y).toBeGreaterThan(q0.y - STATE_RADIUS);
+  });
 });
 
 describe('labelFontSize', () => {
@@ -118,8 +131,32 @@ describe('labelFontSize', () => {
 
 describe('startArrowGeometry', () => {
   it('comes from the left and ends on the circle', () => {
-    const { d } = startArrowGeometry({ x: 100, y: 50 });
-    expect(d).toBe(`M ${100 - STATE_RADIUS - 32} 50 L ${100 - STATE_RADIUS} 50`);
+    const g = startArrowGeometry({ x: 100, y: 50 });
+    expect(g.d).toBe(`M ${100 - STATE_RADIUS - 32} 50 L ${100 - STATE_RADIUS} 50`);
+    expect(g.end).toEqual({ x: 100 - STATE_RADIUS, y: 50 });
+    expect(g.endAngle).toBe(0);
+  });
+  it('comes from any angle, pointing at the center', () => {
+    const right = startArrowGeometry({ x: 100, y: 50 }, 0);
+    expect(right.d).toBe(`M ${100 + STATE_RADIUS + 32} 50 L ${100 + STATE_RADIUS} 50`);
+    expect(Math.abs(right.endAngle)).toBeCloseTo(Math.PI);
+    const above = startArrowGeometry(O, -Math.PI / 2);
+    expect(above.end.x).toBeCloseTo(0);
+    expect(above.end.y).toBeCloseTo(-STATE_RADIUS);
+    expect(above.endAngle).toBeCloseTo(Math.PI / 2); // pointing down
+  });
+});
+
+describe('snapAngle', () => {
+  const step = Math.PI / 4;
+  it('snaps within the tolerance and leaves other angles alone', () => {
+    expect(snapAngle(0.05, step, 0.1)).toBe(0);
+    expect(snapAngle(Math.PI / 4 + 0.08, step, 0.1)).toBeCloseTo(Math.PI / 4);
+    expect(snapAngle(0.3, step, 0.1)).toBe(0.3);
+  });
+  it('keeps the result in (-π, π]', () => {
+    expect(snapAngle(-Math.PI + 0.01, step, 0.1)).toBeCloseTo(Math.PI);
+    expect(snapAngle(Math.PI - 0.01, step, 0.1)).toBeCloseTo(Math.PI);
   });
 });
 

@@ -97,6 +97,7 @@ export function isUntouchedOldExample(a: Automaton): boolean {
           s.id === id &&
           s.x === x &&
           s.y === y &&
+          s.startAngle === undefined &&
           (s.label === id || s.label === id.replace(/^q(\d+)$/, 'q_$1')),
       ),
     );

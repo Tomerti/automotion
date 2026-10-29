@@ -60,6 +60,11 @@ const TABS: Tab[] = [
         action: 'Bend it',
         hint: 'A self-loop turns around its state',
       },
+      {
+        gesture: { mouse: 'drag', on: 'the start arrow' },
+        action: 'Turn it around its state',
+        hint: 'Snaps to 45° steps; hold Alt to turn freely',
+      },
       { gesture: { mouse: 'drag', on: 'empty canvas' }, action: 'Pan' },
       { gesture: { mouse: 'scroll' }, action: 'Zoom' },
       { gesture: { mouse: 'click', on: 'empty canvas' }, action: 'Clear the selection' },

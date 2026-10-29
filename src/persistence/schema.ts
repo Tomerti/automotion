@@ -6,6 +6,7 @@ const stateSchema = z.object({
   label: z.string(),
   x: z.number(),
   y: z.number(),
+  startAngle: z.number().optional(),
 });
 
 const transitionSchema = z.object({

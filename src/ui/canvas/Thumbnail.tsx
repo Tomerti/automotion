@@ -39,12 +39,15 @@ export const Thumbnail = memo(function Thumbnail(props: {
       focusable="false"
     >
       <g transform={`translate(${vp.x} ${vp.y}) scale(${vp.zoom})`}>
-        {starts.map((start) => (
-          <g key={start.id} className="av-thumb-start">
-            <path className="av-thumb-edge-path" d={startArrowGeometry(start).d} />
-            <Arrowhead end={{ x: start.x - STATE_RADIUS, y: start.y }} angle={0} />
-          </g>
-        ))}
+        {starts.map((start) => {
+          const arrow = startArrowGeometry(start, start.startAngle);
+          return (
+            <g key={start.id} className="av-thumb-start">
+              <path className="av-thumb-edge-path" d={arrow.d} />
+              <Arrowhead end={arrow.end} angle={arrow.endAngle} />
+            </g>
+          );
+        })}
         {automaton.transitions.map((t) => {
           const from = byId.get(t.from);
           const to = byId.get(t.to);
