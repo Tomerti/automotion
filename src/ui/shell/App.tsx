@@ -89,6 +89,7 @@ export default function App(): React.JSX.Element {
         {historyOpen && <HistoryBar />}
         <main
           className="av-canvas-area"
+          data-history={historyOpen}
           style={{ '--av-dock-h': `${dockHeight}px` } as React.CSSProperties}
         >
           {trace ? <TraceView trace={trace} stepIndex={stepIndex} /> : <Canvas />}
@@ -128,7 +129,6 @@ export default function App(): React.JSX.Element {
       )}
       {welcomeOpen && (
         <WelcomeCard
-          besideHistory={historyOpen}
           onClose={closeWelcome}
           onStart={() => {
             closeWelcome();

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { STATE_RADIUS } from './geometry';
-import { fitToView, screenToWorld, zoomAt } from './viewport';
+import { fitToView, fitToViewInset, screenToWorld, zoomAt } from './viewport';
 
 describe('screenToWorld', () => {
   it('inverts pan and zoom', () => {
@@ -106,5 +106,28 @@ describe('fitToView', () => {
       size,
     );
     expect(vp.zoom).toBe(0.25);
+  });
+});
+
+describe('fitToViewInset', () => {
+  const pts = [
+    { x: 0, y: 0 },
+    { x: 1000, y: 0 },
+  ];
+  const size = { width: 1200, height: 600 };
+
+  it('stays centred on the whole width', () => {
+    const vp = fitToViewInset(pts, size, 200);
+    expect(vp.x + 500 * vp.zoom).toBeCloseTo(600);
+  });
+
+  it('keeps the inset clear on both sides', () => {
+    const vp = fitToViewInset(pts, size, 200);
+    expect(vp.x - STATE_RADIUS * vp.zoom).toBeGreaterThanOrEqual(200);
+    expect(vp.x + (1000 + STATE_RADIUS) * vp.zoom).toBeLessThanOrEqual(1000);
+  });
+
+  it('is fitToView without an inset', () => {
+    expect(fitToViewInset(pts, size, 0)).toEqual(fitToView(pts, size));
   });
 });

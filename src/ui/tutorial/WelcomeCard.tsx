@@ -11,19 +11,16 @@ const PLAN: { what: string; how: string }[] = [
 ];
 
 /**
- * The first visit's welcome: an offer of the tutorial, centred on the canvas (over the run pill
- * and the empty canvas's hint), not on the window. Escape, the backdrop, the close button and
- * Not now dismiss it.
+ * The first visit's welcome: an offer of the tutorial, centred over the canvas (in line with the
+ * run pill, covering the empty canvas's hint). Escape, the backdrop, the close button and Not now
+ * dismiss it.
  */
 export function WelcomeCard({
   onStart,
   onClose,
-  besideHistory,
 }: {
   onStart: () => void;
   onClose: () => void;
-  /** The history bar is open, so the canvas starts to its right. */
-  besideHistory: boolean;
 }): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalDialog(dialogRef, onClose);
@@ -31,7 +28,6 @@ export function WelcomeCard({
   return (
     <div
       className="av-modal-backdrop av-welcome-backdrop"
-      data-beside-history={besideHistory}
       data-testid="modal-backdrop"
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) onClose();

@@ -310,20 +310,22 @@ input.av-switcher-input {
 
 /* Canvas area and the floating dock */
 
-/* Under the top bar: the history bar (when open) and the canvas beside it. */
+/*
+ * Under the top bar: the canvas, full width whether or not the history bar is open, so the
+ * pills, the dock and the diagrams stay centred on the window. The bar floats over the canvas's
+ * left edge; what fits to view keeps clear of it (--av-history-inset on both sides).
+ */
 .av-body {
   position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
   min-height: 0;
-}
-/* Always the wide column: with the bar hidden, the first column is empty and collapses. */
-.av-body > .av-canvas-area {
-  grid-column: 2;
 }
 
 /* History bar: every automaton, newest edit first, each with a picture of its diagram. */
 .av-history {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 15;
   display: flex;
   flex-direction: column;
   width: var(--av-history-w);
@@ -479,6 +481,8 @@ input.av-switcher-input {
 .av-canvas-area {
   /* How far the floating dock sits above the bottom edge; --av-dock-h is set by App. */
   --av-dock-bottom: 18px;
+  /* Kept clear on each side of what fits to view while the history bar covers the left edge. */
+  --av-history-inset: 0px;
 
   position: relative;
   min-width: 0;
@@ -488,6 +492,9 @@ input.av-switcher-input {
   background-image: radial-gradient(var(--av-paper-dot) 1px, transparent 1.2px);
   background-size: 20px 20px;
   background-position: 10px 10px;
+}
+.av-canvas-area[data-history='true'] {
+  --av-history-inset: var(--av-history-w);
 }
 .av-canvas {
   width: 100%;
@@ -866,12 +873,13 @@ kbd {
 }
 
 @media (max-width: 760px) {
-  /* On a phone the bar floats over the canvas instead of squeezing it. */
+  /* On a phone the bar covers most of the canvas while it is open: lift it, and fit to the
+     whole canvas. */
   .av-history {
-    position: absolute;
-    inset: 0 auto 0 0;
-    z-index: 15;
     box-shadow: var(--av-shadow-float);
+  }
+  .av-canvas-area[data-history='true'] {
+    --av-history-inset: 0px;
   }
   .av-topbar {
     flex-wrap: wrap;

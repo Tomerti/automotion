@@ -7,8 +7,8 @@ import { ContextMenu } from './ContextMenu';
 import { Diagram } from './Diagram';
 import { Arrowhead } from './EdgeView';
 import { InlineInput } from './InlineInput';
-import { DEFAULT_VIEWPORT, useCanvasEditing } from './useCanvasEditing';
-import { fitToView } from './viewport';
+import { DEFAULT_VIEWPORT, historyInset, useCanvasEditing } from './useCanvasEditing';
+import { fitToViewInset } from './viewport';
 import './Canvas.css';
 
 /** Same fallback the trace views use when the element has no measurable size (jsdom). */
@@ -72,7 +72,12 @@ function EditableCanvas(props: {
     const el = containerRef.current;
     const width = el && el.clientWidth > 0 ? el.clientWidth : FALLBACK_SIZE.width;
     const height = el && el.clientHeight > 0 ? el.clientHeight : FALLBACK_SIZE.height;
-    appStore.getState().setViewport(automaton.id, fitToView(automaton.states, { width, height }));
+    appStore
+      .getState()
+      .setViewport(
+        automaton.id,
+        fitToViewInset(automaton.states, { width, height }, historyInset(el)),
+      );
     // Intentionally once per mount (the canvas is keyed by automaton id).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

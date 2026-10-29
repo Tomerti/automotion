@@ -31,15 +31,20 @@ test('the history bar lists automata newest edit first and switches between them
   await expect(entries.first()).toContainText('DFA · 1 state');
   await expect(entries.first().getByTestId('history-thumbnail')).toBeVisible();
 
-  // The History button hides the bar, and the choice survives a reload.
-  await page.getByRole('button', { name: 'History' }).click();
-  await expect(bar).toBeHidden();
-  // The canvas takes the bar's place: it fills the full width.
+  // The bar floats over the canvas, which fills the full width either way, so the run pill
+  // stays centred on the window.
   const fullWidth = async (): Promise<void> => {
     const box = await page.getByTestId('canvas').boundingBox();
     expect(box?.x).toBe(0);
     expect(box?.width).toBe(page.viewportSize()?.width);
+    const pill = await page.getByLabel('Word').locator('xpath=..').boundingBox();
+    expect(Math.round(pill!.x + pill!.width / 2)).toBe(page.viewportSize()!.width / 2);
   };
+  await fullWidth();
+
+  // The History button hides the bar, and the choice survives a reload.
+  await page.getByRole('button', { name: 'History' }).click();
+  await expect(bar).toBeHidden();
   await fullWidth();
   await page.reload();
   await expect(page.getByTestId('canvas')).toBeVisible();
