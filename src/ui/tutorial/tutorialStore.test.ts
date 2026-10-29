@@ -4,7 +4,7 @@ import { emptyAutomaton } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
-import { endTutorial, startTutorial, tutorialStore } from './tutorialStore';
+import { endTutorial, quitTutorial, startTutorial, tutorialStore } from './tutorialStore';
 
 const app = () => appStore.getState();
 const tut = () => tutorialStore.getState();
@@ -80,36 +80,63 @@ describe('startTutorial', () => {
     expect(app().trace).toBeNull();
   });
 
-  it('starting again starts over on a fresh automaton', () => {
+  it('starting again starts over on a fresh automaton and removes the unfinished one', () => {
     startTutorial();
     app().edit((a) => addState(a, { x: 0, y: 0 }));
     expect(tut().progress).toBe(1);
     const first = tut().automatonId;
     startTutorial();
-    expect(tut()).toMatchObject({ progress: 0, current: 0, confirmation: null });
+    expect(tut()).toMatchObject({ progress: 0, current: 0 });
     expect(tut().automatonId).not.toBe(first);
+    expect(app().automata.some((a) => a.id === first)).toBe(false);
+    expect(active()?.name).toBe('Tutorial');
+  });
+
+  it('starting again from the closing card keeps the finished one', () => {
+    startTutorial();
+    const first = tut().automatonId;
+    tutorialStore.setState({ progress: 12, current: 12 });
+    startTutorial();
+    expect(app().automata.some((a) => a.id === first)).toBe(true);
     expect(active()?.name).toBe('Tutorial 2');
+  });
+
+  it('quitting ends it and removes its automaton', () => {
+    startTutorial();
+    const id = tut().automatonId;
+    app().edit((a) => addState(a, { x: 0, y: 0 }));
+    quitTutorial();
+    expect(tut().active).toBe(false);
+    expect(app().automata.some((a) => a.id === id)).toBe(false);
+    expect(app().automata.length).toBeGreaterThan(0);
+  });
+
+  it('quitting the only automaton leaves a blank one', () => {
+    resetAppStore({ automata: [] });
+    startTutorial();
+    app().edit((a) => addState(a, { x: 0, y: 0 }));
+    quitTutorial();
+    expect(app().automata).toHaveLength(1);
+    expect(active()).toMatchObject({ name: 'Untitled', states: [] });
   });
 });
 
 describe('following the app', () => {
-  it('drops the ✓ when the step it confirms comes undone', () => {
+  it('falls back when a step comes undone', () => {
     startTutorial();
     app().edit((a) => addState(a, { x: 0, y: 0 }));
     const id = active()!.states[0]!.id;
     app().edit((a) => setStart(a, id));
     app().edit((a) => toggleAccepting(a, id));
-    expect(tut()).toMatchObject({ current: 3, confirmation: 'q_0 is accepting' });
+    expect(tut()).toMatchObject({ current: 3, progress: 3 });
     app().undo();
-    expect(tut().current).toBe(2);
-    expect(tut().confirmation).toBeNull();
+    expect(tut()).toMatchObject({ current: 2, progress: 3 });
   });
 
-  it('moves on when a step is done and keeps its confirmation', () => {
+  it('moves on when a step is done', () => {
     startTutorial();
     app().edit((a) => addState(a, { x: 0, y: 0 }));
     expect(tut().current).toBe(1);
-    expect(tut().confirmation).toBe('Added q_0');
   });
 
   it('does not move on from edits to another automaton', () => {

@@ -2,6 +2,7 @@ import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
 import { renameAutomaton } from '../../core/edit';
+import { emptyAutomaton } from '../../core/model';
 import type { Automaton } from '../../core/model';
 import { appStore, freeName } from '../../store/store';
 import type { AppState } from '../../store/store';
@@ -17,8 +18,6 @@ export interface TutorialState {
   current: number;
   /** Run steps that reached their verdict. */
   latched: ReadonlySet<StepId>;
-  /** What the last completed step did, shown as "✓ …". */
-  confirmation: string | null;
 }
 
 const NOTHING: ReadonlySet<StepId> = new Set();
@@ -29,7 +28,6 @@ const OFF: TutorialState = {
   progress: 0,
   current: 0,
   latched: NOTHING,
-  confirmation: null,
 };
 
 export const tutorialStore: StoreApi<TutorialState> = createStore<TutorialState>()(() => OFF);
@@ -58,21 +56,11 @@ function follow(app: AppState): void {
     return;
   }
   const next = advance(t.progress, t.latched, ctx, t.current);
-  const done = next.completed === null ? null : STEPS.find((s) => s.id === next.completed);
-  // Behind the furthest step (something came undone), no ✓ for what is no longer true.
-  const confirmation =
-    next.current < next.progress ? null : done ? done.confirmation(ctx) : t.confirmation;
-  if (
-    next.progress !== t.progress ||
-    next.current !== t.current ||
-    next.latched !== t.latched ||
-    confirmation !== t.confirmation
-  ) {
+  if (next.progress !== t.progress || next.current !== t.current || next.latched !== t.latched) {
     tutorialStore.setState({
       progress: next.progress,
       current: next.current,
       latched: next.latched,
-      confirmation,
     });
   }
 }
@@ -93,10 +81,13 @@ function untouched(app: AppState, a: Automaton): boolean {
 
 /**
  * Start (or restart) the tutorial on a DFA named "Tutorial": the active automaton if it is
- * untouched (so a first visit leaves no empty "Untitled" behind), else a new one.
+ * untouched (so a first visit leaves no empty "Untitled" behind), else a new one. A restart
+ * removes the unfinished one, as quitting does.
  */
 export function startTutorial(): void {
-  endTutorial();
+  // A finished one stays, as with Finish.
+  if (STEPS[tutorialStore.getState().current]?.part === 3) endTutorial();
+  else quitTutorial();
   const app = appStore.getState();
   app.closeTrace();
   const current = app.automata.find((a) => a.id === app.activeId);
@@ -112,7 +103,21 @@ export function startTutorial(): void {
   follow(appStore.getState());
 }
 
-/** Stop following the app. The tutorial automaton stays like any other. */
+/**
+ * Quit midway: end the tutorial and remove its automaton from the history. The canvas is never
+ * left without an automaton.
+ */
+export function quitTutorial(): void {
+  const id = tutorialStore.getState().automatonId;
+  endTutorial();
+  if (id === null) return;
+  const app = appStore.getState();
+  app.deleteAutomaton(id);
+  if (appStore.getState().automata.length === 0)
+    app.addAutomaton(emptyAutomaton('Untitled', 'DFA'));
+}
+
+/** Stop following the app. The tutorial automaton stays like any other (Finish keeps it). */
 export function endTutorial(): void {
   unsubscribe?.();
   unsubscribe = null;

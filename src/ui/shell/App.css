@@ -523,14 +523,6 @@ input.av-switcher-input {
     var(--av-shadow-float),
     0 0 0 1px var(--av-run);
 }
-/* Run is in the run's own colour, like everything a run lights up. */
-.av-runpill button.av-primary,
-.av-runpill button.av-primary:hover:not(:disabled) {
-  font-weight: 600;
-  color: var(--av-on-run);
-  background: var(--av-run);
-  border-color: var(--av-run);
-}
 .av-runpill input,
 .av-runpill input:focus-visible {
   width: min(260px, 52vw);

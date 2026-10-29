@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-/** How far the ring stands off the element it circles (px). */
-const OUTSET = 6;
+/** How far the corners stand off the element they frame (px). */
+const OUTSET = 8;
+const CORNERS = ['tl', 'tr', 'bl', 'br'] as const;
 
 /**
- * A soft pulsing ring around the element `selector` finds, drawn over everything and letting
- * every click through. It follows the element each frame (states move, the canvas pans and
+ * Four breathing corner brackets framing the element `selector` finds, drawn over everything and
+ * letting every click through. It follows the element each frame (states move, the canvas pans and
  * zooms) and hides while the element is missing.
  */
 export function TutorialPointer({
@@ -47,7 +48,11 @@ export function TutorialPointer({
       data-testid="tutorial-pointer"
       aria-hidden="true"
       style={{ display: 'none' }}
-    />,
+    >
+      {CORNERS.map((c) => (
+        <span key={c} className="av-tutorial-corner" data-corner={c} />
+      ))}
+    </div>,
     document.body,
   );
 }

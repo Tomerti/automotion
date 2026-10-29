@@ -44,14 +44,30 @@ it('shows the first step with its counter and gesture', () => {
   expect(within(card()).getByText('Double-click')).toBeInTheDocument();
 });
 
-it('moves on when the step is done and confirms it, with subscripts', () => {
+it('ticks off each step done and shows the next one on a new line, with subscripts', () => {
   render(<App />);
   act(() => startTutorial());
+  expect(within(card()).getAllByTestId('tutorial-step')).toHaveLength(1);
   addAt(100);
   expect(card()).toHaveAttribute('data-step', '2');
-  const done = within(card()).getByTestId('tutorial-confirmation');
-  expect(done).toHaveTextContent('✓ Added q0');
-  expect(done.querySelector('sub')).toHaveTextContent('0');
+  const [done, now] = within(card()).getAllByTestId('tutorial-step');
+  expect(done).toHaveAttribute('data-done', 'true');
+  expect(done).toHaveTextContent('✓Added q0');
+  expect(done!.querySelector('sub')).toHaveTextContent('0');
+  expect(now).toHaveAttribute('data-done', 'false');
+  expect(now).toHaveTextContent(/start state/);
+});
+
+it('heads the list with the part, and folds a finished part into one ticked line', () => {
+  render(<App />);
+  act(() => startTutorial());
+  expect(within(card()).getByText('Part 1 · An even number of 0s')).toBeInTheDocument();
+  act(() => tutorialStore.setState({ progress: 9, current: 9 }));
+  expect(within(card()).queryByText(/Part 1/)).toBeNull();
+  expect(within(card()).getByText('Part 2 · Accept every word')).toBeInTheDocument();
+  const [part1, now] = within(card()).getAllByTestId('tutorial-step');
+  expect(part1).toHaveTextContent('✓An even number of 0s');
+  expect(now).toHaveTextContent(/Delete/);
 });
 
 it('shows words as code', () => {
@@ -72,11 +88,58 @@ it('says when another automaton is open and goes back to the tutorial', async ()
   expect(app().activeId).toBe(id);
 });
 
-it('the close button ends it and keeps the automaton', async () => {
+it('the close button asks first; Keep going carries on', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  act(() => startTutorial());
+  await user.click(within(card()).getByRole('button', { name: 'End tutorial' }));
+  const ask = within(card()).getByRole('group', { name: 'Quit the tutorial?' });
+  expect(ask).toHaveTextContent('Tutorial will be removed from your history');
+  expect(screen.queryByTestId('tutorial-pointer')).toBeNull();
+  await user.click(within(ask).getByRole('button', { name: 'Keep going' }));
+  expect(within(card()).queryByRole('group', { name: 'Quit the tutorial?' })).toBeNull();
+  expect(card()).toHaveAttribute('data-step', '1');
+});
+
+it('the question moves focus to Keep going, which hands it back to the close button', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  act(() => startTutorial());
+  const close = within(card()).getByRole('button', { name: 'End tutorial' });
+  await user.click(close);
+  expect(within(card()).getByRole('button', { name: 'Keep going' })).toHaveFocus();
+  await user.click(within(card()).getByRole('button', { name: 'Keep going' }));
+  expect(close).toHaveFocus();
+});
+
+it('drops the question once the tutorial is finished behind it', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  act(() => startTutorial());
+  await user.click(within(card()).getByRole('button', { name: 'End tutorial' }));
+  act(() => tutorialStore.setState({ progress: 12, current: 12 }));
+  expect(within(card()).queryByRole('group', { name: 'Quit the tutorial?' })).toBeNull();
+  expect(within(card()).getByRole('button', { name: 'Finish' })).toBeInTheDocument();
+});
+
+it('Quit ends it and removes its automaton from the history', async () => {
   const user = userEvent.setup();
   render(<App />);
   act(() => startTutorial());
   const id = tutorialStore.getState().automatonId;
+  await user.click(within(card()).getByRole('button', { name: 'End tutorial' }));
+  await user.click(within(card()).getByRole('button', { name: 'Quit' }));
+  expect(screen.queryByTestId('tutorial-card')).toBeNull();
+  expect(app().automata.some((a) => a.id === id)).toBe(false);
+  expect(app().activeId).toBe('Mine');
+});
+
+it('once done, the close button ends it without asking and keeps the automaton', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  act(() => startTutorial());
+  const id = tutorialStore.getState().automatonId;
+  act(() => tutorialStore.setState({ progress: 12, current: 12 }));
   await user.click(within(card()).getByRole('button', { name: 'End tutorial' }));
   expect(screen.queryByTestId('tutorial-card')).toBeNull();
   expect(app().automata.some((a) => a.id === id)).toBe(true);
@@ -136,5 +199,5 @@ it('announces each step from one live region that stays mounted', () => {
   addAt(100);
   expect(card().querySelector('[aria-live="polite"]')).toBe(live);
   expect(live).toHaveTextContent(/start state/);
-  expect(live).toHaveTextContent('✓ Added q0');
+  expect(live).toHaveTextContent('✓Added q0');
 });
