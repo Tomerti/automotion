@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { setKind } from '../../core/edit';
-import { startStates } from '../../core/model';
-import type { Automaton, AutomatonKind } from '../../core/model';
+import type { Automaton } from '../../core/model';
 import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, useAppStore } from '../../store/store';
@@ -20,8 +18,6 @@ import {
 } from './icons';
 import { toast } from './toastStore';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
-
-const KINDS: AutomatonKind[] = ['DFA', 'NFA'];
 
 interface IconButtonProps {
   label: string;
@@ -122,7 +118,7 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
   );
 }
 
-/** Kind switch and the automaton tools on the right of the top bar. */
+/** The automaton tools on the right of the top bar (the DFA/NFA switch floats on the canvas). */
 export function Toolbar(): React.JSX.Element {
   const automaton = useAppStore((s) => s.automata.find((a) => a.id === s.activeId));
   const undoCount = useAppStore((s) =>
@@ -135,40 +131,10 @@ export function Toolbar(): React.JSX.Element {
   const none = automaton === undefined;
 
   const convertReason = automaton ? canConvert(automaton) : null;
-  /** An NFA with several start states only becomes a DFA through Convert to DFA. */
-  const manyStarts = automaton?.kind === 'NFA' && startStates(automaton).length > 1;
   const minimizeReason = automaton ? canMinimize(automaton) : null;
-
-  const changeKind = (kind: AutomatonKind): void => {
-    if (!automaton || automaton.kind === kind) return;
-    const result = setKind(automaton, kind);
-    if (result.ok) {
-      appStore.getState().edit(() => result.automaton);
-    } else {
-      toast(result.issues[0]?.message ?? 'Cannot change the kind', 'error');
-    }
-  };
 
   return (
     <div className="av-toolbar" role="toolbar" aria-label="Automaton tools">
-      <div className="av-kind" role="group" aria-label="Kind">
-        {KINDS.map((k) => (
-          <button
-            key={k}
-            type="button"
-            aria-pressed={automaton?.kind === k}
-            disabled={none || tracing || (k === 'DFA' && manyStarts)}
-            title={
-              k === 'DFA' && manyStarts
-                ? "An NFA with several start states can't be a DFA: use Convert to DFA"
-                : undefined
-            }
-            onClick={() => changeKind(k)}
-          >
-            {k}
-          </button>
-        ))}
-      </div>
       <div className="av-tool-group">
         <IconButton
           label="Undo"

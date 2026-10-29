@@ -125,14 +125,15 @@ describe('store', () => {
 
   it('createAutomaton picks a free name, returns id, becomes active, goes first', () => {
     const s = createAppStore();
-    const id1 = s.getState().createAutomaton('DFA');
+    const id1 = s.getState().createAutomaton();
     const id2 = s.getState().createAutomaton('DFA');
     s.getState().createAutomaton('NFA');
     expect(s.getState().automata.map((a) => a.name)).toEqual([
-      'Untitled NFA',
-      'Untitled DFA 2',
-      'Untitled DFA',
+      'Untitled 3',
+      'Untitled 2',
+      'Untitled',
     ]);
+    expect(s.getState().automata.map((a) => a.kind)).toEqual(['NFA', 'DFA', 'DFA']);
     expect(id1).not.toBe(id2);
     expect(s.getState().automata[1]?.id).toBe(id2);
     expect(s.getState().activeId).toBe(s.getState().automata[0]?.id);

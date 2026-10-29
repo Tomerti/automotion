@@ -31,9 +31,7 @@ export function Canvas(): React.JSX.Element {
           <circle cx="104" cy="32" r="12" strokeDasharray="3 5" />
         </svg>
         <p className="av-empty-title">Create an automaton to get started</p>
-        <p className="av-empty-hint">
-          Use the automaton menu in the top bar: New DFA, New NFA or Import.
-        </p>
+        <p className="av-empty-hint">Use Create or Import in the history bar.</p>
       </div>
     );
   }

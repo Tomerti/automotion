@@ -9,15 +9,6 @@ import { Toolbar } from './Toolbar';
 import { toastStore } from './toastStore';
 
 const nfa = () => fixture({ kind: 'NFA', alphabet: 'a', states: ['q0'], start: 'q0', name: 'n' });
-const nfaEps = () =>
-  fixture({
-    kind: 'NFA',
-    alphabet: 'a',
-    states: ['q0', 'q1'],
-    start: 'q0',
-    edges: [['q0', 'ε', 'q1']],
-    name: 'e',
-  });
 
 beforeEach(() => {
   resetAppStore();
@@ -33,17 +24,7 @@ const btn = (name: string) => screen.getByRole('button', { name });
 describe('Toolbar', () => {
   it('disables everything without an active automaton', () => {
     render(<Toolbar />);
-    for (const n of [
-      'DFA',
-      'NFA',
-      'Undo',
-      'Redo',
-      'Fit',
-      'Tidy',
-      'Convert to DFA',
-      'Minimize',
-      'Export image',
-    ]) {
+    for (const n of ['Undo', 'Redo', 'Fit', 'Tidy', 'Convert to DFA', 'Minimize', 'Export image']) {
       expect(btn(n)).toBeDisabled();
     }
   });
@@ -84,31 +65,6 @@ describe('Toolbar', () => {
     expect(appStore.getState().trace).toBeNull();
   });
 
-  it('kind toggle reflects and changes the kind', async () => {
-    const user = userEvent.setup();
-    resetAppStore({ automata: [nfa()], activeId: 'n' });
-    render(<Toolbar />);
-    expect(btn('NFA')).toHaveAttribute('aria-pressed', 'true');
-    expect(btn('DFA')).toHaveAttribute('aria-pressed', 'false');
-    await user.click(btn('DFA'));
-    expect(appStore.getState().automata[0]?.kind).toBe('DFA');
-    expect(btn('DFA')).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.queryByRole('alert')).toBeNull();
-  });
-
-  it('switching an NFA with ε to DFA shows an error toast', async () => {
-    const user = userEvent.setup();
-    resetAppStore({ automata: [nfaEps()], activeId: 'e' });
-    render(<Toolbar />);
-    await user.click(btn('DFA'));
-    const toasts = toastStore.getState().toasts;
-    expect(toasts).toHaveLength(1);
-    expect(toasts[0]?.kind).toBe('error');
-    expect(toasts[0]?.message).not.toBe('');
-    expect(appStore.getState().automata[0]?.kind).toBe('NFA');
-    expect(screen.queryByRole('alert')).toBeNull();
-  });
-
   it('the export menu downloads SVG and closes; Escape closes it too', async () => {
     const user = userEvent.setup();
     URL.createObjectURL = vi.fn(() => 'blob:x');
@@ -144,7 +100,7 @@ describe('Toolbar', () => {
     await waitFor(() => expect(names).toEqual(['my-auto.svg']));
   });
 
-  it('kind toggle, Undo/Redo and export are disabled while a trace is open', () => {
+  it('Undo/Redo and export are disabled while a trace is open', () => {
     const d = fixture({
       kind: 'DFA',
       alphabet: 'a',
@@ -164,7 +120,7 @@ describe('Toolbar', () => {
     const active = appStore.getState().automata[0]!;
     appStore.getState().openTrace(runWord(active, 'a'));
     render(<Toolbar />);
-    for (const n of ['DFA', 'NFA', 'Undo', 'Redo', 'Export image']) expect(btn(n)).toBeDisabled();
+    for (const n of ['Undo', 'Redo', 'Export image']) expect(btn(n)).toBeDisabled();
   });
 
   it('Undo/Redo call the store and follow history', async () => {
@@ -180,28 +136,5 @@ describe('Toolbar', () => {
     expect(btn('Redo')).toBeEnabled();
     await user.click(btn('Redo'));
     expect(appStore.getState().automata[0]?.states[0]?.x).toBe(5);
-  });
-});
-
-describe('Toolbar with several start states', () => {
-  it('disables DFA for an NFA with several start states, and says why', () => {
-    const two = fixture({
-      kind: 'NFA',
-      alphabet: 'a',
-      states: ['q0', 'q1'],
-      starts: ['q0', 'q1'],
-      name: 'two',
-    });
-    resetAppStore({ automata: [two], activeId: two.id });
-    const { unmount } = render(<Toolbar />);
-    expect(btn('DFA')).toBeDisabled();
-    expect(btn('DFA')).toHaveAttribute(
-      'title',
-      "An NFA with several start states can't be a DFA: use Convert to DFA",
-    );
-    unmount();
-    resetAppStore({ automata: [nfa()], activeId: 'n' });
-    render(<Toolbar />);
-    expect(btn('DFA')).toBeEnabled();
   });
 });

@@ -305,37 +305,6 @@ input.av-switcher-input {
   display: flex;
 }
 
-/* Segmented DFA / NFA switch: the chosen kind is a raised tab, not an inverted block. */
-.av-kind {
-  display: flex;
-  padding: 2px;
-  background: var(--av-hover);
-  border-radius: 8px;
-}
-.av-kind button,
-.av-kind button[aria-pressed='true'] {
-  min-width: 44px;
-  min-height: 26px;
-  padding: 0 9px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--av-ink-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-}
-.av-kind button:hover:not(:disabled) {
-  color: var(--av-ink);
-  background: transparent;
-}
-.av-kind button[aria-pressed='true'],
-.av-kind button[aria-pressed='true']:hover:not(:disabled) {
-  color: var(--av-ink);
-  background: var(--av-surface-raised);
-  box-shadow: 0 1px 2px var(--av-shadow);
-}
-
 /* Canvas area and the floating dock */
 
 /* Under the top bar: the history bar (when open) and the canvas beside it. */
@@ -583,6 +552,47 @@ input.av-switcher-input {
   min-width: 64px;
   min-height: 34px;
   border-radius: 999px;
+}
+
+/*
+ * The DFA / NFA switch floating at the top of the canvas, as far from the top edge as the run
+ * pill is from the bottom. The chosen kind is a filled tab, not an inverted block.
+ */
+.av-kindpill {
+  position: absolute;
+  top: var(--av-dock-bottom);
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--av-surface-raised);
+  border: 1px solid var(--av-rule-strong);
+  border-radius: 999px;
+  box-shadow: var(--av-shadow-float);
+  transform: translateX(-50%);
+}
+.av-kindpill button,
+.av-kindpill button[aria-pressed='true'] {
+  min-width: 52px;
+  min-height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--av-ink-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+}
+.av-kindpill button:hover:not(:disabled) {
+  color: var(--av-ink);
+  background: transparent;
+}
+.av-kindpill button[aria-pressed='true'],
+.av-kindpill button[aria-pressed='true']:hover:not(:disabled) {
+  color: var(--av-ink);
+  background: var(--av-hover);
 }
 
 /* Empty state (no automaton) */

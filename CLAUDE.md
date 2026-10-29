@@ -74,8 +74,10 @@ Layers, with dependencies pointing downward only:
   - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip,
     theme toggle, Controls popup), the left history bar (`HistoryBar.tsx`: every automaton with a
     `canvas/Thumbnail.tsx` picture, newest edit first, a ⋯ menu per entry for rename / export /
-    delete, Delete/Backspace on a focused entry deletes it (after a confirm), New DFA/NFA on top and Import / Export all below; open/closed remembered in
-    `historyPrefs.ts`), the bottom dock (run pill / trace player), toasts, error boundary,
+    delete, Delete/Backspace on a focused entry deletes it (after a confirm), Create (a blank DFA
+    named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in
+    `historyPrefs.ts`), the DFA/NFA switch floating at the top of the canvas (`KindPill.tsx`, hidden
+    while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,
     import/export plumbing. Thumbnails are their own
     small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
