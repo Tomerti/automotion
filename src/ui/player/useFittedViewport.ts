@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { State } from '../../core/model';
 import type { Viewport } from '../../store/types';
 import { fitToView } from '../canvas/viewport';
@@ -17,22 +17,31 @@ export function useElementSize(): {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(FALLBACK_SIZE);
 
+  const measure = useCallback((): void => {
+    const el = ref.current;
+    if (!el) return;
+    const cs = getComputedStyle(el);
+    const width =
+      el.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const height =
+      el.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
+    if (width <= 0 || height <= 0) return;
+    setSize((s) => (s.width === width && s.height === height ? s : { width, height }));
+  }, []);
+
+  // Measured after every commit, before the browser paints: a ResizeObserver's update renders a
+  // frame late, so the diagram would first show fitted to the fallback size (shifted to the
+  // left on a wide canvas), or to the padding of the dock that was there before.
+  useLayoutEffect(measure);
+
+  // Later resizes (the window, the history bar).
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const measure = (): void => {
-      const cs = getComputedStyle(el);
-      const width =
-        el.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-      const height =
-        el.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
-      if (width > 0 && height > 0) setSize({ width, height });
-    };
-    measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [measure]);
 
   return { ref, size };
 }

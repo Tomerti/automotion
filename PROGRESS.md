@@ -25,6 +25,8 @@ Nothing in progress: pick the next task from the list below.
 - [x] A new transition's arrow stays on screen while its symbols are typed
 - [x] A new transition's symbol input opens where its label will be drawn, not on the arrow
 - [x] A rejected word's cue is one falling note (the two-note version sounded like it played twice)
+- [x] Opening a run or walkthrough no longer flashes the diagram fitted to a placeholder size
+      (shifted left) or to the old dock height: both are measured before the first paint
 
 ### History bar
 
