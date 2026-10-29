@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { AnyTrace } from '../../core/trace';
 import { useAppStore } from '../../store/store';
 import { Canvas } from '../canvas/Canvas';
@@ -37,15 +37,19 @@ function traceKey(trace: AnyTrace): number {
 function useDockHeight(): [React.RefObject<HTMLDivElement | null>, number] {
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
+  const measure = useCallback((): void => {
+    if (ref.current) setHeight(ref.current.offsetHeight);
+  }, []);
+  // After every commit, before the paint, so a trace view opening with the player under it is
+  // padded for the player from its first frame (the observer's update would land a frame late).
+  useLayoutEffect(measure);
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const measure = (): void => setHeight(el.offsetHeight);
-    measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [measure]);
   return [ref, height];
 }
 
