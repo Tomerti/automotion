@@ -4,14 +4,24 @@ import { IssuesChip } from './IssuesChip';
 import { ThemeToggle } from './ThemeToggle';
 import { Toolbar } from './Toolbar';
 
-/** A start arrow into an accepting state: the smallest complete automaton. */
+/** The logo (docs/brand/): a start arrow into an accepting state with a self-loop, without its tile. */
 function BrandMark(): React.JSX.Element {
   return (
-    <svg className="av-brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M2 16h7" />
-      <path className="av-brand-head" d="M7 12.5l3.5 3.5-3.5 3.5z" />
-      <circle className="av-brand-state" cx="20" cy="16" r="9" />
-      <circle cx="20" cy="16" r="5.75" />
+    <svg className="av-brand-mark" viewBox="2 2 56 56" aria-hidden="true">
+      <path
+        className="av-brand-loop"
+        d="M34.17 22.08L42.98 11.75A8 8 0 1 1 54.86 22.45L49.64 27.94"
+        strokeWidth="4.5"
+      />
+      <path
+        className="av-brand-loop-head"
+        d="M45.5 32.29L46.45 24.91L52.83 30.97z"
+        strokeWidth="2"
+      />
+      <circle cx="31" cy="37" r="13" strokeWidth="4.5" />
+      <circle cx="31" cy="37" r="5.75" strokeWidth="4" />
+      <path d="M4 37H9" strokeWidth="4.5" />
+      <path className="av-brand-head" d="M15.5 37L9 42L9 32z" strokeWidth="2" />
     </svg>
   );
 }

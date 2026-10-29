@@ -150,16 +150,18 @@ a.av-icon-button {
   height: 22px;
   fill: none;
   stroke: var(--av-ink);
-  stroke-width: 1.75;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .av-brand-mark .av-brand-head {
   fill: var(--av-ink);
-  stroke: none;
 }
-.av-brand-mark .av-brand-state {
+.av-brand-mark .av-brand-loop {
+  stroke: var(--av-highlighter);
+}
+.av-brand-mark .av-brand-loop-head {
   fill: var(--av-highlighter);
-  stroke: var(--av-ink);
+  stroke: var(--av-highlighter);
 }
 .av-topbar-slash {
   padding: 0 2px;
