@@ -1,31 +1,68 @@
-# Automaton Vis
+<p align="center">
+  <a href="https://tomerti.github.io/automaton-vis/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.png">
+      <img src="docs/brand/lockup.png" alt="Automaton Vis" width="360">
+    </picture>
+  </a>
+</p>
 
-Visualize finite automata (DFA, NFA): build them, draw them, and step through their run on a word.
+<p align="center">
+  Build finite automata (DFAs and NFAs), draw them, and watch them run, step by step.<br>
+  <a href="https://tomerti.github.io/automaton-vis/"><b>Open the app →</b></a>
+</p>
 
-**Live site (once GitHub Pages is enabled):** https://tomerti.github.io/automaton-vis/
-
-![Automaton Vis running the "Ends in ab" NFA on the word aab](docs/screenshot.png)
+![The "Ends in ab" NFA after running the word aab: the run ends in {q₀, q₁, q₃} and is accepted](docs/screenshots/run.png)
 
 ## Features
 
-- **Build automata**: create, edit and delete DFAs and NFAs: states, start state, accepting states, alphabet and transitions (including ε-transitions for NFAs), from the canvas or the transition table, with undo/redo.
-- **Draw**: render each automaton as a state diagram and edit it directly on the canvas: double-click to add a state, drag from a state's ring to draw a transition, drag to reposition, auto-layout (Tidy) and fit to view.
-- **Run a word**: enter an input word and step through the run, highlighting the active state(s) at each symbol, then show whether the word is accepted. Play, step back and forth, or scrub.
-- **Algorithms**: step-by-step walkthroughs of NFA → DFA conversion (subset construction) and DFA minimization (partition refinement), with the result savable as a new automaton.
-- **Manage**: keep several automata (autosaved in the browser), import and export them as JSON, and export a diagram as SVG or PNG.
+### Build
+
+- Double-click the canvas to add a state; Shift + drag from one state to another to add a transition (drop it on the same state for a self-loop).
+- Double-click a state to rename it, or an arrow to edit its symbols. Labels like `q_1` and `q_{12}` show as subscripts, and `\epsilon` types ε.
+- Select a state and press **S** to toggle start, **A** to toggle accepting. An NFA can have several start states.
+- Switch an automaton between DFA and NFA. Adding an ε-transition to a DFA makes it an NFA. DFAs may be partial: a missing transition rejects.
+- The issues chip in the top bar explains what is wrong (no start state, two transitions on one symbol in a DFA, unreachable states, …), and actions that need a valid automaton say why they are disabled.
+- Undo and redo (Ctrl+Z, Ctrl+Y) for each automaton.
+
+### Arrange
+
+- Drag states to move them; they snap into line with their neighbours (hold Alt to place freely).
+- Drag an arrow to bend it, or a self-loop to turn it around its state.
+- **Tidy** lays the whole automaton out automatically, and **Fit** brings it into view. Pan by dragging the canvas, zoom by scrolling.
+
+### Run a word
+
+- Type a word into **Test a word** and press Enter. The run plays at once on a tape with a read head, lighting up the active states and the transition just taken.
+- Play, pause, step back and forth, scrub to any step and change the speed. NFA runs show each ε-closure as its own step and mark dead branches.
+- The run ends in an **Accepted** or **Rejected** banner that says why. `ε` or an empty box tests the empty word.
+
+### Convert and minimize
+
+![Subset construction partway through: the NFA on top, the DFA being built below](docs/screenshots/convert.png)
+
+- **Convert to DFA** walks through the subset construction, with the NFA and the DFA being built side by side, one move and ε-closure per step. An NFA with several start states first gets a single new start state with ε-transitions to the old ones.
+- **Minimize** walks through partition refinement (Moore's algorithm) for a DFA, and says so when it is already minimal.
+- Save either result as a new automaton.
+
+### Keep your work
+
+![Editing a DFA in the dark theme, with the history sidebar open](docs/screenshots/edit-dark.png)
+
+- Everything autosaves in your browser. The history sidebar lists every automaton with a thumbnail, most recently edited first; rename, export or delete one from its ⋯ menu.
+- Import and export automata as JSON files, one or all at once, and export a diagram as SVG or PNG.
+- Light and dark themes. Press **?** for the controls guide at any time.
 
 ## Development
 
 ```
 npm install
-npm run dev      # start the dev server
-npm test         # unit tests (Vitest)
-npm run e2e      # end-to-end smoke tests (Playwright, Chromium; builds and serves the app)
+npm run dev      # dev server at http://localhost:5173/automaton-vis/
+npm test         # unit and component tests (Vitest)
+npm run e2e      # end-to-end tests (Playwright, Chromium; builds and serves the app)
 npm run build    # type-check and production build into dist/
 ```
 
 The first `npm run e2e` needs a browser: `npx playwright install chromium`.
 
-## Status
-
-v1 is implemented. CI (typecheck, lint, unit and end-to-end tests) runs on every push and pull request. Once GitHub Pages is enabled for the repository (Settings → Pages → Source: GitHub Actions), the CI workflow deploys `master` to the address above after those checks pass. See [PROGRESS.md](PROGRESS.md) for current and upcoming tasks.
+Built with TypeScript, React, Vite, Zustand and elkjs, with a custom SVG renderer. CI runs typecheck, lint, unit and end-to-end tests on every push and pull request, and deploys `master` to GitHub Pages once they pass. See [PROGRESS.md](PROGRESS.md) for what is planned next, and [docs/brand](docs/brand) for the logo files.
