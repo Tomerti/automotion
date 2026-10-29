@@ -1,5 +1,5 @@
 import { AutomatonName } from './AutomatonName';
-import { HelpIcon, HistoryIcon } from './icons';
+import { GitHubIcon, HelpIcon, HistoryIcon } from './icons';
 import { IssuesChip } from './IssuesChip';
 import { ThemeToggle } from './ThemeToggle';
 import { Toolbar } from './Toolbar';
@@ -16,7 +16,7 @@ function BrandMark(): React.JSX.Element {
   );
 }
 
-/** The one strip of chrome: history toggle, brand, the current automaton, its tools, theme and help. */
+/** The one strip of chrome: history toggle, brand, the current automaton, its tools, theme, help and GitHub. */
 export function TopBar(props: {
   onHelp: () => void;
   historyOpen: boolean;
@@ -59,6 +59,16 @@ export function TopBar(props: {
           >
             <HelpIcon />
           </button>
+          <a
+            className="av-icon-button"
+            href="https://github.com/Tomerti"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub"
+            title="GitHub"
+          >
+            <GitHubIcon />
+          </a>
         </div>
       </div>
     </header>

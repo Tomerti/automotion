@@ -35,6 +35,13 @@
   border-color: transparent;
   border-radius: 8px;
 }
+/* A link dressed as an icon button: it gets none of the base `button` styles. */
+a.av-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+}
 .av-icon-button:hover:not(:disabled),
 .av-icon-button[aria-expanded='true'] {
   color: var(--av-ink);
