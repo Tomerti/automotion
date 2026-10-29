@@ -83,6 +83,12 @@ Layers, with dependencies pointing downward only:
     import/export plumbing. Thumbnails are their own
     small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
+  - `tutorial/`: the interactive tutorial. `steps.ts` is a pure step table (each step's `done`,
+    `hint`, pointer `target`) over the tutorial automaton and the open trace, with `advance()`
+    (moves on, falls back within a part, latches runs at their verdict). `tutorialStore.ts`
+    subscribes to `appStore` while a tutorial runs. `TutorialCard` floats in the canvas corner,
+    `TutorialPointer` rings the target (portal, follows it each frame), and `WelcomeCard` is the
+    first-visit dialog (key `automotion:seen-help`); the Controls popup no longer opens by itself.
   - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
     the canvas uses `<tspan>`s).
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain

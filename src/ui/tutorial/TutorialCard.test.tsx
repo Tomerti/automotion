@@ -5,7 +5,8 @@ import { addState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import App from '../shell/App';
-import { endTutorial, startTutorial, tutorialStore } from './tutorialStore';
+import { STEPS } from './steps';
+import { endTutorial, startTutorial, tutorialContext, tutorialStore } from './tutorialStore';
 
 const card = () => screen.getByTestId('tutorial-card');
 const app = () => appStore.getState();
@@ -113,4 +114,16 @@ it('keeps keys for the canvas: S still makes the selected state the start state'
   act(() => screen.getByTestId('canvas').focus());
   await user.keyboard('s');
   expect(card()).toHaveAttribute('data-step', '3');
+});
+
+it('points at the state itself, not its start arrow', () => {
+  render(<App />);
+  act(() => startTutorial());
+  addAt(100);
+  const state = app().automata.find((a) => a.id === app().activeId)!.states[0]!;
+  act(() => app().edit((a) => ({ ...a, starts: [state.id] })));
+  expect(screen.getByTestId('start-arrow')).toBeInTheDocument();
+  const ctx = tutorialContext(app(), tutorialStore.getState().automatonId);
+  const target = document.querySelector(STEPS[2]!.target(ctx)!);
+  expect(screen.getByTestId('state-q_0')).toContainElement(target as HTMLElement);
 });

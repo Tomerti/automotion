@@ -87,7 +87,8 @@
 
 .av-tutorial-pointer {
   position: fixed;
-  z-index: 30;
+  /* Over the canvas and the card, under the phone's history overlay (15) and dialogs. */
+  z-index: 13;
   pointer-events: none;
   border: 2px solid var(--av-accent);
   border-radius: 999px;

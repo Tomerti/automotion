@@ -1,17 +1,22 @@
 import { expect, test } from '@playwright/test';
 import { openApp } from './helpers.ts';
 
-test('the controls popup opens on the first visit only', async ({ page }) => {
+test('the welcome dialog opens on the first visit only; Controls opens on demand', async ({
+  page,
+}) => {
   await page.goto('./');
-  const dialog = page.getByRole('dialog', { name: 'Controls' });
-  await expect(dialog).toBeVisible();
+  const welcome = page.getByRole('dialog', { name: 'Welcome' });
+  const controls = page.getByRole('dialog', { name: 'Controls' });
+  await expect(welcome).toBeVisible();
+  await expect(controls).toBeHidden();
   await page.keyboard.press('Escape');
-  await expect(dialog).toBeHidden();
+  await expect(welcome).toBeHidden();
   await page.reload();
   await expect(page.getByTestId('canvas')).toBeVisible();
-  await expect(dialog).toBeHidden();
+  await expect(welcome).toBeHidden();
+  await expect(controls).toBeHidden();
   await page.getByRole('button', { name: 'Controls' }).click();
-  await expect(dialog).toBeVisible();
+  await expect(controls).toBeVisible();
 });
 
 test('the theme starts light even on a dark system, and toggles light ↔ dark', async ({ page }) => {

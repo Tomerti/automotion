@@ -19,6 +19,14 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Tutorial
+
+- [x] Interactive tutorial: build the "even number of 0s" DFA, run `1010` and `10`, then delete q1 and loop q0 on `0,1` to accept every word
+- [x] Coach card in the canvas corner: step counter, gesture chip, hints for common mistakes, ✓ for the last step; checks the automaton live and falls back when a step comes undone
+- [x] Pointer ring on the state, loop label or word box a step uses
+- [x] A first visit opens a welcome dialog offering the tutorial (instead of the Controls popup); Controls has Take / Restart tutorial
+- [x] The tutorial works on its own "Tutorial" automaton (reusing an empty one), which stays in history
+
 ### Fixes
 
 - [x] Replaying a run (Play at the end, First, scrubbing to step 1) plays the Run chime again

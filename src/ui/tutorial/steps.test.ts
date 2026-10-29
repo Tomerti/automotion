@@ -310,7 +310,9 @@ describe('instructions and targets', () => {
 
   it('point at the state, the loop label or the word box', () => {
     const a = tut({ states: ['q_0'], accepting: [] });
-    expect(step('start').target(ctx(a))).toBe('[data-testid="canvas"] [data-state-id="q_0"]');
+    expect(step('start').target(ctx(a))).toBe(
+      '[data-testid="canvas"] [data-state-id="q_0"] .av-state-body',
+    );
     const b = tut({
       states: ['q_0'],
       start: 'q_0',
@@ -326,6 +328,8 @@ describe('instructions and targets', () => {
 
   it('the loops step points at the state still missing its loop', () => {
     const a = tut({ states: ['q_0', 'q_1'], start: 'q_0', edges: [['q_0', '1', 'q_0']] });
-    expect(step('loops').target(ctx(a))).toBe('[data-testid="canvas"] [data-state-id="q_1"]');
+    expect(step('loops').target(ctx(a))).toBe(
+      '[data-testid="canvas"] [data-state-id="q_1"] .av-state-body',
+    );
   });
 });

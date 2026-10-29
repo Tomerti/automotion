@@ -79,8 +79,9 @@ function onAutomaton<T>(
   return ctx.automaton ? fn(ctx.automaton, roles(ctx.automaton)) : fallback;
 }
 
+/** The state's circle: its start arrow carries the same `data-state-id` and comes first. */
 const stateTarget = (s: State | undefined): string | null =>
-  s ? `[data-testid="canvas"] [data-state-id="${s.id}"]` : null;
+  s ? `[data-testid="canvas"] [data-state-id="${s.id}"] .av-state-body` : null;
 const WORD_BOX = 'input[aria-label="Word"]';
 
 /** An edge the step draws, and the symbols it should read. */
