@@ -69,36 +69,39 @@ export function TutorialCard(): React.JSX.Element | null {
           <CloseIcon />
         </button>
       </header>
-      {/* Keyed by step so each new one fades in. */}
-      <div key={step.id} className="av-tutorial-body">
-        <p className="av-tutorial-text" aria-live="polite">
-          <RichText text={step.instruction(ctx)} />
-        </p>
-        {gesture && <GestureChip gesture={gesture} />}
-      </div>
-      {hint?.kind === 'elsewhere' ? (
-        <p className="av-tutorial-hint">
-          You’re on {openName ?? 'another automaton'}.{' '}
-          <button
-            type="button"
-            className="av-tutorial-link"
-            onClick={() => automatonId && appStore.getState().setActive(automatonId)}
-          >
-            Back to Tutorial
-          </button>
-        </p>
-      ) : hint ? (
-        <p className="av-tutorial-hint">
-          <RichText text={hint.text} />
-        </p>
-      ) : (
-        confirmation &&
-        !last && (
-          <p className="av-tutorial-done" data-testid="tutorial-confirmation">
-            ✓ <RichText text={confirmation} />
+      {/* One live region that stays mounted, so screen readers announce each new step, hint
+          and ✓; only the instruction inside is keyed by step, so each new one fades in. */}
+      <div className="av-tutorial-live" aria-live="polite">
+        <div key={step.id} className="av-tutorial-body">
+          <p className="av-tutorial-text">
+            <RichText text={step.instruction(ctx)} />
           </p>
-        )
-      )}
+          {gesture && <GestureChip gesture={gesture} />}
+        </div>
+        {hint?.kind === 'elsewhere' ? (
+          <p className="av-tutorial-hint">
+            You’re on {openName ?? 'another automaton'}.{' '}
+            <button
+              type="button"
+              className="av-tutorial-link"
+              onClick={() => automatonId && appStore.getState().setActive(automatonId)}
+            >
+              Back to Tutorial
+            </button>
+          </p>
+        ) : hint ? (
+          <p className="av-tutorial-hint">
+            <RichText text={hint.text} />
+          </p>
+        ) : (
+          confirmation &&
+          !last && (
+            <p className="av-tutorial-done" data-testid="tutorial-confirmation">
+              ✓ <RichText text={confirmation} />
+            </p>
+          )
+        )}
+      </div>
       {last && (
         <div className="av-tutorial-actions">
           <button type="button" className="av-primary" onClick={endTutorial}>

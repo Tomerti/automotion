@@ -26,7 +26,8 @@ by itself. It never does a step for the user.
 
 ## The tutorial automaton
 
-- If the active automaton has no states, the tutorial uses it: it is renamed **Tutorial** (or
+- If the active automaton is untouched (no states, a default `Untitled` / `Untitled N` name, nothing
+  to undo or redo), the tutorial uses it: it is renamed **Tutorial** (or
   "Tutorial 2", … if taken; same numbering as `freeName`) and made a DFA. This keeps the first
   visit from leaving an empty "Untitled" behind. Otherwise a new DFA named that way is created
   (`createAutomaton`, then a rename), which also opens it.
@@ -96,8 +97,9 @@ first applicable one wins:
 - Automaton is an NFA: "It became an NFA: switch back to DFA at the top" (ε makes it one).
 - Steps 5–7 and 11: an edge the step asks for exists but has other symbols: "q0 → q1 should read
   only 0" (wording per edge).
-- Part 1, an arrow other than q0 → q1, q1 → q0 and the two loops (only possible once q1 exists):
-  "Delete the arrow {from} → {to} (click it, then Delete)."
+- Part 1, any of the four arrows (q0 → q1, q1 → q0, the two loops) reading other symbols, even
+  before its step comes up: "q1 → q1 should read only 1." (With two states those four are the only
+  possible arrows; a third state gets the extra-state hint first.)
 - Run steps, a run of a different word on the tutorial automaton is open: "That was `11`. Press
   Esc and run `1010`."
 - Step 10, no states left: "Undo (Ctrl+Z) to bring q0 back."

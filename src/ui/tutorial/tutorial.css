@@ -34,6 +34,10 @@
   color: var(--av-ink-muted);
 }
 
+.av-tutorial-live {
+  display: grid;
+  gap: 10px;
+}
 .av-tutorial-body {
   display: grid;
   gap: 10px;

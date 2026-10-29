@@ -127,3 +127,14 @@ it('points at the state itself, not its start arrow', () => {
   const target = document.querySelector(STEPS[2]!.target(ctx)!);
   expect(screen.getByTestId('state-q_0')).toContainElement(target as HTMLElement);
 });
+
+it('announces each step from one live region that stays mounted', () => {
+  render(<App />);
+  act(() => startTutorial());
+  const live = card().querySelector('[aria-live="polite"]');
+  expect(live).toHaveTextContent('Add a state');
+  addAt(100);
+  expect(card().querySelector('[aria-live="polite"]')).toBe(live);
+  expect(live).toHaveTextContent(/start state/);
+  expect(live).toHaveTextContent('✓ Added q0');
+});

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { addState } from '../../core/edit';
+import { addState, removeState, renameAutomaton, setStart, toggleAccepting } from '../../core/edit';
 import { emptyAutomaton } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
@@ -49,6 +49,29 @@ describe('startTutorial', () => {
     expect(tut().automatonId).toBe(app().activeId);
   });
 
+  it('does not reuse an empty automaton that has undo history', () => {
+    resetAppStore({ automata: [emptyAutomaton('Untitled', 'DFA')] });
+    app().edit((a) => addState(a, { x: 0, y: 0 }));
+    app().edit((a) => removeState(a, a.states[0]!.id));
+    startTutorial();
+    expect(app().automata).toHaveLength(2);
+    app().edit((a) => addState(a, { x: 0, y: 0 }));
+    app().undo();
+    app().undo();
+    expect(active()?.name).toBe('Tutorial');
+  });
+
+  it('does not reuse an empty automaton the user named', () => {
+    const blank = renameAutomaton(emptyAutomaton('Untitled', 'NFA'), 'HW3 NFA');
+    resetAppStore({ automata: [blank] });
+    startTutorial();
+    expect(app().automata.find((a) => a.id === blank.id)).toMatchObject({
+      name: 'HW3 NFA',
+      kind: 'NFA',
+    });
+    expect(active()?.name).toBe('Tutorial');
+  });
+
   it('closes an open run', () => {
     resetAppStore({ automata: [loop()] });
     startRun('a');
@@ -70,6 +93,18 @@ describe('startTutorial', () => {
 });
 
 describe('following the app', () => {
+  it('drops the ✓ when the step it confirms comes undone', () => {
+    startTutorial();
+    app().edit((a) => addState(a, { x: 0, y: 0 }));
+    const id = active()!.states[0]!.id;
+    app().edit((a) => setStart(a, id));
+    app().edit((a) => toggleAccepting(a, id));
+    expect(tut()).toMatchObject({ current: 3, confirmation: 'q_0 is accepting' });
+    app().undo();
+    expect(tut().current).toBe(2);
+    expect(tut().confirmation).toBeNull();
+  });
+
   it('moves on when a step is done and keeps its confirmation', () => {
     startTutorial();
     app().edit((a) => addState(a, { x: 0, y: 0 }));

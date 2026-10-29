@@ -2,6 +2,7 @@ import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
 import { renameAutomaton } from '../../core/edit';
+import type { Automaton } from '../../core/model';
 import { appStore, freeName } from '../../store/store';
 import type { AppState } from '../../store/store';
 import { advance, STEPS } from './steps';
@@ -58,7 +59,9 @@ function follow(app: AppState): void {
   }
   const next = advance(t.progress, t.latched, ctx);
   const done = next.completed === null ? null : STEPS.find((s) => s.id === next.completed);
-  const confirmation = done ? done.confirmation(ctx) : t.confirmation;
+  // Behind the furthest step (something came undone), no ✓ for what is no longer true.
+  const confirmation =
+    next.current < next.progress ? null : done ? done.confirmation(ctx) : t.confirmation;
   if (
     next.progress !== t.progress ||
     next.current !== t.current ||
@@ -75,15 +78,29 @@ function follow(app: AppState): void {
 }
 
 /**
- * Start (or restart) the tutorial on a DFA named "Tutorial": the active automaton if it has no
- * states yet (so a first visit leaves no empty "Untitled" behind), else a new one.
+ * A blank automaton as Create made it: no states, a default name and nothing to undo or redo
+ * (undo would otherwise bring the user's old content back into the tutorial).
+ */
+function untouched(app: AppState, a: Automaton): boolean {
+  const h = app.history[a.id];
+  return (
+    a.states.length === 0 &&
+    /^Untitled( \d+)?$/.test(a.name) &&
+    !h?.past.length &&
+    !h?.future.length
+  );
+}
+
+/**
+ * Start (or restart) the tutorial on a DFA named "Tutorial": the active automaton if it is
+ * untouched (so a first visit leaves no empty "Untitled" behind), else a new one.
  */
 export function startTutorial(): void {
   endTutorial();
   const app = appStore.getState();
   app.closeTrace();
   const current = app.automata.find((a) => a.id === app.activeId);
-  const reuse = current !== undefined && current.states.length === 0;
+  const reuse = current !== undefined && untouched(app, current);
   const id = reuse ? current.id : app.createAutomaton('DFA');
   const others = appStore.getState().automata.filter((a) => a.id !== id);
   const name = freeName(others, 'Tutorial');
