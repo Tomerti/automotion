@@ -30,8 +30,26 @@ test('build a DFA, rename a state, and run a word', async ({ page }) => {
   await page.keyboard.press('a');
   await expect(page.getByTestId('state-end')).toHaveAttribute('data-accepting', 'true');
 
+  // end has no 'a' transition yet: an incomplete DFA can't be run.
   await page.getByLabel('Word').fill('a');
-  await page.getByRole('button', { name: 'Run' }).click();
+  const run = page.getByRole('button', { name: 'Run' });
+  await expect(run).toBeDisabled();
+  await expect(run).toHaveAttribute('title', /^Complete the DFA first/);
+
+  // Shift-drag out of end and back onto it: a self-loop on 'a' completes the DFA.
+  const e = await stateCenter(page, 'end');
+  await page.keyboard.down('Shift');
+  await page.mouse.move(e.x, e.y);
+  await page.mouse.down();
+  await page.mouse.move(e.x + 60, e.y - 60, { steps: 6 });
+  await page.mouse.move(e.x, e.y, { steps: 6 });
+  await page.mouse.up();
+  await page.keyboard.up('Shift');
+  await page.getByTestId('symbol-input').fill('a');
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('edge-end-end')).toBeVisible();
+
+  await run.click();
   await page.getByRole('button', { name: 'Last' }).click();
   await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'true');
   await expect(page.getByTestId('verdict')).toContainText('Accepted');
