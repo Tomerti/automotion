@@ -31,8 +31,9 @@ thoroughly tested automaton core, and a codebase worth showing.
 ### Assumptions
 
 - Alphabet symbols are single characters. `ε` is reserved and is never part of the alphabet.
-- A DFA may be **partial**: a missing transition means the run gets stuck and rejects. Algorithms
-  that need a complete DFA (minimization) complete it with a dead state first.
+- A DFA may be **partial** while it is being built, but that is an error: a partial DFA can't be
+  run. Minimization still accepts one and completes it with a dead state first, and an NFA can be
+  switched to a partial DFA. Only an NFA run can get stuck.
 
 ## 2. Stack
 
@@ -101,7 +102,7 @@ interface Automaton {
 ### Validation (`core/validate.ts`)
 
 `validate(a: Automaton): Issue[]` where
-`Issue = { severity: 'error' | 'warning'; message: string; stateId?: StateId; transitionId?: string }`.
+`Issue = { severity: 'error' | 'warning'; code?: 'incomplete-dfa'; message: string; stateId?: StateId; transitionId?: string }`.
 It never throws.
 
 Errors:
@@ -110,14 +111,17 @@ Errors:
 - DFA only: a transition uses ε.
 - DFA only: two transitions from the same state share a symbol (nondeterminism).
 - Duplicate state labels.
+- DFA only: the DFA is incomplete (one issue, naming the first missing transition and how many more
+  there are; code `incomplete-dfa`). It blocks a run; minimization and the NFA → DFA kind switch
+  ignore it (`ignoringIncomplete`).
 
 Warnings:
 - No start state.
 - No accepting states.
 - Unreachable states.
-- DFA is partial (informational; it is still runnable).
 
-Changing `kind` from NFA to DFA is allowed only when the result has no errors.
+Changing `kind` from NFA to DFA is allowed only when the result has no errors other than being
+incomplete.
 
 ## 5. Edit operations (`core/edit.ts`)
 

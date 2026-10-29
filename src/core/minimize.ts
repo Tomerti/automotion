@@ -4,13 +4,13 @@ import { newId } from './id';
 import { startStates } from './model';
 import type { Automaton, StateId, Sym, Transition } from './model';
 import type { MinimizeStep, MinimizeTrace } from './trace';
-import { hasErrors, validate } from './validate';
+import { hasErrors, ignoringIncomplete, validate } from './validate';
 
 /** Why `a` can't be minimized, or null when it can. */
 export function canMinimize(a: Automaton): string | null {
   if (a.kind !== 'DFA') return 'Minimization needs a DFA';
   if (startStates(a).length === 0) return 'Set a start state first';
-  if (hasErrors(validate(a))) return 'Fix the errors in the automaton first';
+  if (hasErrors(ignoringIncomplete(validate(a)))) return 'Fix the errors in the automaton first';
   return null;
 }
 

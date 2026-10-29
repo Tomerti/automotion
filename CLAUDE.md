@@ -39,7 +39,9 @@ Layers, with dependencies pointing downward only:
     `startStates(a)` ignores stale ids. Converting a multi-start NFA first adds a single start state
     `q_s` with ε-transitions to the old ones (`withSingleStart` in `subset.ts`).
   - `validate.ts` returns `Issue[]` (errors/warnings) and never throws; the UI disables actions with the
-    reason instead. DFAs may be partial (a missing transition rejects).
+    reason instead. An incomplete DFA is an error (code `incomplete-dfa`) that blocks a run, but
+    minimization (it adds a dead state) and the NFA → DFA kind switch skip it via `ignoringIncomplete`,
+    so only NFA runs get stuck.
   - `edit.ts`: every edit is a pure `Automaton → Automaton` function, shared by the canvas and the table.
   - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
     snapshots (`trace.ts`). Each has a `can*` guard returning a user-facing reason or `null`.

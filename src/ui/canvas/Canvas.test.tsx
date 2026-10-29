@@ -929,7 +929,10 @@ describe('Canvas editing', () => {
       states: ['q0', 'q1'],
       start: 'q0',
       accepting: ['q1'],
-      edges: [['q0', 'a', 'q1']],
+      edges: [
+        ['q0', 'a', 'q1'],
+        ['q1', 'a', 'q1'],
+      ],
       name: 'm',
     });
     load(a);
@@ -1034,7 +1037,13 @@ describe('Fit and Tidy', () => {
   });
 
   it('Tidy does nothing while a trace is open', async () => {
-    load({ ...two('DFA', 'a', [['q0', 'a', 'q1']]), starts: ['q0'] });
+    load({
+      ...two('DFA', 'a', [
+        ['q0', 'a', 'q1'],
+        ['q1', 'a', 'q1'],
+      ]),
+      starts: ['q0'],
+    });
     act(() => st().openTrace(runWord(active(), 'a')));
     render(<Canvas />);
     const before = active();

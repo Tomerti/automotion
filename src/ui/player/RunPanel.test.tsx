@@ -28,7 +28,7 @@ const evenZeros: Automaton = {
     { id: 't4', from: 'q1', to: 'q1', symbols: ['1'] },
   ],
 };
-const ab: Automaton = { ...evenZeros, alphabet: ['a', 'b'], transitions: [] };
+const ab: Automaton = { ...evenZeros, kind: 'NFA', alphabet: ['a', 'b'], transitions: [] };
 
 beforeEach(() => {
   resetAppStore();
@@ -53,6 +53,19 @@ describe('RunPanel', () => {
     const run = screen.getByRole('button', { name: 'Run' });
     expect(run).toBeDisabled();
     expect(run).toHaveAttribute('title', "'c' is not in the alphabet {a, b}");
+  });
+
+  it('Run is disabled on an incomplete DFA', async () => {
+    resetAppStore({ automata: [{ ...ab, kind: 'DFA' }] });
+    const user = userEvent.setup();
+    render(<RunPanel />);
+    await user.type(screen.getByLabelText('Word'), 'ab');
+    const run = screen.getByRole('button', { name: 'Run' });
+    expect(run).toBeDisabled();
+    expect(run).toHaveAttribute(
+      'title',
+      'Complete the DFA first: every state needs a transition on every symbol',
+    );
   });
 
   it('Enter runs the word and opens a trace', async () => {

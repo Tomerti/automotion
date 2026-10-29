@@ -25,8 +25,16 @@ const parity = fixture({
     ['q_0', 'a', 'q_1'],
     ['q_1', 'a', 'q_0'],
     ['q_0', 'b', 'q_0'],
+    ['q_1', 'b', 'q_1'],
   ],
 });
+
+/** `parity` without q_1's 'b' transition, as an NFA (a DFA must be complete to run): 'ab' gets stuck. */
+const stuckParity = {
+  ...parity,
+  kind: 'NFA' as const,
+  transitions: parity.transitions.filter((t) => !(t.from === 'q_1' && t.symbols.includes('b'))),
+};
 
 const endsInA = fixture({
   kind: 'NFA',
@@ -76,7 +84,7 @@ describe('RunTraceView tape', () => {
   });
 
   it('a stuck step marks the unreadable cell', () => {
-    const trace = runWord(parity, 'ab');
+    const trace = runWord(stuckParity, 'ab');
     show(trace, lastIndex(trace));
     const [, b] = screen.getAllByTestId('word-char');
     expect(b).toHaveAttribute('data-state', 'current');
@@ -98,7 +106,7 @@ describe('RunTraceView tokens', () => {
   });
 
   it('a stuck step keeps a ✕ on the states the run died in', () => {
-    const trace = runWord(parity, 'ab');
+    const trace = runWord(stuckParity, 'ab');
     show(trace, lastIndex(trace));
     const dead = screen.getAllByTestId('dead-branch');
     expect(dead.map((d) => d.getAttribute('data-state-id'))).toEqual(['q_1']);
@@ -211,7 +219,7 @@ describe('RunTraceView verdict', () => {
   });
 
   it('stuck: names the missing transition', () => {
-    const v = verdictOf(runWord(parity, 'ab'));
+    const v = verdictOf(runWord(stuckParity, 'ab'));
     expect(v).toHaveAttribute('data-accepted', 'false');
     expect(v).toHaveTextContent("Stuck: no 'b' transition from q1");
   });

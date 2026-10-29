@@ -14,7 +14,11 @@ const dfa = (id: string) => ({
     states: ['q0', 'q1'],
     start: 'q0',
     accepting: ['q1'],
-    edges: [['q0', 'a', 'q1']],
+    edges: [
+      ['q0', 'a', 'q1'],
+      ['q0', 'b', 'q0'],
+      ['q1', 'a,b', 'q1'],
+    ],
   }),
   id,
   name: id,

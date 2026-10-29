@@ -61,7 +61,14 @@ describe('AutomatonName', () => {
     expect(names()[0]).toBe('blurred');
   });
   it('the name cannot be renamed while a trace is open', () => {
-    const d = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0'], start: 'q0', name: 'd' });
+    const d = fixture({
+      kind: 'DFA',
+      alphabet: 'a',
+      states: ['q0'],
+      start: 'q0',
+      edges: [['q0', 'a', 'q0']],
+      name: 'd',
+    });
     resetAppStore({ automata: [d], activeId: 'd' });
     appStore.getState().openTrace(runWord(d, ''));
     render(<AutomatonName />);
