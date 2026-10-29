@@ -229,7 +229,8 @@ select.av-player-speed:hover {
   width: var(--av-cell);
   height: 50px;
   margin-left: -1.5px;
-  font-family: var(--av-font-mono);
+  /* Not a monospace (a slashed 0 reads as ∅); the cells are fixed-width anyway. */
+  font-family: var(--av-font-math);
   font-size: 24px;
   font-weight: 500;
   line-height: 1;

@@ -5,6 +5,9 @@
  */
 
 .av-app {
+  /* Also where the canvas starts, for dialogs centred on it (the welcome). */
+  --av-topbar-h: 48px;
+  --av-history-w: 220px;
   display: grid;
   height: 100%;
   grid-template-rows: auto minmax(0, 1fr);
@@ -116,7 +119,7 @@ a.av-icon-button {
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  min-height: 48px;
+  min-height: var(--av-topbar-h);
   padding: 0 10px 0 14px;
   background: var(--av-surface);
   border-bottom: 1px solid var(--av-rule);
@@ -323,7 +326,7 @@ input.av-switcher-input {
 .av-history {
   display: flex;
   flex-direction: column;
-  width: 220px;
+  width: var(--av-history-w);
   min-height: 0;
   background: var(--av-surface);
   border-right: 1px solid var(--av-rule);

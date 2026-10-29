@@ -117,6 +117,17 @@ export function quitTutorial(): void {
     app.addAutomaton(emptyAutomaton('Untitled', 'DFA'));
 }
 
+/**
+ * Finish from the closing card: the tutorial automaton stays, and the run that ended the
+ * tutorial closes, back to editing.
+ */
+export function finishTutorial(): void {
+  const id = tutorialStore.getState().automatonId;
+  endTutorial();
+  const app = appStore.getState();
+  if (app.trace && app.trace.source.id === id) app.closeTrace();
+}
+
 /** Stop following the app. The tutorial automaton stays like any other (Finish keeps it). */
 export function endTutorial(): void {
   unsubscribe?.();

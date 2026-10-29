@@ -116,7 +116,7 @@ Hints are pure functions of the context, like `done`.
 - Header: "Tutorial · n of 12" in the muted small caps style of other section labels, and a ✕
   icon button "End tutorial" (`aria-label`). There is no Back button: steps are checked live and
   fall back by themselves, so Back would only jump forward again. (Changed from the chat design.)
-- Body: the instruction (`LabelText` for state labels, `<code>`-styled words in Geist Mono), the
+- Body: the instruction (`LabelText` for state labels, `<code>`-styled words, in Geist: a monospace slashed 0 reads as ∅), the
   gesture chip, then the hint or the ✓ confirmation.
 - Step 13 shows the closing text and a primary **Finish** button.
 - `role="region"`, `aria-label="Tutorial"`, `aria-live="polite"` on the instruction so screen
@@ -140,7 +140,7 @@ Hints are pure functions of the context, like `done`.
   zooms) and hides when the element is missing. No pulse under `prefers-reduced-motion` (a still
   ring).
 - Targets: a state `[data-testid="canvas"] [data-state-id="…"]`, a loop label
-  `[data-transition-id="…"] [data-testid="edge-label"]`, the word box `input[aria-label="Word"]`.
+  `[data-transition-id="…"] [data-testid="edge-label"]`, the run pill `form:has(input[aria-label="Word"])` (word box and Run button).
 - `data-testid="tutorial-pointer"`.
 
 ### Welcome dialog (`WelcomeCard.tsx`)

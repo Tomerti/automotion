@@ -84,8 +84,10 @@ test('the first visit offers the tutorial, which walks through building and chan
   await card.getByRole('button', { name: 'Finish' }).click();
   await expect(card).toHaveCount(0);
 
-  // The automaton stays: one state looping on 0 and 1.
-  await page.keyboard.press('Escape');
+  // Finish also closes the last run, back to editing; the automaton stays: one state looping
+  // on 0 and 1.
+  await expect(page.getByTestId('verdict')).toHaveCount(0);
+  await expect(page.getByLabel('Word')).toBeVisible();
   await expect(page.getByTestId('edge-q_0-q_0').getByTestId('edge-label')).toHaveText('0,1');
   await expect(page.getByRole('navigation', { name: 'History' })).toContainText('Tutorial');
 });

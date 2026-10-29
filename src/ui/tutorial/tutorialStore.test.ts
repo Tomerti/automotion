@@ -4,7 +4,13 @@ import { emptyAutomaton } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
-import { endTutorial, quitTutorial, startTutorial, tutorialStore } from './tutorialStore';
+import {
+  endTutorial,
+  finishTutorial,
+  quitTutorial,
+  startTutorial,
+  tutorialStore,
+} from './tutorialStore';
 
 const app = () => appStore.getState();
 const tut = () => tutorialStore.getState();
@@ -78,6 +84,28 @@ describe('startTutorial', () => {
     expect(app().trace).not.toBeNull();
     startTutorial();
     expect(app().trace).toBeNull();
+  });
+
+  it('Finish keeps the automaton and closes the run that ended the tutorial', () => {
+    startTutorial();
+    const id = tut().automatonId;
+    app().edit((a) => addState(a, { x: 0, y: 0 }));
+    app().edit((a) => setStart(a, a.states[0]!.id));
+    startRun('');
+    expect(app().trace?.source.id).toBe(id);
+    finishTutorial();
+    expect(tut().active).toBe(false);
+    expect(app().trace).toBeNull();
+    expect(app().automata.some((a) => a.id === id)).toBe(true);
+  });
+
+  it('Finish leaves a run on another automaton open', () => {
+    resetAppStore({ automata: [loop()] });
+    startTutorial();
+    app().setActive('mine');
+    startRun('a');
+    finishTutorial();
+    expect(app().trace).not.toBeNull();
   });
 
   it('starting again starts over on a fresh automaton and removes the unfinished one', () => {

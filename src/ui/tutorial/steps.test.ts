@@ -330,7 +330,7 @@ describe('instructions and targets', () => {
     expect(step('loop-01').target(ctx(b))).toBe(
       '[data-transition-id="q_0->q_0"] [data-testid="edge-label"]',
     );
-    expect(step('run-1010').target(ctx(evenZeros()))).toBe('input[aria-label="Word"]');
+    expect(step('run-1010').target(ctx(evenZeros()))).toBe('form:has(input[aria-label="Word"])');
     expect(step('add-q0').target(ctx(tut({})))).toBeNull();
   });
 

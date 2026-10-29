@@ -5,8 +5,8 @@
  * up in four distinct pens: orange for the run (active states, taken edges, the tape's read
  * cell, the Run button), red for errors and rejections, blue for your own selection, green for
  * acceptance, and
- * marker tints for the blocks of a minimization. Everything is set in Geist; the input tape
- * uses Geist Mono so its cells line up. The loud element is the run's input tape with
+ * marker tints for the blocks of a minimization. Everything is set in Geist, the tape too: a
+ * monospace's slashed 0 reads as ∅. The loud element is the run's input tape with
  * its read head; the one orchestrated motion is the verdict stamp. Light is the default whatever
  * the system prefers; the theme button switches to dark (`<html data-theme="dark">`, set by
  * src/ui/shell/theme.ts before the first render). Diagram exports always use the light (paper) tokens via
@@ -19,7 +19,6 @@
 
   --av-font-ui: 'Geist', 'Segoe UI', system-ui, sans-serif;
   --av-font-math: var(--av-font-ui);
-  --av-font-mono: 'Geist Mono', ui-monospace, Consolas, monospace;
 
   /* Surfaces and ink */
   --av-paper: #f3f5f0;
