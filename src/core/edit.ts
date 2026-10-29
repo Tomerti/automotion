@@ -222,6 +222,11 @@ export function normalizeSymbolText(text: string): string {
   return text.replaceAll('\\epsilon', EPSILON);
 }
 
+/** Live state-name normalization: `\emptyset` turns into ∅ (the dead state's usual name). */
+export function normalizeStateLabel(text: string): string {
+  return text.replaceAll('\\emptyset', '∅');
+}
+
 export function parseSymbolInput(
   text: string,
   kind: AutomatonKind,

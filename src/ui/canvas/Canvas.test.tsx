@@ -384,6 +384,21 @@ describe('Canvas editing', () => {
     expect(screen.queryByTestId('rename-input')).toBeNull();
   });
 
+  it('typing \\emptyset in a state name turns into ∅', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(<Canvas />);
+    fireEvent.doubleClick(stateEl('q0'), { clientX: 0, clientY: 0 });
+    const input = screen.getByTestId('rename-input');
+    await user.clear(input);
+    await user.type(input, '\\emptyse');
+    expect(input).toHaveValue('\\emptyse');
+    await user.type(input, 't');
+    expect(input).toHaveValue('∅');
+    await user.type(input, '{Enter}');
+    expect(active().states[0]?.label).toBe('∅');
+  });
+
   it('the rename input sits on the state in its label font and hides the drawn label', () => {
     load(two());
     st().setViewport('m', { x: 10, y: 20, zoom: 2 });

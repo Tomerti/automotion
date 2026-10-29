@@ -65,6 +65,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] A toggles accepting, S toggles start on the selected state (Enter/Space no longer do)
 - [x] Alignment snapping with guides while dragging (Alt skips)
 - [x] `\epsilon` types ε; ε on a DFA turns it into an NFA
+- [x] `\emptyset` types ∅ in a state name
 - [x] Remove the transition table, issues panel and sidebar; derived alphabet; issues chip
 - [x] Minimal top bar with automaton switcher; floating run pill; light/dark theme toggle
 - [x] Controls popup (help button, `?`, first visit)
