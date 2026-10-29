@@ -3,7 +3,7 @@ import type { Viewport } from '../../store/types';
 import { Arrowhead, EdgeView } from './EdgeView';
 import { StateNode } from './StateNode';
 import { diagramStyles } from './diagramStyles';
-import { startArrowGeometry, STATE_RADIUS, transitionGeometry } from './geometry';
+import { startArrowGeometry, transitionGeometry } from './geometry';
 
 export interface DiagramHighlight {
   active?: StateId[];
@@ -71,17 +71,21 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
     >
       <style>{diagramStyles}</style>
       <g transform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`}>
-        {starts.map((start) => (
-          <g
-            key={start.id}
-            className="av-start-arrow"
-            data-testid="start-arrow"
-            data-state-id={start.id}
-          >
-            <path className="av-edge-path" d={startArrowGeometry(start).d} />
-            <Arrowhead end={{ x: start.x - STATE_RADIUS, y: start.y }} angle={0} />
-          </g>
-        ))}
+        {starts.map((start) => {
+          const arrow = startArrowGeometry(start, start.startAngle);
+          return (
+            <g
+              key={start.id}
+              className="av-start-arrow"
+              data-testid="start-arrow"
+              data-state-id={start.id}
+            >
+              <path className="av-edge-hit" d={arrow.d} />
+              <path className="av-edge-path" d={arrow.d} />
+              <Arrowhead end={arrow.end} angle={arrow.endAngle} />
+            </g>
+          );
+        })}
         {visibleTransitions.map((t) => {
           const from = stateById.get(t.from) as State;
           const to = stateById.get(t.to) as State;

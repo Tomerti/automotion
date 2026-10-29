@@ -129,6 +129,27 @@ export function setEdgeBend(
   };
 }
 
+/**
+ * Turn a state's start arrow so it comes from `angle` (see `State.startAngle`); `undefined`
+ * restores the default (from the left).
+ */
+export function setStartAngle(
+  a: Automaton,
+  stateId: StateId,
+  angle: number | undefined,
+): Automaton {
+  return {
+    ...a,
+    states: a.states.map((s) => {
+      if (s.id !== stateId) return s;
+      if (angle !== undefined) return { ...s, startAngle: angle };
+      const rest = { ...s };
+      delete rest.startAngle;
+      return rest;
+    }),
+  };
+}
+
 export function setLoopAngle(a: Automaton, transitionId: string, angle: number): Automaton {
   return {
     ...a,

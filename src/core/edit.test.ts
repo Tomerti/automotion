@@ -22,6 +22,7 @@ import {
   setKind,
   setLoopAngle,
   setStart,
+  setStartAngle,
   syncAlphabet,
   toggleAccepting,
 } from './edit';
@@ -283,6 +284,13 @@ describe('derived alphabet and edge shape', () => {
     expect(bent.transitions[0]?.bend).toBe(20);
     expect('bend' in (setEdgeBend(bent, id, undefined).transitions[0] ?? {})).toBe(false);
     expect(setLoopAngle(a, id, 1).transitions[0]?.loopAngle).toBe(1);
+  });
+
+  it('turns a start arrow and restores it to the default', () => {
+    const turned = setStartAngle(dfa(), 'q0', -Math.PI / 2);
+    expect(turned.states[0]?.startAngle).toBe(-Math.PI / 2);
+    expect(turned.states[1]).not.toHaveProperty('startAngle');
+    expect(setStartAngle(turned, 'q0', undefined).states[0]).not.toHaveProperty('startAngle');
   });
 });
 

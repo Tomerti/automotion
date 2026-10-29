@@ -12,6 +12,7 @@ import {
   setEdgeBend,
   setLoopAngle,
   setStart,
+  setStartAngle,
   toggleAccepting,
   toggleStart,
 } from '../../core/edit';
@@ -26,6 +27,7 @@ import {
   hitState,
   labelFontSize,
   loopAngleToward,
+  snapAngle,
   STATE_RADIUS,
   transitionGeometry,
   type PathGeometry,
@@ -44,6 +46,9 @@ const LABEL_HIT_RADIUS = 12;
 const STRAIGHT_SNAP = 6;
 /** A dragged state within this many screen px of another's x or y snaps to it. */
 const ALIGN_SNAP = 8;
+/** A dragged start arrow snaps to the nearest multiple of 45° within this many radians (~8°). */
+const START_ANGLE_STEP = Math.PI / 4;
+const START_ANGLE_SNAP = 0.14;
 /** Keep in sync with .av-edge-label in diagramStyles.ts. */
 const EDGE_LABEL_FONT_SIZE = 15;
 
@@ -56,6 +61,7 @@ type Gesture = { pointerId: number; start: Point; moved: boolean } & (
   /** `grab`: the bend at the press minus the bend through the press point, so the edge doesn't jump. */
   | { kind: 'bend'; transitionId: string; from: Point; to: Point; grab: number }
   | { kind: 'loop'; transitionId: string; center: Point }
+  | { kind: 'start'; stateId: StateId; center: Point }
 );
 
 /** The arrow of a new transition, while it is Shift-dragged and named, in world coordinates. */
@@ -369,7 +375,9 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
   const targets = (target: EventTarget | null) => {
     const el = target instanceof Element ? target : null;
     return {
+      // A start arrow carries its state's id too: it counts as the state except when dragged.
       stateEl: el?.closest('[data-state-id]') ?? null,
+      startEl: el?.closest('[data-testid="start-arrow"]') ?? null,
       edgeEl: el?.closest('[data-transition-id]') ?? null,
     };
   };
@@ -388,7 +396,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     containerRef.current?.focus();
     setMenu(null);
     const base = { pointerId: e.pointerId, start: { x: e.clientX, y: e.clientY }, moved: false };
-    const { stateEl, edgeEl } = targets(e.target);
+    const { stateEl, startEl, edgeEl } = targets(e.target);
     const store = appStore.getState();
 
     if (locked || (!stateEl && !edgeEl)) {
@@ -399,7 +407,9 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       const state = automaton.states.find((s) => s.id === stateEl.getAttribute('data-state-id'));
       if (!state) return;
       store.select({ states: [state.id], transitions: [] });
-      if (e.shiftKey) {
+      if (startEl) {
+        gesture.current = { ...base, kind: 'start', stateId: state.id, center: state };
+      } else if (e.shiftKey) {
         gesture.current = { ...base, kind: 'draw', from: state.id };
       } else {
         const p = toWorld(e);
@@ -435,7 +445,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       g.moved = true;
       // Capture only now: capturing on press would retarget click/dblclick to the <svg>.
       svgRef.current?.setPointerCapture?.(g.pointerId);
-      if (g.kind === 'move' || g.kind === 'bend' || g.kind === 'loop') {
+      if (g.kind === 'move' || g.kind === 'bend' || g.kind === 'loop' || g.kind === 'start') {
         appStore.getState().checkpoint();
         svgRef.current?.setAttribute('data-dragging', '');
       }
@@ -465,6 +475,11 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     } else if (g.kind === 'loop') {
       const angle = loopAngleToward(g.center, p);
       store.edit((a) => setLoopAngle(a, g.transitionId, angle), { record: false });
+    } else if (g.kind === 'start') {
+      const raw = loopAngleToward(g.center, p);
+      // Alt held: any angle, no snapping.
+      const angle = e.altKey ? raw : snapAngle(raw, START_ANGLE_STEP, START_ANGLE_SNAP);
+      store.edit((a) => setStartAngle(a, g.stateId, angle), { record: false });
     } else {
       const from = automaton.states.find((s) => s.id === g.from);
       if (!from) return;
@@ -536,12 +551,22 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     });
     if (stateId) {
       store.select({ states: [stateId], transitions: [] });
+      const turned =
+        automaton.starts.includes(stateId) &&
+        automaton.states.find((s) => s.id === stateId)?.startAngle !== undefined;
       setMenu({
         at,
         items: [
           automaton.kind === 'NFA'
             ? item('Toggle start', () => edit((a) => toggleStart(a, stateId)))
             : item('Set as start', () => edit((a) => setStart(a, stateId))),
+          ...(turned
+            ? [
+                item('Start arrow from the left', () =>
+                  edit((a) => setStartAngle(a, stateId, undefined)),
+                ),
+              ]
+            : []),
           item('Toggle accepting', () => edit((a) => toggleAccepting(a, stateId))),
           item('Rename', () => openRename(stateId)),
           item('Delete', () => {

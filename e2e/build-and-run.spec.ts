@@ -73,3 +73,28 @@ test('drag an edge to curve it', async ({ page }) => {
   await expect(path).not.toHaveAttribute('d', before ?? '');
   await expect(path).toHaveAttribute('d', /Q/);
 });
+
+test('drag the start arrow to turn it around its state', async ({ page }) => {
+  await openApp(page, { clear: true });
+  await addStateAt(page, 300, 250);
+  await clickState(page, 'q_0');
+  await page.keyboard.press('s');
+
+  const arrow = page.getByTestId('start-arrow');
+  const c = await stateCenter(page, 'q_0');
+  const box = await arrow.boundingBox();
+  if (!box) throw new Error('no start arrow');
+  // It comes from the left; drag its tail over the top round to the right of the state.
+  expect(box.x + box.width).toBeLessThan(c.x);
+  await page.mouse.move(box.x + 4, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(c.x, c.y - 80, { steps: 8 });
+  await page.mouse.move(c.x + 80, c.y, { steps: 8 });
+  await page.mouse.up();
+
+  const turned = await arrow.boundingBox();
+  if (!turned) throw new Error('no start arrow');
+  expect(turned.x).toBeGreaterThan(c.x);
+  await expect(page.getByTestId('state-q_0')).toHaveAttribute('data-start', 'true');
+  expect(await stateCenter(page, 'q_0')).toEqual(c);
+});

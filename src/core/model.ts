@@ -10,6 +10,11 @@ export interface State {
   label: string;
   x: number;
   y: number;
+  /**
+   * Start states only: direction the start arrow comes from (radians, screen coordinates, from the
+   * state's center toward the arrow's tail). Absent: from the left.
+   */
+  startAngle?: number;
 }
 
 export interface Transition {
