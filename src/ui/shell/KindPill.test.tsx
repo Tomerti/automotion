@@ -58,8 +58,15 @@ describe('KindPill', () => {
     expect(screen.queryByTestId('kind-pill')).toBeNull();
     unmount();
 
-    const d = { ...nfa(), kind: 'DFA' as const, alphabet: ['a'] };
-    resetAppStore({ automata: [d], activeId: 'n' });
+    const d = fixture({
+      kind: 'DFA',
+      alphabet: 'a',
+      states: ['q0'],
+      start: 'q0',
+      edges: [['q0', 'a', 'q0']],
+      name: 'd',
+    });
+    resetAppStore({ automata: [d], activeId: 'd' });
     appStore.getState().openTrace(runWord(d, 'a'));
     render(<KindPill />);
     expect(screen.queryByTestId('kind-pill')).toBeNull();
