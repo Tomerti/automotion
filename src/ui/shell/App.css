@@ -666,6 +666,11 @@ input.av-switcher-input {
 .av-modal-head .av-icon-button {
   margin-right: -8px;
 }
+/* The tutorial button sits beside the close button, pushed to the right with it. */
+.av-guide-tutorial {
+  margin-left: auto;
+  margin-right: 6px;
+}
 .av-guide {
   width: min(560px, 100%);
 }

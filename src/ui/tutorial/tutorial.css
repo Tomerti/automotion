@@ -116,3 +116,25 @@
     width: auto;
   }
 }
+
+/* The first visit's welcome dialog (on the shared .av-modal surface). */
+
+.av-welcome {
+  width: min(420px, 100%);
+}
+.av-welcome-text {
+  margin: 4px 0 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--av-ink-muted);
+}
+.av-welcome-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.av-welcome-note {
+  margin: 16px 0 0;
+  font-size: 12px;
+  color: var(--av-ink-muted);
+}

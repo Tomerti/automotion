@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { GestureChip } from './GestureChip';
 import type { Gesture } from './GestureChip';
+import { useTutorial } from '../tutorial/tutorialStore';
 import { CloseIcon } from './icons';
 
 interface Row {
@@ -100,7 +101,14 @@ const TABS: Tab[] = [
  * Modal guide to the controls, one tab per task. Escape, the backdrop or the close button
  * dismiss it; ←/→ move between tabs.
  */
-export function ControlsDialog({ onClose }: { onClose: () => void }): React.JSX.Element {
+export function ControlsDialog({
+  onClose,
+  onStartTutorial,
+}: {
+  onClose: () => void;
+  onStartTutorial: () => void;
+}): React.JSX.Element {
+  const tutorialRunning = useTutorial((s) => s.active);
   const dialogRef = useRef<HTMLDivElement>(null);
   const latestClose = useRef(onClose);
   const [tab, setTab] = useState(0);
@@ -170,6 +178,14 @@ export function ControlsDialog({ onClose }: { onClose: () => void }): React.JSX.
       >
         <header className="av-modal-head">
           <h2>Controls</h2>
+          <button
+            type="button"
+            className="av-guide-tutorial"
+            data-focus-stop
+            onClick={onStartTutorial}
+          >
+            {tutorialRunning ? 'Restart tutorial' : 'Take the tutorial'}
+          </button>
           <button
             type="button"
             className="av-icon-button"

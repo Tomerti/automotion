@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-/** Set once the controls popup has been shown, so it opens by itself only on the first visit. */
+/** Set once the welcome dialog has been shown, so it opens by itself only on the first visit. */
 export const SEEN_HELP_KEY = 'automotion:seen-help';
 
 export function hasSeenHelp(): boolean {
@@ -28,12 +28,18 @@ export function isTypingTarget(t: EventTarget | null): boolean {
   );
 }
 
-/** Open state of the controls popup: open on the first visit, and on `?` anywhere. */
-export function useControlsHelp(): [boolean, (open: boolean) => void] {
+/** Open state of the welcome dialog: open on the first visit only. */
+export function useWelcome(): [boolean, () => void] {
   const [open, setOpen] = useState(() => !hasSeenHelp());
   useEffect(() => {
     if (open) markHelpSeen();
   }, [open]);
+  return [open, () => setOpen(false)];
+}
+
+/** Open state of the controls popup: opened by `?` anywhere (and the help button). */
+export function useControlsHelp(): [boolean, (open: boolean) => void] {
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key !== '?' || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return;
