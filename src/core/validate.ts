@@ -117,12 +117,18 @@ export function validate(a: Automaton): Issue[] {
         .map((sym) => `'${sym}' transition from ${st.label}`),
     );
     const [first] = missing;
-    if (first !== undefined) {
-      const more = missing.length > 1 ? ` (and ${missing.length - 1} more)` : '';
+    // The alphabet comes from the transitions, so states with none have no symbol to miss.
+    const reason =
+      a.states.length > 0 && a.alphabet.length === 0
+        ? 'it has no transitions yet'
+        : first !== undefined
+          ? `no ${first}${missing.length > 1 ? ` (and ${missing.length - 1} more)` : ''}`
+          : null;
+    if (reason !== null) {
       issues.push({
         severity: 'error',
         code: 'incomplete-dfa',
-        message: `DFA is incomplete: no ${first}${more}`,
+        message: `DFA is incomplete: ${reason}`,
       });
     }
   }

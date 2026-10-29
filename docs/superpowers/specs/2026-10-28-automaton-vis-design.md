@@ -112,7 +112,8 @@ Errors:
 - DFA only: two transitions from the same state share a symbol (nondeterminism).
 - Duplicate state labels.
 - DFA only: the DFA is incomplete (one issue, naming the first missing transition and how many more
-  there are; code `incomplete-dfa`). It blocks a run; minimization and the NFA → DFA kind switch
+  there are, or saying it has no transitions yet when it has states but an empty alphabet; code
+  `incomplete-dfa`). It blocks a run; minimization and the NFA → DFA kind switch
   ignore it (`ignoringIncomplete`).
 
 Warnings:
