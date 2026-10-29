@@ -4,7 +4,7 @@ The logo is a start arrow into an accepting state with an orange self-loop: the 
 that still loops. It is drawn on a 64 × 64 grid.
 
 - `mark.svg` / `mark-dark.svg`: the mark on its tile, for light and dark backgrounds.
-- `lockup.svg` / `lockup-dark.svg`: the mark and the wordmark ("Automaton" in ink, "Vis" in the
+- `lockup.svg` / `lockup-dark.svg`: the mark and the wordmark ("Auto" in ink, "Motion" in the
   run's orange), set in Geist. The text is live `<text>`, so it renders in Geist only where Geist is
   loaded.
 - `lockup.png` / `lockup-dark.png`: the lockups rendered at 3× with Geist, on a transparent

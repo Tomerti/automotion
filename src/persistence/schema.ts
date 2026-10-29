@@ -58,8 +58,12 @@ export const automatonSchema = z
     if (multi) ctx.addIssue({ code: 'custom', message: 'Symbols must be single characters' });
   });
 
+export const FORMAT = 'automotion';
+/** The format name from before the project was renamed AutoMotion; still read, never written. */
+export const LEGACY_FORMAT = 'automaton-vis';
+
 export const fileSchema = z.object({
-  format: z.literal('automaton-vis'),
+  format: z.enum([FORMAT, LEGACY_FORMAT]),
   version: z.number().int(),
   automata: z.array(automatonSchema),
 });

@@ -24,7 +24,7 @@ afterEach(cleanup);
 
 it('renders the app title in the top bar', () => {
   render(<App />);
-  expect(screen.getByRole('heading', { name: 'Automaton Vis' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'AutoMotion' })).toBeInTheDocument();
   expect(screen.getByRole('banner')).toContainElement(
     screen.getByRole('toolbar', { name: 'Automaton tools' }),
   );

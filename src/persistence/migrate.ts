@@ -18,7 +18,7 @@ function fromV1(a: unknown): unknown {
 export function migrate(json: unknown): unknown {
   const version = (json as { version?: unknown } | null)?.version;
   if (typeof version === 'number' && version > CURRENT_VERSION) {
-    throw new Error('This file is from a newer version of Automaton Vis');
+    throw new Error('This file is from a newer version of AutoMotion');
   }
   if (version === 1) {
     const file = json as { automata?: unknown };

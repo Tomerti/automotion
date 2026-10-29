@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const URL = 'http://localhost:4173/automaton-vis/';
+const URL = 'http://localhost:4173/automotion/';
 
 export default defineConfig({
   testDir: 'e2e',

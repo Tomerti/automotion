@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/automaton-vis/',
+  base: '/automotion/',
   plugins: [react()],
   // elkjs (~1.5 MB) can't be split further; it is loaded lazily on the first Tidy.
   build: { chunkSizeWarningLimit: 1600 },

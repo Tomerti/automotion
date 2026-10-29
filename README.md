@@ -1,15 +1,15 @@
 <p align="center">
-  <a href="https://tomerti.github.io/automaton-vis/">
+  <a href="https://tomerti.github.io/automotion/">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.png">
-      <img src="docs/brand/lockup.png" alt="Automaton Vis" width="360">
+      <img src="docs/brand/lockup.png" alt="AutoMotion" width="308">
     </picture>
   </a>
 </p>
 
 <p align="center">
   Build finite automata (DFAs and NFAs), draw them, and watch them run, step by step.<br>
-  <a href="https://tomerti.github.io/automaton-vis/"><b>Open the app →</b></a>
+  <a href="https://tomerti.github.io/automotion/"><b>Open the app →</b></a>
 </p>
 
 ![The "Ends in ab" NFA after running the word aab: the run ends in {q₀, q₁, q₃} and is accepted](docs/screenshots/run.png)
@@ -57,7 +57,7 @@
 
 ```
 npm install
-npm run dev      # dev server at http://localhost:5173/automaton-vis/
+npm run dev      # dev server at http://localhost:5173/automotion/
 npm test         # unit and component tests (Vitest)
 npm run e2e      # end-to-end tests (Playwright, Chromium; builds and serves the app)
 npm run build    # type-check and production build into dist/

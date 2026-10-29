@@ -74,7 +74,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Run animation: tape with read head, tokens along edges, dead-branch ✕, verdict banner with a reason
 - [x] e2e specs rewritten for the new gestures and shell
 
-- [x] Design spec approved (`docs/superpowers/specs/2026-10-28-automaton-vis-design.md`)
+- [x] Design spec approved (`docs/superpowers/specs/2026-10-28-automotion-design.md`)
 - [x] Write the implementation plan (21 tasks)
 - [x] Choose the stack: TypeScript, React, Vite, custom SVG renderer, elkjs, Zustand (see spec)
 - [x] Define the automaton data model (see spec §4)
@@ -128,5 +128,9 @@ Nothing in progress: pick the next task from the list below.
 - [x] Playwright smoke tests
 - [x] CI (typecheck, lint, unit tests, e2e)
 - [x] Deploy job for GitHub Pages (in `.github/workflows/ci.yml`, runs after checks pass on `master`)
-- [x] Enable GitHub Pages and deploy v1: https://tomerti.github.io/automaton-vis/
+- [x] Enable GitHub Pages and deploy v1: https://tomerti.github.io/automotion/
 - [x] Bump GitHub Actions to current majors (removes the Node.js 20 deprecation warnings)
+
+### Rename
+
+- [x] Rename the project from Automaton Vis to AutoMotion (repo `Tomerti/automotion`, https://tomerti.github.io/automotion/); old files and saved data still load

@@ -1,7 +1,7 @@
 /** Colour theme: light (the default, whatever the system prefers) or dark. */
 export type Theme = 'light' | 'dark';
 
-export const THEME_KEY = 'automaton-vis:theme';
+export const THEME_KEY = 'automotion:theme';
 
 export const OTHER_THEME: Record<Theme, Theme> = { light: 'dark', dark: 'light' };
 

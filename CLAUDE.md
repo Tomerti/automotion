@@ -2,20 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# Automaton Vis
+# AutoMotion
 
 Visualize finite automata (DFA, NFA): build them, draw them, and step through their run on a word,
 NFA → DFA conversion and DFA minimization. Static site, no backend; live at
-https://tomerti.github.io/automaton-vis/.
+https://tomerti.github.io/automotion/.
 
 - Stack: TypeScript (strict, `noUncheckedIndexedAccess`), React 19, Vite, custom SVG renderer, elkjs,
   Zustand + immer, zod, Vitest + fast-check + Testing Library, Playwright.
-- Design spec (binding when behavior is unclear): `docs/superpowers/specs/2026-10-28-automaton-vis-design.md`.
+- Design spec (binding when behavior is unclear): `docs/superpowers/specs/2026-10-28-automotion-design.md`.
 - Track tasks in `PROGRESS.md`: tick items off when they're done and add follow-up tasks as they come up.
 
 ## Commands
 
-- `npm run dev`: dev server (Vite `base` is `/automaton-vis/`, so open `http://localhost:5173/automaton-vis/`)
+- `npm run dev`: dev server (Vite `base` is `/automotion/`, so open `http://localhost:5173/automotion/`)
 - `npm test`: all unit/component tests once; `npm run test:watch` to watch
 - One test file: `npx vitest run src/core/run.test.ts`; one test by name: `npx vitest run -t "stuck run"`
 - `npm run typecheck`, `npm run lint`, `npm run build`
@@ -57,13 +57,15 @@ Layers, with dependencies pointing downward only:
   `edit`, `checkpoint` and undo/redo do nothing while a trace is open. Selecting, creating or adding an
   automaton closes the trace. `useAppStore` selectors must return stable references (see its doc comment)
   or React 19 loops. `traceActions.ts` opens traces (`startRun`, `startSubset`, `startMinimize`).
-- `src/persistence/`: localStorage autosave (key `automaton-vis:v1`, 500 ms debounce, flush on `pagehide`),
+- `src/persistence/`: localStorage autosave (key `automotion:v1`, 500 ms debounce, flush on `pagehide`),
   and the versioned JSON file format
-  (`{ format: "automaton-vis", version, automata }`, version 2; `migrate()` turns v1's single `start`
+  (`{ format: "automotion", version, automata }`, version 2; `migrate()` turns v1's single `start`
   into `starts`). Every load goes through `migrate()` and the zod schema; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
   built-in examples; e2e specs import `e2e/fixtures/automata.json`. The first release seeded three:
-  the first load in a browser (flag `automaton-vis:old-examples-checked`) removes the ones never
-  changed (`oldExamples.ts`) and saves the result.
+  the first load in a browser (flag `automotion:old-examples-checked`) removes the ones never
+  changed (`oldExamples.ts`) and saves the result. The project was called Automaton Vis until
+  2026-10-29: files tagged `"automaton-vis"` still import (`LEGACY_FORMAT`), and `migrateLegacyKeys()`
+  (first thing in `main.tsx`) moves old `automaton-vis:*` localStorage keys to `automotion:*`.
 - `src/ui/`:
   - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
     states, tints, visibility). Its `data-testid`s and `data-*` attributes are a contract used by tests,

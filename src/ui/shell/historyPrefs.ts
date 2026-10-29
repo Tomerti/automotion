@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 /** Whether the history bar is open, remembered per browser like the theme. */
-export const HISTORY_BAR_KEY = 'automaton-vis:history-bar';
+export const HISTORY_BAR_KEY = 'automotion:history-bar';
 
 /** Below this width the bar starts closed, so it doesn't crowd a phone screen. */
 const NARROW = '(max-width: 720px)';

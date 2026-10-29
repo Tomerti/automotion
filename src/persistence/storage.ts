@@ -3,10 +3,37 @@ import { emptyAutomaton } from '../core/model';
 import { parseFile, serialize } from './fileFormat';
 import { isUntouchedOldExample } from './oldExamples';
 
-export const STORAGE_KEY = 'automaton-vis:v1';
-export const BACKUP_KEY = 'automaton-vis:v1:corrupt-backup';
+export const STORAGE_KEY = 'automotion:v1';
+export const BACKUP_KEY = 'automotion:v1:corrupt-backup';
 /** Set once the first release's untouched example automata have been removed. */
-export const OLD_EXAMPLES_CHECKED_KEY = 'automaton-vis:old-examples-checked';
+export const OLD_EXAMPLES_CHECKED_KEY = 'automotion:old-examples-checked';
+
+/** Every key's prefix before the project was renamed AutoMotion. */
+const LEGACY_PREFIX = 'automaton-vis:';
+const PREFIX = 'automotion:';
+
+/**
+ * Move keys saved under the old name to the new one (same origin, so they are still here),
+ * keeping any new key that already exists. Runs before anything reads storage. Best-effort.
+ */
+export function migrateLegacyKeys(storage: Storage | null): void {
+  if (storage === null) return;
+  try {
+    const legacy: string[] = [];
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key?.startsWith(LEGACY_PREFIX)) legacy.push(key);
+    }
+    for (const key of legacy) {
+      const value = storage.getItem(key);
+      const renamed = PREFIX + key.slice(LEGACY_PREFIX.length);
+      if (value !== null && storage.getItem(renamed) === null) storage.setItem(renamed, value);
+      storage.removeItem(key);
+    }
+  } catch {
+    // Storage may be unavailable or full; the old keys stay where they are.
+  }
+}
 
 export const NO_PERSIST_WARNING = "Changes won't persist — export to save";
 const CORRUPT_WARNING =

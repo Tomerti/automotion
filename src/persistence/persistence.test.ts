@@ -7,6 +7,7 @@ import {
   OLD_EXAMPLES_CHECKED_KEY,
   STORAGE_KEY,
   loadFromStorage,
+  migrateLegacyKeys,
   saveToStorage,
 } from './storage';
 import { memoryStorage } from './testing/memoryStorage';
@@ -23,7 +24,7 @@ const sample = () =>
     name: 'Sample',
   });
 
-const wrap = (x: unknown) => JSON.stringify({ format: 'automaton-vis', version: 2, automata: [x] });
+const wrap = (x: unknown) => JSON.stringify({ format: 'automotion', version: 2, automata: [x] });
 
 describe('fileFormat', () => {
   it('round-trips serialize → parseFile', () => {
@@ -33,7 +34,7 @@ describe('fileFormat', () => {
 
   it('serializes with the format header and 2-space indent', () => {
     const text = serialize([sample()]);
-    expect(text).toContain('\n  "format": "automaton-vis"');
+    expect(text).toContain('\n  "format": "automotion"');
     expect(JSON.parse(text).version).toBe(2);
   });
 
@@ -129,20 +130,26 @@ describe('fileFormat', () => {
 
   it('rejects non-JSON and foreign JSON', () => {
     expect(parseFile('{oops', new Set())).toEqual({ ok: false, error: 'Not a valid JSON file' });
-    expect(parseFile('[1]', new Set())).toEqual({ ok: false, error: 'Not an Automaton Vis file' });
+    expect(parseFile('[1]', new Set())).toEqual({ ok: false, error: 'Not an AutoMotion file' });
     expect(parseFile('{"format":"other"}', new Set())).toEqual({
       ok: false,
-      error: 'Not an Automaton Vis file',
+      error: 'Not an AutoMotion file',
     });
   });
 
+  it('reads files saved under the old name, Automaton Vis', () => {
+    const a = sample();
+    const old = JSON.stringify({ format: 'automaton-vis', version: 2, automata: [a] });
+    expect(parseFile(old, new Set())).toEqual({ ok: true, automata: [a] });
+  });
+
   it('rejects a newer version', () => {
-    const r = parseFile('{"format":"automaton-vis","version":3,"automata":[]}', new Set());
+    const r = parseFile('{"format":"automotion","version":3,"automata":[]}', new Set());
     expect(r).toEqual({
       ok: false,
-      error: 'This file is from a newer version of Automaton Vis',
+      error: 'This file is from a newer version of AutoMotion',
     });
-    expect(() => migrate({ format: 'automaton-vis', version: 9 })).toThrow(/newer version/);
+    expect(() => migrate({ format: 'automotion', version: 9 })).toThrow(/newer version/);
   });
 });
 
@@ -314,6 +321,26 @@ describe('storage', () => {
     expect(r.automata.length).toBe(1);
     expect(r.warning).toMatch(/backup/);
     expect(s.getItem(BACKUP_KEY)).toBe('{oops');
+  });
+
+  it('moves keys saved under the old name and loads them', () => {
+    const a = sample();
+    const s = memoryStorage({
+      'automaton-vis:v1': JSON.stringify({ format: 'automaton-vis', version: 2, automata: [a] }),
+      'automaton-vis:theme': 'dark',
+      'automotion:history-bar': 'closed',
+      'automaton-vis:history-bar': 'open',
+      unrelated: 'x',
+    });
+    migrateLegacyKeys(s);
+    expect(s.getItem('automaton-vis:v1')).toBeNull();
+    expect(s.getItem('automaton-vis:history-bar')).toBeNull();
+    expect(s.getItem('automotion:theme')).toBe('dark');
+    // A key already saved under the new name wins.
+    expect(s.getItem('automotion:history-bar')).toBe('closed');
+    expect(s.getItem('unrelated')).toBe('x');
+    expect(loadFromStorage(s)).toEqual({ automata: [a] });
+    migrateLegacyKeys(null);
   });
 
   it('survives a storage that throws', () => {
