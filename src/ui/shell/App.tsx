@@ -7,6 +7,7 @@ import { RunPanel } from '../player/RunPanel';
 import { TraceExtraActions } from '../player/traceExtraActions';
 import { TracePlayer } from '../player/TracePlayer';
 import { TraceView } from '../player/TraceView';
+import { TutorialCard } from '../tutorial/TutorialCard';
 import { ControlsDialog } from './ControlsDialog';
 import { useControlsHelp } from './help';
 import { HistoryBar } from './HistoryBar';
@@ -89,6 +90,7 @@ export default function App(): React.JSX.Element {
         >
           {trace ? <TraceView trace={trace} stepIndex={stepIndex} /> : <Canvas />}
           <KindPill />
+          <TutorialCard />
           <div
             ref={dockRef}
             className="av-dock"

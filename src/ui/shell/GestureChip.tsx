@@ -1,3 +1,5 @@
+import { LabelText } from '../LabelText';
+
 export type Mouse = 'click' | 'double' | 'drag' | 'right' | 'scroll';
 
 /** How to do it: keys held (as <kbd>) and/or a mouse action, and where. */
@@ -54,7 +56,7 @@ export function GestureChip({ gesture }: { gesture: Gesture }): React.JSX.Elemen
           </span>
         )}
       </span>
-      {on && <span className="av-gesture-on">{on}</span>}
+      {on && <LabelText className="av-gesture-on" text={on} />}
     </span>
   );
 }

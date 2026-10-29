@@ -1,0 +1,118 @@
+/*
+ * The tutorial: a coach card floating in the canvas's top-right corner, like the run and kind
+ * pills, and a ring in the selection pen around whatever the step uses.
+ */
+
+.av-tutorial {
+  position: absolute;
+  top: var(--av-dock-bottom);
+  right: var(--av-dock-bottom);
+  z-index: 12;
+  display: grid;
+  gap: 10px;
+  width: 300px;
+  padding: 12px 14px 14px;
+  color: var(--av-ink);
+  background: var(--av-surface-raised);
+  border: 1px solid var(--av-rule-strong);
+  border-radius: 12px;
+  box-shadow: var(--av-shadow-float);
+  animation: av-pop-in 160ms ease-out;
+}
+
+.av-tutorial-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px -6px -2px 0;
+}
+.av-tutorial-count {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--av-ink-muted);
+}
+
+.av-tutorial-body {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  animation: av-tutorial-step 220ms ease-out;
+}
+.av-tutorial-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.av-tutorial code {
+  padding: 0 4px;
+  font-family: var(--av-font-mono);
+  font-size: 0.92em;
+  background: var(--av-kbd);
+  border: 1px solid var(--av-rule);
+  border-radius: 4px;
+}
+
+.av-tutorial-hint,
+.av-tutorial-done {
+  margin: 0;
+  padding-top: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  border-top: 1px solid var(--av-rule);
+}
+.av-tutorial-hint {
+  color: var(--av-red);
+}
+.av-tutorial-done {
+  color: var(--av-green);
+}
+.av-tutorial-link,
+.av-tutorial-link:hover:not(:disabled) {
+  min-height: 0;
+  padding: 0;
+  font-weight: 600;
+  color: var(--av-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: transparent;
+  border: 0;
+}
+
+.av-tutorial-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.av-tutorial-pointer {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none;
+  border: 2px solid var(--av-accent);
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--av-accent) 18%, transparent);
+  animation: av-tutorial-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes av-tutorial-step {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes av-tutorial-pulse {
+  50% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--av-accent) 0%, transparent);
+  }
+}
+
+@media (max-width: 760px) {
+  .av-tutorial {
+    top: 56px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}
