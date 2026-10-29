@@ -16,6 +16,10 @@
 
 ## Features
 
+### Learn
+
+- A first visit offers a two-minute interactive tutorial: build a DFA for an even number of 0s, run it, then change it to accept every word. A card in the corner says what to do next, checks your automaton as you go and points at what to use. Restart it from the Controls popup (**?**).
+
 ### Build
 
 - Double-click the canvas to add a state; Shift + drag from one state to another to add a transition (drop it on the same state for a self-loop).

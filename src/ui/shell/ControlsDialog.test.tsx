@@ -1,8 +1,9 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { resetAppStore } from '../../store/store';
 import App from './App';
+import { endTutorial } from '../tutorial/tutorialStore';
 import { SEEN_HELP_KEY } from './help';
 
 const dialog = () => screen.queryByRole('dialog', { name: 'Controls' });
@@ -46,6 +47,8 @@ describe('Controls popup', () => {
     const tab = (name: string) => within(d).getByRole('tab', { name });
     expect(d).toHaveFocus();
     await user.tab();
+    expect(within(d).getByRole('button', { name: 'Take the tutorial' })).toHaveFocus();
+    await user.tab();
     expect(within(d).getByRole('button', { name: 'Close controls' })).toHaveFocus();
     await user.tab();
     expect(tab('Build')).toHaveFocus();
@@ -55,7 +58,7 @@ describe('Controls popup', () => {
     await user.keyboard('{ArrowLeft}{ArrowLeft}');
     expect(tab('Keys')).toHaveAttribute('aria-selected', 'true');
     await user.tab();
-    expect(within(d).getByRole('button', { name: 'Close controls' })).toHaveFocus();
+    expect(within(d).getByRole('button', { name: 'Take the tutorial' })).toHaveFocus();
   });
 
   it('closes with Escape, the close button and the backdrop', async () => {
@@ -91,16 +94,21 @@ describe('Controls popup', () => {
     expect(dialog()).not.toBeNull();
   });
 
-  it('opens by itself once, on the first visit', async () => {
-    const user = userEvent.setup();
+  it('does not open by itself on a first visit (the welcome dialog does)', () => {
     localStorage.removeItem(SEEN_HELP_KEY);
-    const first = render(<App />);
-    expect(dialog()).not.toBeNull();
-    expect(localStorage.getItem(SEEN_HELP_KEY)).not.toBeNull();
-    await user.keyboard('{Escape}');
-    first.unmount();
-
     render(<App />);
     expect(dialog()).toBeNull();
+  });
+
+  it('Take the tutorial closes it and starts the tutorial; it reads Restart while one runs', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
+    await user.click(within(dialog()!).getByRole('button', { name: 'Take the tutorial' }));
+    expect(dialog()).toBeNull();
+    expect(screen.getByTestId('tutorial-card')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
+    expect(within(dialog()!).getByRole('button', { name: 'Restart tutorial' })).toBeInTheDocument();
+    act(() => endTutorial());
   });
 });

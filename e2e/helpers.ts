@@ -9,7 +9,7 @@ export interface Point {
   y: number;
 }
 
-/** Open the app with the first-visit Controls popup already dismissed. */
+/** Open the app as a return visitor (no first-visit welcome dialog). */
 export async function openApp(page: Page, opts: { clear?: boolean } = {}): Promise<void> {
   await page.addInitScript((clear) => {
     if (clear && !sessionStorage.getItem('e2e-cleared')) {

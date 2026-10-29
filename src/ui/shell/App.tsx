@@ -7,8 +7,11 @@ import { RunPanel } from '../player/RunPanel';
 import { TraceExtraActions } from '../player/traceExtraActions';
 import { TracePlayer } from '../player/TracePlayer';
 import { TraceView } from '../player/TraceView';
+import { TutorialCard } from '../tutorial/TutorialCard';
+import { startTutorial } from '../tutorial/tutorialStore';
+import { WelcomeCard } from '../tutorial/WelcomeCard';
 import { ControlsDialog } from './ControlsDialog';
-import { useControlsHelp } from './help';
+import { useControlsHelp, useWelcome } from './help';
 import { HistoryBar } from './HistoryBar';
 import { useHistoryOpen } from './historyPrefs';
 import { importFile } from './importFile';
@@ -61,6 +64,7 @@ export default function App(): React.JSX.Element {
   const setStep = useAppStore((s) => s.setStep);
   const closeTrace = useAppStore((s) => s.closeTrace);
   const [helpOpen, setHelpOpen] = useControlsHelp();
+  const [welcomeOpen, closeWelcome] = useWelcome();
   const [historyOpen, toggleHistory] = useHistoryOpen();
   const step = trace?.steps[stepIndex];
   const [dockRef, dockHeight] = useDockHeight();
@@ -89,6 +93,7 @@ export default function App(): React.JSX.Element {
         >
           {trace ? <TraceView trace={trace} stepIndex={stepIndex} /> : <Canvas />}
           <KindPill />
+          <TutorialCard />
           <div
             ref={dockRef}
             className="av-dock"
@@ -112,7 +117,24 @@ export default function App(): React.JSX.Element {
         </main>
       </div>
       <Toasts />
-      {helpOpen && <ControlsDialog onClose={() => setHelpOpen(false)} />}
+      {helpOpen && (
+        <ControlsDialog
+          onClose={() => setHelpOpen(false)}
+          onStartTutorial={() => {
+            setHelpOpen(false);
+            startTutorial();
+          }}
+        />
+      )}
+      {welcomeOpen && (
+        <WelcomeCard
+          onClose={closeWelcome}
+          onStart={() => {
+            closeWelcome();
+            startTutorial();
+          }}
+        />
+      )}
     </div>
   );
 }
