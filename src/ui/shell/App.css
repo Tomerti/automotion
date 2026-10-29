@@ -131,7 +131,7 @@ a.av-icon-button {
   gap: 6px;
 }
 .av-topbar-end {
-  gap: 14px;
+  gap: 8px;
 }
 
 .av-brand {
@@ -293,7 +293,7 @@ input.av-switcher-input {
   align-items: center;
 }
 .av-toolbar {
-  gap: 14px;
+  gap: 8px;
 }
 .av-tool-group {
   gap: 2px;
