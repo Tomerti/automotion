@@ -1,14 +1,16 @@
-# Automaton Vis v1 Implementation Plan
+# AutoMotion v1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build automaton-vis v1: a static React app to build, draw, and edit DFAs/NFAs and to step through word runs, NFA→DFA subset construction, and DFA minimization.
+**Goal:** Build automotion v1: a static React app to build, draw, and edit DFAs/NFAs and to step through word runs, NFA→DFA subset construction, and DFA minimization.
 
 **Architecture:** A pure TypeScript `core/` (model, validation, edit ops, algorithms that eagerly produce step-snapshot traces), a `layout/` wrapper around elkjs, a Zustand `store/`, `persistence/` (localStorage + versioned JSON), and React `ui/` (custom SVG canvas, transition table, generic trace player, shell). Dependencies point downward only.
 
 **Tech Stack:** TypeScript (strict), React, Vite, elkjs, Zustand + immer, zod, Vitest, fast-check, React Testing Library, Playwright, ESLint, Prettier, GitHub Actions → GitHub Pages.
 
-**Spec:** `docs/superpowers/specs/2026-10-28-automaton-vis-design.md` (read it first; this plan argues from it).
+**Spec:** `docs/superpowers/specs/2026-10-28-automotion-design.md` (read it first; this plan argues from it).
+
+The project was called Automaton Vis until 2026-10-29; this plan was written under that name and now uses the new one throughout.
 
 ## Global Constraints
 
@@ -19,11 +21,11 @@
 - At most one `Transition` per (from, to) pair.
 - A DFA may be partial; a missing transition means the run gets stuck and rejects.
 - Undo history: per automaton, capped at 100 entries, not persisted.
-- Autosave debounce: 500 ms. Storage key: `automaton-vis:v1`.
-- File format: `{ "format": "automaton-vis", "version": 1, "automata": Automaton[] }`.
+- Autosave debounce: 500 ms. Storage key: `automotion:v1`.
+- File format: `{ "format": "automotion", "version": 1, "automata": Automaton[] }`.
 - Editing is view-only while a trace is open.
 - Desktop-first; nothing in v1 targets touch editing.
-- Deploy to GitHub Pages from `master`; Vite `base` is `/automaton-vis/`.
+- Deploy to GitHub Pages from `master`; Vite `base` is `/automotion/`.
 - Test files are colocated as `*.test.ts(x)` next to the code; Playwright specs live in `e2e/`.
 - Every interactive canvas/table/player element carries a stable `data-testid` (named in each task); the design pass (Task 20) must not rename them.
 
@@ -102,19 +104,19 @@ e2e/
 - Produces: npm scripts `dev`, `build`, `typecheck` (`tsc -b --noEmit`), `lint`, `format`, `test` (`vitest run`), `test:watch`; Vitest config with `environment: 'jsdom'`, `setupFiles: ['src/test/setup.ts']` (imports `@testing-library/jest-dom/vitest`).
 
 - [ ] **Step 1:** Scaffold with `npm create vite@latest . -- --template react-ts` (keep the existing README, CLAUDE.md, PROGRESS.md, docs/). Remove the template's demo assets and CSS. Move `App.tsx` to `src/ui/shell/`.
-- [ ] **Step 2:** Install dev/runtime deps: `zustand immer elkjs zod` and `-D vitest jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event fast-check prettier eslint-config-prettier`. Set `"strict": true` and `noUncheckedIndexedAccess: true` in the app tsconfig. Set Vite `base: '/automaton-vis/'`.
+- [ ] **Step 2:** Install dev/runtime deps: `zustand immer elkjs zod` and `-D vitest jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event fast-check prettier eslint-config-prettier`. Set `"strict": true` and `noUncheckedIndexedAccess: true` in the app tsconfig. Set Vite `base: '/automotion/'`.
 - [ ] **Step 3: Write the failing test**
 
 ```tsx
 // src/ui/shell/App.test.tsx
 it('renders the app title', () => {
   render(<App />);
-  expect(screen.getByRole('heading', { name: 'Automaton Vis' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'AutoMotion' })).toBeInTheDocument();
 });
 ```
 
 - [ ] **Step 4:** Run `npm test`. Expected: FAIL (no heading).
-- [ ] **Step 5:** Make `App` render `<h1>Automaton Vis</h1>`.
+- [ ] **Step 5:** Make `App` render `<h1>AutoMotion</h1>`.
 - [ ] **Step 6:** Run `npm test && npm run typecheck && npm run lint && npm run build`. Expected: all pass.
 - [ ] **Step 7:** Add `.github/workflows/ci.yml`: on push and pull_request, Node LTS, `npm ci`, then `typecheck`, `lint`, `test`.
 - [ ] **Step 8: Commit** — `chore: scaffold Vite React TS app with Vitest, ESLint, Prettier and CI`
@@ -900,10 +902,10 @@ it('done step shows the minimized automaton and Save adds "D (min)"', ...);
 
 **Interfaces:**
 - Produces:
-  - `schema.ts`: zod `automatonSchema`, `fileSchema` (`format: z.literal('automaton-vis')`, `version: z.number().int()`), with a refinement giving `Transition ${id} points to unknown state ${stateId}` and `Symbols must be single characters` errors.
-  - `migrate.ts`: `CURRENT_VERSION = 1`; `migrate(json: unknown): unknown` — passes v1 through; version > current → throws `This file is from a newer version of Automaton Vis`.
-  - `fileFormat.ts`: `serialize(automata: Automaton[]): string` (2-space JSON); `parseFile(text: string, existingIds: Set<string>): { ok: true; automata: Automaton[] } | { ok: false; error: string }` — `Not a valid JSON file`, `Not an Automaton Vis file`, or the first zod issue message; automata whose id is in `existingIds` get `newId()`. All-or-nothing.
-  - `storage.ts`: `STORAGE_KEY = 'automaton-vis:v1'`, `BACKUP_KEY = 'automaton-vis:v1:corrupt-backup'`; `loadFromStorage(storage: Storage | null): { automata: Automaton[]; warning?: string }` — nothing stored → `exampleAutomata()`; unreadable → copy the raw string to `BACKUP_KEY`, return examples and warning `Saved data could not be read; a backup was kept and the examples were loaded`; `storage` null or throwing → examples + warning `Changes won't persist — export to save`. `saveToStorage(storage, automata): boolean`.
+  - `schema.ts`: zod `automatonSchema`, `fileSchema` (`format: z.literal('automotion')`, `version: z.number().int()`), with a refinement giving `Transition ${id} points to unknown state ${stateId}` and `Symbols must be single characters` errors.
+  - `migrate.ts`: `CURRENT_VERSION = 1`; `migrate(json: unknown): unknown` — passes v1 through; version > current → throws `This file is from a newer version of AutoMotion`.
+  - `fileFormat.ts`: `serialize(automata: Automaton[]): string` (2-space JSON); `parseFile(text: string, existingIds: Set<string>): { ok: true; automata: Automaton[] } | { ok: false; error: string }` — `Not a valid JSON file`, `Not an AutoMotion file`, or the first zod issue message; automata whose id is in `existingIds` get `newId()`. All-or-nothing.
+  - `storage.ts`: `STORAGE_KEY = 'automotion:v1'`, `BACKUP_KEY = 'automotion:v1:corrupt-backup'`; `loadFromStorage(storage: Storage | null): { automata: Automaton[]; warning?: string }` — nothing stored → `exampleAutomata()`; unreadable → copy the raw string to `BACKUP_KEY`, return examples and warning `Saved data could not be read; a backup was kept and the examples were loaded`; `storage` null or throwing → examples + warning `Changes won't persist — export to save`. `saveToStorage(storage, automata): boolean`.
   - `useAutosave()`: subscribes to `automata`, debounces 500 ms, calls `saveToStorage`; on the first `false`, one toast `Changes won't persist — export to save`.
   - `examples.ts`: `exampleAutomata(): Automaton[]` — `Ends in ab (NFA)` with an ε-transition, `Even number of 0s (DFA)`, `Redundant states (DFA)` that minimizes to fewer states; hand-placed positions.
   - `toastStore.ts`: `toast(message: string, kind?: 'info' | 'error'): void`; `Toasts` renders them (`role="status"`), auto-dismiss after 5 s.
@@ -999,12 +1001,12 @@ it('ErrorBoundary offers data export after a crash', ...);
 **Interfaces:**
 - Consumes: the `data-testid`s and ARIA names from Tasks 11–18.
 
-- [ ] **Step 1: Write the e2e specs** (Playwright `webServer: npm run build && npm run preview`, `baseURL` ending in `/automaton-vis/` to match the Vite `base`, Chromium only)
+- [ ] **Step 1: Write the e2e specs** (Playwright `webServer: npm run build && npm run preview`, `baseURL` ending in `/automotion/` to match the Vite `base`, Chromium only)
   - `build-and-run`: clear storage; `New DFA`; double-click twice to add `q0`, `q1`; ring-drag q0→q1, type `a`, Enter; select q0 and press `S`, select q1 and press `A`; type `a` in Word, `Run`, click `Next` until the last step; expect `verdict` to have text `Accepted`.
   - `convert`: select the `Ends in ab (NFA)` example, `Convert to DFA`, step to the end, `Save as new automaton`; expect an automaton item named `Ends in ab (NFA) → DFA`.
   - `import-export`: `Export all` (capture the download), clear storage and reload, import the file; expect the same automaton names.
 - [ ] **Step 2:** Run `npx playwright install chromium && npm run e2e`. Expected: 3 passed.
 - [ ] **Step 3:** Add `.github/workflows/deploy.yml`: on push to `master`, build and deploy `dist/` with `actions/upload-pages-artifact` + `actions/deploy-pages` (needs Pages enabled with source "GitHub Actions" in the repo settings: tell the user). Add the e2e job to `ci.yml`.
-- [ ] **Step 4:** Update `README.md` (live URL `https://tomerti.github.io/automaton-vis/`, a screenshot, `npm` scripts) and tick everything done in `PROGRESS.md`.
+- [ ] **Step 4:** Update `README.md` (live URL `https://tomerti.github.io/automotion/`, a screenshot, `npm` scripts) and tick everything done in `PROGRESS.md`.
 - [ ] **Step 5:** Run `npm test && npm run typecheck && npm run lint && npm run build && npm run e2e`. Expected: all pass.
 - [ ] **Step 6: Commit** — `test: e2e smoke tests; ci: deploy to GitHub Pages`
