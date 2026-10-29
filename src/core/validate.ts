@@ -118,8 +118,9 @@ export function validate(a: Automaton): Issue[] {
     );
     const [first] = missing;
     // The alphabet comes from the transitions, so states with none have no symbol to miss.
+    // A lone state with no transitions is a complete DFA over the empty alphabet.
     const reason =
-      a.states.length > 0 && a.alphabet.length === 0
+      a.states.length > 1 && a.alphabet.length === 0
         ? 'it has no transitions yet'
         : first !== undefined
           ? `no ${first}${missing.length > 1 ? ` (and ${missing.length - 1} more)` : ''}`

@@ -150,6 +150,8 @@ describe('validate', () => {
     });
     const blank = fixture({ kind: 'DFA', alphabet: '', states: [] });
     expect(validate(blank).some((i) => i.code === 'incomplete-dfa')).toBe(false);
+    const lone = fixture({ kind: 'DFA', alphabet: '', states: ['q0'], start: 'q0' });
+    expect(validate(lone).some((i) => i.code === 'incomplete-dfa')).toBe(false);
     expect(validate({ ...oneMissing, kind: 'NFA' }).some((i) => i.severity === 'error')).toBe(
       false,
     );
