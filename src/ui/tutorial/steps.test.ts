@@ -222,6 +222,12 @@ describe('advance', () => {
     const p = advance(0, none, ctx(evenZeros(), { isActive: false }));
     expect(p).toMatchObject({ progress: 0, current: 0, completed: null });
   });
+
+  it('keeps the step it fell back to while another automaton is open', () => {
+    const a = { ...evenZeros(), starts: [] };
+    const p = advance(idx('loops'), none, ctx(a, { isActive: false }), idx('start'));
+    expect(p).toMatchObject({ progress: idx('loops'), current: idx('start'), completed: null });
+  });
 });
 
 describe('hints', () => {
@@ -292,7 +298,16 @@ describe('hints', () => {
   });
 
   it('offers undo when every state is gone in part 2', () => {
-    expect(hintText('delete-q1', ctx(tut({})))).toBe('Undo (Ctrl+Z) to bring q_0 back.');
+    expect(hintText('delete-q1', ctx(tut({})))).toBe(
+      'Undo (Ctrl+Z) to bring the start state back.',
+    );
+  });
+
+  it('names the state to delete instead when the start state was deleted', () => {
+    const a = tut({ states: ['x_1'], edges: [['x_1', '1', 'x_1']] });
+    expect(hintText('delete-q1', ctx(a))).toBe(
+      'That was the start state: undo (Ctrl+Z), then delete x_1.',
+    );
   });
 
   it('has no hint on a step going to plan', () => {

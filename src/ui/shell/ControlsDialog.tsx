@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { GestureChip } from './GestureChip';
 import type { Gesture } from './GestureChip';
 import { useTutorial } from '../tutorial/tutorialStore';
 import { CloseIcon } from './icons';
+import { useModalDialog } from './useModalDialog';
 
 interface Row {
   gesture: Gesture;
@@ -110,46 +111,9 @@ export function ControlsDialog({
 }): React.JSX.Element {
   const tutorialRunning = useTutorial((s) => s.active);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const latestClose = useRef(onClose);
   const [tab, setTab] = useState(0);
   const baseId = useId();
-  useEffect(() => {
-    latestClose.current = onClose;
-  });
-
-  useEffect(() => {
-    const before = document.activeElement;
-    // The dialog itself takes focus (no ring on a button when it opens by itself).
-    dialogRef.current?.focus();
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        // Keep Escape from also closing a trace or a menu underneath.
-        e.stopPropagation();
-        latestClose.current();
-      } else if (e.key === 'Tab') {
-        // Keep focus inside the dialog: cycle through the selected tab and the close button.
-        const stops = Array.from(
-          dialogRef.current?.querySelectorAll<HTMLElement>('[data-focus-stop]') ?? [],
-        ).filter((el) => el.tabIndex >= 0);
-        if (stops.length === 0) return;
-        e.preventDefault();
-        const at = stops.indexOf(document.activeElement as HTMLElement);
-        const next = e.shiftKey
-          ? at <= 0
-            ? stops.length - 1
-            : at - 1
-          : at === -1 || at === stops.length - 1
-            ? 0
-            : at + 1;
-        stops[next]?.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => {
-      window.removeEventListener('keydown', onKey, true);
-      if (before instanceof HTMLElement) before.focus();
-    };
-  }, []);
+  useModalDialog(dialogRef, onClose);
 
   const tabKeys = (e: React.KeyboardEvent): void => {
     const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;

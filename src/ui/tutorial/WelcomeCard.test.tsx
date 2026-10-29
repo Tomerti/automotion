@@ -53,3 +53,37 @@ it('Not now and Escape close it without a tutorial', async () => {
   await user.keyboard('{Escape}');
   expect(welcome()).toBeNull();
 });
+
+it('keeps Tab inside the dialog', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  const d = welcome()!;
+  expect(d).toHaveFocus();
+  for (let i = 0; i < 4; i++) {
+    await user.tab();
+    expect(d).toContainElement(document.activeElement as HTMLElement);
+  }
+});
+
+it('? does not open the Controls popup on top of it', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await user.keyboard('?');
+  expect(screen.queryByRole('dialog', { name: 'Controls' })).toBeNull();
+  await user.keyboard('{Escape}');
+  expect(welcome()).toBeNull();
+  await user.keyboard('?');
+  expect(screen.getByRole('dialog', { name: 'Controls' })).toBeInTheDocument();
+});
+
+it('gives focus back to what had it when it closes', async () => {
+  const user = userEvent.setup();
+  const outside = document.createElement('button');
+  document.body.append(outside);
+  outside.focus();
+  render(<App />);
+  expect(welcome()).toHaveFocus();
+  await user.click(within(welcome()!).getByRole('button', { name: 'Not now' }));
+  expect(outside).toHaveFocus();
+  outside.remove();
+});

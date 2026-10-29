@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { CloseIcon } from '../shell/icons';
+import { useModalDialog } from '../shell/useModalDialog';
 import './tutorial.css';
 
 /**
@@ -14,22 +15,7 @@ export function WelcomeCard({
   onClose: () => void;
 }): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
-  const latestClose = useRef(onClose);
-  useEffect(() => {
-    latestClose.current = onClose;
-  });
-
-  useEffect(() => {
-    dialogRef.current?.focus();
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key !== 'Escape') return;
-      // Keep Escape from also reaching the canvas underneath.
-      e.stopPropagation();
-      latestClose.current();
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, []);
+  useModalDialog(dialogRef, onClose);
 
   return (
     <div
@@ -54,6 +40,7 @@ export function WelcomeCard({
             className="av-icon-button"
             aria-label="Close"
             title="Close (Esc)"
+            data-focus-stop
             onClick={onClose}
           >
             <CloseIcon />
@@ -63,10 +50,10 @@ export function WelcomeCard({
           Learn the basics by building a small automaton, about two minutes.
         </p>
         <div className="av-welcome-actions">
-          <button type="button" onClick={onClose}>
+          <button type="button" data-focus-stop onClick={onClose}>
             Not now
           </button>
-          <button type="button" className="av-primary" onClick={onStart}>
+          <button type="button" className="av-primary" data-focus-stop onClick={onStart}>
             Start tutorial
           </button>
         </div>

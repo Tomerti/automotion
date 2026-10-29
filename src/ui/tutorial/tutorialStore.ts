@@ -57,7 +57,7 @@ function follow(app: AppState): void {
     endTutorial();
     return;
   }
-  const next = advance(t.progress, t.latched, ctx);
+  const next = advance(t.progress, t.latched, ctx, t.current);
   const done = next.completed === null ? null : STEPS.find((s) => s.id === next.completed);
   // Behind the furthest step (something came undone), no ✓ for what is no longer true.
   const confirmation =

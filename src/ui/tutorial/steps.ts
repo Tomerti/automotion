@@ -260,11 +260,14 @@ const SPECS: StepSpec[] = [
           a.accepting.includes(r.q0.id),
       ),
     hint: (ctx) =>
-      onAutomaton(ctx, null, (a, r) =>
-        a.states.length === 0 || (a.states.length === 1 && !(r.q0 && a.accepting.includes(r.q0.id)))
-          ? 'Undo (Ctrl+Z) to bring q_0 back.'
-          : null,
-      ),
+      onAutomaton(ctx, null, (a, r) => {
+        if (a.states.length === 0) return 'Undo (Ctrl+Z) to bring the start state back.';
+        // One state left that isn't the start: the start state went instead of q1 (the one left).
+        if (a.states.length === 1 && r.q0 && !startStates(a).includes(r.q0.id)) {
+          return `That was the start state: undo (Ctrl+Z), then delete ${r.q0.label}.`;
+        }
+        return null;
+      }),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q1)),
   },
   {
@@ -391,30 +394,32 @@ export function advance(
   progress: number,
   latched: ReadonlySet<StepId>,
   ctx: TutorialContext,
+  /** The step on the card now: kept as it is while another automaton is open. */
+  current: number = progress,
 ): Progress {
   let completed: StepId | null = null;
-  if (!ctx.isActive || !ctx.automaton) return { progress, current: progress, latched, completed };
+  if (!ctx.isActive || !ctx.automaton) return { progress, current, latched, completed };
   let held = latched;
   for (;;) {
     const isDone = (i: number): boolean => {
       const s = STEPS[i]!;
       return s.run ? held.has(s.id) : s.done(ctx);
     };
-    let current: number | undefined;
+    let undone: number | undefined;
     for (let i = partStart(progress); i <= progress; i++) {
       if (!isDone(i)) {
-        current = i;
+        undone = i;
         break;
       }
     }
-    if (current !== undefined) {
-      const s = STEPS[current]!;
+    if (undone !== undefined) {
+      const s = STEPS[undone]!;
       if (s.run && runSucceeded(s, ctx)) {
         held = new Set([...held, s.id]);
-        if (current === progress) completed = s.id;
+        if (undone === progress) completed = s.id;
         continue;
       }
-      return { progress, current, latched: held, completed };
+      return { progress, current: undone, latched: held, completed };
     }
     if (progress === LAST) return { progress, current: LAST, latched: held, completed };
     completed = STEPS[progress]!.id;

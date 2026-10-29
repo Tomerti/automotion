@@ -120,6 +120,21 @@ describe('following the app', () => {
     expect(tut().current).toBe(0);
   });
 
+  it('keeps showing the step it fell back to while another automaton is open', () => {
+    resetAppStore({ automata: [loop()] });
+    startTutorial();
+    app().edit((a) => addState(a, { x: 0, y: 0 }));
+    const id = active()!.states[0]!.id;
+    app().edit((a) => setStart(a, id));
+    app().edit((a) => toggleAccepting(a, id));
+    app().edit((a) => addState(a, { x: 100, y: 0 }));
+    expect(tut()).toMatchObject({ progress: 4, current: 4 });
+    app().edit((a) => toggleAccepting(a, id));
+    expect(tut()).toMatchObject({ progress: 4, current: 2 });
+    app().setActive('mine');
+    expect(tut().current).toBe(2);
+  });
+
   it('ends when its automaton is deleted, leaving other work alone', () => {
     resetAppStore({ automata: [loop()] });
     startTutorial();
