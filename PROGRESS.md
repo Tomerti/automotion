@@ -33,6 +33,11 @@ Nothing in progress: pick the next task from the list below.
 
 ### Fixes
 
+- [x] A 0 in the tutorial's words and on the run tape read as ∅ (Geist Mono's slashed zero): both are set in Geist now, and Geist Mono is no longer loaded
+- [x] The tutorial's pointer on a run step frames the whole run pill, Run button included, not just the word box
+- [x] Finishing the tutorial (Finish, or X on the closing card) also closes its last run, back to editing
+- [x] The welcome dialog is centred on the canvas, in line with the run pill, and covers the empty canvas's hint
+
 - [x] Replaying a run (Play at the end, First, scrubbing to step 1) plays the Run chime again
 - [x] A new transition's arrow stays on screen while its symbols are typed
 - [x] A new transition's symbol input opens where its label will be drawn, not on the arrow

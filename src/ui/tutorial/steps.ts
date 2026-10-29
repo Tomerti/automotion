@@ -88,7 +88,8 @@ function onAutomaton<T>(
 /** The state's circle: its start arrow carries the same `data-state-id` and comes first. */
 const stateTarget = (s: State | undefined): string | null =>
   s ? `[data-testid="canvas"] [data-state-id="${s.id}"] .av-state-body` : null;
-const WORD_BOX = 'input[aria-label="Word"]';
+/** The whole run pill, so the frame takes in the Run button too. */
+const RUN_PILL = 'form:has(input[aria-label="Word"])';
 
 /** An edge the step draws, and the symbols it should read. */
 interface WantedEdge {
@@ -236,7 +237,7 @@ const SPECS: StepSpec[] = [
     gesture: () => RUN_GESTURE,
     confirmation: () => '`1010` is accepted',
     run: { word: '1010', accepted: true },
-    target: () => WORD_BOX,
+    target: () => RUN_PILL,
   },
   {
     id: 'run-10',
@@ -246,7 +247,7 @@ const SPECS: StepSpec[] = [
     gesture: () => ({ keys: ['Esc'], on: 'then Enter in “Test a word”' }),
     confirmation: () => '`10` is rejected: an odd number of 0s',
     run: { word: '10', accepted: false },
-    target: () => WORD_BOX,
+    target: () => RUN_PILL,
   },
   {
     id: 'delete-q1',
@@ -303,7 +304,7 @@ const SPECS: StepSpec[] = [
     gesture: () => RUN_GESTURE,
     confirmation: () => '`10` is accepted now',
     run: { word: '10', accepted: true },
-    target: () => WORD_BOX,
+    target: () => RUN_PILL,
   },
   {
     id: 'done',

@@ -128,6 +128,7 @@ export default function App(): React.JSX.Element {
       )}
       {welcomeOpen && (
         <WelcomeCard
+          besideHistory={historyOpen}
           onClose={closeWelcome}
           onStart={() => {
             closeWelcome();

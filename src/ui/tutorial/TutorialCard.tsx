@@ -5,7 +5,7 @@ import { GestureChip } from '../shell/GestureChip';
 import { CloseIcon } from '../shell/icons';
 import { COUNTED_STEPS, PART_TITLES, STEPS } from './steps';
 import { TutorialPointer } from './TutorialPointer';
-import { endTutorial, quitTutorial, tutorialContext, useTutorial } from './tutorialStore';
+import { finishTutorial, quitTutorial, tutorialContext, useTutorial } from './tutorialStore';
 import './tutorial.css';
 
 /** Words in backticks as <code>; the rest with label subscripts. */
@@ -98,7 +98,7 @@ export function TutorialCard(): React.JSX.Element | null {
           aria-label="End tutorial"
           title="End tutorial"
           // Nothing to lose once it's done: close it like Finish. Midway, ask first.
-          onClick={last ? endTutorial : () => setQuitFor(automatonId)}
+          onClick={last ? finishTutorial : () => setQuitFor(automatonId)}
         >
           <CloseIcon />
         </button>
@@ -183,7 +183,7 @@ export function TutorialCard(): React.JSX.Element | null {
           </ol>
           {last && (
             <div className="av-tutorial-actions">
-              <button type="button" className="av-go" onClick={endTutorial}>
+              <button type="button" className="av-go" onClick={finishTutorial}>
                 Finish
               </button>
             </div>
