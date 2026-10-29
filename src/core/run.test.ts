@@ -29,6 +29,9 @@ const abDfa = fixture({
   edges: [['q0', 'a', 'q1']],
 });
 
+/** `abDfa` as an NFA: a DFA must be complete to run, so only an NFA run can get stuck. */
+const abNfa = { ...abDfa, kind: 'NFA' as const };
+
 const epsNfa = fixture({
   kind: 'NFA',
   alphabet: 'a',
@@ -57,7 +60,7 @@ describe('runWord', () => {
     expect(t.steps.map((s) => s.phase)).toEqual(['start', 'verdict']);
     expect(t.steps[0]).toMatchObject({ position: 0, before: [], active: ['even'] });
     expect(t.accepted).toBe(true);
-    const r = runWord(abDfa, '');
+    const r = runWord(abNfa, '');
     expect(r.accepted).toBe(false);
     expect(r.steps[1]?.explanation).toBe('Reject: no accepting state in {q0}');
   });
@@ -78,7 +81,7 @@ describe('runWord', () => {
   });
 
   it('stuck run ends with a stuck reject step', () => {
-    const t = runWord(abDfa, 'ab');
+    const t = runWord(abNfa, 'ab');
     expect(t.steps.at(-1)).toMatchObject({
       phase: 'stuck',
       verdict: 'reject',
@@ -118,7 +121,7 @@ describe('runWord', () => {
   });
 
   it('throws the canRun reason', () => {
-    expect(() => runWord(abDfa, 'c')).toThrow("'c' is not in the alphabet {a, b}");
+    expect(() => runWord(abNfa, 'c')).toThrow("'c' is not in the alphabet {a, b}");
   });
 
   it('property: verdict equals accepts()', () => {
@@ -141,8 +144,14 @@ describe('canRun', () => {
     expect(canRun(removeState(evenZeros, 'even'), '0')).toBe('Set a start state first');
   });
   it('names the first bad character', () => {
-    expect(canRun(abDfa, 'ab c')).toBe("' ' is not in the alphabet {a, b}");
-    expect(canRun(abDfa, 'ab')).toBeNull();
+    expect(canRun(abNfa, 'ab c')).toBe("' ' is not in the alphabet {a, b}");
+    expect(canRun(abNfa, 'ab')).toBeNull();
+  });
+  it('refuses an incomplete DFA', () => {
+    expect(canRun(abDfa, 'a')).toBe(
+      'Complete the DFA first: every state needs a transition on every symbol',
+    );
+    expect(() => runWord(abDfa, 'a')).toThrow('Complete the DFA first');
   });
   it('prints an empty alphabet as {}', () => {
     const a = fixture({ kind: 'DFA', alphabet: '', states: ['q0'], start: 'q0' });

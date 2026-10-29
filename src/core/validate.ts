@@ -3,6 +3,8 @@ import type { Automaton, StateId } from './model';
 
 export interface Issue {
   severity: 'error' | 'warning';
+  /** Set on an issue some actions tolerate: minimization completes a partial DFA itself. */
+  code?: 'incomplete-dfa';
   message: string;
   stateId?: StateId;
   transitionId?: string;
@@ -108,16 +110,19 @@ export function validate(a: Automaton): Issue[] {
     issues.push({ severity: 'warning', message: 'No accepting states' });
   }
 
-  if (a.kind === 'DFA' && a.states.length > 0 && a.alphabet.length > 0) {
-    const partial = a.states.some((st) =>
-      a.alphabet.some(
-        (sym) => !a.transitions.some((t) => t.from === st.id && t.symbols.includes(sym)),
-      ),
+  if (a.kind === 'DFA') {
+    const missing = a.states.flatMap((st) =>
+      a.alphabet
+        .filter((sym) => !a.transitions.some((t) => t.from === st.id && t.symbols.includes(sym)))
+        .map((sym) => `'${sym}' transition from ${st.label}`),
     );
-    if (partial) {
+    const [first] = missing;
+    if (first !== undefined) {
+      const more = missing.length > 1 ? ` (and ${missing.length - 1} more)` : '';
       issues.push({
-        severity: 'warning',
-        message: 'DFA is partial: a missing transition rejects the word',
+        severity: 'error',
+        code: 'incomplete-dfa',
+        message: `DFA is incomplete: no ${first}${more}`,
       });
     }
   }
@@ -127,4 +132,9 @@ export function validate(a: Automaton): Issue[] {
 
 export function hasErrors(issues: Issue[]): boolean {
   return issues.some((i) => i.severity === 'error');
+}
+
+/** `issues` without the incomplete-DFA error, for actions that complete a partial DFA themselves. */
+export function ignoringIncomplete(issues: Issue[]): Issue[] {
+  return issues.filter((i) => i.code !== 'incomplete-dfa');
 }

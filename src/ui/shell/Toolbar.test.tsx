@@ -150,7 +150,10 @@ describe('Toolbar', () => {
       alphabet: 'a',
       states: ['q0', 'q1'],
       start: 'q0',
-      edges: [['q0', 'a', 'q1']],
+      edges: [
+        ['q0', 'a', 'q1'],
+        ['q1', 'a', 'q1'],
+      ],
       name: 'd',
     });
     resetAppStore({ automata: [d], activeId: 'd' });

@@ -13,7 +13,7 @@ import {
 import type { Automaton } from './model';
 import { arbDfa, arbNfa, arbWord } from './testing/arbitraries';
 import { fixture } from './testing/fixtures';
-import { hasErrors, validate } from './validate';
+import { hasErrors, ignoringIncomplete, validate } from './validate';
 
 const chain = fixture({
   kind: 'NFA',
@@ -149,7 +149,7 @@ describe('accepts', () => {
 describe('arbitraries', () => {
   it('produce valid automata', () => {
     fc.assert(fc.property(arbNfa(), (a) => !hasErrors(validate(a))));
-    fc.assert(fc.property(arbDfa(), (a) => !hasErrors(validate(a))));
+    fc.assert(fc.property(arbDfa(), (a) => !hasErrors(ignoringIncomplete(validate(a)))));
   });
   it('respect their options', () => {
     fc.assert(

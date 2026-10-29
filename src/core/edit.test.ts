@@ -193,6 +193,17 @@ describe('kind and name', () => {
     expect(setKind(nfaWithEpsilon(), 'NFA').ok).toBe(true);
   });
 
+  it('setKind to DFA allows an incomplete result', () => {
+    const partial = fixture({
+      kind: 'NFA',
+      alphabet: 'a',
+      states: ['q0', 'q1'],
+      start: 'q0',
+      edges: [['q0', 'a', 'q1']],
+    });
+    expect(setKind(partial, 'DFA').ok).toBe(true);
+  });
+
   it('renames the automaton', () => {
     expect(renameAutomaton(dfa(), 'X').name).toBe('X');
   });

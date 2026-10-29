@@ -21,8 +21,16 @@ const parity = fixture({
     ['q_0', 'a', 'q_1'],
     ['q_1', 'a', 'q_0'],
     ['q_0', 'b', 'q_0'],
+    ['q_1', 'b', 'q_1'],
   ],
 });
+
+/** `parity` without q_1's 'b' transition, as an NFA (a DFA must be complete to run): 'ab' gets stuck. */
+const stuckParity = {
+  ...parity,
+  kind: 'NFA' as const,
+  transitions: parity.transitions.filter((t) => !(t.from === 'q_1' && t.symbols.includes('b'))),
+};
 
 /** NFA guessing the last symbol is 'a': q0 loops, q0 -a-> q1 (accepting), q1 has no moves. */
 const endsInA = fixture({
@@ -70,7 +78,7 @@ describe('tape', () => {
   });
 
   it('a stuck step points the head at the symbol it cannot read', () => {
-    const { steps } = runWord(parity, 'abb');
+    const { steps } = runWord(stuckParity, 'abb');
     const stuck = stepOf(steps, steps.length - 1);
     expect(stuck.phase).toBe('stuck');
     expect(readHead(stuck, 3)).toEqual({ cell: 1, waiting: false });
@@ -123,11 +131,11 @@ describe('stepMotion', () => {
   });
 
   it('a stuck step kills every branch and rests on the states it was in', () => {
-    const { steps } = runWord(parity, 'ab');
+    const { steps } = runWord(stuckParity, 'ab');
     const stuck = stepOf(steps, steps.length - 1);
     expect(stuck.phase).toBe('stuck');
-    expect(stepMotion(parity, stuck)).toBeNull();
-    expect(deadBranches(parity, stuck)).toEqual(['q_1']);
+    expect(stepMotion(stuckParity, stuck)).toBeNull();
+    expect(deadBranches(stuckParity, stuck)).toEqual(['q_1']);
     expect(restingStates(stuck)).toEqual(['q_1']);
     expect(restingStates(stepOf(steps, 1))).toEqual(['q_1']);
   });
@@ -141,7 +149,7 @@ describe('verdictReason', () => {
   });
 
   it('a stuck run names the symbol and the state', () => {
-    expect(verdictReason(runWord(parity, 'ab'))).toBe("Stuck: no 'b' transition from q_1");
+    expect(verdictReason(runWord(stuckParity, 'ab'))).toBe("Stuck: no 'b' transition from q_1");
   });
 
   it('NFA verdicts talk about the set of active states', () => {

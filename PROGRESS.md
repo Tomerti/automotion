@@ -109,6 +109,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Step forward and back through the run, highlighting active states and the transition taken
 - [x] Play the whole run automatically
 - [x] Show accept or reject at the end
+- [x] An incomplete DFA can't be run: it is a red error in the issues chip and Run says why
 
 ### Persistence
 

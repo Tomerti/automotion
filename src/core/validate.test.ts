@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasErrors, validate } from './validate';
+import { hasErrors, ignoringIncomplete, validate } from './validate';
 import { fixture } from './testing/fixtures';
 
 const dfa = () =>
@@ -93,7 +93,7 @@ describe('validate', () => {
     );
   });
 
-  it('warns: no start, no accepting, unreachable q2, partial DFA (exactly one partial warning)', () => {
+  it('warns: no start, no accepting, unreachable q2', () => {
     const noStart = validate(
       fixture({ kind: 'NFA', alphabet: 'a', states: ['q0'], accepting: ['q0'] }),
     );
@@ -110,10 +110,41 @@ describe('validate', () => {
     const messages = issues.map((i) => i.message);
     expect(messages).toContain('No accepting states');
     expect(messages).toContain('q2 is unreachable');
-    expect(messages.filter((m) => m.startsWith('DFA is partial'))).toEqual([
-      'DFA is partial: a missing transition rejects the word',
+    expect(issues.filter((i) => i.severity === 'warning').map((i) => i.message)).toEqual([
+      'q2 is unreachable',
+      'No accepting states',
     ]);
-    expect(issues.every((i) => i.severity === 'warning')).toBe(true);
+  });
+
+  it('an incomplete DFA is one error naming the first missing transition', () => {
+    const a = fixture({
+      kind: 'DFA',
+      alphabet: 'ab',
+      states: ['q0', 'q1', 'q2'],
+      start: 'q0',
+      edges: [['q0', 'a', 'q1']],
+    });
+    expect(validate(a).filter((i) => i.code === 'incomplete-dfa')).toEqual([
+      {
+        severity: 'error',
+        code: 'incomplete-dfa',
+        message: "DFA is incomplete: no 'b' transition from q0 (and 4 more)",
+      },
+    ]);
+    const oneMissing = fixture({
+      kind: 'DFA',
+      alphabet: 'a',
+      states: ['q0', 'q1'],
+      start: 'q0',
+      edges: [['q0', 'a', 'q1']],
+    });
+    expect(validate(oneMissing).map((i) => i.message)).toContain(
+      "DFA is incomplete: no 'a' transition from q1",
+    );
+    expect(hasErrors(ignoringIncomplete(validate(oneMissing)))).toBe(false);
+    expect(validate({ ...oneMissing, kind: 'NFA' }).some((i) => i.severity === 'error')).toBe(
+      false,
+    );
   });
 
   it('hasErrors ignores warnings', () => {

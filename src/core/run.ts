@@ -4,7 +4,7 @@ import { formatSet } from './format';
 import { EPSILON, startStates } from './model';
 import type { Automaton, StateId } from './model';
 import type { RunStep, RunTrace } from './trace';
-import { hasErrors, validate } from './validate';
+import { hasErrors, ignoringIncomplete, validate } from './validate';
 
 /**
  * The word to run for what the user typed: `\epsilon` reads as ε, and ε is the empty word, so
@@ -17,7 +17,11 @@ export function readWord(text: string): string {
 /** Why `word` can't be run on `a`, or null when it can. */
 export function canRun(a: Automaton, word: string): string | null {
   if (startStates(a).length === 0) return 'Set a start state first';
-  if (hasErrors(validate(a))) return 'Fix the errors in the automaton first';
+  const issues = validate(a);
+  if (hasErrors(ignoringIncomplete(issues))) return 'Fix the errors in the automaton first';
+  if (issues.some((i) => i.code === 'incomplete-dfa')) {
+    return 'Complete the DFA first: every state needs a transition on every symbol';
+  }
   for (const ch of [...word]) {
     if (!a.alphabet.includes(ch)) {
       return `'${ch}' is not in the alphabet {${a.alphabet.join(', ')}}`;

@@ -1,7 +1,7 @@
 import { newId } from './id';
 import { EPSILON } from './model';
 import type { Automaton, AutomatonKind, StateId, Sym, Transition } from './model';
-import { hasErrors, validate } from './validate';
+import { hasErrors, ignoringIncomplete, validate } from './validate';
 import type { Issue } from './validate';
 
 export function nextStateLabel(a: Automaton): string {
@@ -224,7 +224,7 @@ export function setKind(
 ): { ok: true; automaton: Automaton } | { ok: false; issues: Issue[] } {
   const next: Automaton = { ...a, kind };
   if (kind === 'DFA') {
-    const issues = validate(next);
+    const issues = ignoringIncomplete(validate(next));
     if (hasErrors(issues))
       return { ok: false, issues: issues.filter((i) => i.severity === 'error') };
   }
