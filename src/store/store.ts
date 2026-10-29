@@ -42,10 +42,12 @@ export interface AppState {
 
 type Initial = Partial<Pick<AppState, 'automata' | 'activeId'>>;
 
-/** No kind in the name: the kind can be switched right after creating it. */
-function freeName(automata: Automaton[]): string {
+/**
+ * `base`, or `base 2`, `base 3`, … if taken. No kind in the name: the kind can be switched right
+ * after creating it.
+ */
+export function freeName(automata: Automaton[], base = 'Untitled'): string {
   const taken = new Set(automata.map((a) => a.name));
-  const base = 'Untitled';
   let name = base;
   for (let n = 2; taken.has(name); n++) name = `${base} ${n}`;
   return name;
