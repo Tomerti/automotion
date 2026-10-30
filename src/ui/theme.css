@@ -2,9 +2,9 @@
  * AutoMotion theme: a marked-up problem set.
  *
  * The canvas is dotted engineering paper and the diagram is ink on it. Processes are marked
- * up in four distinct pens: orange for the run (active states, taken edges, the tape's read
- * cell, the Run button), red for errors and rejections, blue for your own selection, green for
- * acceptance, and
+ * up in distinct pens: orange for the run (active states, taken edges, the tape's read cell,
+ * the Run button) and for your own selection while editing, red for errors and rejections,
+ * green for acceptance, and
  * marker tints for the blocks of a minimization. Everything is set in Geist, the tape too: a
  * monospace's slashed 0 reads as ∅. The tutorial's words and symbols to type are the exception:
  * Geist's 0 reads as O there, so they use IBM Plex Mono's dotted 0. The loud element is the run's input tape with
@@ -58,7 +58,8 @@
   --av-edge-stroke: #3a4356;
   --av-text: var(--av-ink);
   --av-label-halo: var(--av-paper);
-  --av-selected: var(--av-accent);
+  /* The run's orange: selection only shows while editing, when no run is open. */
+  --av-selected: var(--av-run);
   --av-active: var(--av-highlighter-ink);
   --av-active-stroke: var(--av-highlighter-ink);
   --av-active-fill: var(--av-highlighter-soft);
