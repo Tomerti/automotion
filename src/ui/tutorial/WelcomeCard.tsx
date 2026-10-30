@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { CloseIcon } from '../shell/icons';
 import { useModalDialog } from '../shell/useModalDialog';
+import { WelcomeDemo } from './WelcomeDemo';
 import './tutorial.css';
 
 /** What the tutorial covers, one row each, like the Controls popup's rows. */
@@ -55,6 +56,7 @@ export function WelcomeCard({
           </button>
         </header>
         <p className="av-welcome-tagline">Watch automata come to life.</p>
+        <WelcomeDemo />
         <p className="av-welcome-text">A two-minute tutorial:</p>
         <ol className="av-welcome-plan">
           {PLAN.map((p, i) => (

@@ -264,3 +264,17 @@ describe('RunTraceView sound', () => {
     expect(playVerdictSound).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('RunTraceView ambient', () => {
+  it('stays silent and shows no verdict banner, leaving the verdict to the tokens', () => {
+    const trace = runWord(parity, 'ab');
+    const { rerender } = render(
+      <RunTraceView trace={trace} stepIndex={lastIndex(trace)} ambient />,
+    );
+    expect(screen.queryByTestId('verdict')).toBeNull();
+    expect(playVerdictSound).not.toHaveBeenCalled();
+    rerender(<RunTraceView trace={trace} stepIndex={0} ambient />);
+    expect(playRunSound).not.toHaveBeenCalled();
+    expect(tokensOn()).toEqual(['q_0']);
+  });
+});

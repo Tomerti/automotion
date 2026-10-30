@@ -24,6 +24,7 @@ it('opens by itself on a first visit, instead of the Controls popup', () => {
   expect(screen.queryByRole('dialog', { name: 'Controls' })).toBeNull();
   expect(within(welcome()!).getByText('Watch automata come to life.')).toBeInTheDocument();
   expect(within(welcome()!).getByText(/Press \? at any time/)).toBeInTheDocument();
+  expect(within(welcome()!).getByTestId('welcome-demo')).toHaveAttribute('aria-hidden', 'true');
 });
 
 it('opens again after a reload until it is answered, then never again', async () => {

@@ -374,10 +374,19 @@ select.av-player-speed:hover {
   font-weight: 700;
   fill: var(--av-active, #d9480f);
 }
+/*
+ * It pops by its font size (15px in diagramStyles), not a transform: a transform animation on
+ * SVG text made Chrome redraw the whole diagram soft and shifted while it ran at fractional
+ * display scaling (125%, 150%), so every state label stuttered on each step. Its centre anchor
+ * keeps it growing in place.
+ */
 .av-run-view[data-moving] .av-edge[data-taken='true'] .av-edge-label {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: av-pop 280ms ease-out;
+  animation: av-pop-label 280ms ease-out;
+}
+@keyframes av-pop-label {
+  from {
+    font-size: 17.25px;
+  }
 }
 
 /* The verdict: a banner over the top of the diagram, with the reason under it. */

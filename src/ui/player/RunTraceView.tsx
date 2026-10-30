@@ -19,6 +19,11 @@ import { useFittedViewport } from './useFittedViewport';
 export interface RunTraceViewProps {
   trace: RunTrace;
   stepIndex: number;
+  /**
+   * A run played on its own as decoration (the welcome's demo): silent, at 1× whatever the
+   * player's speed, and without the verdict banner (the tokens' tint shows the verdict).
+   */
+  ambient?: boolean;
 }
 
 /** The step being animated, and which of its waves is moving. */
@@ -276,10 +281,15 @@ function VerdictBanner({ trace }: { trace: RunTrace }): React.JSX.Element {
   );
 }
 
-export function RunTraceView({ trace, stepIndex }: RunTraceViewProps): React.JSX.Element {
+export function RunTraceView({
+  trace,
+  stepIndex,
+  ambient = false,
+}: RunTraceViewProps): React.JSX.Element {
   const step = trace.steps[stepIndex];
   const { ref, viewport } = useFittedViewport(trace.source.states);
-  const speed = usePlaybackSpeed();
+  const playerSpeed = usePlaybackSpeed();
+  const speed = ambient ? 1 : playerSpeed;
   const motion = useMemo(
     () => (step ? stepMotion(trace.source, step) : null),
     [trace.source, step],
@@ -302,8 +312,9 @@ export function RunTraceView({ trace, stepIndex }: RunTraceViewProps): React.JSX
   useEffect(() => {
     const prev = shown.current;
     shown.current = { trace, stepIndex };
+    if (ambient) return;
     if (stepIndex === 0 && prev.trace === trace && prev.stepIndex !== 0) playRunSound();
-  }, [trace, stepIndex]);
+  }, [trace, stepIndex, ambient]);
 
   if (!step) return <div className="av-trace-view" />;
 
@@ -335,7 +346,7 @@ export function RunTraceView({ trace, stepIndex }: RunTraceViewProps): React.JSX
             }
           />
         </Diagram>
-        {isLast && <VerdictBanner trace={trace} />}
+        {isLast && !ambient && <VerdictBanner trace={trace} />}
       </div>
     </div>
   );

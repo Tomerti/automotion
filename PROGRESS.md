@@ -28,12 +28,15 @@ Nothing in progress: pick the next task from the list below.
 - [x] A first visit opens a welcome dialog offering the tutorial (instead of the Controls popup); Controls has Take / Restart tutorial
 - [x] The tutorial works on its own "Tutorial" automaton (reusing an empty one), which stays in history
 - [x] UI pass: the welcome is Controls-sized and styled, with the "Watch automata come to life" tagline and an orange Start tutorial pill like Run
+- [x] The welcome shows a live demo under the tagline: the "ends in 01" NFA running random words forever with the run view's animation (silent, no controls, no verdict banner)
 - [x] The coach card is a checklist: each step done gets a green ✓ and the next one appears on a new line; a finished part folds into one ticked line
 - [x] The pointer is orange corner brackets instead of a blue ring (which looked like an accepting state)
 - [x] X midway asks before quitting, and quitting (or restarting) removes the unfinished Tutorial automaton from history; Finish keeps it
 
 ### Fixes
 
+- [x] State labels stuttered on every run step at 125%/150% display scaling: the taken edge label's pop was a transform animation on SVG text, which made Chrome redraw the diagram soft and shifted while it ran; it pops by font size now (e2e `welcome-demo.spec.ts` checks at 1.5×)
+- [x] At 100% too, with GPU raster (seen on Windows Chrome), each state's `q` hopped 1 px up and down on every run step (subscripts held still): hinting put its baseline on a different pixel row on different repaints. Diagram text is unhinted now (`text-rendering: geometricPrecision`); Playwright's bundled Chromium doesn't show it, so it was measured from screencast frames in real Chrome
 - [x] A 0 in the tutorial's words and on the run tape read as ∅ (Geist Mono's slashed zero): both are set in Geist now, and Geist Mono is no longer loaded
 - [x] The tutorial's pointer on a run step frames the whole run pill, Run button included, not just the word box
 - [x] Finishing the tutorial (Finish, or X on the closing card) also closes its last run, back to editing

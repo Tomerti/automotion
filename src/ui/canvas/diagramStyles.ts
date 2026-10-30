@@ -2,9 +2,13 @@
  * Stylesheet embedded in the diagram's <svg>, so an exported SVG is self-contained.
  * Colours come from the theme tokens in src/ui/theme.css; fallbacks are the light theme's
  * values and must stay plain (no parentheses) so the exporter can resolve them.
+ *
+ * Text is drawn at its exact position (geometricPrecision, no hinting): hinted, Chrome's GPU
+ * raster put a label's baseline on one pixel row on some repaints and the next on others, so the
+ * labels hopped 1 px on every run step.
  */
 export const diagramStyles = `
-.av-diagram { background: var(--av-canvas-bg, transparent); font-family: var(--av-font, Geist, system-ui, sans-serif); user-select: none; }
+.av-diagram { background: var(--av-canvas-bg, transparent); font-family: var(--av-font, Geist, system-ui, sans-serif); text-rendering: geometricPrecision; user-select: none; }
 .av-state-body { fill: var(--av-state-fill, #ffffff); stroke: var(--av-state-stroke, #1c2333); stroke-width: 1.75; transition: fill 0.2s, stroke 0.2s, opacity 0.2s; }
 .av-state-ring { fill: none; stroke: var(--av-state-stroke, #1c2333); stroke-width: 1.5; transition: stroke 0.2s; }
 .av-state-label { fill: var(--av-text, #1c2333); font-size: 15px; font-weight: 500; text-anchor: middle; dominant-baseline: central; pointer-events: none; transition: fill 0.2s; }
