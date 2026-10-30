@@ -1,16 +1,18 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runWord } from '../../core/run';
 import { fixture } from '../../core/testing/fixtures';
 import type { RunTrace } from '../../core/trace';
 import { RunTraceView } from './RunTraceView';
-import { playRunSound } from './sound';
+import { playRunSound, playVerdictSound } from './sound';
 
 vi.mock('./sound', () => ({ playRunSound: vi.fn(), playVerdictSound: vi.fn() }));
 
 afterEach(() => {
   cleanup();
   vi.mocked(playRunSound).mockClear();
+  vi.mocked(playVerdictSound).mockClear();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -245,5 +247,20 @@ describe('RunTraceView sound', () => {
     // A new run opens at its first step: that chime is the Run button's.
     rerender(<RunTraceView trace={runWord(parity, 'a')} stepIndex={0} />);
     expect(playRunSound).toHaveBeenCalledTimes(1);
+  });
+
+  it('plays the verdict cue once under StrictMode, and again on a replay to the end', () => {
+    const trace = runWord(parity, 'ab');
+    const at = (i: number) => (
+      <StrictMode>
+        <RunTraceView trace={trace} stepIndex={i} />
+      </StrictMode>
+    );
+    const { rerender } = render(at(lastIndex(trace)));
+    expect(playVerdictSound).toHaveBeenCalledTimes(1);
+    expect(playVerdictSound).toHaveBeenLastCalledWith(true);
+    rerender(at(0));
+    rerender(at(lastIndex(trace)));
+    expect(playVerdictSound).toHaveBeenCalledTimes(2);
   });
 });

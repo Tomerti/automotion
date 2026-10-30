@@ -250,7 +250,14 @@ function RunOverlay(props: {
 }
 
 function VerdictBanner({ trace }: { trace: RunTrace }): React.JSX.Element {
-  useEffect(() => playVerdictSound(trace.accepted), [trace]);
+  // Once per mount and trace: StrictMode runs a mount effect twice in development (keeping refs),
+  // which played the cue twice. A replay remounts the banner, so it still plays again.
+  const played = useRef<RunTrace | null>(null);
+  useEffect(() => {
+    if (played.current === trace) return;
+    played.current = trace;
+    playVerdictSound(trace.accepted);
+  }, [trace]);
   return (
     <div
       className="av-verdict"
