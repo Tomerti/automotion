@@ -8,7 +8,8 @@ import { TraceExtraActions } from '../player/traceExtraActions';
 import { TracePlayer } from '../player/TracePlayer';
 import { TraceView } from '../player/TraceView';
 import { TutorialCard } from '../tutorial/TutorialCard';
-import { startTutorial } from '../tutorial/tutorialStore';
+import { FinishedCard } from '../tutorial/FinishedCard';
+import { closeCelebration, startTutorial, useTutorial } from '../tutorial/tutorialStore';
 import { WelcomeCard } from '../tutorial/WelcomeCard';
 import { ControlsDialog } from './ControlsDialog';
 import { useControlsHelp, useWelcome } from './help';
@@ -66,6 +67,7 @@ export default function App(): React.JSX.Element {
   const [helpOpen, setHelpOpen] = useControlsHelp();
   const [welcomeOpen, closeWelcome] = useWelcome();
   const [historyOpen, toggleHistory] = useHistoryOpen();
+  const celebrating = useTutorial((s) => s.celebrating);
   const step = trace?.steps[stepIndex];
   const [dockRef, dockHeight] = useDockHeight();
 
@@ -136,6 +138,7 @@ export default function App(): React.JSX.Element {
           }}
         />
       )}
+      {celebrating && <FinishedCard onClose={closeCelebration} />}
     </div>
   );
 }

@@ -92,8 +92,12 @@
   flex: 1 1 auto;
   min-width: 60px;
   margin: 0 6px;
-  accent-color: var(--av-ink);
   cursor: pointer;
+}
+/* The run's orange, like the Run button and the read head. `input.` beats theme.css's blue
+   `input[type='range']`. */
+input.av-player-scrubber {
+  accent-color: var(--av-run);
 }
 .av-player-counter {
   flex: none;

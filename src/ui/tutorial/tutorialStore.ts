@@ -6,6 +6,8 @@ import { emptyAutomaton } from '../../core/model';
 import type { Automaton } from '../../core/model';
 import { appStore, freeName } from '../../store/store';
 import type { AppState } from '../../store/store';
+import { fitActive } from '../canvas/useCanvasEditing';
+import { playFanfareSound, playTickSound } from '../player/sound';
 import { advance, STEPS } from './steps';
 import type { StepId, TutorialContext } from './steps';
 
@@ -18,6 +20,8 @@ export interface TutorialState {
   current: number;
   /** Run steps that reached their verdict. */
   latched: ReadonlySet<StepId>;
+  /** Finished just now: the congratulations popup is open. */
+  celebrating: boolean;
 }
 
 const NOTHING: ReadonlySet<StepId> = new Set();
@@ -28,6 +32,7 @@ const OFF: TutorialState = {
   progress: 0,
   current: 0,
   latched: NOTHING,
+  celebrating: false,
 };
 
 export const tutorialStore: StoreApi<TutorialState> = createStore<TutorialState>()(() => OFF);
@@ -42,6 +47,7 @@ export function tutorialContext(app: AppState, automatonId: string | null): Tuto
     isActive: automatonId !== null && app.activeId === automatonId,
     trace: app.trace,
     stepIndex: app.stepIndex,
+    selected: app.selection.states,
   };
 }
 
@@ -57,6 +63,8 @@ function follow(app: AppState): void {
   }
   const next = advance(t.progress, t.latched, ctx, t.current);
   if (next.progress !== t.progress || next.current !== t.current || next.latched !== t.latched) {
+    // A step ticked off (a first time, or again after falling back).
+    if (next.current > t.current || next.progress > t.progress) playTickSound();
     tutorialStore.setState({
       progress: next.progress,
       current: next.current,
@@ -118,14 +126,25 @@ export function quitTutorial(): void {
 }
 
 /**
- * Finish from the closing card: the tutorial automaton stays, and the run that ended the
- * tutorial closes, back to editing.
+ * Finish from the closing card: the tutorial automaton stays, the run that ended the tutorial
+ * closes, back to editing, the view fits what is left (one state, wherever q0 was drawn), and
+ * the congratulations popup opens.
  */
 export function finishTutorial(): void {
   const id = tutorialStore.getState().automatonId;
   endTutorial();
   const app = appStore.getState();
   if (app.trace && app.trace.source.id === id) app.closeTrace();
+  tutorialStore.setState({ celebrating: true });
+  playFanfareSound();
+  // Once the editing canvas is back on screen, so the fit has its size.
+  requestAnimationFrame(() => {
+    if (appStore.getState().activeId === id) fitActive();
+  });
+}
+
+export function closeCelebration(): void {
+  tutorialStore.setState({ celebrating: false });
 }
 
 /** Stop following the app. The tutorial automaton stays like any other (Finish keeps it). */

@@ -6,6 +6,7 @@ import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
 import App from '../shell/App';
+import { CHEERS } from './cheers';
 import { STEPS } from './steps';
 import { endTutorial, startTutorial, tutorialContext, tutorialStore } from './tutorialStore';
 
@@ -24,6 +25,22 @@ const mine = () =>
     name: 'Mine',
   });
 
+/** The finished part 1: an even number of zeros. */
+const evenZeros = () =>
+  fixture({
+    kind: 'DFA',
+    alphabet: '01',
+    states: ['q_0', 'q_1'],
+    start: 'q_0',
+    accepting: ['q_0'],
+    edges: [
+      ['q_0', '0', 'q_1'],
+      ['q_1', '0', 'q_0'],
+      ['q_0', '1', 'q_0'],
+      ['q_1', '1', 'q_1'],
+    ],
+  });
+
 beforeEach(() => resetAppStore({ automata: [mine()] }));
 afterEach(() => {
   act(() => endTutorial());
@@ -40,7 +57,7 @@ it('shows the first step with its counter', () => {
   act(() => startTutorial());
   expect(card()).toHaveAttribute('data-step', '1');
   expect(card()).toHaveAccessibleName('Tutorial');
-  expect(within(card()).getByText('Tutorial · 1 of 12')).toBeInTheDocument();
+  expect(within(card()).getByText('Tutorial · 1 of 13')).toBeInTheDocument();
   expect(within(card()).getByText(/Add a state: double-click/)).toBeInTheDocument();
 });
 
@@ -95,11 +112,30 @@ it('asks to leave a run before an editing step first, in plain ink, not as a mis
   act(() => app().edit((a) => ({ ...a, starts: [a.states[0]!.id] })));
   act(() => tutorialStore.setState({ progress: 9, current: 9 }));
   act(() => startRun(''));
-  const first = within(card()).getByTestId('tutorial-leave-run');
+  const first = within(card()).getByTestId('tutorial-first');
   expect(first).toHaveTextContent('First, press Esc to get back to editing.');
   expect(first.querySelector('kbd')).toHaveTextContent('Esc');
   expect(card().querySelector('.av-tutorial-hint')).toBeNull();
   expect(app().trace?.source.id).toBe(id);
+});
+
+it('keeps part 1 on show, its last ✓ included, until Esc closes the run that ended it', () => {
+  render(<App />);
+  act(() => startTutorial());
+  const id = tutorialStore.getState().automatonId!;
+  act(() => app().edit(() => ({ ...evenZeros(), id, name: 'Tutorial' })));
+  act(() => tutorialStore.setState({ progress: 8, current: 8, latched: new Set(['run-1010']) }));
+  act(() => startRun('10'));
+  act(() => app().setStep(app().trace!.steps.length - 1));
+  expect(card()).toHaveAttribute('data-step', '10');
+  expect(within(card()).getByText('Part 1 · An even number of zeros')).toBeInTheDocument();
+  expect(card()).toHaveTextContent('✓10 is rejected, as it should be');
+  expect(card()).toHaveTextContent(
+    'Part 1 done! Press Esc to get back to editing and start Part 2.',
+  );
+  act(() => app().closeTrace());
+  expect(within(card()).getByText('Part 2 · Accept every word')).toBeInTheDocument();
+  expect(card()).toHaveTextContent(/Delete q1/);
 });
 
 it('says when another automaton is open and goes back to the tutorial', async () => {
@@ -142,7 +178,7 @@ it('drops the question once the tutorial is finished behind it', async () => {
   render(<App />);
   act(() => startTutorial());
   await user.click(within(card()).getByRole('button', { name: 'End tutorial' }));
-  act(() => tutorialStore.setState({ progress: 12, current: 12 }));
+  act(() => tutorialStore.setState({ progress: 13, current: 13 }));
   expect(within(card()).queryByRole('group', { name: 'Quit the tutorial?' })).toBeNull();
   expect(within(card()).getByRole('button', { name: 'Finish' })).toBeInTheDocument();
 });
@@ -164,7 +200,7 @@ it('once done, the close button ends it without asking and keeps the automaton',
   render(<App />);
   act(() => startTutorial());
   const id = tutorialStore.getState().automatonId;
-  act(() => tutorialStore.setState({ progress: 12, current: 12 }));
+  act(() => tutorialStore.setState({ progress: 13, current: 13 }));
   await user.click(within(card()).getByRole('button', { name: 'End tutorial' }));
   expect(screen.queryByTestId('tutorial-card')).toBeNull();
   expect(app().automata.some((a) => a.id === id)).toBe(true);
@@ -174,11 +210,32 @@ it('the closing card has Finish, which ends it', async () => {
   const user = userEvent.setup();
   render(<App />);
   act(() => startTutorial());
-  act(() => tutorialStore.setState({ progress: 12, current: 12 }));
-  expect(card()).toHaveAttribute('data-step', '13');
+  act(() => tutorialStore.setState({ progress: 13, current: 13 }));
+  expect(card()).toHaveAttribute('data-step', '14');
   expect(within(card()).getByText('Tutorial · Done')).toBeInTheDocument();
   await user.click(within(card()).getByRole('button', { name: 'Finish' }));
   expect(screen.queryByTestId('tutorial-card')).toBeNull();
+});
+
+it('Finish opens a congratulations popup with a joke, which closes', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  act(() => startTutorial());
+  act(() => tutorialStore.setState({ progress: 13, current: 13 }));
+  await user.click(within(card()).getByRole('button', { name: 'Finish' }));
+  const popup = screen.getByRole('dialog', { name: 'Tutorial complete' });
+  expect(CHEERS).toContain(within(popup).getByTestId('tutorial-cheer').textContent);
+  await user.click(within(popup).getByRole('button', { name: 'Back to building' }));
+  expect(screen.queryByRole('dialog', { name: 'Tutorial complete' })).toBeNull();
+});
+
+it('quitting midway opens no popup', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  act(() => startTutorial());
+  await user.click(within(card()).getByRole('button', { name: 'End tutorial' }));
+  await user.click(within(card()).getByRole('button', { name: 'Quit' }));
+  expect(screen.queryByRole('dialog', { name: 'Tutorial complete' })).toBeNull();
 });
 
 it('points at the state to use, outside the card', () => {

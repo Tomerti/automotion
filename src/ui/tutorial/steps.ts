@@ -9,6 +9,8 @@ export interface TutorialContext {
   isActive: boolean;
   trace: AnyTrace | null;
   stepIndex: number;
+  /** The selected states. */
+  selected: readonly StateId[];
 }
 
 export type StepId =
@@ -23,17 +25,23 @@ export type StepId =
   | 'run-10'
   | 'delete-q1'
   | 'loop-01'
+  | 'rename-q0'
   | 'run-10-again'
   | 'done';
 
 /**
  * `elsewhere`: another automaton is open (the card names it and offers the way back).
- * `leave-run`: a run is still open on an editing step. Not a mistake (a run step just ended in
- * one, whose confirmation `ran` repeats, since its part may have folded away), so the card puts
- * it first, in plain ink. `text`: something is off, shown in red.
+ * `part-done`: the run that ended `part` is still open: the card keeps that part on show, its
+ * last ✓ included, and asks for Esc to start the next one.
+ * `first`: something to do before the step (leave a run, select the state). Not a mistake, so
+ * the card puts it before the step, in plain ink.
+ * `text`: something is off, shown in red.
  */
 export type Hint =
-  { kind: 'elsewhere' } | { kind: 'leave-run'; ran?: string } | { kind: 'text'; text: string };
+  | { kind: 'elsewhere' }
+  | { kind: 'part-done'; part: 1 | 2 }
+  | { kind: 'first'; text: string }
+  | { kind: 'text'; text: string };
 
 export interface Step {
   id: StepId;
@@ -54,7 +62,7 @@ export interface Step {
   run?: { word: string; accepted: boolean };
 }
 
-export const COUNTED_STEPS = 12;
+export const COUNTED_STEPS = 13;
 
 /** What each part builds, as the checklist's headings. */
 export const PART_TITLES: Record<1 | 2, string> = {
@@ -91,6 +99,9 @@ function onAutomaton<T>(
 ): T {
   return ctx.automaton ? fn(ctx.automaton, roles(ctx.automaton)) : fallback;
 }
+
+/** A label as new states get it (`q_3`, `q_{12}`), or as typed without the underscore. */
+const DEFAULT_LABEL = /^q_?(\d+|\{\d+\})$/;
 
 /** The state's circle: its start arrow carries the same `data-state-id` and comes first. */
 const stateTarget = (s: State | undefined): string | null =>
@@ -159,6 +170,8 @@ interface StepSpec {
   done?(ctx: TutorialContext): boolean;
   /** Hints of this step only, after the common ones. */
   hint?(ctx: TutorialContext): string | null;
+  /** Something to do before this step, shown as a `first` hint. */
+  first?(ctx: TutorialContext): string | null;
   /** The edges this step draws, for the wrong-symbols hint. */
   edges?: WantedEdge[];
   target?(ctx: TutorialContext): string | null;
@@ -189,6 +202,11 @@ const SPECS: StepSpec[] = [
     confirmation: (l) => `${l.q0} is accepting`,
     done: (ctx) =>
       onAutomaton(ctx, false, (a, r) => r.q0 !== undefined && a.accepting.includes(r.q0.id)),
+    // A click on the canvas since the last step clears the selection, and A then does nothing.
+    first: (ctx) =>
+      onAutomaton(ctx, null, (_, r) =>
+        r.q0 && !ctx.selected.includes(r.q0.id) ? `First, click ${r.q0.label} to select it.` : null,
+      ),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
   {
@@ -230,7 +248,7 @@ const SPECS: StepSpec[] = [
     id: 'run-1010',
     part: 1,
     instruction: () =>
-      'Test it: type `1010` (two zeros) in “Test a word” and press [Enter]. It should end in Accepted.',
+      'Test it: type `1010` in “Test a word” and press [Enter]. It should end in Accepted.',
     confirmation: () => '`1010` is accepted',
     run: { word: '1010', accepted: true },
     target: () => RUN_PILL,
@@ -239,7 +257,7 @@ const SPECS: StepSpec[] = [
     id: 'run-10',
     part: 1,
     instruction: () =>
-      'Now try `10` (one zero), which should be rejected: press [Esc] to get back to editing, then run it.',
+      'Now try `10`, which should be rejected: press [Esc] to get back to editing, then run it.',
     confirmation: () => '`10` is rejected, as it should be: it has an odd number of zeros',
     run: { word: '10', accepted: false },
     target: () => RUN_PILL,
@@ -291,6 +309,17 @@ const SPECS: StepSpec[] = [
       }),
   },
   {
+    id: 'rename-q0',
+    part: 2,
+    instruction: (l) =>
+      `${l.q0} now accepts every word, so name it that: double-click ${l.q0}, type \`any\` and press [Enter].`,
+    confirmation: (l) => `Renamed it ${l.q0}`,
+    // Any name of the user's own will do.
+    done: (ctx) =>
+      onAutomaton(ctx, false, (_, r) => r.q0 !== undefined && !DEFAULT_LABEL.test(r.q0.label)),
+    target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
+  },
+  {
     id: 'run-10-again',
     part: 2,
     instruction: () =>
@@ -303,7 +332,7 @@ const SPECS: StepSpec[] = [
     id: 'done',
     part: 3,
     instruction: () =>
-      'You built a DFA, ran it and changed what it accepts. Try Convert to DFA and Minimize in the toolbar next, and press [?] for all the controls.',
+      'You built a DFA, ran it, changed what it accepts and named a state. Try Convert to DFA and Minimize in the toolbar next, and press [?] for all the controls.',
     confirmation: () => '',
     done: () => false,
   },
@@ -318,15 +347,16 @@ function toStep(spec: StepSpec, i: number): Step {
     if (structural && ctx.trace) {
       const prev = SPECS[i - 1];
       const t = ctx.trace;
-      const justRan =
+      const endsPart =
         prev?.run !== undefined &&
+        prev.part !== spec.part &&
         t.kind === 'run' &&
         t.source.id === ctx.automaton?.id &&
         t.word === prev.run.word &&
         t.accepted === prev.run.accepted;
-      return justRan
-        ? { kind: 'leave-run', ran: prev.confirmation(labels(ctx)) }
-        : { kind: 'leave-run' };
+      return endsPart && prev.part !== 3
+        ? { kind: 'part-done', part: prev.part }
+        : { kind: 'first', text: 'First, press [Esc] to get back to editing.' };
     }
     const text =
       (spec.part === 1 ? part1Hint(ctx) : null) ??
@@ -337,7 +367,9 @@ function toStep(spec: StepSpec, i: number): Step {
       (spec.run ? otherWord(ctx, spec.run.word, SPECS[i - 1]?.run?.word) : null) ??
       spec.hint?.(ctx) ??
       null;
-    return text === null ? null : { kind: 'text', text };
+    if (text !== null) return { kind: 'text', text };
+    const first = spec.first?.(ctx) ?? null;
+    return first === null ? null : { kind: 'first', text: first };
   };
   return {
     id: spec.id,

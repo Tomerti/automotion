@@ -40,7 +40,12 @@ Nothing in progress: pick the next task from the list below.
 - [x] The welcome dialog is centred on the canvas, in line with the run pill, and covers the empty canvas's hint
 - [x] The tutorial's 0 read as O (Geist): its words and symbols are set in IBM Plex Mono's dotted 0
 - [x] Tutorial steps are one sentence with every key as a key cap (`[Shift]`, `[0]`, `[Enter]`), the symbol to type included, instead of words plus a separate gesture chip in another style
-- [x] After `10` is rejected the card no longer opens part 2 with a red "Press Esc": it says, in green, that the rejection was right, then asks for Esc in plain ink
+- [x] After `10` is rejected the card keeps part 1 on show, "✓ 10 is rejected, as it should be" included, and asks for Esc to start part 2 (it used to open part 2 with a red "Press Esc")
+- [x] Things to do before a step (leave a run, select q0 again before pressing A) are a plain-ink "First, …" line, not a red hint
+- [x] A chime as each tutorial step is ticked off, and a fanfare on Finish
+- [x] Part 2 has a rename step: q0 accepts every word, so name it `any` (any name of one's own will do)
+- [x] Finish fits the view (the lone state was left wherever q0 was drawn, off-centre) and opens a congratulations popup with a random joke and confetti
+- [x] The trace player's step slider is the run's orange (theme.css's blue range rule was overriding it)
 
 - [x] Replaying a run (Play at the end, First, scrubbing to step 1) plays the Run chime again
 - [x] A new transition's arrow stays on screen while its symbols are typed

@@ -28,11 +28,17 @@ const evenZeros = (): Automaton =>
 const everything = (): Automaton =>
   tut({ states: ['q_0'], start: 'q_0', accepting: ['q_0'], edges: [['q_0', '0,1', 'q_0']] });
 
+/** `a` with q_0 renamed `any`, as the rename step asks. */
+const named = (a: Automaton): Automaton => ({
+  ...a,
+  states: a.states.map((s) => (s.id === 'q_0' ? { ...s, label: 'any' } : s)),
+});
+
 function ctx(
   automaton: Automaton | undefined,
   more: Partial<TutorialContext> = {},
 ): TutorialContext {
-  return { automaton, isActive: true, trace: null, stepIndex: 0, ...more };
+  return { automaton, isActive: true, trace: null, stepIndex: 0, selected: [], ...more };
 }
 
 /** A run of `word` on `a`, shown at its verdict (or at `at`). */
@@ -63,11 +69,12 @@ describe('the step table', () => {
       'run-10',
       'delete-q1',
       'loop-01',
+      'rename-q0',
       'run-10-again',
       'done',
     ]);
-    expect(COUNTED_STEPS).toBe(12);
-    expect(STEPS.map((s) => s.part)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3]);
+    expect(COUNTED_STEPS).toBe(13);
+    expect(STEPS.map((s) => s.part)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3]);
   });
 });
 
@@ -124,6 +131,16 @@ describe('done', () => {
     expect(step('delete-q1').done(ctx(one))).toBe(true);
     expect(step('loop-01').done(ctx(one))).toBe(false);
     expect(step('loop-01').done(ctx(everything()))).toBe(true);
+    expect(step('rename-q0').done(ctx(everything()))).toBe(false);
+    expect(step('rename-q0').done(ctx(named(everything())))).toBe(true);
+  });
+
+  it('takes any name of the user’s own for the rename, but not another q-number', () => {
+    const label = (l: string): TutorialContext =>
+      ctx({ ...everything(), states: everything().states.map((s) => ({ ...s, label: l })) });
+    expect(step('rename-q0').done(label('all'))).toBe(true);
+    expect(step('rename-q0').done(label('q_{12}'))).toBe(false);
+    expect(step('rename-q0').done(label('q3'))).toBe(false);
   });
 
   it('the closing card is never done', () => {
@@ -204,7 +221,7 @@ describe('advance', () => {
   });
 
   it('reaches the closing card after the last run and stays there', () => {
-    const b = everything();
+    const b = named(everything());
     const p = advance(idx('run-10-again'), none, ctx(b, ran(b, '10')));
     expect(p.current).toBe(idx('done'));
     expect(p.progress).toBe(idx('done'));
@@ -232,16 +249,25 @@ describe('hints', () => {
 
   it('asks to leave a run before editing, as a next step rather than a mistake', () => {
     const a = evenZeros();
-    expect(step('q0-q1').hint(ctx(a, ran(a, '10')))).toEqual({ kind: 'leave-run' });
+    expect(step('q0-q1').hint(ctx(a, ran(a, '10')))).toEqual({
+      kind: 'first',
+      text: 'First, press [Esc] to get back to editing.',
+    });
+    expect(step('delete-q1').hint(ctx(a, ran(a, '1010')))).toMatchObject({ kind: 'first' });
   });
 
-  it('repeats the confirmation of the run that just passed when asking to leave it', () => {
+  it('keeps part 1 on show while the run that ended it is open', () => {
     const a = evenZeros();
-    expect(step('delete-q1').hint(ctx(a, ran(a, '10')))).toEqual({
-      kind: 'leave-run',
-      ran: '`10` is rejected, as it should be: it has an odd number of zeros',
+    expect(step('delete-q1').hint(ctx(a, ran(a, '10')))).toEqual({ kind: 'part-done', part: 1 });
+  });
+
+  it('asks to select q0 again before pressing A once the selection is gone', () => {
+    const a = tut({ states: ['q_0'], start: 'q_0' });
+    expect(step('accepting').hint(ctx(a))).toEqual({
+      kind: 'first',
+      text: 'First, click q_0 to select it.',
     });
-    expect(step('delete-q1').hint(ctx(a, ran(a, '1010')))).toEqual({ kind: 'leave-run' });
+    expect(step('accepting').hint(ctx(a, { selected: ['q_0'] }))).toBeNull();
   });
 
   it('points out an extra state in part 1', () => {
