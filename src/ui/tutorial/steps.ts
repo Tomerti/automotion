@@ -332,7 +332,7 @@ const SPECS: StepSpec[] = [
     id: 'done',
     part: 3,
     instruction: () =>
-      'You built a DFA, ran it, changed what it accepts and named a state. Press [?] for all the controls.',
+      'You built a DFA, ran it, changed what it accepts and named a state. You can always press [?] for all the controls.',
     confirmation: () => '',
     done: () => false,
   },
