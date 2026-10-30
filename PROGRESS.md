@@ -43,6 +43,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] After `10` is rejected the card keeps part 1 on show, "✓ 10 is rejected, as it should be" included, and asks for Esc to start part 2 (it used to open part 2 with a red "Press Esc")
 - [x] Things to do before a step (leave a run, select q0 again before pressing A) are a plain-ink "First, …" line, not a red hint
 - [x] A fanfare on Finish (a chime per ticked step was tried and dropped as annoying)
+- [x] The welcome dialog was marked seen as soon as it opened, so any reload before answering it (a refresh, Vite's reload after optimizing dependencies, a second incognito tab) lost it for good: it is now marked seen when closed or when the tutorial starts
 - [x] The accept/reject cue played twice in development: StrictMode runs the verdict banner's mount effect twice; it now plays once per mount (a replay to the end still plays it again)
 - [x] Part 2 has a rename step: q0 accepts every word, so name it `any` (any name of one's own will do)
 - [x] Finish fits the view (the lone state was left wherever q0 was drawn, off-centre) and opens a congratulations popup with a random joke and confetti

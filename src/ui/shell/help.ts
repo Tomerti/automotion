@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-/** Set once the welcome dialog has been shown, so it opens by itself only on the first visit. */
+/** Set once the welcome dialog has been answered, so it opens by itself only until then. */
 export const SEEN_HELP_KEY = 'automotion:seen-help';
 
 export function hasSeenHelp(): boolean {
@@ -28,13 +28,18 @@ export function isTypingTarget(t: EventTarget | null): boolean {
   );
 }
 
-/** Open state of the welcome dialog: open on the first visit only. */
+/**
+ * Open state of the welcome dialog: open on every visit until it is answered (closed, or the
+ * tutorial started). Marked seen on close, not on open: a reload before answering (Vite's own
+ * reload after optimizing dependencies, a refresh) would otherwise lose it for good.
+ */
 export function useWelcome(): [boolean, () => void] {
   const [open, setOpen] = useState(() => !hasSeenHelp());
-  useEffect(() => {
-    if (open) markHelpSeen();
-  }, [open]);
-  return [open, () => setOpen(false)];
+  const close = useCallback((): void => {
+    markHelpSeen();
+    setOpen(false);
+  }, []);
+  return [open, close];
 }
 
 /** Open state of the controls popup: opened by `?` anywhere (and the help button). */
