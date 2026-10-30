@@ -252,10 +252,18 @@ input[type='checkbox'] {
   outline: 2px solid var(--av-accent);
   outline-offset: 2px;
 }
+/* A field being edited is marked like a selection: in orange, its caret and selected text too. */
 input:focus-visible,
 select:focus-visible {
+  outline-color: var(--av-selected);
   outline-offset: 0;
-  border-color: var(--av-accent);
+  border-color: var(--av-selected);
+}
+input {
+  caret-color: var(--av-selected);
+}
+input::selection {
+  background: color-mix(in srgb, var(--av-selected) 28%, transparent);
 }
 
 [role='alert'] {
