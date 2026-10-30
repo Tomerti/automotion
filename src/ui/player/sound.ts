@@ -55,18 +55,6 @@ export function playRunSound(): void {
   );
 }
 
-/** A light two-note ding when a tutorial step is ticked off. */
-export function playTickSound(): void {
-  play(
-    [
-      { freq: 1046.5, at: 0, length: 0.12 },
-      { freq: 1568, at: 0.06, length: 0.22 },
-    ],
-    'sine',
-    0.11,
-  );
-}
-
 /** A short fanfare for finishing the tutorial: up the major chord and a held top note. */
 export function playFanfareSound(): void {
   play(

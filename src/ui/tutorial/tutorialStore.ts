@@ -7,7 +7,7 @@ import type { Automaton } from '../../core/model';
 import { appStore, freeName } from '../../store/store';
 import type { AppState } from '../../store/store';
 import { fitActive } from '../canvas/useCanvasEditing';
-import { playFanfareSound, playTickSound } from '../player/sound';
+import { playFanfareSound } from '../player/sound';
 import { advance, STEPS } from './steps';
 import type { StepId, TutorialContext } from './steps';
 
@@ -63,8 +63,6 @@ function follow(app: AppState): void {
   }
   const next = advance(t.progress, t.latched, ctx, t.current);
   if (next.progress !== t.progress || next.current !== t.current || next.latched !== t.latched) {
-    // A step ticked off (a first time, or again after falling back).
-    if (next.current > t.current || next.progress > t.progress) playTickSound();
     tutorialStore.setState({
       progress: next.progress,
       current: next.current,

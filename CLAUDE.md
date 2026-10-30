@@ -95,8 +95,8 @@ Layers, with dependencies pointing downward only:
     the target with orange corner brackets (portal, follows it each frame; not a ring, which would
     read as accepting), and `WelcomeCard` is the first-visit dialog (key `automotion:seen-help`);
     the Controls popup no longer opens by itself. Finish fits the view and opens `FinishedCard`
-    (a random joke from `cheers.ts`, confetti, a fanfare); each ticked step plays a chime
-    (`player/sound.ts`). `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish.
+    (a random joke from `cheers.ts`, confetti, a fanfare from `player/sound.ts`); ticked steps
+    stay silent. `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish.
   - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
     the canvas uses `<tspan>`s).
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain

@@ -42,7 +42,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Tutorial steps are one sentence with every key as a key cap (`[Shift]`, `[0]`, `[Enter]`), the symbol to type included, instead of words plus a separate gesture chip in another style
 - [x] After `10` is rejected the card keeps part 1 on show, "✓ 10 is rejected, as it should be" included, and asks for Esc to start part 2 (it used to open part 2 with a red "Press Esc")
 - [x] Things to do before a step (leave a run, select q0 again before pressing A) are a plain-ink "First, …" line, not a red hint
-- [x] A chime as each tutorial step is ticked off, and a fanfare on Finish
+- [x] A fanfare on Finish (a chime per ticked step was tried and dropped: it was annoying, and on run steps it played right after the verdict cue, so the verdict sounded twice)
 - [x] Part 2 has a rename step: q0 accepts every word, so name it `any` (any name of one's own will do)
 - [x] Finish fits the view (the lone state was left wherever q0 was drawn, off-centre) and opens a congratulations popup with a random joke and confetti
 - [x] The trace player's step slider is the run's orange (theme.css's blue range rule was overriding it)
