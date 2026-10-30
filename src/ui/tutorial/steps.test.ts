@@ -230,9 +230,18 @@ describe('hints', () => {
     });
   });
 
-  it('asks to leave a run before editing', () => {
+  it('asks to leave a run before editing, as a next step rather than a mistake', () => {
     const a = evenZeros();
-    expect(hintText('delete-q1', ctx(a, ran(a, '10')))).toBe('Press Esc to get back to editing.');
+    expect(step('q0-q1').hint(ctx(a, ran(a, '10')))).toEqual({ kind: 'leave-run' });
+  });
+
+  it('repeats the confirmation of the run that just passed when asking to leave it', () => {
+    const a = evenZeros();
+    expect(step('delete-q1').hint(ctx(a, ran(a, '10')))).toEqual({
+      kind: 'leave-run',
+      ran: '`10` is rejected, as it should be: it has an odd number of zeros',
+    });
+    expect(step('delete-q1').hint(ctx(a, ran(a, '1010')))).toEqual({ kind: 'leave-run' });
   });
 
   it('points out an extra state in part 1', () => {
@@ -243,7 +252,9 @@ describe('hints', () => {
 
   it('points out an accepting q1', () => {
     const a = tut({ states: ['q_0', 'q_1'], start: 'q_0', accepting: ['q_0', 'q_1'] });
-    expect(hintText('q0-q1', ctx(a))).toBe('Only q_0 should be accepting: select q_1 and press A.');
+    expect(hintText('q0-q1', ctx(a))).toBe(
+      'Only q_0 should be accepting: click q_1 and press [A].',
+    );
   });
 
   it('points out that it became an NFA', () => {
@@ -253,18 +264,18 @@ describe('hints', () => {
 
   it('points out wrong symbols on the edge being drawn', () => {
     const a = tut({ states: ['q_0', 'q_1'], start: 'q_0', edges: [['q_0', '0,1', 'q_1']] });
-    expect(hintText('q0-q1', ctx(a))).toBe('q_0 → q_1 should read only 0.');
+    expect(hintText('q0-q1', ctx(a))).toBe('q_0 → q_1 should read only `0`.');
   });
 
   it('points out wrong symbols on an arrow of a later step', () => {
     const a = tut({ states: ['q_0', 'q_1'], start: 'q_0', edges: [['q_1', '0', 'q_1']] });
-    expect(hintText('q0-q1', ctx(a))).toBe('q_1 → q_1 should read only 1.');
+    expect(hintText('q0-q1', ctx(a))).toBe('q_1 → q_1 should read only `1`.');
   });
 
   it('points out a run of another word', () => {
     const a = evenZeros();
     expect(hintText('run-1010', ctx(a, ran(a, '11')))).toBe(
-      'That was `11`. Press Esc and run `1010`.',
+      'That was `11`. Press [Esc] and run `1010`.',
     );
   });
 
@@ -287,19 +298,19 @@ describe('hints', () => {
       accepting: ['q_0'],
       edges: [['q_0', '1,a', 'q_0']],
     });
-    expect(hintText('loop-01', ctx(b))).toBe('q_0’s loop should read only 0 and 1.');
+    expect(hintText('loop-01', ctx(b))).toBe('q_0’s loop should read only `0` and `1`.');
   });
 
   it('offers undo when every state is gone in part 2', () => {
     expect(hintText('delete-q1', ctx(tut({})))).toBe(
-      'Undo (Ctrl+Z) to bring the start state back.',
+      'Press [Ctrl] + [Z] to bring the start state back.',
     );
   });
 
   it('names the state to delete instead when the start state was deleted', () => {
     const a = tut({ states: ['x_1'], edges: [['x_1', '1', 'x_1']] });
     expect(hintText('delete-q1', ctx(a))).toBe(
-      'That was the start state: undo (Ctrl+Z), then delete x_1.',
+      'That was the start state: press [Ctrl] + [Z] to undo, then delete x_1.',
     );
   });
 
@@ -313,7 +324,14 @@ describe('instructions and targets', () => {
     const a = tut({ states: ['q_0', 'q_1'], start: 'q_0' });
     expect(step('q0-q1').instruction(ctx(a))).toContain('q_0');
     expect(step('q0-q1').instruction(ctx(a))).toContain('q_1');
-    expect(step('q0-q1').gesture(ctx(a))?.on).toBe('q_0 to q_1');
+  });
+
+  it('name every key to press, the symbol to type included', () => {
+    const a = tut({ states: ['q_0', 'q_1'], start: 'q_0' });
+    expect(step('q0-q1').instruction(ctx(a))).toContain(
+      'hold [Shift] and drag from q_0 to q_1, then type [0] and press [Enter]',
+    );
+    expect(step('run-10').instruction(ctx(a))).toContain('press [Esc]');
   });
 
   it('point at the state, the loop label or the word box', () => {

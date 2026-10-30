@@ -86,7 +86,9 @@ Layers, with dependencies pointing downward only:
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
   - `tutorial/`: the interactive tutorial. `steps.ts` is a pure step table (each step's `done`,
     `hint`, pointer `target`) over the tutorial automaton and the open trace, with `advance()`
-    (moves on, falls back within a part, latches runs at their verdict). `tutorialStore.ts`
+    (moves on, falls back within a part, latches runs at their verdict). Its texts mark keys as
+    `[Shift]` (rendered as `<kbd>`) and words/symbols to type in backticks (`<code>`, in the
+    dotted-zero `--av-font-symbol`, since Geist's 0 reads as O). `tutorialStore.ts`
     subscribes to `appStore` while a tutorial runs. `TutorialCard` floats in the canvas corner as
     a checklist (the current part's finished steps ticked, the step to do last); its X asks, then
     `quitTutorial()` removes the tutorial automaton (Finish keeps it). `TutorialPointer` frames

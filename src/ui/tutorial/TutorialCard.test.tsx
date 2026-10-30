@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it } from 'vitest';
 import { addState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
+import { startRun } from '../../store/traceActions';
 import App from '../shell/App';
 import { STEPS } from './steps';
 import { endTutorial, startTutorial, tutorialContext, tutorialStore } from './tutorialStore';
@@ -34,14 +35,23 @@ it('is not there without a tutorial', () => {
   expect(screen.queryByTestId('tutorial-card')).toBeNull();
 });
 
-it('shows the first step with its counter and gesture', () => {
+it('shows the first step with its counter', () => {
   render(<App />);
   act(() => startTutorial());
   expect(card()).toHaveAttribute('data-step', '1');
   expect(card()).toHaveAccessibleName('Tutorial');
   expect(within(card()).getByText('Tutorial · 1 of 12')).toBeInTheDocument();
-  expect(within(card()).getByText(/Add a state/)).toBeInTheDocument();
-  expect(within(card()).getByText('Double-click')).toBeInTheDocument();
+  expect(within(card()).getByText(/Add a state: double-click/)).toBeInTheDocument();
+});
+
+it('shows keys inline as <kbd>, a digit key in the symbol font', () => {
+  render(<App />);
+  act(() => startTutorial());
+  act(() => tutorialStore.setState({ progress: 4, current: 4 }));
+  const kbds = [...card().querySelectorAll('.av-tutorial-now kbd')];
+  expect(kbds.map((k) => k.textContent)).toEqual(['Shift', '0', 'Enter']);
+  expect(kbds.map((k) => k.hasAttribute('data-symbol'))).toEqual([false, true, false]);
+  expect(within(card()).getByText('0', { selector: 'code' })).toBeInTheDocument();
 });
 
 it('ticks off each step done and shows the next one on a new line, with subscripts', () => {
@@ -61,12 +71,12 @@ it('ticks off each step done and shows the next one on a new line, with subscrip
 it('heads the list with the part, and folds a finished part into one ticked line', () => {
   render(<App />);
   act(() => startTutorial());
-  expect(within(card()).getByText('Part 1 · An even number of 0s')).toBeInTheDocument();
+  expect(within(card()).getByText('Part 1 · An even number of zeros')).toBeInTheDocument();
   act(() => tutorialStore.setState({ progress: 9, current: 9 }));
   expect(within(card()).queryByText(/Part 1/)).toBeNull();
   expect(within(card()).getByText('Part 2 · Accept every word')).toBeInTheDocument();
   const [part1, now] = within(card()).getAllByTestId('tutorial-step');
-  expect(part1).toHaveTextContent('✓An even number of 0s');
+  expect(part1).toHaveTextContent('✓An even number of zeros');
   expect(now).toHaveTextContent(/Delete/);
 });
 
@@ -75,6 +85,21 @@ it('shows words as code', () => {
   act(() => startTutorial());
   act(() => tutorialStore.setState({ progress: 7, current: 7 }));
   expect(within(card()).getByText('1010', { selector: 'code' })).toBeInTheDocument();
+});
+
+it('asks to leave a run before an editing step first, in plain ink, not as a mistake', () => {
+  render(<App />);
+  act(() => startTutorial());
+  addAt(100);
+  const id = app().activeId!;
+  act(() => app().edit((a) => ({ ...a, starts: [a.states[0]!.id] })));
+  act(() => tutorialStore.setState({ progress: 9, current: 9 }));
+  act(() => startRun(''));
+  const first = within(card()).getByTestId('tutorial-leave-run');
+  expect(first).toHaveTextContent('First, press Esc to get back to editing.');
+  expect(first.querySelector('kbd')).toHaveTextContent('Esc');
+  expect(card().querySelector('.av-tutorial-hint')).toBeNull();
+  expect(app().trace?.source.id).toBe(id);
 });
 
 it('says when another automaton is open and goes back to the tutorial', async () => {

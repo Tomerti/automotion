@@ -11,6 +11,7 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; consider a more compact layout or pan/zoom in trace views (the transition table is gone in v2)
 - [ ] Equal-spacing snap guides (Notability-style) in addition to center alignment
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
+- [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
 
 ## Ideas (later)
@@ -22,7 +23,7 @@ Nothing in progress: pick the next task from the list below.
 ### Tutorial
 
 - [x] Interactive tutorial: build the "even number of 0s" DFA, run `1010` and `10`, then delete q1 and loop q0 on `0,1` to accept every word
-- [x] Coach card in the canvas corner: step counter, gesture chip, hints for common mistakes, ✓ for the last step; checks the automaton live and falls back when a step comes undone
+- [x] Coach card in the canvas corner: step counter, keys inline, hints for common mistakes, ✓ for the last step; checks the automaton live and falls back when a step comes undone
 - [x] Pointer ring on the state, loop label or word box a step uses
 - [x] A first visit opens a welcome dialog offering the tutorial (instead of the Controls popup); Controls has Take / Restart tutorial
 - [x] The tutorial works on its own "Tutorial" automaton (reusing an empty one), which stays in history
@@ -37,6 +38,9 @@ Nothing in progress: pick the next task from the list below.
 - [x] The tutorial's pointer on a run step frames the whole run pill, Run button included, not just the word box
 - [x] Finishing the tutorial (Finish, or X on the closing card) also closes its last run, back to editing
 - [x] The welcome dialog is centred on the canvas, in line with the run pill, and covers the empty canvas's hint
+- [x] The tutorial's 0 read as O (Geist): its words and symbols are set in IBM Plex Mono's dotted 0
+- [x] Tutorial steps are one sentence with every key as a key cap (`[Shift]`, `[0]`, `[Enter]`), the symbol to type included, instead of words plus a separate gesture chip in another style
+- [x] After `10` is rejected the card no longer opens part 2 with a red "Press Esc": it says, in green, that the rejection was right, then asks for Esc in plain ink
 
 - [x] Replaying a run (Play at the end, First, scrubbing to step 1) plays the Run chime again
 - [x] A new transition's arrow stays on screen while its symbols are typed

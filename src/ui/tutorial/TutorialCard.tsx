@@ -1,26 +1,32 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { appStore, useAppStore } from '../../store/store';
 import { LabelText } from '../LabelText';
-import { GestureChip } from '../shell/GestureChip';
 import { CloseIcon } from '../shell/icons';
 import { COUNTED_STEPS, PART_TITLES, STEPS } from './steps';
 import { TutorialPointer } from './TutorialPointer';
 import { finishTutorial, quitTutorial, tutorialContext, useTutorial } from './tutorialStore';
 import './tutorial.css';
 
-/** Words in backticks as <code>; the rest with label subscripts. */
+/** A `word` to type, or a [Key] to press. */
+const MARKUP = /(`[^`]*`|\[[^\]\s]+\])/;
+
+/**
+ * Words in backticks as <code>, keys in brackets as <kbd> (a digit key in the symbol font, like
+ * the words); the rest with label subscripts.
+ */
 function RichText({ text }: { text: string }): React.JSX.Element {
   return (
     <>
-      {text
-        .split('`')
-        .map((part, i) =>
-          i % 2 === 1 ? (
-            <code key={i}>{part}</code>
-          ) : (
-            <Fragment key={i}>{part && <LabelText text={part} />}</Fragment>
-          ),
-        )}
+      {text.split(MARKUP).map((part, i) => {
+        if (i % 2 === 0) return <Fragment key={i}>{part && <LabelText text={part} />}</Fragment>;
+        const inner = part.slice(1, -1);
+        if (part.startsWith('`')) return <code key={i}>{inner}</code>;
+        return (
+          <kbd key={i} data-symbol={/^\d$/.test(inner) || undefined}>
+            {inner}
+          </kbd>
+        );
+      })}
     </>
   );
 }
@@ -71,7 +77,6 @@ export function TutorialCard(): React.JSX.Element | null {
 
   if (!active || !step) return null;
 
-  const gesture = step.gesture(ctx);
   const keepGoing = (): void => {
     setQuitFor(null);
     closeRef.current?.focus();
@@ -156,10 +161,23 @@ export function TutorialCard(): React.JSX.Element | null {
             >
               {!last && <Box done={false} />}
               <div className="av-tutorial-body">
+                {hint?.kind === 'leave-run' && (
+                  <p className="av-tutorial-first" data-testid="tutorial-leave-run">
+                    {hint.ran ? (
+                      <>
+                        <span className="av-tutorial-ran">
+                          ✓ <RichText text={hint.ran} />.
+                        </span>{' '}
+                        <RichText text="Press [Esc] to get back to editing." />
+                      </>
+                    ) : (
+                      <RichText text="First, press [Esc] to get back to editing." />
+                    )}
+                  </p>
+                )}
                 <p className="av-tutorial-text">
                   <RichText text={step.instruction(ctx)} />
                 </p>
-                {gesture && <GestureChip gesture={gesture} />}
                 {hint?.kind === 'elsewhere' ? (
                   <p className="av-tutorial-hint">
                     You’re on {openName ?? 'another automaton'}.{' '}
@@ -172,7 +190,7 @@ export function TutorialCard(): React.JSX.Element | null {
                     </button>
                   </p>
                 ) : (
-                  hint && (
+                  hint?.kind === 'text' && (
                     <p className="av-tutorial-hint">
                       <RichText text={hint.text} />
                     </p>
