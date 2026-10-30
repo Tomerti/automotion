@@ -39,7 +39,7 @@
   border-radius: 0;
   outline: none;
   box-shadow: none;
-  caret-color: var(--av-accent);
+  caret-color: var(--av-selected);
 }
 .av-inline[data-invalid='true'] input {
   color: var(--av-red);

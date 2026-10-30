@@ -42,7 +42,7 @@ test('the first visit offers the tutorial, which walks through building and chan
   const card = page.getByTestId('tutorial-card');
   const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
   await at(1);
-  await expect(card).toContainText('Tutorial · 1 of 12');
+  await expect(card).toContainText('Tutorial · 1 of 13');
 
   // Part 1: an even number of 0s.
   await addStateAt(page, 150, 220);
@@ -67,9 +67,13 @@ test('the first visit offers the tutorial, which walks through building and chan
   await page.keyboard.press('Escape');
   await run(page, '10', false);
   await at(10);
+  // Part 1 stays on show, its last ✓ included, until Esc closes the run.
+  await expect(card).toContainText('Part 1 done!');
+  await expect(card).toContainText('10 is rejected, as it should be');
 
   // Part 2: accept every word.
   await page.keyboard.press('Escape');
+  await expect(card).toContainText('Part 2 · Accept every word');
   await clickState(page, 'q_1');
   await page.keyboard.press('Delete');
   await at(11);
@@ -78,18 +82,32 @@ test('the first visit offers the tutorial, which walks through building and chan
   await page.getByTestId('symbol-input').fill('0,1');
   await page.keyboard.press('Enter');
   await at(12);
-  await run(page, '10', true);
+  const q0 = await stateCenter(page, 'q_0');
+  await page.mouse.dblclick(q0.x, q0.y);
+  await page.getByTestId('rename-input').fill('any');
+  await page.keyboard.press('Enter');
   await at(13);
+  await run(page, '10', true);
+  await at(14);
   await expect(card).toContainText('Tutorial · Done');
   await card.getByRole('button', { name: 'Finish' }).click();
   await expect(card).toHaveCount(0);
+  const popup = page.getByRole('dialog', { name: 'Tutorial complete' });
+  await expect(popup).toBeVisible();
+  await popup.getByRole('button', { name: 'Back to building' }).click();
+  await expect(popup).toHaveCount(0);
 
-  // Finish also closes the last run, back to editing; the automaton stays: one state looping
-  // on 0 and 1.
+  // Finish also closes the last run, back to editing; the automaton stays: one state, now
+  // named "any", looping on 0 and 1…
   await expect(page.getByTestId('verdict')).toHaveCount(0);
   await expect(page.getByLabel('Word')).toBeVisible();
-  await expect(page.getByTestId('edge-q_0-q_0').getByTestId('edge-label')).toHaveText('0,1');
+  await expect(page.getByTestId('edge-any-any').getByTestId('edge-label')).toHaveText('0,1');
   await expect(page.getByRole('navigation', { name: 'History' })).toContainText('Tutorial');
+  // …centred: the view fits it, wherever q0 was drawn.
+  const canvas = (await page.getByTestId('canvas').boundingBox())!;
+  const centre = await stateCenter(page, 'any');
+  expect(Math.abs(centre.x - (canvas.x + canvas.width / 2))).toBeLessThan(30);
+  expect(Math.abs(centre.y - (canvas.y + canvas.height / 2))).toBeLessThan(30);
 });
 
 test('quitting the tutorial midway asks first, then removes it from the history', async ({

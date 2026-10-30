@@ -1,7 +1,6 @@
 import { startStates } from '../../core/model';
 import type { Automaton, State, StateId, Sym } from '../../core/model';
 import type { AnyTrace } from '../../core/trace';
-import type { Gesture } from '../shell/GestureChip';
 
 /** What the steps look at: the tutorial automaton (by id) and whatever run is on screen. */
 export interface TutorialContext {
@@ -10,6 +9,8 @@ export interface TutorialContext {
   isActive: boolean;
   trace: AnyTrace | null;
   stepIndex: number;
+  /** The selected states. */
+  selected: readonly StateId[];
 }
 
 export type StepId =
@@ -24,19 +25,33 @@ export type StepId =
   | 'run-10'
   | 'delete-q1'
   | 'loop-01'
+  | 'rename-q0'
   | 'run-10-again'
   | 'done';
 
-/** `elsewhere`: another automaton is open (the card names it and offers the way back). */
-export type Hint = { kind: 'elsewhere' } | { kind: 'text'; text: string };
+/**
+ * `elsewhere`: another automaton is open (the card names it and offers the way back).
+ * `part-done`: the run that ended `part` is still open: the card keeps that part on show, its
+ * last ✓ included, and asks for Esc to start the next one.
+ * `first`: something to do before the step (leave a run, select the state). Not a mistake, so
+ * the card puts it before the step, in plain ink.
+ * `text`: something is off, shown in red.
+ */
+export type Hint =
+  | { kind: 'elsewhere' }
+  | { kind: 'part-done'; part: 1 | 2 }
+  | { kind: 'first'; text: string }
+  | { kind: 'text'; text: string };
 
 export interface Step {
   id: StepId;
   /** 3 is the closing card. */
   part: 1 | 2 | 3;
-  /** Words in backticks; state labels as typed (`q_0`), for `LabelText`. */
+  /**
+   * Words and symbols in backticks, keys in brackets (`[Shift]`, `[0]`); state labels as typed
+   * (`q_0`), for `LabelText`.
+   */
   instruction(ctx: TutorialContext): string;
-  gesture(ctx: TutorialContext): Gesture | null;
   /** Shown as "✓ …" once the step is done. */
   confirmation(ctx: TutorialContext): string;
   /** Structural check. Run steps are done once latched (see `runSucceeded`). */
@@ -47,11 +62,11 @@ export interface Step {
   run?: { word: string; accepted: boolean };
 }
 
-export const COUNTED_STEPS = 12;
+export const COUNTED_STEPS = 13;
 
 /** What each part builds, as the checklist's headings. */
 export const PART_TITLES: Record<1 | 2, string> = {
-  1: 'An even number of 0s',
+  1: 'An even number of zeros',
   2: 'Accept every word',
 };
 
@@ -84,6 +99,9 @@ function onAutomaton<T>(
 ): T {
   return ctx.automaton ? fn(ctx.automaton, roles(ctx.automaton)) : fallback;
 }
+
+/** A label as new states get it (`q_3`, `q_{12}`), or as typed without the underscore. */
+const DEFAULT_LABEL = /^q_?(\d+|\{\d+\})$/;
 
 /** The state's circle: its start arrow carries the same `data-state-id` and comes first. */
 const stateTarget = (s: State | undefined): string | null =>
@@ -118,7 +136,8 @@ function wrongSymbols(ctx: TutorialContext, edges: WantedEdge[]): string | null 
       if (!from || !to) continue;
       const syms = edge(a, from.id, to.id);
       if (syms.length > 0 && !sameSet(syms, e.symbols)) {
-        return `${from.label} → ${to.label} should read only ${e.symbols.join(', ')}.`;
+        const only = e.symbols.map((s) => `\`${s}\``).join(', ');
+        return `${from.label} → ${to.label} should read only ${only}.`;
       }
     }
     return null;
@@ -129,9 +148,9 @@ function wrongSymbols(ctx: TutorialContext, edges: WantedEdge[]): string | null 
 function part1Hint(ctx: TutorialContext): string | null {
   return onAutomaton(ctx, null, (a, r) => {
     const extra = a.states.find((s) => s.id !== r.q0?.id && s.id !== r.q1?.id);
-    if (extra) return `Delete the extra state ${extra.label} (click it, then Delete).`;
+    if (extra) return `Delete the extra state ${extra.label}: click it, then press [Delete].`;
     if (r.q0 && r.q1 && a.accepting.includes(r.q1.id)) {
-      return `Only ${r.q0.label} should be accepting: select ${r.q1.label} and press A.`;
+      return `Only ${r.q0.label} should be accepting: click ${r.q1.label} and press [A].`;
     }
     return null;
   });
@@ -147,34 +166,30 @@ interface StepSpec {
   id: StepId;
   part: 1 | 2 | 3;
   instruction(l: { q0: string; q1: string }): string;
-  gesture?(l: { q0: string; q1: string }): Gesture;
   confirmation(l: { q0: string; q1: string }): string;
   done?(ctx: TutorialContext): boolean;
   /** Hints of this step only, after the common ones. */
   hint?(ctx: TutorialContext): string | null;
+  /** Something to do before this step, shown as a `first` hint. */
+  first?(ctx: TutorialContext): string | null;
   /** The edges this step draws, for the wrong-symbols hint. */
   edges?: WantedEdge[];
   target?(ctx: TutorialContext): string | null;
   run?: { word: string; accepted: boolean };
 }
 
-const RUN_GESTURE: Gesture = { keys: ['Enter'], on: 'in “Test a word”' };
-const ADD_GESTURE: Gesture = { mouse: 'double', on: 'empty canvas' };
-
 const SPECS: StepSpec[] = [
   {
     id: 'add-q0',
     part: 1,
     instruction: () => 'Add a state: double-click anywhere on the canvas.',
-    gesture: () => ADD_GESTURE,
     confirmation: (l) => `Added ${l.q0}`,
     done: (ctx) => onAutomaton(ctx, false, (a) => a.states.length >= 1),
   },
   {
     id: 'start',
     part: 1,
-    instruction: (l) => `Make ${l.q0} the start state: click it, then press S.`,
-    gesture: () => ({ keys: ['S'], on: 'selected state' }),
+    instruction: (l) => `Make ${l.q0} the start state: click it, then press [S].`,
     confirmation: (l) => `${l.q0} is the start state`,
     done: (ctx) => onAutomaton(ctx, false, (a) => startStates(a).length > 0),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
@@ -183,18 +198,21 @@ const SPECS: StepSpec[] = [
     id: 'accepting',
     part: 1,
     instruction: (l) =>
-      `Make ${l.q0} accepting too: a word is accepted when its run ends here. Press A.`,
-    gesture: () => ({ keys: ['A'], on: 'selected state' }),
+      `Make ${l.q0} accepting too: a word is accepted when its run ends here. Press [A].`,
     confirmation: (l) => `${l.q0} is accepting`,
     done: (ctx) =>
       onAutomaton(ctx, false, (a, r) => r.q0 !== undefined && a.accepting.includes(r.q0.id)),
+    // A click on the canvas since the last step clears the selection, and A then does nothing.
+    first: (ctx) =>
+      onAutomaton(ctx, null, (_, r) =>
+        r.q0 && !ctx.selected.includes(r.q0.id) ? `First, click ${r.q0.label} to select it.` : null,
+      ),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
   {
     id: 'add-q1',
     part: 1,
-    instruction: () => 'Add a second state, the same way.',
-    gesture: () => ADD_GESTURE,
+    instruction: () => 'Add a second state: double-click the canvas again.',
     confirmation: (l) => `Added ${l.q1}`,
     done: (ctx) => onAutomaton(ctx, false, (a) => a.states.length >= 2),
   },
@@ -202,9 +220,8 @@ const SPECS: StepSpec[] = [
     id: 'q0-q1',
     part: 1,
     instruction: (l) =>
-      `Reading a 0 in ${l.q0} goes to ${l.q1}: hold Shift and drag from ${l.q0} to ${l.q1}, then type \`0\` and press Enter.`,
-    gesture: (l) => ({ keys: ['Shift'], mouse: 'drag', on: `${l.q0} to ${l.q1}` }),
-    confirmation: (l) => `${l.q0} → ${l.q1} reads 0`,
+      `Reading a \`0\` in ${l.q0} goes to ${l.q1}: hold [Shift] and drag from ${l.q0} to ${l.q1}, then type [0] and press [Enter].`,
+    confirmation: (l) => `${l.q0} → ${l.q1} reads \`0\``,
     edges: [PART1_EDGES[0]!],
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
@@ -212,9 +229,8 @@ const SPECS: StepSpec[] = [
     id: 'q1-q0',
     part: 1,
     instruction: (l) =>
-      `…and reading a 0 in ${l.q1} goes back: Shift + drag from ${l.q1} to ${l.q0}, then type \`0\`.`,
-    gesture: (l) => ({ keys: ['Shift'], mouse: 'drag', on: `${l.q1} to ${l.q0}` }),
-    confirmation: (l) => `${l.q1} → ${l.q0} reads 0`,
+      `…and reading a \`0\` in ${l.q1} goes back: hold [Shift] and drag from ${l.q1} to ${l.q0}, then type [0] and press [Enter].`,
+    confirmation: (l) => `${l.q1} → ${l.q0} reads \`0\``,
     edges: [PART1_EDGES[1]!],
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q1)),
   },
@@ -222,9 +238,8 @@ const SPECS: StepSpec[] = [
     id: 'loops',
     part: 1,
     instruction: () =>
-      'Reading a 1 changes nothing: give both states a self-loop on `1`. Shift + drag from a state, out and back onto itself.',
-    gesture: () => ({ keys: ['Shift'], mouse: 'drag', on: 'a state onto itself' }),
-    confirmation: () => 'Both states loop on 1',
+      'Reading a `1` changes nothing: give both states a loop. Hold [Shift] and drag from a state, out and back onto itself, then type [1] and press [Enter].',
+    confirmation: () => 'Both states loop on `1`',
     edges: [PART1_EDGES[2]!, PART1_EDGES[3]!],
     target: (ctx) =>
       onAutomaton(ctx, null, (_, r) => stateTarget(edgeIs(ctx, PART1_EDGES[2]!) ? r.q1 : r.q0)),
@@ -233,8 +248,7 @@ const SPECS: StepSpec[] = [
     id: 'run-1010',
     part: 1,
     instruction: () =>
-      'Test it: type `1010` (two 0s) in “Test a word” and press Enter. It should end in Accepted.',
-    gesture: () => RUN_GESTURE,
+      'Test it: type `1010` in “Test a word” and press [Enter]. It should end in Accepted.',
     confirmation: () => '`1010` is accepted',
     run: { word: '1010', accepted: true },
     target: () => RUN_PILL,
@@ -243,17 +257,15 @@ const SPECS: StepSpec[] = [
     id: 'run-10',
     part: 1,
     instruction: () =>
-      'Now try `10` (one 0): press Esc to get back to editing, then run it. It should be rejected.',
-    gesture: () => ({ keys: ['Esc'], on: 'then Enter in “Test a word”' }),
-    confirmation: () => '`10` is rejected: an odd number of 0s',
+      'Now try `10`, which should be rejected: press [Esc] to get back to editing, then run it.',
+    confirmation: () => '`10` is rejected, as it should be: it has an odd number of zeros',
     run: { word: '10', accepted: false },
     target: () => RUN_PILL,
   },
   {
     id: 'delete-q1',
     part: 2,
-    instruction: (l) => `Delete ${l.q1}: click it, then press Delete. Its arrows go with it.`,
-    gesture: () => ({ keys: ['Delete'], on: 'selected state' }),
+    instruction: (l) => `Delete ${l.q1}: click it, then press [Delete]. Its arrows go with it.`,
     confirmation: (l) => `${l.q1} is gone`,
     done: (ctx) =>
       onAutomaton(
@@ -267,10 +279,10 @@ const SPECS: StepSpec[] = [
       ),
     hint: (ctx) =>
       onAutomaton(ctx, null, (a, r) => {
-        if (a.states.length === 0) return 'Undo (Ctrl+Z) to bring the start state back.';
+        if (a.states.length === 0) return 'Press [Ctrl] + [Z] to bring the start state back.';
         // One state left that isn't the start: the start state went instead of q1 (the one left).
         if (a.states.length === 1 && r.q0 && !startStates(a).includes(r.q0.id)) {
-          return `That was the start state: undo (Ctrl+Z), then delete ${r.q0.label}.`;
+          return `That was the start state: press [Ctrl] + [Z] to undo, then delete ${r.q0.label}.`;
         }
         return null;
       }),
@@ -280,15 +292,14 @@ const SPECS: StepSpec[] = [
     id: 'loop-01',
     part: 2,
     instruction: (l) =>
-      `Let ${l.q0}’s loop read both symbols: double-click its label and type \`0,1\`.`,
-    gesture: () => ({ mouse: 'double', on: 'the loop' }),
-    confirmation: (l) => `${l.q0} loops on 0 and 1`,
+      `Let ${l.q0}’s loop read both symbols: double-click its label, type \`0,1\` and press [Enter].`,
+    confirmation: (l) => `${l.q0} loops on \`0\` and \`1\``,
     // Not `edges`: a loop still reading only 1 is unfinished, not wrong.
     done: (ctx) => edgeIs(ctx, { from: 'q0', to: 'q0', symbols: ['0', '1'] }),
     hint: (ctx) =>
       onAutomaton(ctx, null, (a, r) =>
         edge(a, r.q0?.id, r.q0?.id).some((s) => s !== '0' && s !== '1')
-          ? `${r.q0?.label ?? 'q_0'}’s loop should read only 0 and 1.`
+          ? `${r.q0?.label ?? 'q_0'}’s loop should read only \`0\` and \`1\`.`
           : null,
       ),
     target: (ctx) =>
@@ -298,10 +309,21 @@ const SPECS: StepSpec[] = [
       }),
   },
   {
+    id: 'rename-q0',
+    part: 2,
+    instruction: (l) =>
+      `${l.q0} now accepts every word, so name it that: double-click ${l.q0}, type \`any\` and press [Enter].`,
+    confirmation: (l) => `Renamed it ${l.q0}`,
+    // Any name of the user's own will do.
+    done: (ctx) =>
+      onAutomaton(ctx, false, (_, r) => r.q0 !== undefined && !DEFAULT_LABEL.test(r.q0.label)),
+    target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
+  },
+  {
     id: 'run-10-again',
     part: 2,
-    instruction: () => 'Run `10` again: now it’s accepted, like every word.',
-    gesture: () => RUN_GESTURE,
+    instruction: () =>
+      'Run `10` again: type it in “Test a word” and press [Enter]. Now it’s accepted, like every word.',
     confirmation: () => '`10` is accepted now',
     run: { word: '10', accepted: true },
     target: () => RUN_PILL,
@@ -310,7 +332,7 @@ const SPECS: StepSpec[] = [
     id: 'done',
     part: 3,
     instruction: () =>
-      'You built a DFA, ran it and changed what it accepts. Try Convert to DFA and Minimize in the toolbar next, and press `?` for all the controls.',
+      'You built a DFA, ran it, changed what it accepts and named a state. You can always press [?] for all the controls.',
     confirmation: () => '',
     done: () => false,
   },
@@ -322,8 +344,21 @@ function toStep(spec: StepSpec, i: number): Step {
     spec.done ? spec.done(ctx) : (spec.edges ?? []).every((e) => edgeIs(ctx, e));
   const hint = (ctx: TutorialContext): Hint | null => {
     if (!ctx.isActive) return { kind: 'elsewhere' };
+    if (structural && ctx.trace) {
+      const prev = SPECS[i - 1];
+      const t = ctx.trace;
+      const endsPart =
+        prev?.run !== undefined &&
+        prev.part !== spec.part &&
+        t.kind === 'run' &&
+        t.source.id === ctx.automaton?.id &&
+        t.word === prev.run.word &&
+        t.accepted === prev.run.accepted;
+      return endsPart && prev.part !== 3
+        ? { kind: 'part-done', part: prev.part }
+        : { kind: 'first', text: 'First, press [Esc] to get back to editing.' };
+    }
     const text =
-      (structural && ctx.trace ? 'Press Esc to get back to editing.' : null) ??
       (spec.part === 1 ? part1Hint(ctx) : null) ??
       (spec.part !== 3 ? nfaHint(ctx) : null) ??
       (spec.edges ? wrongSymbols(ctx, spec.edges) : null) ??
@@ -332,13 +367,14 @@ function toStep(spec: StepSpec, i: number): Step {
       (spec.run ? otherWord(ctx, spec.run.word, SPECS[i - 1]?.run?.word) : null) ??
       spec.hint?.(ctx) ??
       null;
-    return text === null ? null : { kind: 'text', text };
+    if (text !== null) return { kind: 'text', text };
+    const first = spec.first?.(ctx) ?? null;
+    return first === null ? null : { kind: 'first', text: first };
   };
   return {
     id: spec.id,
     part: spec.part,
     instruction: (ctx) => spec.instruction(labels(ctx)),
-    gesture: (ctx) => spec.gesture?.(labels(ctx)) ?? null,
     confirmation: (ctx) => spec.confirmation(labels(ctx)),
     done,
     hint,
@@ -356,7 +392,7 @@ function otherWord(
   const t = ctx.trace;
   if (t?.kind !== 'run' || t.source.id !== ctx.automaton?.id) return null;
   if (t.word === word || t.word === previous) return null;
-  return `That was \`${t.word === '' ? 'ε' : t.word}\`. Press Esc and run \`${word}\`.`;
+  return `That was \`${t.word === '' ? 'ε' : t.word}\`. Press [Esc] and run \`${word}\`.`;
 }
 
 export const STEPS: readonly Step[] = SPECS.map(toStep);

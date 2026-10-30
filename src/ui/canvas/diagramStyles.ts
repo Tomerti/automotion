@@ -18,8 +18,8 @@ export const diagramStyles = `
 .av-edge-head { fill: var(--av-edge-stroke, #3a4356); transition: fill 0.2s; }
 .av-edge-label { fill: var(--av-text, #1c2333); font-size: 15px; font-weight: 500; text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--av-label-halo, #f3f5f0); stroke-width: 4px; stroke-linejoin: round; }
 .av-rubber-band { pointer-events: none; }
-.av-rubber-band .av-edge-path { stroke: var(--av-selected, #2563eb); stroke-width: 2; }
-.av-rubber-band .av-edge-head { fill: var(--av-selected, #2563eb); }
+.av-rubber-band .av-edge-path { stroke: var(--av-selected, #d9480f); stroke-width: 2; }
+.av-rubber-band .av-edge-head { fill: var(--av-selected, #d9480f); }
 .av-start-arrow .av-edge-path { stroke: var(--av-state-stroke, #1c2333); stroke-width: 1.75; }
 .av-start-arrow .av-edge-head { fill: var(--av-state-stroke, #1c2333); }
 
@@ -33,16 +33,16 @@ export const diagramStyles = `
 .av-state[data-tint="7"] .av-state-body { fill: var(--av-tint-7, #dadfe6); }
 
 .av-state[data-faded="true"], .av-edge[data-faded="true"] { opacity: 0.25; }
-.av-state[data-selected="true"] .av-state-body { stroke: var(--av-selected, #2563eb); stroke-width: 3; }
-.av-state[data-selected="true"] .av-state-ring { stroke: var(--av-selected, #2563eb); }
+.av-state[data-selected="true"] .av-state-body { stroke: var(--av-selected, #d9480f); stroke-width: 3; }
+.av-state[data-selected="true"] .av-state-ring { stroke: var(--av-selected, #d9480f); }
 .av-state[data-active="true"] .av-state-body { fill: var(--av-active-fill, #fff0e1); stroke: var(--av-active-stroke, #d9480f); stroke-width: 2.25; }
 .av-state[data-active="true"] .av-state-ring { stroke: var(--av-active-stroke, #d9480f); }
 .av-state[data-active="true"] .av-state-label { fill: var(--av-active-text, #1c2333); }
 .av-state[data-error="true"] .av-state-body { stroke: var(--av-error, #c42f36); stroke-width: 3; }
 .av-state[data-error="true"] .av-state-ring { stroke: var(--av-error, #c42f36); }
 
-.av-edge[data-selected="true"] .av-edge-path { stroke: var(--av-selected, #2563eb); stroke-width: 2.5; }
-.av-edge[data-selected="true"] .av-edge-head { fill: var(--av-selected, #2563eb); }
+.av-edge[data-selected="true"] .av-edge-path { stroke: var(--av-selected, #d9480f); stroke-width: 2.5; }
+.av-edge[data-selected="true"] .av-edge-head { fill: var(--av-selected, #d9480f); }
 .av-edge[data-taken="true"] .av-edge-hit { stroke: var(--av-taken-band, #f7670726); stroke-width: 7; }
 .av-edge[data-taken="true"] .av-edge-path { stroke: var(--av-active, #d9480f); stroke-width: 2.25; }
 .av-edge[data-taken="true"] .av-edge-head { fill: var(--av-active, #d9480f); }

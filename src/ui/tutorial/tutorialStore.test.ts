@@ -123,7 +123,7 @@ describe('startTutorial', () => {
   it('starting again from the closing card keeps the finished one', () => {
     startTutorial();
     const first = tut().automatonId;
-    tutorialStore.setState({ progress: 12, current: 12 });
+    tutorialStore.setState({ progress: 13, current: 13 });
     startTutorial();
     expect(app().automata.some((a) => a.id === first)).toBe(true);
     expect(active()?.name).toBe('Tutorial 2');

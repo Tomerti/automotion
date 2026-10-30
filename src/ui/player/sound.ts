@@ -55,6 +55,21 @@ export function playRunSound(): void {
   );
 }
 
+/** A short fanfare for finishing the tutorial: up the major chord and a held top note. */
+export function playFanfareSound(): void {
+  play(
+    [
+      { freq: 523.25, at: 0, length: 0.14 },
+      { freq: 659.25, at: 0.1, length: 0.14 },
+      { freq: 783.99, at: 0.2, length: 0.14 },
+      { freq: 1046.5, at: 0.3, length: 0.5 },
+      { freq: 783.99, at: 0.3, length: 0.5 },
+    ],
+    'triangle',
+    0.12,
+  );
+}
+
 /**
  * A bright major arpeggio for an accepted word; for a rejected one, a single low note that slides
  * down (two separate notes read as the cue playing twice).

@@ -116,14 +116,33 @@
 .av-tutorial-now .av-tutorial-text {
   margin-top: -1px;
 }
-/* Not a monospace: a slashed 0 reads as ∅. */
+/*
+ * Words and symbols to type, in the symbol font (Geist's 0 reads as O, a slashed one as ∅). Flat,
+ * where a key (<kbd>) has a raised bottom edge.
+ */
+.av-tutorial code,
+.av-tutorial kbd[data-symbol] {
+  font-family: var(--av-font-symbol);
+  font-weight: 500;
+}
 .av-tutorial code {
   padding: 0 4px;
-  font-family: var(--av-font-math);
-  font-size: 0.92em;
+  font-size: 0.88em;
   background: var(--av-kbd);
   border: 1px solid var(--av-rule);
   border-radius: 4px;
+}
+.av-tutorial kbd {
+  margin: 0 1px;
+  vertical-align: 1px;
+}
+
+/* Something to do before the step (leave a run, select the state): not a mistake, so plain ink. */
+.av-tutorial-first {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--av-ink-muted);
 }
 
 .av-tutorial-hint {
@@ -321,4 +340,52 @@
   margin: 14px 0 0;
   font-size: 12px;
   color: var(--av-ink-muted);
+}
+
+/* The popup after Finish, on the welcome's surface, with a burst of confetti. */
+
+.av-modal.av-finished {
+  position: relative;
+  overflow: hidden;
+}
+.av-finished-cheer {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.av-welcome-note.av-finished-note {
+  margin: 8px 0 18px;
+}
+.av-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.av-confetti span {
+  position: absolute;
+  top: -12px;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: av-confetti-fall 1.6s ease-in forwards;
+}
+.av-confetti span:nth-child(odd) {
+  width: 9px;
+  height: 6px;
+  animation-duration: 1.9s;
+}
+@keyframes av-confetti-fall {
+  10% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(260px) rotate(540deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .av-confetti {
+    display: none;
+  }
 }

@@ -86,14 +86,18 @@ Layers, with dependencies pointing downward only:
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
   - `tutorial/`: the interactive tutorial. `steps.ts` is a pure step table (each step's `done`,
     `hint`, pointer `target`) over the tutorial automaton and the open trace, with `advance()`
-    (moves on, falls back within a part, latches runs at their verdict). `tutorialStore.ts`
+    (moves on, falls back within a part, latches runs at their verdict). Its texts mark keys as
+    `[Shift]` (rendered as `<kbd>`) and words/symbols to type in backticks (`<code>`, in the
+    dotted-zero `--av-font-symbol`, since Geist's 0 reads as O). `tutorialStore.ts`
     subscribes to `appStore` while a tutorial runs. `TutorialCard` floats in the canvas corner as
     a checklist (the current part's finished steps ticked, the step to do last); its X asks, then
     `quitTutorial()` removes the tutorial automaton (Finish keeps it). `TutorialPointer` frames
     the target with orange corner brackets (portal, follows it each frame; not a ring, which would
-    read as accepting), and `WelcomeCard` is the first-visit dialog (key `automotion:seen-help`);
-    the Controls popup no longer opens by itself. `.av-go` (theme.css) is the orange pill of Run,
-    Start tutorial and Finish.
+    read as accepting), and `WelcomeCard` is the first-visit dialog (key `automotion:seen-help`, set when it is answered,
+    not when it opens, so a reload before answering shows it again);
+    the Controls popup no longer opens by itself. Finish fits the view and opens `FinishedCard`
+    (a random joke from `cheers.ts`, confetti, a fanfare from `player/sound.ts`); ticked steps
+    stay silent. `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish.
   - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
     the canvas uses `<tspan>`s).
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain

@@ -24,13 +24,27 @@ it('opens by itself on a first visit, instead of the Controls popup', () => {
   expect(screen.queryByRole('dialog', { name: 'Controls' })).toBeNull();
   expect(within(welcome()!).getByText('Watch automata come to life.')).toBeInTheDocument();
   expect(within(welcome()!).getByText(/Press \? at any time/)).toBeInTheDocument();
-  expect(localStorage.getItem(SEEN_HELP_KEY)).not.toBeNull();
 });
 
-it('only once', () => {
+it('opens again after a reload until it is answered, then never again', async () => {
+  const user = userEvent.setup();
+  // A reload before answering (a refresh, Vite's reload after optimizing dependencies).
   render(<App />).unmount();
+  expect(localStorage.getItem(SEEN_HELP_KEY)).toBeNull();
+  render(<App />);
+  expect(welcome()).not.toBeNull();
+  await user.click(within(welcome()!).getByRole('button', { name: 'Not now' }));
+  expect(localStorage.getItem(SEEN_HELP_KEY)).not.toBeNull();
+  cleanup();
   render(<App />);
   expect(welcome()).toBeNull();
+});
+
+it('Start tutorial answers it too', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(within(welcome()!).getByRole('button', { name: 'Start tutorial' }));
+  expect(localStorage.getItem(SEEN_HELP_KEY)).not.toBeNull();
 });
 
 it('Start tutorial closes it and starts the tutorial', async () => {

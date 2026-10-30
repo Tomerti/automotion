@@ -5,9 +5,9 @@ import './tutorial.css';
 
 /** What the tutorial covers, one row each, like the Controls popup's rows. */
 const PLAN: { what: string; how: string }[] = [
-  { what: 'Build', how: 'a DFA for words with an even number of 0s' },
+  { what: 'Build', how: 'a DFA for words with an even number of zeros' },
   { what: 'Run', how: 'words on it and watch every step' },
-  { what: 'Change', how: 'it to accept every word' },
+  { what: 'Change', how: 'it to accept every word, and name a state' },
 ];
 
 /**

@@ -1,26 +1,32 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { appStore, useAppStore } from '../../store/store';
 import { LabelText } from '../LabelText';
-import { GestureChip } from '../shell/GestureChip';
 import { CloseIcon } from '../shell/icons';
 import { COUNTED_STEPS, PART_TITLES, STEPS } from './steps';
 import { TutorialPointer } from './TutorialPointer';
 import { finishTutorial, quitTutorial, tutorialContext, useTutorial } from './tutorialStore';
 import './tutorial.css';
 
-/** Words in backticks as <code>; the rest with label subscripts. */
+/** A `word` to type, or a [Key] to press. */
+const MARKUP = /(`[^`]*`|\[[^\]\s]+\])/;
+
+/**
+ * Words in backticks as <code>, keys in brackets as <kbd> (a digit key in the symbol font, like
+ * the words); the rest with label subscripts.
+ */
 function RichText({ text }: { text: string }): React.JSX.Element {
   return (
     <>
-      {text
-        .split('`')
-        .map((part, i) =>
-          i % 2 === 1 ? (
-            <code key={i}>{part}</code>
-          ) : (
-            <Fragment key={i}>{part && <LabelText text={part} />}</Fragment>
-          ),
-        )}
+      {text.split(MARKUP).map((part, i) => {
+        if (i % 2 === 0) return <Fragment key={i}>{part && <LabelText text={part} />}</Fragment>;
+        const inner = part.slice(1, -1);
+        if (part.startsWith('`')) return <code key={i}>{inner}</code>;
+        return (
+          <kbd key={i} data-symbol={/^\d$/.test(inner) || undefined}>
+            {inner}
+          </kbd>
+        );
+      })}
     </>
   );
 }
@@ -53,6 +59,7 @@ export function TutorialCard(): React.JSX.Element | null {
   useAppStore((s) => s.automata);
   useAppStore((s) => s.trace);
   useAppStore((s) => s.stepIndex);
+  useAppStore((s) => s.selection);
   const openName = useAppStore((s) => s.automata.find((a) => a.id === s.activeId)?.name);
   const tutorialName = useAppStore((s) => s.automata.find((a) => a.id === automatonId)?.name);
 
@@ -62,7 +69,8 @@ export function TutorialCard(): React.JSX.Element | null {
   const last = step?.part === 3;
   // Finishing behind the question makes it moot: nothing to lose any more.
   const quitting = quitFor !== null && quitFor === automatonId && !last;
-  const hintKey = hint === null ? '' : hint.kind === 'text' ? hint.text : hint.kind;
+  const hintKey =
+    hint === null ? '' : hint.kind === 'text' || hint.kind === 'first' ? hint.text : hint.kind;
 
   // A long part scrolls; keep the step to do (and its hint) in view.
   useEffect(() => {
@@ -71,14 +79,17 @@ export function TutorialCard(): React.JSX.Element | null {
 
   if (!active || !step) return null;
 
-  const gesture = step.gesture(ctx);
   const keepGoing = (): void => {
     setQuitFor(null);
     closeRef.current?.focus();
   };
+  // The run that ended a part is still open: that part stays on show, its last ✓ included, until
+  // Esc starts the next one.
+  const partDone = hint?.kind === 'part-done' ? hint.part : null;
+  const shownPart = partDone ?? step.part;
   // Every step before the current one in its part is done (`advance` stops at the first that isn't).
-  const ticked = STEPS.slice(0, current).filter((s) => s.part === step.part);
-  const finishedParts = ([1, 2] as const).filter((p) => p < step.part);
+  const ticked = STEPS.slice(0, current).filter((s) => s.part === shownPart);
+  const finishedParts = ([1, 2] as const).filter((p) => p < shownPart);
 
   return (
     <section
@@ -130,9 +141,9 @@ export function TutorialCard(): React.JSX.Element | null {
                 <span className="av-tutorial-part-done">{PART_TITLES[p]}</span>
               </li>
             ))}
-            {step.part !== 3 && (
+            {shownPart !== 3 && (
               <li className="av-tutorial-part" aria-hidden="true">
-                Part {step.part} · {PART_TITLES[step.part]}
+                Part {shownPart} · {PART_TITLES[shownPart]}
               </li>
             )}
             {ticked.map((s) => (
@@ -149,17 +160,27 @@ export function TutorialCard(): React.JSX.Element | null {
               </li>
             ))}
             <li
-              key={step.id}
+              key={partDone ? `${step.id}-part-done` : step.id}
               className="av-tutorial-step av-tutorial-now"
               data-testid="tutorial-step"
               data-done="false"
             >
               {!last && <Box done={false} />}
               <div className="av-tutorial-body">
+                {hint?.kind === 'first' && (
+                  <p className="av-tutorial-first" data-testid="tutorial-first">
+                    <RichText text={hint.text} />
+                  </p>
+                )}
                 <p className="av-tutorial-text">
-                  <RichText text={step.instruction(ctx)} />
+                  <RichText
+                    text={
+                      partDone
+                        ? `Part ${partDone} done! Press [Esc] to get back to editing and start Part ${partDone + 1}.`
+                        : step.instruction(ctx)
+                    }
+                  />
                 </p>
-                {gesture && <GestureChip gesture={gesture} />}
                 {hint?.kind === 'elsewhere' ? (
                   <p className="av-tutorial-hint">
                     You’re on {openName ?? 'another automaton'}.{' '}
@@ -172,7 +193,7 @@ export function TutorialCard(): React.JSX.Element | null {
                     </button>
                   </p>
                 ) : (
-                  hint && (
+                  hint?.kind === 'text' && (
                     <p className="av-tutorial-hint">
                       <RichText text={hint.text} />
                     </p>
@@ -190,7 +211,9 @@ export function TutorialCard(): React.JSX.Element | null {
           )}
         </>
       )}
-      {!quitting && hint?.kind !== 'elsewhere' && <TutorialPointer selector={step.target(ctx)} />}
+      {!quitting && hint?.kind !== 'elsewhere' && (
+        <TutorialPointer selector={partDone ? null : step.target(ctx)} />
+      )}
     </section>
   );
 }

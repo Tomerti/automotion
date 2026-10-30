@@ -72,7 +72,8 @@ describe('diagramToSvgString', () => {
     document.documentElement.style.removeProperty('--av-state-stroke');
     expect(text).not.toContain('var(--');
     expect(text).toContain('#abcdef');
-    expect(text).toContain('#2563eb');
+    // A fallback of a variable nothing sets here (the first block tint).
+    expect(text).toContain('#c9dbff');
   });
 
   it('drops interaction-only elements and selection highlights', () => {
