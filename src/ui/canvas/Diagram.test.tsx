@@ -192,6 +192,15 @@ describe('Diagram', () => {
     expect(screen.getByTestId('overlay')).toBeInTheDocument();
     expect(ref).toBe(screen.getByTestId('diagram'));
   });
+
+  it('draws its text at its exact position, not hinted to whole pixels', () => {
+    // With GPU raster, Chrome hinted a label's baseline to one pixel row on some repaints and the
+    // next row on others: the q of every state hopped 1 px on each run step. jsdom can't render,
+    // and Playwright's bundled headless Chromium doesn't hint that way, so this pins the rule.
+    render(<Diagram automaton={abDfa} viewport={vp} />);
+    const css = screen.getByTestId('diagram').querySelector('style')?.textContent ?? '';
+    expect(css).toMatch(/\.av-diagram \{[^}]*text-rendering: geometricPrecision;/);
+  });
 });
 
 describe('Diagram start arrows', () => {
