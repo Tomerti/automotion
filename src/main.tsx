@@ -6,7 +6,7 @@ import { loadFromStorage, migrateLegacyKeys } from './persistence/storage';
 import { appStore } from './store/store';
 import App from './ui/shell/App';
 import { ErrorBoundary } from './ui/shell/ErrorBoundary';
-import { applyTheme, readTheme } from './ui/shell/theme';
+import { applyTheme, followSystemTheme, readTheme } from './ui/shell/theme';
 import { toast } from './ui/shell/toastStore';
 
 function browserStorage(): Storage | null {
@@ -20,8 +20,10 @@ function browserStorage(): Storage | null {
 // First, so the theme, prefs and automata saved under the old name are found below.
 migrateLegacyKeys(browserStorage());
 
-// Before the first render, so a forced theme never flashes the system one.
+// Before the first render, so the page never flashes the other theme; then keep following
+// the system while that is the choice.
 applyTheme(readTheme());
+followSystemTheme();
 
 const loaded = loadFromStorage(browserStorage());
 appStore.getState().replaceAll(loaded.automata);

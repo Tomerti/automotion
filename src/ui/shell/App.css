@@ -109,6 +109,14 @@ a.av-icon-button {
 .av-menu .av-menu-danger {
   color: var(--av-red);
 }
+.av-theme-menu {
+  min-width: 150px;
+}
+.av-theme-check {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--av-selected);
+}
 
 /* Top bar */
 

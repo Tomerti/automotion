@@ -1,9 +1,15 @@
-/** Colour theme: light (the default, whatever the system prefers) or dark. */
+/** The colour theme in use. */
 export type Theme = 'light' | 'dark';
+
+/** The user's choice: follow the system (the default), or force light or dark. */
+export type ThemePref = 'system' | Theme;
 
 export const THEME_KEY = 'automotion:theme';
 
-export const OTHER_THEME: Record<Theme, Theme> = { light: 'dark', dark: 'light' };
+/** The choices, in the order the theme menu lists them. */
+export const THEME_PREFS: readonly ThemePref[] = ['system', 'light', 'dark'];
+
+const DARK_QUERY = '(prefers-color-scheme: dark)';
 
 function storage(): Storage | null {
   try {
@@ -13,26 +19,66 @@ function storage(): Storage | null {
   }
 }
 
-/** The stored theme; anything else (nothing stored, an old "system" choice) is light. */
-export function readTheme(): Theme {
+function darkQuery(): MediaQueryList | null {
+  return typeof window.matchMedia === 'function' ? window.matchMedia(DARK_QUERY) : null;
+}
+
+/** What the system prefers; light when it can't tell. */
+export function systemTheme(): Theme {
+  return darkQuery()?.matches ? 'dark' : 'light';
+}
+
+/** The theme `pref` shows right now. */
+export function resolveTheme(pref: ThemePref): Theme {
+  return pref === 'system' ? systemTheme() : pref;
+}
+
+/** The stored choice; nothing stored (or anything unknown) follows the system. */
+export function readTheme(): ThemePref {
   try {
-    return storage()?.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
+    const v = storage()?.getItem(THEME_KEY);
+    return v === 'light' || v === 'dark' ? v : 'system';
   } catch {
-    return 'light';
+    return 'system';
   }
 }
 
-/** Apply `theme` to `<html data-theme>`; see src/ui/theme.css. */
-export function applyTheme(theme: Theme): void {
-  document.documentElement.setAttribute('data-theme', theme);
+/** The last choice applied, so a system change knows whether to follow it. */
+let current: ThemePref = 'system';
+
+/**
+ * Apply `pref` to `<html data-theme>`, always as the resolved `light` or `dark` (see
+ * src/ui/theme.css), so styles never have to know about the system choice.
+ */
+export function applyTheme(pref: ThemePref): void {
+  current = pref;
+  document.documentElement.setAttribute('data-theme', resolveTheme(pref));
 }
 
-/** Apply and remember `theme`. Storage is best-effort. */
-export function saveTheme(theme: Theme): void {
-  applyTheme(theme);
+/** Apply and remember `pref`. Storage is best-effort. */
+export function saveTheme(pref: ThemePref): void {
+  applyTheme(pref);
   try {
-    storage()?.setItem(THEME_KEY, theme);
+    const s = storage();
+    if (pref === 'system') s?.removeItem(THEME_KEY);
+    else s?.setItem(THEME_KEY, pref);
   } catch {
     // Not persisted; the choice still holds for this visit.
   }
+}
+
+/**
+ * While the choice is "system", switch with the system as it changes (e.g. a scheduled dark
+ * mode at sunset). Returns the unsubscribe.
+ */
+export function followSystemTheme(onChange?: () => void): () => void {
+  const query = darkQuery();
+  if (!query) return () => {};
+  const listener = (): void => {
+    if (current !== 'system') return;
+    applyTheme('system');
+    onChange?.();
+  };
+  query.addEventListener('change', listener);
+  return () => query.removeEventListener('change', listener);
 }

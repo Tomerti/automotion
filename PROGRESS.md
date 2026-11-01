@@ -20,6 +20,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Theme
+
+- [x] The theme follows the system (light or dark, switching live when the system does) unless the theme menu in the top bar forces Light or Dark; System is the default and the choice is remembered
+
 ### Tutorial
 
 - [x] Interactive tutorial: build the "even number of 0s" DFA, run `1010` and `10`, then delete q1 and loop q0 on `0,1` to accept every word
@@ -94,7 +98,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] ε or `\epsilon` in the word is the empty word
 - [x] Run and Convert to DFA play at once; Run has a chime, and an accept/reject cue when the verdict appears
 - [x] Run highlight is a slim orange ring and edge instead of the wide yellow highlighter; the Run button is orange too
-- [x] Theme toggle is light ↔ dark only, light by default (no longer follows the system)
+- [x] Theme toggle is light ↔ dark only, light by default (no longer follows the system; superseded: see Theme above)
 - [x] Trace views stop above the floating player, so nothing (e.g. a DFA self-loop) is drawn behind it
 - [x] Minimizing an already minimal DFA ends with "Already minimal" instead of Save; names never stack "(min)" or "→ DFA"
 - [x] A toggles accepting, S toggles start on the selected state (Enter/Space no longer do)
