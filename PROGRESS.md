@@ -12,6 +12,8 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Equal-spacing snap guides (Notability-style) in addition to center alignment
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
+- [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
+      incomplete DFA): consider muting it, or saying in the card that it is expected
 - [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
 
 - [ ] Copy and paste follow-ups: Ctrl+X (cut), Ctrl+A (select all), and Shift + click as an alternative to Ctrl + click (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
@@ -43,6 +45,12 @@ Nothing in progress: pick the next task from the list below.
 
 ### Tutorial
 
+- [x] Clearer tutorial (feedback: people didn't know what they were building, and the steps
+      confused them): a goal box above the checklist for each part (one sentence, example words
+      with ✓ / ✗ and a labelled picture of the finished automaton); the states are named `even`
+      and `odd` early, so every step says why before how ("reading a `0` turns an even count
+      odd"); one action per step (the two loops are two steps; 16 steps now); state names show
+      as small states in the text, and a key's "." no longer wraps on its own
 - [x] Interactive tutorial: build the "even number of 0s" DFA, run `1010` and `10`, then delete q1 and loop q0 on `0,1` to accept every word
 - [x] Coach card in the canvas corner: step counter, keys inline, hints for common mistakes, ✓ for the last step; checks the automaton live and falls back when a step comes undone
 - [x] Pointer ring on the state, loop label or word box a step uses

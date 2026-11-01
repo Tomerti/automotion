@@ -2,33 +2,61 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { appStore, useAppStore } from '../../store/store';
 import { LabelText } from '../LabelText';
 import { CloseIcon } from '../shell/icons';
-import { COUNTED_STEPS, PART_TITLES, STEPS } from './steps';
+import { GoalPicture } from './GoalPicture';
+import { COUNTED_STEPS, PART_GOALS, PART_TITLES, STEPS } from './steps';
 import { TutorialPointer } from './TutorialPointer';
 import { finishTutorial, quitTutorial, tutorialContext, useTutorial } from './tutorialStore';
 import './tutorial.css';
 
-/** A `word` to type, or a [Key] to press. */
-const MARKUP = /(`[^`]*`|\[[^\]\s]+\])/;
+/** A `word` to type, a [Key] to press, or a «state». */
+const MARKUP = /(`[^`]*`|\[[^\]\s]+\]|«[^»]*»)/;
+
+/** Punctuation (or a possessive) that belongs with the key or state before it. */
+const TRAILING = /^(’s|[.,:;!?]+)/;
 
 /**
  * Words in backticks as <code>, keys in brackets as <kbd> (a digit key in the symbol font, like
- * the words); the rest with label subscripts.
+ * the words), states in guillemets as a small state with its label; the rest with label
+ * subscripts.
  */
 function RichText({ text }: { text: string }): React.JSX.Element {
+  const parts = text.split(MARKUP);
   return (
     <>
-      {text.split(MARKUP).map((part, i) => {
-        if (i % 2 === 0) return <Fragment key={i}>{part && <LabelText text={part} />}</Fragment>;
-        const inner = part.slice(1, -1);
-        if (part.startsWith('`')) return <code key={i}>{inner}</code>;
-        return (
-          <kbd key={i} data-symbol={/^\d$/.test(inner) || undefined}>
-            {inner}
-          </kbd>
+      {parts.map((part, i) => {
+        if (i % 2 === 0) {
+          // Punctuation right after a key or a state went with it (below).
+          const rest = i > 0 ? part.replace(TRAILING, '') : part;
+          return <Fragment key={i}>{rest && <LabelText text={rest} />}</Fragment>;
+        }
+        // A key cap or state is an inline block, which a line may break after: keep the
+        // punctuation after it on its line, so a "." never wraps on its own.
+        const trailing = TRAILING.exec(parts[i + 1] ?? '')?.[0];
+        const markup = <Markup part={part} />;
+        return trailing ? (
+          <span key={i} className="av-tutorial-nowrap">
+            {markup}
+            {trailing}
+          </span>
+        ) : (
+          <Fragment key={i}>{markup}</Fragment>
         );
       })}
     </>
   );
+}
+
+function Markup({ part }: { part: string }): React.JSX.Element {
+  const inner = part.slice(1, -1);
+  if (part.startsWith('`')) return <code>{inner}</code>;
+  if (part.startsWith('«')) {
+    return (
+      <span className="av-tutorial-state">
+        <LabelText text={inner} />
+      </span>
+    );
+  }
+  return <kbd data-symbol={/^\d$/.test(inner) || undefined}>{inner}</kbd>;
 }
 
 /** A checklist box: empty while the step is to do, a green ✓ once it is done. */
@@ -41,8 +69,41 @@ function Box({ done }: { done: boolean }): React.JSX.Element {
 }
 
 /**
+ * What the part builds, above its checklist: a sentence, words it accepts (✓) and rejects (✗),
+ * and a picture of the finished automaton.
+ */
+function GoalBox({ part }: { part: 1 | 2 }): React.JSX.Element {
+  const goal = PART_GOALS[part];
+  return (
+    <div className="av-tutorial-goal" data-testid="tutorial-goal">
+      <p className="av-tutorial-goal-title">
+        Part {part} · {PART_TITLES[part]}
+      </p>
+      <p className="av-tutorial-goal-text">
+        <RichText text={goal.text} />
+      </p>
+      <ul className="av-tutorial-examples" aria-label="For example">
+        {goal.examples.map((e) => (
+          <li key={e.word} data-accepted={e.accepted}>
+            <code>{e.word}</code>
+            <span
+              className="av-tutorial-mark"
+              role="img"
+              aria-label={e.accepted ? 'accepted' : 'rejected'}
+            >
+              {e.accepted ? '✓' : '✗'}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <GoalPicture automaton={goal.automaton} description={goal.description} />
+    </div>
+  );
+}
+
+/**
  * The tutorial's coach card, floating in the top-right corner of the canvas: a checklist that
- * grows as the user goes. Each finished step of the current part is a ticked line saying what it
+ * grows as the user goes, under the goal of the current part. Each finished step of the current part is a ticked line saying what it
  * did, earlier parts fold into one ticked line, and the step to do now comes last, with how to
  * do it and what's off. It takes no keys and never takes focus, so the canvas shortcuts keep
  * working.
@@ -132,6 +193,7 @@ export function TutorialCard(): React.JSX.Element | null {
         </div>
       ) : (
         <>
+          {shownPart !== 3 && <GoalBox part={shownPart} />}
           {/* One live region that stays mounted, so screen readers announce each ✓ and each new
               step and hint as it appears. */}
           <ol ref={listRef} className="av-tutorial-steps" aria-live="polite">
@@ -141,11 +203,6 @@ export function TutorialCard(): React.JSX.Element | null {
                 <span className="av-tutorial-part-done">{PART_TITLES[p]}</span>
               </li>
             ))}
-            {shownPart !== 3 && (
-              <li className="av-tutorial-part" aria-hidden="true">
-                Part {shownPart} · {PART_TITLES[shownPart]}
-              </li>
-            )}
             {ticked.map((s) => (
               <li
                 key={s.id}

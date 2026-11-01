@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { addState, removeState, renameAutomaton, setStart, toggleAccepting } from '../../core/edit';
+import {
+  addState,
+  removeState,
+  renameAutomaton,
+  renameState,
+  setStart,
+  toggleAccepting,
+} from '../../core/edit';
 import { emptyAutomaton } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
@@ -11,6 +18,7 @@ import {
   startTutorial,
   tutorialStore,
 } from './tutorialStore';
+import { STEPS } from './steps';
 
 const app = () => appStore.getState();
 const tut = () => tutorialStore.getState();
@@ -123,7 +131,8 @@ describe('startTutorial', () => {
   it('starting again from the closing card keeps the finished one', () => {
     startTutorial();
     const first = tut().automatonId;
-    tutorialStore.setState({ progress: 13, current: 13 });
+    const done = STEPS.length - 1;
+    tutorialStore.setState({ progress: done, current: done });
     startTutorial();
     expect(app().automata.some((a) => a.id === first)).toBe(true);
     expect(active()?.name).toBe('Tutorial 2');
@@ -154,11 +163,12 @@ describe('following the app', () => {
     startTutorial();
     app().edit((a) => addState(a, { x: 0, y: 0 }));
     const id = active()!.states[0]!.id;
+    app().edit((a) => renameState(a, id, 'even'));
     app().edit((a) => setStart(a, id));
     app().edit((a) => toggleAccepting(a, id));
-    expect(tut()).toMatchObject({ current: 3, progress: 3 });
+    expect(tut()).toMatchObject({ current: 4, progress: 4 });
     app().undo();
-    expect(tut()).toMatchObject({ current: 2, progress: 3 });
+    expect(tut()).toMatchObject({ current: 3, progress: 4 });
   });
 
   it('moves on when a step is done', () => {
@@ -180,14 +190,15 @@ describe('following the app', () => {
     startTutorial();
     app().edit((a) => addState(a, { x: 0, y: 0 }));
     const id = active()!.states[0]!.id;
+    app().edit((a) => renameState(a, id, 'even'));
     app().edit((a) => setStart(a, id));
     app().edit((a) => toggleAccepting(a, id));
     app().edit((a) => addState(a, { x: 100, y: 0 }));
-    expect(tut()).toMatchObject({ progress: 4, current: 4 });
+    expect(tut()).toMatchObject({ progress: 5, current: 5 });
     app().edit((a) => toggleAccepting(a, id));
-    expect(tut()).toMatchObject({ progress: 4, current: 2 });
+    expect(tut()).toMatchObject({ progress: 5, current: 3 });
     app().setActive('mine');
-    expect(tut().current).toBe(2);
+    expect(tut().current).toBe(3);
   });
 
   it('ends when its automaton is deleted, leaving other work alone', () => {

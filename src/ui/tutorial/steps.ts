@@ -15,12 +15,15 @@ export interface TutorialContext {
 
 export type StepId =
   | 'add-q0'
+  | 'name-q0'
   | 'start'
   | 'accepting'
   | 'add-q1'
+  | 'name-q1'
   | 'q0-q1'
   | 'q1-q0'
-  | 'loops'
+  | 'loop-q0'
+  | 'loop-q1'
   | 'run-1010'
   | 'run-10'
   | 'delete-q1'
@@ -48,8 +51,8 @@ export interface Step {
   /** 3 is the closing card. */
   part: 1 | 2 | 3;
   /**
-   * Words and symbols in backticks, keys in brackets (`[Shift]`, `[0]`); state labels as typed
-   * (`q_0`), for `LabelText`.
+   * Words and symbols in backticks, keys in brackets (`[Shift]`, `[0]`), state labels in
+   * guillemets as typed (`«q_0»`), drawn as a small state with `LabelText`.
    */
   instruction(ctx: TutorialContext): string;
   /** Shown as "✓ …" once the step is done. */
@@ -62,12 +65,86 @@ export interface Step {
   run?: { word: string; accepted: boolean };
 }
 
-export const COUNTED_STEPS = 13;
+export const COUNTED_STEPS = 16;
 
 /** What each part builds, as the checklist's headings. */
 export const PART_TITLES: Record<1 | 2, string> = {
   1: 'An even number of zeros',
   2: 'Accept every word',
+};
+
+/**
+ * What a part builds, shown above its checklist for the whole part so the steps have a point:
+ * a sentence (same markup as the steps), words it accepts and rejects, and a picture of the
+ * finished automaton, with `description` as the picture's text alternative.
+ */
+export interface Goal {
+  text: string;
+  examples: { word: string; accepted: boolean }[];
+  automaton: Automaton;
+  description: string;
+}
+
+/** The names the steps ask for, which the goal pictures use. */
+export const NAMES = { even: 'even', odd: 'odd', any: 'any' } as const;
+
+/** A two-symbol picture automaton: states at (x, 0), loops pointing up. */
+function picture(
+  states: { id: string; x: number }[],
+  edges: [from: string, symbols: Sym[], to: string][],
+): Automaton {
+  return {
+    id: 'goal',
+    name: 'Goal',
+    kind: 'DFA',
+    alphabet: ['0', '1'],
+    states: states.map((s) => ({ id: s.id, label: s.id, x: s.x, y: 0 })),
+    starts: [states[0]!.id],
+    accepting: [states[0]!.id],
+    transitions: edges.map(([from, symbols, to]) => ({
+      id: `${from}->${to}`,
+      from,
+      to,
+      symbols,
+      ...(from === to ? { loopAngle: -Math.PI / 2 } : {}),
+    })),
+  };
+}
+
+export const PART_GOALS: Record<1 | 2, Goal> = {
+  1: {
+    text: 'Build a DFA that reads words made of `0` and `1`, and accepts the ones with an even number of zeros.',
+    examples: [
+      { word: '1010', accepted: true },
+      { word: '11', accepted: true },
+      { word: '10', accepted: false },
+      { word: '000', accepted: false },
+    ],
+    automaton: picture(
+      [
+        { id: NAMES.even, x: 0 },
+        { id: NAMES.odd, x: 150 },
+      ],
+      [
+        [NAMES.even, ['0'], NAMES.odd],
+        [NAMES.odd, ['0'], NAMES.even],
+        [NAMES.even, ['1'], NAMES.even],
+        [NAMES.odd, ['1'], NAMES.odd],
+      ],
+    ),
+    description:
+      'The goal: two states, even (start, accepting) and odd. A 0 goes from one to the other; a 1 loops on each.',
+  },
+  2: {
+    text: 'Change it to accept every word: one state that every run stays in.',
+    examples: [
+      { word: '10', accepted: true },
+      { word: '0', accepted: true },
+      { word: '111', accepted: true },
+    ],
+    automaton: picture([{ id: NAMES.any, x: 0 }], [[NAMES.any, ['0', '1'], NAMES.any]]),
+    description: 'The goal: one state, any (start, accepting), looping on 0 and 1.',
+  },
 };
 
 /** q0 is the start state (or the first state before there is one); q1 is the first other state. */
@@ -86,9 +163,13 @@ function sameSet(xs: Sym[], ys: Sym[]): boolean {
   return xs.length === ys.length && xs.every((x) => ys.includes(x));
 }
 
+/** A state label as the card draws it: a small state. */
+const chip = (label: string): string => `«${label}»`;
+
+/** The current labels of q0 and q1, as chips. */
 function labels(ctx: TutorialContext): { q0: string; q1: string } {
   const r = ctx.automaton ? roles(ctx.automaton) : {};
-  return { q0: r.q0?.label ?? 'q_0', q1: r.q1?.label ?? 'q_1' };
+  return { q0: chip(r.q0?.label ?? 'q_0'), q1: chip(r.q1?.label ?? 'q_1') };
 }
 
 /** What `fn` says about the automaton, or `fallback` without one. */
@@ -137,7 +218,9 @@ function wrongSymbols(ctx: TutorialContext, edges: WantedEdge[]): string | null 
       const syms = edge(a, from.id, to.id);
       if (syms.length > 0 && !sameSet(syms, e.symbols)) {
         const only = e.symbols.map((s) => `\`${s}\``).join(', ');
-        return `${from.label} → ${to.label} should read only ${only}.`;
+        return from === to
+          ? `${chip(from.label)}’s loop should read only ${only}.`
+          : `${chip(from.label)} → ${chip(to.label)} should read only ${only}.`;
       }
     }
     return null;
@@ -148,9 +231,9 @@ function wrongSymbols(ctx: TutorialContext, edges: WantedEdge[]): string | null 
 function part1Hint(ctx: TutorialContext): string | null {
   return onAutomaton(ctx, null, (a, r) => {
     const extra = a.states.find((s) => s.id !== r.q0?.id && s.id !== r.q1?.id);
-    if (extra) return `Delete the extra state ${extra.label}: click it, then press [Delete].`;
+    if (extra) return `Delete the extra state ${chip(extra.label)}: click it, then press [Delete].`;
     if (r.q0 && r.q1 && a.accepting.includes(r.q1.id)) {
-      return `Only ${r.q0.label} should be accepting: click ${r.q1.label} and press [A].`;
+      return `Only ${chip(r.q0.label)} should be accepting: click ${chip(r.q1.label)} and press [A].`;
     }
     return null;
   });
@@ -178,18 +261,37 @@ interface StepSpec {
   run?: { word: string; accepted: boolean };
 }
 
+/** A state given a name of the user's own (not a `q`-number). */
+const isNamed = (s: State | undefined): boolean => s !== undefined && !DEFAULT_LABEL.test(s.label);
+
+/** Labels the part-1 steps asked for, which part 2's rename must move away from. */
+const PART1_NAMES: readonly string[] = [NAMES.even, NAMES.odd];
+
+/** The double-click rename, ending in `name` as a word to type. */
+const renameHow = (name: string): string => `double-click it, type \`${name}\` and press [Enter]`;
+
 const SPECS: StepSpec[] = [
   {
     id: 'add-q0',
     part: 1,
-    instruction: () => 'Add a state: double-click anywhere on the canvas.',
+    instruction: () => 'Add the first state: double-click anywhere on the canvas.',
     confirmation: (l) => `Added ${l.q0}`,
     done: (ctx) => onAutomaton(ctx, false, (a) => a.states.length >= 1),
   },
   {
+    id: 'name-q0',
+    part: 1,
+    instruction: (l) =>
+      `${l.q0} will stand for “an even number of zeros so far”. Name it: ${renameHow(NAMES.even)}.`,
+    confirmation: (l) => `Named it ${l.q0}`,
+    done: (ctx) => onAutomaton(ctx, false, (_, r) => isNamed(r.q0)),
+    target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
+  },
+  {
     id: 'start',
     part: 1,
-    instruction: (l) => `Make ${l.q0} the start state: click it, then press [S].`,
+    instruction: (l) =>
+      `Before reading anything there are no zeros yet, and zero is even, so every run starts in ${l.q0}. Click it, then press [S] to make it the start state.`,
     confirmation: (l) => `${l.q0} is the start state`,
     done: (ctx) => onAutomaton(ctx, false, (a) => startStates(a).length > 0),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
@@ -198,14 +300,16 @@ const SPECS: StepSpec[] = [
     id: 'accepting',
     part: 1,
     instruction: (l) =>
-      `Make ${l.q0} accepting too: a word is accepted when its run ends here. Press [A].`,
+      `A word whose run ends in ${l.q0} has an even number of zeros, so it should be accepted: press [A] to make ${l.q0} accepting.`,
     confirmation: (l) => `${l.q0} is accepting`,
     done: (ctx) =>
       onAutomaton(ctx, false, (a, r) => r.q0 !== undefined && a.accepting.includes(r.q0.id)),
     // A click on the canvas since the last step clears the selection, and A then does nothing.
     first: (ctx) =>
       onAutomaton(ctx, null, (_, r) =>
-        r.q0 && !ctx.selected.includes(r.q0.id) ? `First, click ${r.q0.label} to select it.` : null,
+        r.q0 && !ctx.selected.includes(r.q0.id)
+          ? `First, click ${chip(r.q0.label)} to select it.`
+          : null,
       ),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
@@ -217,11 +321,20 @@ const SPECS: StepSpec[] = [
     done: (ctx) => onAutomaton(ctx, false, (a) => a.states.length >= 2),
   },
   {
+    id: 'name-q1',
+    part: 1,
+    instruction: (l) =>
+      `${l.q1} will stand for “an odd number of zeros so far”. Name it: ${renameHow(NAMES.odd)}.`,
+    confirmation: (l) => `Named it ${l.q1}`,
+    done: (ctx) => onAutomaton(ctx, false, (_, r) => isNamed(r.q1)),
+    target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q1)),
+  },
+  {
     id: 'q0-q1',
     part: 1,
     instruction: (l) =>
-      `Reading a \`0\` in ${l.q0} goes to ${l.q1}: hold [Shift] and drag from ${l.q0} to ${l.q1}, then type [0] and press [Enter].`,
-    confirmation: (l) => `${l.q0} → ${l.q1} reads \`0\``,
+      `Reading a \`0\` turns an even count odd: hold [Shift] and drag from ${l.q0} to ${l.q1}, then type [0] and press [Enter].`,
+    confirmation: (l) => `A \`0\` in ${l.q0} moves to ${l.q1}`,
     edges: [PART1_EDGES[0]!],
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
@@ -229,44 +342,54 @@ const SPECS: StepSpec[] = [
     id: 'q1-q0',
     part: 1,
     instruction: (l) =>
-      `…and reading a \`0\` in ${l.q1} goes back: hold [Shift] and drag from ${l.q1} to ${l.q0}, then type [0] and press [Enter].`,
-    confirmation: (l) => `${l.q1} → ${l.q0} reads \`0\``,
+      `…and an odd count back to even: hold [Shift] and drag from ${l.q1} to ${l.q0}, then type [0] and press [Enter].`,
+    confirmation: (l) => `A \`0\` in ${l.q1} moves back to ${l.q0}`,
     edges: [PART1_EDGES[1]!],
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q1)),
   },
   {
-    id: 'loops',
+    id: 'loop-q0',
     part: 1,
-    instruction: () =>
-      'Reading a `1` changes nothing: give both states a loop. Hold [Shift] and drag from a state, out and back onto itself, then type [1] and press [Enter].',
-    confirmation: () => 'Both states loop on `1`',
-    edges: [PART1_EDGES[2]!, PART1_EDGES[3]!],
-    target: (ctx) =>
-      onAutomaton(ctx, null, (_, r) => stateTarget(edgeIs(ctx, PART1_EDGES[2]!) ? r.q1 : r.q0)),
+    instruction: (l) =>
+      `Reading a \`1\` leaves the count as it is, so a \`1\` in ${l.q0} stays in ${l.q0}: an arrow from it back to itself. Hold [Shift] and drag from ${l.q0} out and back onto it, then type [1] and press [Enter].`,
+    confirmation: (l) => `A \`1\` in ${l.q0} stays there`,
+    edges: [PART1_EDGES[2]!],
+    target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
+  },
+  {
+    id: 'loop-q1',
+    part: 1,
+    instruction: (l) =>
+      `The same for ${l.q1}: hold [Shift] and drag from ${l.q1} out and back onto it, then type [1] and press [Enter].`,
+    confirmation: (l) => `A \`1\` in ${l.q1} stays there`,
+    edges: [PART1_EDGES[3]!],
+    target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q1)),
   },
   {
     id: 'run-1010',
     part: 1,
-    instruction: () =>
-      'Test it: type `1010` in “Test a word” and press [Enter]. It should end in Accepted.',
-    confirmation: () => '`1010` is accepted',
+    instruction: (l) =>
+      `It’s built! Test it: type \`1010\` in “Test a word” at the bottom and press [Enter]. It has two zeros, so its run ends in ${l.q0} and it’s accepted.`,
+    confirmation: () => '`1010` is accepted: two zeros',
     run: { word: '1010', accepted: true },
     target: () => RUN_PILL,
   },
   {
     id: 'run-10',
     part: 1,
-    instruction: () =>
-      'Now try `10`, which should be rejected: press [Esc] to get back to editing, then run it.',
-    confirmation: () => '`10` is rejected, as it should be: it has an odd number of zeros',
+    instruction: (l) =>
+      `Now \`10\`, with one zero: press [Esc] to get back to editing, then run it. Its run ends in ${l.q1}, so it’s rejected.`,
+    confirmation: () => '`10` is rejected, as it should be: one zero is odd',
     run: { word: '10', accepted: false },
     target: () => RUN_PILL,
   },
   {
     id: 'delete-q1',
     part: 2,
-    instruction: (l) => `Delete ${l.q1}: click it, then press [Delete]. Its arrows go with it.`,
-    confirmation: (l) => `${l.q1} is gone`,
+    instruction: (l) =>
+      `To accept every word there’s nothing left to count, so ${l.q1} can go: click it, then press [Delete]. Its arrows go with it.`,
+    // Not its label: the state is gone by the time the ✓ shows.
+    confirmation: () => 'Down to one state',
     done: (ctx) =>
       onAutomaton(
         ctx,
@@ -282,7 +405,7 @@ const SPECS: StepSpec[] = [
         if (a.states.length === 0) return 'Press [Ctrl] + [Z] to bring the start state back.';
         // One state left that isn't the start: the start state went instead of q1 (the one left).
         if (a.states.length === 1 && r.q0 && !startStates(a).includes(r.q0.id)) {
-          return `That was the start state: press [Ctrl] + [Z] to undo, then delete ${r.q0.label}.`;
+          return `That was the start state: press [Ctrl] + [Z] to undo, then delete ${chip(r.q0.label)}.`;
         }
         return null;
       }),
@@ -292,14 +415,14 @@ const SPECS: StepSpec[] = [
     id: 'loop-01',
     part: 2,
     instruction: (l) =>
-      `Let ${l.q0}’s loop read both symbols: double-click its label, type \`0,1\` and press [Enter].`,
+      `Let ${l.q0}’s loop read both symbols, so every run stays in ${l.q0}: double-click the loop’s \`1\`, type \`0,1\` and press [Enter].`,
     confirmation: (l) => `${l.q0} loops on \`0\` and \`1\``,
     // Not `edges`: a loop still reading only 1 is unfinished, not wrong.
     done: (ctx) => edgeIs(ctx, { from: 'q0', to: 'q0', symbols: ['0', '1'] }),
     hint: (ctx) =>
       onAutomaton(ctx, null, (a, r) =>
         edge(a, r.q0?.id, r.q0?.id).some((s) => s !== '0' && s !== '1')
-          ? `${r.q0?.label ?? 'q_0'}’s loop should read only \`0\` and \`1\`.`
+          ? `${chip(r.q0?.label ?? 'q_0')}’s loop should read only \`0\` and \`1\`.`
           : null,
       ),
     target: (ctx) =>
@@ -312,18 +435,25 @@ const SPECS: StepSpec[] = [
     id: 'rename-q0',
     part: 2,
     instruction: (l) =>
-      `${l.q0} now accepts every word, so name it that: double-click ${l.q0}, type \`any\` and press [Enter].`,
+      `${l.q0} doesn’t count anything any more, so give it a name that fits: ${renameHow(NAMES.any)}.`,
     confirmation: (l) => `Renamed it ${l.q0}`,
-    // Any name of the user's own will do.
+    // Any name of the user's own will do, but not one part 1 asked for.
     done: (ctx) =>
-      onAutomaton(ctx, false, (_, r) => r.q0 !== undefined && !DEFAULT_LABEL.test(r.q0.label)),
+      onAutomaton(
+        ctx,
+        false,
+        (_, r) =>
+          r.q0 !== undefined &&
+          isNamed(r.q0) &&
+          !PART1_NAMES.includes(r.q0.label.trim().toLowerCase()),
+      ),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
   {
     id: 'run-10-again',
     part: 2,
-    instruction: () =>
-      'Run `10` again: type it in “Test a word” and press [Enter]. Now it’s accepted, like every word.',
+    instruction: (l) =>
+      `Run \`10\` again: type it in “Test a word” and press [Enter]. Its run ends in ${l.q0}, so now it’s accepted, like every word.`,
     confirmation: () => '`10` is accepted now',
     run: { word: '10', accepted: true },
     target: () => RUN_PILL,
@@ -332,7 +462,7 @@ const SPECS: StepSpec[] = [
     id: 'done',
     part: 3,
     instruction: () =>
-      'You built a DFA, ran it, changed what it accepts and named a state. You can always press [?] for all the controls.',
+      'You built a DFA that counts zeros, ran words on it, and changed it to accept every word. You can always press [?] for all the controls.',
     confirmation: () => '',
     done: () => false,
   },

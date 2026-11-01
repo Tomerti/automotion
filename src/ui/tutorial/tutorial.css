@@ -10,10 +10,10 @@
   top: var(--av-dock-bottom);
   right: var(--av-dock-bottom);
   z-index: 12;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  width: 300px;
+  width: 320px;
   max-height: calc(100% - 2 * var(--av-dock-bottom) - 64px);
   padding: 12px 14px 14px;
   color: var(--av-ink);
@@ -28,6 +28,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex: none;
   margin: -4px -6px -4px 0;
 }
 .av-tutorial-count {
@@ -38,9 +39,97 @@
   color: var(--av-ink-muted);
 }
 
+/* The goal of the part: what it builds, words it accepts and rejects, and its picture. */
+
+.av-tutorial-goal {
+  flex: none;
+  display: grid;
+  gap: 7px;
+  padding: 10px 12px 8px;
+  background: var(--av-surface);
+  border: 1px solid var(--av-rule);
+  border-radius: 10px;
+}
+.av-tutorial-goal-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.av-tutorial-goal-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.av-tutorial-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  list-style: none;
+}
+.av-tutorial-examples li {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.av-tutorial-mark {
+  font-weight: 700;
+}
+.av-tutorial-examples [data-accepted='true'] .av-tutorial-mark {
+  color: var(--av-green);
+}
+.av-tutorial-examples [data-accepted='false'] .av-tutorial-mark {
+  color: var(--av-red);
+}
+.av-tutorial-goal-picture {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 112px;
+  margin-top: 2px;
+}
+.av-goal-edge {
+  fill: none;
+  stroke: var(--av-edge-stroke, #3a4356);
+  stroke-width: 1.5;
+}
+.av-tutorial-goal-picture .av-edge-head {
+  fill: var(--av-edge-stroke, #3a4356);
+}
+.av-goal-state,
+.av-goal-accept {
+  fill: var(--av-state-fill, #ffffff);
+  stroke: var(--av-state-stroke, #1c2333);
+  stroke-width: 1.5;
+}
+.av-goal-accept {
+  fill: none;
+}
+.av-goal-label,
+.av-goal-symbols {
+  font-family: var(--av-font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: var(--av-ink);
+}
+.av-goal-label {
+  font-size: 13px;
+}
+.av-goal-symbols {
+  font-family: var(--av-font-symbol);
+  font-size: 14px;
+}
+
 /* The checklist */
 
 .av-tutorial-steps {
+  /* Only the checklist scrolls: the goal above it stays in view. */
+  flex: 0 1 auto;
+  min-height: 0;
   display: grid;
   align-content: start;
   gap: 7px;
@@ -48,12 +137,6 @@
   padding: 0;
   overflow-y: auto;
   list-style: none;
-}
-.av-tutorial-part {
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--av-ink-muted);
 }
 .av-tutorial-step {
   display: grid;
@@ -74,8 +157,7 @@
   padding-top: 9px;
   border-top: 1px solid var(--av-rule);
 }
-.av-tutorial-now:first-child,
-.av-tutorial-part + .av-tutorial-now {
+.av-tutorial-now:first-child {
   padding-top: 0;
   border-top: 0;
 }
@@ -135,6 +217,24 @@
 .av-tutorial kbd {
   margin: 0 1px;
   vertical-align: 1px;
+}
+
+/* A key cap or state and the punctuation after it, kept on one line. */
+.av-tutorial-nowrap {
+  white-space: nowrap;
+}
+
+/* A state named in the text: its label in a small state, as it looks on the canvas. */
+.av-tutorial-state {
+  display: inline-block;
+  padding: 0 6px;
+  font-size: 0.93em;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--av-state-fill, transparent);
+  border: 1.5px solid var(--av-state-stroke, currentColor);
+  border-radius: 999px;
 }
 
 /* Something to do before the step (leave a run, select the state): not a mistake, so plain ink. */
@@ -260,7 +360,11 @@
     left: 12px;
     right: 12px;
     width: auto;
-    max-height: 45%;
+    max-height: 55%;
+  }
+  /* Room for the steps: the words and sentence say what the picture would. */
+  .av-tutorial-goal-picture {
+    display: none;
   }
 }
 
