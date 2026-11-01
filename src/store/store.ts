@@ -3,6 +3,7 @@ import { immer } from 'zustand/middleware/immer';
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
 import { syncAlphabet } from '../core/edit';
+import { newId } from '../core/id';
 import { emptyAutomaton } from '../core/model';
 import type { Automaton, AutomatonKind } from '../core/model';
 import type { AnyTrace } from '../core/trace';
@@ -26,6 +27,11 @@ export interface AppState {
   /** A blank automaton named "Untitled" (or "Untitled 2", …); a DFA unless `kind` says NFA. */
   createAutomaton(kind?: AutomatonKind): string;
   addAutomaton(a: Automaton): void;
+  /**
+   * Add a copy of automaton `id` named "X copy" (or "X copy 2", …) with its own undo history,
+   * and open it like `addAutomaton`, in the same view. `null` if there is no such automaton.
+   */
+  duplicateAutomaton(id: string): string | null;
   deleteAutomaton(id: string): void;
   setActive(id: string): void;
   replaceAll(automata: Automaton[]): void;
@@ -133,6 +139,23 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
             s.trace = null;
             s.stepIndex = 0;
           });
+        },
+
+        duplicateAutomaton(id) {
+          const { automata, viewports } = get();
+          const original = automata.find((a) => a.id === id);
+          if (!original) return null;
+          // A copy of "X copy 2" is "X copy 3", not "X copy 2 copy".
+          const base = `${original.name.replace(/ copy(?: \d+)?$/, '')} copy`;
+          const copy: Automaton = { ...original, id: newId(), name: freeName(automata, base) };
+          const viewport = viewports[id];
+          get().addAutomaton(copy);
+          if (viewport) {
+            set((s) => {
+              s.viewports[copy.id] = viewport;
+            });
+          }
+          return copy.id;
         },
 
         deleteAutomaton(id) {
