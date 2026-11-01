@@ -7,6 +7,7 @@ import { appStore, useAppStore } from '../../store/store';
 import { Thumbnail } from '../canvas/Thumbnail';
 import { downloadText, slug } from './download';
 import { importFile } from './importFile';
+import { toast } from './toastStore';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
 
 /** Thumbnail size in CSS px; keep in sync with .av-history-thumb in App.css. */
@@ -22,6 +23,18 @@ function deleteWithConfirm(a: Automaton): void {
   const st = appStore.getState();
   st.deleteAutomaton(a.id);
   if (appStore.getState().automata.length === 0) st.addAutomaton(emptyAutomaton('Untitled', 'DFA'));
+}
+
+/** Ctrl+C (⌘C), without Shift or Alt. */
+function isCopyKey(e: React.KeyboardEvent): boolean {
+  return (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'c';
+}
+
+/** Copy `a` for Ctrl+V to add a copy of it, and say so: nothing on screen changes otherwise. */
+function copyWithToast(a: Automaton): void {
+  if (appStore.getState().copyAutomaton(a.id)) {
+    toast(`Copied "${a.name}": Ctrl+V adds a copy of it`, 'info');
+  }
 }
 
 function exportOne(a: Automaton): void {
@@ -141,7 +154,7 @@ function EntryMenu(props: {
 /**
  * The left bar: every automaton, most recently edited first, with a picture of its diagram.
  * Clicking one opens it; Delete on it, or its ⋯ menu, deletes it after asking; the menu also
- * renames, duplicates and exports. Create sits at the top, Import and Export all at the bottom.
+ * renames, duplicates and exports. Ctrl+C on one copies it, and Ctrl+V (anywhere) adds a copy. Create sits at the top, Import and Export all at the bottom.
  */
 export function HistoryBar(): React.JSX.Element {
   const automata = useAppStore((s) => s.automata);
@@ -218,9 +231,14 @@ export function HistoryBar(): React.JSX.Element {
                   }}
                   onDoubleClick={() => startRename(a.id)}
                   onKeyDown={(e) => {
-                    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-                    e.preventDefault();
-                    deleteWithConfirm(a);
+                    if (isCopyKey(e)) {
+                      // Handled here: the canvas would copy its selection, the toolbar a picture.
+                      e.preventDefault();
+                      copyWithToast(a);
+                    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                      e.preventDefault();
+                      deleteWithConfirm(a);
+                    }
                   }}
                 >
                   <span className="av-history-name">{a.name}</span>

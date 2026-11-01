@@ -85,6 +85,32 @@ it('Create from the history bar shows its diagram, and the kind pill switches it
   expect(appStore.getState().automata[0]?.kind).toBe('NFA');
 });
 
+it('Ctrl+C on a history entry copies that automaton and Ctrl+V adds a copy of it', async () => {
+  const user = userEvent.setup();
+  localStorage.removeItem(HISTORY_BAR_KEY);
+  toastStore.setState({ toasts: [] });
+  const other = { ...loop(), id: 'e', name: 'e' };
+  resetAppStore({ automata: [loop(), other], activeId: 'd' });
+  // Selected states would take Ctrl+C on the canvas; on a history entry the entry wins.
+  appStore.getState().select({ states: ['q0'], transitions: [] });
+  const write = vi.fn();
+  Object.defineProperty(navigator, 'clipboard', { value: { write }, configurable: true });
+  render(<App />);
+  const entry = within(screen.getByRole('navigation', { name: 'History' }))
+    .getAllByTestId('history-item')
+    .find((el) => el.textContent?.startsWith('e'))!;
+  await user.click(entry);
+  await user.keyboard('{Control>}c{/Control}');
+  expect(write).not.toHaveBeenCalled();
+  expect(appStore.getState().clipboard).toMatchObject({ kind: 'automaton' });
+  expect(toastStore.getState().toasts).toMatchObject([
+    { message: 'Copied "e": Ctrl+V adds a copy of it' },
+  ]);
+  await user.keyboard('{Control>}v{/Control}');
+  expect(appStore.getState().automata.map((a) => a.name)).toEqual(['e copy', 'd', 'e']);
+  expect(appStore.getState().activeId).toBe(appStore.getState().automata[0]!.id);
+});
+
 it('a failed autosave shows an error toast', async () => {
   const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
     throw new Error('full');
