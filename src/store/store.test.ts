@@ -172,6 +172,45 @@ describe('store', () => {
     expect(st().selection.states).toEqual([]);
   });
 
+  it('duplicateAutomaton adds an independent copy first, opens it and keeps its view', () => {
+    const s = createAppStore({ automata: [dfa('a1'), dfa('a2')], activeId: 'a1' });
+    const st = () => s.getState();
+    st().edit((a) => moveState(a, 'q0', { x: 5, y: 0 }));
+    st().setViewport('a2', { x: 1, y: 2, zoom: 3 });
+    st().openTrace(runWord(st().automata[0]!, 'a'));
+    const id = st().duplicateAutomaton('a2');
+    expect(id).not.toBeNull();
+    const copy = st().automata[0]!;
+    const original = st().automata.find((a) => a.id === 'a2')!;
+    expect(copy.id).toBe(id);
+    expect(copy.name).toBe('a2 copy');
+    expect({ ...copy, id: 'a2', name: 'a2' }).toEqual(original);
+    expect(st().automata.map((a) => a.id)).toEqual([id, 'a1', 'a2']);
+    expect(st().activeId).toBe(id);
+    expect(st().trace).toBeNull();
+    expect(st().viewports[id!]).toEqual({ x: 1, y: 2, zoom: 3 });
+    // Its own undo history: editing the copy leaves the original alone.
+    expect(st().history[id!]).toBeUndefined();
+    st().edit((a) => moveState(a, 'q0', { x: 9, y: 0 }));
+    expect(x0(st().automata.find((a) => a.id === 'a2')!)).toBe(0);
+    st().undo();
+    expect(x0(st().automata[0]!)).toBe(0);
+    expect(st().duplicateAutomaton('missing')).toBeNull();
+  });
+
+  it('duplicates are named "X copy", "X copy 2", … and a copy of a copy does not stack', () => {
+    const s = createAppStore({ automata: [dfa('a1')], activeId: 'a1' });
+    const st = () => s.getState();
+    const dup = (id: string) => {
+      const copyId = st().duplicateAutomaton(id);
+      return st().automata.find((a) => a.id === copyId)!;
+    };
+    expect(dup('a1').name).toBe('a1 copy');
+    const second = dup('a1');
+    expect(second.name).toBe('a1 copy 2');
+    expect(dup(second.id).name).toBe('a1 copy 3');
+  });
+
   it('deleteAutomaton picks next, else previous, else null, and drops history/viewport', () => {
     const s = createAppStore({ automata: [dfa('a1'), dfa('a2'), dfa('a3')], activeId: 'a2' });
     const st = () => s.getState();

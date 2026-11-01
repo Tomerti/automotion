@@ -76,6 +76,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] The top-bar automaton dropdown is gone; the name there still renames the open automaton
 - [x] Delete (or Backspace) on a clicked entry deletes that automaton after asking
 - [x] One-time cleanup: the first release's three seeded examples are removed from saved work if never changed
+- [x] Duplicate in an entry's ⋯ menu adds a copy ("X copy", "X copy 2", …) at the top and opens it in the same view, with its own undo history
 - [x] One Create button replaces New DFA / New NFA; the DFA/NFA switch moved out of the top bar into a pill floating at the top of the canvas
 
 ### Multiple start states

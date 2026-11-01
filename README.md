@@ -53,7 +53,7 @@
 
 ![Editing a DFA in the dark theme, with the history sidebar open](docs/screenshots/edit-dark.png)
 
-- Everything autosaves in your browser. The history sidebar lists every automaton with a thumbnail, most recently edited first; rename, export or delete one from its ⋯ menu.
+- Everything autosaves in your browser. The history sidebar lists every automaton with a thumbnail, most recently edited first; rename, duplicate, export or delete one from its ⋯ menu.
 - Import and export automata as JSON files, one or all at once, and export a diagram as SVG or PNG.
 - Light and dark themes: it follows your system by default, or pick Light or Dark from the theme menu. Press **?** for the controls guide at any time.
 

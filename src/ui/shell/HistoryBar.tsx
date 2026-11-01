@@ -14,7 +14,7 @@ const THUMB_WIDTH = 176;
 const THUMB_HEIGHT = 92;
 const MIME = 'application/json';
 /** Room the ⋯ menu needs below its button before it opens upward instead. */
-const MENU_ROOM = 150;
+const MENU_ROOM = 180;
 
 /** Delete `a` after confirming; the canvas is never left without an automaton. */
 function deleteWithConfirm(a: Automaton): void {
@@ -128,6 +128,7 @@ function EntryMenu(props: {
           onKeyDown={onMenuKeyDown}
         >
           {item('Rename', onRename, { disabled: !canRename })}
+          {item('Duplicate', () => appStore.getState().duplicateAutomaton(automaton.id))}
           {item('Export JSON', () => exportOne(automaton))}
           <div role="separator" className="av-menu-sep" />
           {item('Delete', () => deleteWithConfirm(automaton), { danger: true })}
@@ -140,7 +141,7 @@ function EntryMenu(props: {
 /**
  * The left bar: every automaton, most recently edited first, with a picture of its diagram.
  * Clicking one opens it; Delete on it, or its ⋯ menu, deletes it after asking; the menu also
- * renames and exports. Create sits at the top, Import and Export all at the bottom.
+ * renames, duplicates and exports. Create sits at the top, Import and Export all at the bottom.
  */
 export function HistoryBar(): React.JSX.Element {
   const automata = useAppStore((s) => s.automata);

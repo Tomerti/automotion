@@ -75,6 +75,32 @@ test('rename and delete an automaton from its ⋯ menu in the history bar', asyn
   await expect(entries.first()).toContainText('Mine');
 });
 
+test('duplicate an automaton from its ⋯ menu; the copy is edited on its own', async ({ page }) => {
+  await openApp(page, { clear: true });
+  const bar = page.getByRole('navigation', { name: 'History' });
+  const entries = bar.getByTestId('history-item');
+  await addStateAt(page, 300, 200);
+  await expect(entries.first()).toContainText('DFA · 1 state');
+
+  await bar.getByRole('button', { name: 'More actions for Untitled' }).click();
+  await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+  await expect(entries).toHaveCount(2);
+  await expect(entries.first()).toContainText('Untitled copy');
+  await expect(entries.first()).toContainText('DFA · 1 state');
+  await expect(entries.first()).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.av-switcher-name')).toHaveText('Untitled copy');
+
+  // Editing the copy leaves the original as it was, and both survive a reload.
+  await addStateAt(page, 300, 300);
+  await expect(entries.first()).toContainText('Untitled copy');
+  await expect(entries.first()).toContainText('DFA · 2 states');
+  await expect(entries.nth(1)).toContainText('DFA · 1 state');
+  await page.reload();
+  await expect(entries).toHaveCount(2);
+  await expect(entries.first()).toContainText('Untitled copy');
+  await expect(entries.nth(1)).toContainText('Untitled');
+});
+
 test('the Delete key deletes a clicked history entry after asking', async ({ page }) => {
   await openApp(page, { clear: true });
   const bar = page.getByRole('navigation', { name: 'History' });

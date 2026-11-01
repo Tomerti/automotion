@@ -117,7 +117,12 @@ describe('HistoryBar actions', () => {
     await user.click(more);
     const menu = screen.getByRole('menu', { name: 'Actions for Blank' });
     const entries = within(menu).getAllByRole('menuitem');
-    expect(entries.map((e) => e.textContent)).toEqual(['Rename', 'Export JSON', 'Delete']);
+    expect(entries.map((e) => e.textContent)).toEqual([
+      'Rename',
+      'Duplicate',
+      'Export JSON',
+      'Delete',
+    ]);
     expect(entries[0]).toHaveFocus();
     await user.keyboard('{ArrowDown}');
     expect(entries[1]).toHaveFocus();
@@ -171,6 +176,18 @@ describe('HistoryBar actions', () => {
     act(() => startRun('a'));
     await user.click(screen.getByRole('button', { name: 'More actions for Parity' }));
     expect(screen.getByRole('menuitem', { name: 'Rename' })).toBeDisabled();
+  });
+
+  it('Duplicate adds a copy at the top and opens it, also while a run is open', async () => {
+    const user = userEvent.setup();
+    render(<HistoryBar />);
+    act(() => startRun('a'));
+    await openAction(user, 'Parity', 'Duplicate');
+    expect(names()).toEqual(['Parity copy', 'Parity', 'Blank']);
+    expect(st().activeId).toBe(st().automata[0]?.id);
+    expect(st().trace).toBeNull();
+    expect(items()[0]).toHaveTextContent('Parity copyDFA · 2 states');
+    expect(items()[0]).toHaveAttribute('aria-current', 'page');
   });
 
   it('Delete asks, removes that automaton and always keeps one', async () => {

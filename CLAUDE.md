@@ -76,8 +76,8 @@ Layers, with dependencies pointing downward only:
   - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip,
     theme menu (System / Light / Dark: `theme.ts` resolves it to `<html data-theme>`), Controls popup), the left history bar (`HistoryBar.tsx`, floating over the full-width canvas so everything stays
     centred on the window; fits keep `--av-history-inset` clear on both sides: every automaton with a
-    `canvas/Thumbnail.tsx` picture, newest edit first, a ⋯ menu per entry for rename / export /
-    delete, Delete/Backspace on a focused entry deletes it (after a confirm), Create (a blank DFA
+    `canvas/Thumbnail.tsx` picture, newest edit first, a ⋯ menu per entry for rename / duplicate /
+    export / delete (`store.duplicateAutomaton`), Delete/Backspace on a focused entry deletes it (after a confirm), Create (a blank DFA
     named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in
     `historyPrefs.ts`), the DFA/NFA switch floating at the top of the canvas (`KindPill.tsx`, hidden
     while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,
