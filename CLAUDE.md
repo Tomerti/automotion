@@ -45,7 +45,8 @@ Layers, with dependencies pointing downward only:
   - `edit.ts`: every edit is a pure `Automaton → Automaton` function, shared by the canvas and the table.
   - `clipboard.ts`: Ctrl+C / Ctrl+V. `copyStates` snapshots states with their arrows out (to each other
     and to outside states, never into the copy); `pasteClip` adds them with fresh ids, primed labels
-    (`q_1'`), accepting but not start, dropping arrows to states the target lacks.
+    (`q_1'`), accepting but not start, dropping arrows to states the target lacks. Ctrl+C copies
+    states when `selectedStates()` (store) has any, and the diagram as a picture (Toolbar) otherwise.
   - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
     snapshots (`trace.ts`). Each has a `can*` guard returning a user-facing reason or `null`.
     `subsetConstruction` throws past `MAX_DFA_STATES` (64).

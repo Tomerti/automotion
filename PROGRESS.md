@@ -28,6 +28,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Dragging a selected state moves the whole selection (one undo step), snapping to the other states
 - [x] Ctrl+C / Ctrl+V copy and paste the selected states with the arrows between them and their arrows to outside states (arrows into the chain are not copied); the paste lands at the pointer, or a step off the original, and is selected
 - [x] Pasted names keep their label when free, otherwise gain primes (q_1 → q_1'); accepting is copied, start is not; pasting into another automaton drops arrows to states it lacks, and ε-arrows turn a DFA into an NFA
+- [x] Ctrl+C copies the selected states when there are any, and the diagram as a picture (Copy image) when there are none
 - [x] Right-click: Copy on a state, Copy / Delete N states on a multi-selection, Paste on the empty canvas
 
 ### Theme

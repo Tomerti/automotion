@@ -337,6 +337,15 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
 export const appStore: StoreApi<AppState> = createAppStore();
 
 /**
+ * The selected states that exist in the active automaton (undo can leave stale ids selected).
+ * Ctrl+C copies these when there are any, and the diagram as a picture otherwise.
+ */
+export function selectedStates(s: AppState): string[] {
+  const active = s.automata.find((a) => a.id === s.activeId);
+  return active ? s.selection.states.filter((id) => active.states.some((q) => q.id === id)) : [];
+}
+
+/**
  * Subscribe to the app store. Selectors must return stable references: select existing state
  * or primitives, and wrap derived objects/arrays with `useShallow` from `zustand/react/shallow`.
  * A selector that builds a fresh object each call re-renders forever.

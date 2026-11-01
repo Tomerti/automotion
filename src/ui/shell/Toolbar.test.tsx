@@ -170,6 +170,20 @@ describe('Toolbar', () => {
       expect(written).toHaveLength(1);
     });
 
+    it('Ctrl+C leaves the image alone while states are selected (it copies them instead)', async () => {
+      const user = userEvent.setup();
+      stubClipboard();
+      const active = appStore.getState().automata[0]!;
+      appStore.getState().select({ states: [active.states[0]!.id], transitions: [] });
+      renderWithDiagram();
+      await user.keyboard('{Control>}c{/Control}');
+      expect(written).toHaveLength(0);
+      // A selection that undo left pointing at no state does not count.
+      appStore.getState().select({ states: ['gone'], transitions: [] });
+      await user.keyboard('{Control>}c{/Control}');
+      expect(written).toHaveLength(1);
+    });
+
     it('Ctrl+C does nothing while a trace is open', async () => {
       const user = userEvent.setup();
       stubClipboard();
