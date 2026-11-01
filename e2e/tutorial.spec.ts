@@ -50,7 +50,7 @@ test('the first visit offers the tutorial, which walks through building and chan
   const card = page.getByTestId('tutorial-card');
   const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
   await at(1);
-  await expect(card).toContainText('Part 1 of 2 · Step 1 of 10');
+  await expect(card).toContainText('Part 1 of 2 · Step 1 of 11');
   // What part 1 builds is on show from the start: a picture, the goal and example words.
   const goal = card.getByTestId('tutorial-goal');
   await expect(goal).toContainText('Part 1 goal: Accept the words with an even number of zeros');
@@ -70,28 +70,30 @@ test('the first visit offers the tutorial, which walks through building and chan
   await at(3);
   await clickState(page, 'even');
   await page.keyboard.press('s');
-  await page.keyboard.press('a');
   await at(4);
+  // S made it the start state; A, its own step, makes it accepting.
+  await page.keyboard.press('a');
+  await at(5);
   await addStateAt(page, 450, 400);
   // q_0 is free again, so the new state takes it.
   await rename(page, 'q_0', 'odd');
-  await at(5);
-  await edge(page, 'even', 'odd', '0');
   await at(6);
-  await edge(page, 'odd', 'even', '0');
+  await edge(page, 'even', 'odd', '0');
   await at(7);
-  await selfLoop(page, 'even', '1');
+  await edge(page, 'odd', 'even', '0');
   await at(8);
-  await selfLoop(page, 'odd', '1');
+  await selfLoop(page, 'even', '1');
   await at(9);
+  await selfLoop(page, 'odd', '1');
+  await at(10);
   await run(page, '1010', true);
   // The run's tape starts below the card, not under it.
   const tape = (await page.locator('.av-tape').boundingBox())!;
   expect(tape.y).toBeGreaterThanOrEqual(box.y + (await card.boundingBox())!.height);
-  await at(10);
+  await at(11);
   await page.keyboard.press('Escape');
   await run(page, '10', false);
-  await at(11);
+  await at(12);
   // The card says part 1 is done, and what part 2 is, until Esc closes the run.
   await expect(card.getByTestId('tutorial-part-done')).toContainText('Part 1 complete!');
   await expect(card).toContainText('Next: Part 2 · Accept every word');
@@ -102,16 +104,16 @@ test('the first visit offers the tutorial, which walks through building and chan
   await expect(card).toContainText('Part 2 of 2 · Step 1 of 4');
   await clickState(page, 'odd');
   await page.keyboard.press('Delete');
-  await at(12);
+  await at(13);
   await expect(page.getByTestId('state-odd')).toHaveCount(0);
   await page.getByTestId('edge-even-even').getByTestId('edge-label').dblclick();
   await page.getByTestId('symbol-input').fill('0,1');
   await page.keyboard.press('Enter');
-  await at(13);
-  await rename(page, 'even', 'any');
   await at(14);
-  await run(page, '10', true);
+  await rename(page, 'even', 'any');
   await at(15);
+  await run(page, '10', true);
+  await at(16);
   await expect(card).toContainText('Tutorial · Done');
   await card.getByRole('button', { name: 'Finish' }).click();
   await expect(card).toHaveCount(0);

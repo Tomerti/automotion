@@ -52,9 +52,9 @@ Nothing in progress: pick the next task from the list below.
       no longer wraps on its own
 - [x] Shorter tutorial with less text: the card sits at the top centre under the DFA/NFA switch
       (runs start below it); one short instruction plus a few muted words of why per step, and a
-      progress bar instead of the list of ticked steps; 14 steps (start + accepting in one, adding
-      and naming the second state in one); a larger goal; "rename it `even`" rather than "type";
-      the S/A step says what each key does and what it drew; part 1 ends on a green "Part 1
+      progress bar instead of the list of ticked steps; 15 steps (adding and naming the second
+      state in one); a larger goal; "rename it `even`" rather than "type"; S and A are their own
+      steps, each saying what the key does and what it draws (the arrow, the double ring); part 1 ends on a green "Part 1
       complete!" panel naming part 2, the header numbers steps per part ("Part 2 of 2 · Step 1 of
       4") and part 2's goal flashes in; part 2 ends by renaming the state `any`
 - [x] Interactive tutorial: build the "even number of 0s" DFA, run `1010` and `10`, then delete q1 and loop q0 on `0,1` to accept every word

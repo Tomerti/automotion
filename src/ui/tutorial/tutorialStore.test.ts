@@ -166,9 +166,9 @@ describe('following the app', () => {
     app().edit((a) => renameState(a, id, 'even'));
     app().edit((a) => setStart(a, id));
     app().edit((a) => toggleAccepting(a, id));
-    expect(tut()).toMatchObject({ current: 3, progress: 3 });
+    expect(tut()).toMatchObject({ current: 4, progress: 4 });
     app().undo();
-    expect(tut()).toMatchObject({ current: 2, progress: 3 });
+    expect(tut()).toMatchObject({ current: 3, progress: 4 });
   });
 
   it('moves on when a step is done', () => {
@@ -194,11 +194,11 @@ describe('following the app', () => {
     app().edit((a) => setStart(a, id));
     app().edit((a) => toggleAccepting(a, id));
     app().edit((a) => addState(a, { x: 100, y: 0 }));
-    expect(tut()).toMatchObject({ progress: 3, current: 3 });
+    expect(tut()).toMatchObject({ progress: 4, current: 4 });
     app().edit((a) => toggleAccepting(a, id));
-    expect(tut()).toMatchObject({ progress: 3, current: 2 });
+    expect(tut()).toMatchObject({ progress: 4, current: 3 });
     app().setActive('mine');
-    expect(tut().current).toBe(2);
+    expect(tut().current).toBe(3);
   });
 
   it('ends when its automaton is deleted, leaving other work alone', () => {

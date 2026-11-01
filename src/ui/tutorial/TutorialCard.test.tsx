@@ -65,7 +65,7 @@ it('shows the first step with its counter', () => {
   act(() => startTutorial());
   expect(card()).toHaveAttribute('data-step', '1');
   expect(card()).toHaveAccessibleName('Tutorial');
-  expect(within(card()).getByText('Part 1 of 2 · Step 1 of 10')).toBeInTheDocument();
+  expect(within(card()).getByText('Part 1 of 2 · Step 1 of 11')).toBeInTheDocument();
   expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
     'Double-click the canvas to add a state.',
   );
@@ -106,8 +106,8 @@ it('shows one step at a time, with a few words of why, and fills a progress bar'
   act(() => startTutorial());
   const bar = within(card()).getByRole('progressbar', { name: 'Tutorial progress' });
   expect(bar).toHaveAttribute('aria-valuenow', '0');
-  expect(bar).toHaveAttribute('aria-valuemax', '14');
-  expect(bar.children).toHaveLength(14);
+  expect(bar).toHaveAttribute('aria-valuemax', '15');
+  expect(bar.children).toHaveLength(15);
   expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
   addAt(100);
   expect(card()).toHaveAttribute('data-step', '2');
@@ -293,7 +293,7 @@ it('the closing card has Finish, which ends it', async () => {
   render(<App />);
   act(() => startTutorial());
   at('done');
-  expect(card()).toHaveAttribute('data-step', '15');
+  expect(card()).toHaveAttribute('data-step', '16');
   expect(within(card()).getByText('Tutorial · Done')).toBeInTheDocument();
   await user.click(within(card()).getByRole('button', { name: 'Finish' }));
   expect(screen.queryByTestId('tutorial-card')).toBeNull();
@@ -342,8 +342,9 @@ it('keeps keys for the canvas: S still makes the selected state the start state'
   // As clicking the state would: the canvas takes focus and handles the key.
   act(() => screen.getByTestId('canvas').focus());
   await user.keyboard('s');
-  await user.keyboard('a');
   expect(card()).toHaveAttribute('data-step', '4');
+  await user.keyboard('a');
+  expect(card()).toHaveAttribute('data-step', '5');
 });
 
 it('points at the state itself, not its start arrow', () => {
@@ -354,7 +355,7 @@ it('points at the state itself, not its start arrow', () => {
   act(() => app().edit((a) => ({ ...a, starts: [state.id] })));
   expect(screen.getByTestId('start-arrow')).toBeInTheDocument();
   const ctx = tutorialContext(app(), tutorialStore.getState().automatonId);
-  const target = document.querySelector(STEPS[idx('start-accepting')]!.target(ctx)!);
+  const target = document.querySelector(STEPS[idx('start')]!.target(ctx)!);
   expect(screen.getByTestId('state-q_0')).toContainElement(target as HTMLElement);
 });
 

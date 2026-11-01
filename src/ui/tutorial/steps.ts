@@ -16,7 +16,8 @@ export interface TutorialContext {
 export type StepId =
   | 'add-q0'
   | 'name-q0'
-  | 'start-accepting'
+  | 'start'
+  | 'accepting'
   | 'add-q1'
   | 'q0-q1'
   | 'q1-q0'
@@ -64,7 +65,7 @@ export interface Step {
   run?: { word: string; accepted: boolean };
 }
 
-export const COUNTED_STEPS = 14;
+export const COUNTED_STEPS = 15;
 
 /** Each part's name, for the card's header and the hand-over between the parts. */
 export const PART_TITLES: Record<1 | 2, string> = {
@@ -264,14 +265,6 @@ interface StepSpec {
   run?: { word: string; accepted: boolean };
 }
 
-/** Whether q0 is a start state, and whether it is accepting. */
-function startAndAccepting(ctx: TutorialContext): { start: boolean; accepting: boolean } {
-  return onAutomaton(ctx, { start: false, accepting: false }, (a, r) => ({
-    start: r.q0 !== undefined && startStates(a).includes(r.q0.id),
-    accepting: r.q0 !== undefined && a.accepting.includes(r.q0.id),
-  }));
-}
-
 /** A state given a name of the user's own (not a `q`-number). */
 const isNamed = (s: State | undefined): boolean => s !== undefined && !DEFAULT_LABEL.test(s.label);
 
@@ -294,39 +287,28 @@ const SPECS: StepSpec[] = [
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
   {
-    id: 'start-accepting',
+    id: 'start',
     part: 1,
-    // Says what each key does, and once one is pressed, what it did and what the other is for.
-    instruction: (l, ctx) => {
-      const { start, accepting } = startAndAccepting(ctx);
-      if (start && !accepting) {
-        return `${l.q0} is the start state now. Press [A] to make it accepting too.`;
-      }
-      if (accepting && !start) {
-        return `${l.q0} is accepting now. Press [S] to make it the start state too.`;
-      }
-      return `Click ${l.q0}, then press [S] to make it the start state and [A] to make it accepting.`;
-    },
-    why: (_, ctx) => {
-      const { start, accepting } = startAndAccepting(ctx);
-      if (start && !accepting) return 'An accepting state gets a double ring.';
-      if (accepting && !start) return 'The start state gets an arrow pointing in.';
-      return 'Every run starts here, and a run that ends here is accepted.';
-    },
+    instruction: (l) => `Click ${l.q0}, then press [S] to make it the start state.`,
+    why: () => 'Every run starts here. The start state gets an arrow pointing in.',
     done: (ctx) =>
-      onAutomaton(
-        ctx,
-        false,
-        (a, r) =>
-          r.q0 !== undefined && startStates(a).includes(r.q0.id) && a.accepting.includes(r.q0.id),
-      ),
-    // Halfway (S or A pressed) with the selection gone since, the other key would do nothing.
+      onAutomaton(ctx, false, (a, r) => r.q0 !== undefined && startStates(a).includes(r.q0.id)),
+    target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
+  },
+  {
+    id: 'accepting',
+    part: 1,
+    instruction: (l) => `Press [A] to make ${l.q0} accepting.`,
+    why: () => 'A run that ends here is accepted. It gets a double ring.',
+    done: (ctx) =>
+      onAutomaton(ctx, false, (a, r) => r.q0 !== undefined && a.accepting.includes(r.q0.id)),
+    // A click on the canvas since the last step clears the selection, and A then does nothing.
     first: (ctx) =>
-      onAutomaton(ctx, null, (a, r) => {
-        if (!r.q0 || ctx.selected.includes(r.q0.id)) return null;
-        const halfway = startStates(a).includes(r.q0.id) || a.accepting.includes(r.q0.id);
-        return halfway ? `First, click ${chip(r.q0.label)} again.` : null;
-      }),
+      onAutomaton(ctx, null, (_, r) =>
+        r.q0 && !ctx.selected.includes(r.q0.id)
+          ? `First, click ${chip(r.q0.label)} to select it.`
+          : null,
+      ),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
   {

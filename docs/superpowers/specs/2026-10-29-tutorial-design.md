@@ -58,28 +58,27 @@ of why under it (at most 70), both checked by a unit test.
 |---|------|-------------------|-----------|---------|
 | 1 | 1 | Double-click the canvas to add a state. | ≥ 1 state | – |
 | 2 | 1 | Double-click q0 and rename it `even`. / It will mean: an even number of zeros so far. | q0 named | q0 |
-| 3 | 1 | Click even, then press S to make it the start state and A to make it accepting. / Every run starts here, and a run that ends here is accepted. | q0 is a start state and accepting | q0 |
-| 4 | 1 | Add a second state and rename it `odd`. / It will mean: an odd number of zeros so far. | q1 named | q1 |
-| 5 | 1 | Hold Shift and drag from even to odd, then type 0 and press Enter. / A `0` makes an even count odd. | edge(q0,q1) = {0} | q0 |
-| 6 | 1 | Hold Shift and drag from odd to even, then type 0 and press Enter. / …and an odd count even again. | edge(q1,q0) = {0} | q1 |
-| 7 | 1 | Hold Shift and drag from even out and back onto it, then type 1 and press Enter. / A `1` leaves the count as it is. | edge(q0,q0) = {1} | q0 |
-| 8 | 1 | Give odd a loop on `1` the same way. | edge(q1,q1) = {1} | q1 |
-| 9 | 1 | Type `1010` in "Test a word" and press Enter. / Two zeros: it should be accepted. | latched (see below): run of `1010` reached its verdict, accepted | run pill |
-| 10 | 1 | Press Esc, then run `10`. / One zero: it should be rejected. | latched: run of `10` reached its verdict, rejected | run pill |
-| 11 | 2 | Click odd and press Delete. / Nothing to count any more, so one state will do. | exactly one state, which is start and accepting | q1 |
-| 12 | 2 | Double-click the loop's `1`, type `0,1` and press Enter. / Then every word stays in even, which accepts. | edge(q0,q0) = {0,1} | q0's loop label |
-| 13 | 2 | Double-click even and rename it `any`. / It accepts any word now, so give it a name that fits. | q0 named, and not `even` / `odd` (part 1's names, any case) | q0 |
-| 14 | 2 | Run `10` again. / This time it's accepted. | latched: run of `10` reached its verdict, accepted | run pill |
-| 15 | – | "You built a DFA and changed what it accepts. Press ? any time for all the controls." | **Finish** button | – |
+| 3 | 1 | Click even, then press S to make it the start state. / Every run starts here. The start state gets an arrow pointing in. | q0 is a start state | q0 |
+| 4 | 1 | Press A to make even accepting. / A run that ends here is accepted. It gets a double ring. | q0 accepting | q0 |
+| 5 | 1 | Add a second state and rename it `odd`. / It will mean: an odd number of zeros so far. | q1 named | q1 |
+| 6 | 1 | Hold Shift and drag from even to odd, then type 0 and press Enter. / A `0` makes an even count odd. | edge(q0,q1) = {0} | q0 |
+| 7 | 1 | Hold Shift and drag from odd to even, then type 0 and press Enter. / …and an odd count even again. | edge(q1,q0) = {0} | q1 |
+| 8 | 1 | Hold Shift and drag from even out and back onto it, then type 1 and press Enter. / A `1` leaves the count as it is. | edge(q0,q0) = {1} | q0 |
+| 9 | 1 | Give odd a loop on `1` the same way. | edge(q1,q1) = {1} | q1 |
+| 10 | 1 | Type `1010` in "Test a word" and press Enter. / Two zeros: it should be accepted. | latched (see below): run of `1010` reached its verdict, accepted | run pill |
+| 11 | 1 | Press Esc, then run `10`. / One zero: it should be rejected. | latched: run of `10` reached its verdict, rejected | run pill |
+| 12 | 2 | Click odd and press Delete. / Nothing to count any more, so one state will do. | exactly one state, which is start and accepting | q1 |
+| 13 | 2 | Double-click the loop's `1`, type `0,1` and press Enter. / Then every word stays in even, which accepts. | edge(q0,q0) = {0,1} | q0's loop label |
+| 14 | 2 | Double-click even and rename it `any`. / It accepts any word now, so give it a name that fits. | q0 named, and not `even` / `odd` (part 1's names, any case) | q0 |
+| 15 | 2 | Run `10` again. / This time it's accepted. | latched: run of `10` reached its verdict, accepted | run pill |
+| 16 | – | "You built a DFA and changed what it accepts. Press ? any time for all the controls." | **Finish** button | – |
 
-Step 3 follows the user: once one of S and A is pressed it says what that key did and what the
-other is for ("even is the start state now. Press A to make it accepting too." / "An accepting
-state gets a double ring.", and the same the other way round, "The start state gets an arrow
-pointing in."). If q0 is no longer selected by then, a plain-ink "First, click even again." comes
-before it (the other key would do nothing). Run steps also require the structural steps before
+S and A are separate steps, each saying what its key does and what it draws. If q0 is no longer
+selected at step 4, a plain-ink "First, click even to select it." comes before it (A would do
+nothing). Run steps also require the structural steps before
 them in their part (see *Progress*), so a run only counts on the right automaton.
 
-The header numbers steps within their part: "Part 1 of 2 · Step 3 of 10", "Part 2 of 2 · Step 1
+The header numbers steps within their part: "Part 1 of 2 · Step 3 of 11", "Part 2 of 2 · Step 1
 of 4"; the closing card reads "Tutorial · Done". While the run that ends part 1 is open, the
 header reads "Part 1 of 2 · Complete", a green panel takes the goal row's place ("✓ Part 1
 complete!", what the DFA now accepts, "Next: Part 2 · Accept every word") and the step line reads
