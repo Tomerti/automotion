@@ -21,6 +21,7 @@ export const diagramStyles = `
 .av-edge-path { fill: none; stroke: var(--av-edge-stroke, #3a4356); stroke-width: 1.4; stroke-linecap: round; transition: stroke 0.2s, stroke-width 0.2s; }
 .av-edge-head { fill: var(--av-edge-stroke, #3a4356); transition: fill 0.2s; }
 .av-edge-label { fill: var(--av-text, #1c2333); font-size: 15px; font-weight: 500; text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--av-label-halo, #f3f5f0); stroke-width: 4px; stroke-linejoin: round; }
+.av-select-box { fill: var(--av-selected, #d9480f); fill-opacity: 0.06; stroke: var(--av-selected, #d9480f); stroke-width: 1; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; pointer-events: none; }
 .av-rubber-band { pointer-events: none; }
 .av-rubber-band .av-edge-path { stroke: var(--av-selected, #d9480f); stroke-width: 2; }
 .av-rubber-band .av-edge-head { fill: var(--av-selected, #d9480f); }

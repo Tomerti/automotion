@@ -14,11 +14,21 @@ Nothing in progress: pick the next task from the list below.
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
 
+- [ ] Copy and paste follow-ups: Ctrl+X (cut), Ctrl+A (select all), and Shift + click as an alternative to Ctrl + click (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
+
 ## Ideas (later)
 
 - [ ] Regex → NFA
 
 ## Done
+
+### Copy and paste
+
+- [x] Select several states: Ctrl + drag on the empty canvas draws a selection box, Ctrl + click adds or removes a state (or arrow); the arrows between selected states are selected too
+- [x] Dragging a selected state moves the whole selection (one undo step), snapping to the other states
+- [x] Ctrl+C / Ctrl+V copy and paste the selected states with the arrows between them and their arrows to outside states (arrows into the chain are not copied); the paste lands at the pointer, or a step off the original, and is selected
+- [x] Pasted names keep their label when free, otherwise gain primes (q_1 → q_1'); accepting is copied, start is not; pasting into another automaton drops arrows to states it lacks, and ε-arrows turn a DFA into an NFA
+- [x] Right-click: Copy on a state, Copy / Delete N states on a multi-selection, Paste on the empty canvas
 
 ### Theme
 

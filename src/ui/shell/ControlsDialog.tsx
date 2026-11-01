@@ -48,7 +48,7 @@ const TABS: Tab[] = [
       {
         gesture: { mouse: 'drag', on: 'a state' },
         action: 'Move it',
-        hint: 'Snaps into line; hold Alt to place freely',
+        hint: 'The rest of the selection moves along. Snaps into line; hold Alt to place freely',
       },
       {
         gesture: { mouse: 'drag', on: 'an arrow' },
@@ -61,6 +61,14 @@ const TABS: Tab[] = [
         hint: 'Snaps to 45° steps; hold Alt to turn freely',
       },
       { gesture: { mouse: 'drag', on: 'empty canvas' }, action: 'Pan' },
+      {
+        gesture: { keys: ['Ctrl'], mouse: 'drag', on: 'empty canvas' },
+        action: 'Select the states in a box',
+      },
+      {
+        gesture: { keys: ['Ctrl'], mouse: 'click', on: 'state or arrow' },
+        action: 'Add it to the selection or take it out',
+      },
       { gesture: { mouse: 'scroll' }, action: 'Zoom' },
       { gesture: { mouse: 'click', on: 'empty canvas' }, action: 'Clear the selection' },
     ],
@@ -90,6 +98,12 @@ const TABS: Tab[] = [
       {
         gesture: { keys: ['Delete'], on: 'clicked history entry' },
         action: 'Delete that automaton',
+      },
+      { gesture: { keys: ['Ctrl', 'C'] }, action: 'Copy the selected states' },
+      {
+        gesture: { keys: ['Ctrl', 'V'] },
+        action: 'Paste them',
+        hint: 'At the pointer, with their arrows; into another automaton too',
       },
       { gesture: { keys: ['Ctrl', 'Z'] }, action: 'Undo' },
       { gesture: { keys: ['Ctrl', 'Y'] }, action: 'Redo' },

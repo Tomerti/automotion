@@ -3,7 +3,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import { moveState, renameAutomaton } from '../core/edit';
 import { runWord } from '../core/run';
 import { fixture } from '../core/testing/fixtures';
-import { appStore, createAppStore, resetAppStore } from './store';
+import { appStore, createAppStore, PASTE_STEP, resetAppStore } from './store';
 import type { AppState } from './store';
 import type { Automaton } from '../core/model';
 
@@ -286,6 +286,100 @@ describe('store', () => {
     st().setActive('a1');
     expect(st().trace).toBe(trace);
     expect(st().stepIndex).toBe(1);
+  });
+
+  describe('copy and paste', () => {
+    const label = (a: Automaton, id: string) => a.states.find((q) => q.id === id)?.label;
+
+    it('copies the selected states and pastes them as one undo step, selected', () => {
+      const { st, active } = setup();
+      st().select({ states: ['q0', 'q1'], transitions: [] });
+      expect(st().copySelection()).toBe(true);
+      expect(st().paste()).toEqual({ promoted: false });
+      const a = active();
+      expect(a.states).toHaveLength(4);
+      const pasted = st().selection.states;
+      expect(pasted.map((id) => label(a, id))).toEqual(["q0'", "q1'"]);
+      // The arrows between the pasted states are selected too.
+      expect(st().selection.transitions).toHaveLength(3);
+      st().undo();
+      expect(active().states).toHaveLength(2);
+    });
+
+    it('pastes each copy a step further along without a point', () => {
+      const { st, active } = setup();
+      st().select({ states: ['q1'], transitions: [] });
+      st().copySelection();
+      st().paste();
+      const first = active().states.find((q) => q.id === st().selection.states[0])!;
+      st().paste();
+      const second = active().states.find((q) => q.id === st().selection.states[0])!;
+      expect(first).toMatchObject({ label: "q1'", x: 100 + PASTE_STEP, y: PASTE_STEP });
+      expect(second).toMatchObject({ label: "q1''", x: 100 + 2 * PASTE_STEP, y: 2 * PASTE_STEP });
+    });
+
+    it('centres a paste on the given point, stepping along when pasted there again', () => {
+      const { st, active } = setup();
+      st().select({ states: ['q0', 'q1'], transitions: [] });
+      st().copySelection();
+      const xs = () =>
+        st().selection.states.map((id) => active().states.find((q) => q.id === id)!.x);
+      st().paste({ x: 500, y: 300 });
+      expect(xs()).toEqual([450, 550]);
+      st().paste({ x: 500, y: 300 });
+      expect(xs()).toEqual([450 + PASTE_STEP, 550 + PASTE_STEP]);
+      st().paste({ x: 0, y: 0 });
+      expect(xs()).toEqual([-50, 50]);
+    });
+
+    it('pastes into another automaton, dropping arrows to states it lacks', () => {
+      const { st, active } = setup();
+      st().select({ states: ['q1'], transitions: [] });
+      st().copySelection();
+      st().createAutomaton();
+      st().paste();
+      expect(active().states.map((q) => q.label)).toEqual(['q1']);
+      expect(active().accepting).toEqual([active().states[0]!.id]);
+      expect(active().transitions).toHaveLength(1);
+      expect(active().alphabet).toEqual(['a', 'b']);
+    });
+
+    it('copies a snapshot: later edits to the originals do not change the paste', () => {
+      const { st, active } = setup();
+      st().select({ states: ['q0'], transitions: [] });
+      st().copySelection();
+      st().edit((a) => moveState(a, 'q0', { x: 999, y: 0 }));
+      st().paste();
+      const pasted = active().states.find((q) => q.id === st().selection.states[0])!;
+      expect(pasted.x).toBe(PASTE_STEP);
+    });
+
+    it('does nothing with no states selected, nothing copied, or a trace open', () => {
+      const { st, active } = setup();
+      expect(st().copySelection()).toBe(false);
+      expect(st().paste()).toBeNull();
+      st().select({ states: ['gone'], transitions: [] });
+      expect(st().copySelection()).toBe(false);
+      st().select({ states: ['q0'], transitions: [] });
+      st().copySelection();
+      st().openTrace(runWord(active(), 'a'));
+      expect(st().paste()).toBeNull();
+      expect(active().states).toHaveLength(2);
+    });
+
+    it('reports when pasting ε-arrows turned a DFA into an NFA', () => {
+      const { st, active } = setup();
+      st().edit((a) => ({
+        ...a,
+        kind: 'NFA',
+        transitions: [{ id: 'e', from: 'q0', to: 'q1', symbols: ['ε'] }],
+      }));
+      st().select({ states: ['q0', 'q1'], transitions: [] });
+      st().copySelection();
+      st().createAutomaton('DFA');
+      expect(st().paste()).toEqual({ promoted: true });
+      expect(active().kind).toBe('NFA');
+    });
   });
 
   describe('module store', () => {

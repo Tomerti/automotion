@@ -46,7 +46,7 @@ const diagram = () => screen.getByTestId('diagram');
 const canvas = () => screen.getByTestId('canvas');
 const stateEl = (label: string) => screen.getByTestId(`state-${label}`);
 
-type Mods = { shiftKey?: boolean; altKey?: boolean };
+type Mods = { shiftKey?: boolean; altKey?: boolean; ctrlKey?: boolean };
 const at = (x: number, y: number, mods: Mods = {}) => ({
   clientX: x,
   clientY: y,
@@ -516,6 +516,7 @@ describe('Canvas editing', () => {
       'Set as start',
       'Toggle accepting',
       'Rename',
+      'Copy',
       'Delete',
     ]);
     await user.click(screen.getByRole('menuitem', { name: 'Set as start' }));
@@ -959,6 +960,220 @@ function sizeCanvas(width: number, height: number): void {
   Object.defineProperty(canvas(), 'clientWidth', { value: width, configurable: true });
   Object.defineProperty(canvas(), 'clientHeight', { value: height, configurable: true });
 }
+
+describe('selecting several states, copy and paste', () => {
+  /** q0 -a-> q1 -a-> q2 -b-> q0, at x = 0, 100, 200. */
+  const three = () =>
+    fixture({
+      kind: 'DFA',
+      alphabet: 'ab',
+      states: ['q0', 'q1', 'q2'],
+      start: 'q0',
+      accepting: ['q2'],
+      edges: [
+        ['q0', 'a', 'q1'],
+        ['q1', 'a', 'q2'],
+        ['q2', 'b', 'q0'],
+      ],
+      name: 'm',
+    });
+  const ctrl = { ctrlKey: true };
+  const key = (k: string, mods: { ctrlKey?: boolean; metaKey?: boolean } = ctrl) =>
+    fireEvent.keyDown(window, { key: k, ...mods });
+  const byLabel = (label: string) => active().states.find((s) => s.label === label);
+
+  it('Ctrl + drag on the background draws a box that selects the states inside', () => {
+    load(three());
+    render(<Canvas />);
+    fireEvent.pointerDown(diagram(), at(50, -50, ctrl));
+    fireEvent.pointerMove(diagram(), at(150, 0, ctrl));
+    fireEvent.pointerMove(diagram(), at(250, 50, ctrl));
+    expect(screen.getByTestId('select-box')).toHaveAttribute('width', '200');
+    expect(st().selection).toEqual({ states: ['q1', 'q2'], transitions: ['q1->q2'] });
+    fireEvent.pointerUp(diagram(), at(250, 50, ctrl));
+    expect(screen.queryByTestId('select-box')).toBeNull();
+    expect(stateEl('q1')).toHaveAttribute('data-selected', 'true');
+    expect(stateEl('q2')).toHaveAttribute('data-selected', 'true');
+    // No pan.
+    expect(st().viewports.m).toEqual({ x: 0, y: 0, zoom: 1 });
+  });
+
+  it('a box adds to the selection; a Ctrl+click on the background keeps it', () => {
+    load(three());
+    render(<Canvas />);
+    click(stateEl('q0'), 0, 0);
+    drag(diagram(), [150, -50], [[250, 50]], ctrl);
+    expect(st().selection.states).toEqual(['q0', 'q2']);
+    expect(st().selection.transitions).toEqual(['q2->q0']);
+    drag(diagram(), [300, 300], [], ctrl);
+    expect(st().selection.states).toEqual(['q0', 'q2']);
+  });
+
+  it('Ctrl+click adds a state (with its arrows to selected states) or takes it out', () => {
+    load(three());
+    render(<Canvas />);
+    click(stateEl('q0'), 0, 0);
+    drag(stateEl('q1'), [100, 0], [], ctrl);
+    expect(st().selection).toEqual({ states: ['q0', 'q1'], transitions: ['q0->q1'] });
+    drag(stateEl('q0'), [0, 0], [], ctrl);
+    expect(st().selection).toEqual({ states: ['q1'], transitions: [] });
+  });
+
+  it('dragging a selected state moves the whole selection in one undo step', () => {
+    load(three());
+    render(<Canvas />);
+    click(stateEl('q0'), 0, 0);
+    drag(stateEl('q1'), [100, 0], [], ctrl);
+    drag(
+      stateEl('q1'),
+      [100, 0],
+      [
+        [120, 30],
+        [130, 60],
+      ],
+    );
+    expect(active().states.map((s) => [s.x, s.y])).toEqual([
+      [30, 60],
+      [130, 60],
+      [200, 0],
+    ]);
+    expect(st().selection.states).toEqual(['q0', 'q1']);
+    expect(st().history.m?.past).toHaveLength(1);
+    act(() => st().undo());
+    expect(active().states.map((s) => s.x)).toEqual([0, 100, 200]);
+  });
+
+  it('a click without a drag on a state of the selection selects it alone', () => {
+    load(three());
+    render(<Canvas />);
+    click(stateEl('q0'), 0, 0);
+    drag(stateEl('q1'), [100, 0], [], ctrl);
+    click(stateEl('q1'), 100, 0);
+    expect(st().selection).toEqual({ states: ['q1'], transitions: [] });
+  });
+
+  it('Delete removes every selected state', () => {
+    load(three());
+    render(<Canvas />);
+    drag(diagram(), [-50, -50], [[150, 50]], ctrl);
+    fireEvent.keyDown(canvas(), { key: 'Delete' });
+    expect(active().states.map((s) => s.id)).toEqual(['q2']);
+    expect(active().transitions).toEqual([]);
+  });
+
+  it('Ctrl+C then Ctrl+V pastes a copy a step off, with its arrows, selected', () => {
+    load(three());
+    render(<Canvas />);
+    drag(diagram(), [50, -50], [[250, 50]], ctrl);
+    key('c');
+    // The pointer is off the canvas: the copy lands a step down and right of the original.
+    fireEvent.pointerLeave(canvas());
+    key('v');
+    expect(active().states.map((s) => s.label)).toEqual(['q0', 'q1', 'q2', "q1'", "q2'"]);
+    expect(byLabel("q1'")).toMatchObject({ x: 140, y: 40 });
+    const ids = [byLabel("q1'")!.id, byLabel("q2'")!.id];
+    expect(st().selection.states).toEqual(ids);
+    const pasted = active().transitions.filter((t) => ids.includes(t.from));
+    expect(pasted.map((t) => [t.from, t.to, t.symbols])).toEqual([
+      [ids[0], ids[1], ['a']],
+      [ids[1], 'q0', ['b']],
+    ]);
+    expect(active().accepting).toEqual(['q2', ids[1]]);
+    expect(stateEl("q1'")).toHaveAttribute('data-selected', 'true');
+    // One undo step.
+    act(() => st().undo());
+    expect(active().states).toHaveLength(3);
+  });
+
+  it('pastes centred on the pointer while it is over the canvas', () => {
+    load(three());
+    render(<Canvas />);
+    drag(diagram(), [50, -50], [[250, 50]], ctrl);
+    key('c');
+    fireEvent.pointerMove(diagram(), at(500, 300));
+    key('v');
+    expect(byLabel("q1'")).toMatchObject({ x: 450, y: 300 });
+    expect(byLabel("q2'")).toMatchObject({ x: 550, y: 300 });
+    fireEvent.pointerLeave(canvas());
+    key('v');
+    expect(byLabel("q1''")).toMatchObject({ x: 140, y: 40 });
+  });
+
+  it('⌘ works like Ctrl', () => {
+    load(three());
+    render(<Canvas />);
+    click(stateEl('q0'), 0, 0);
+    key('c', { metaKey: true });
+    key('v', { metaKey: true });
+    expect(byLabel("q0'")).toBeDefined();
+  });
+
+  it('copy and paste leave inputs and open traces alone', () => {
+    load(three());
+    render(<Canvas />);
+    click(stateEl('q0'), 0, 0);
+    // Nothing copied yet: Ctrl+V does nothing and keeps the browser's paste.
+    expect(fireEvent.keyDown(window, { key: 'v', ctrlKey: true })).toBe(true);
+    expect(fireEvent.keyDown(window, { key: 'c', ctrlKey: true })).toBe(false);
+    fireEvent.doubleClick(stateEl('q1'), { clientX: 100, clientY: 0 });
+    fireEvent.keyDown(screen.getByTestId('rename-input'), { key: 'v', ctrlKey: true });
+    expect(active().states).toHaveLength(3);
+    fireEvent.keyDown(screen.getByTestId('rename-input'), { key: 'Escape' });
+    act(() => st().openTrace(runWord({ ...active(), kind: 'NFA' }, 'a')));
+    key('v');
+    expect(active().states).toHaveLength(3);
+  });
+
+  it('pasting ε-arrows into a DFA switches it to an NFA with a toast', () => {
+    const nfa = fixture({
+      kind: 'NFA',
+      alphabet: 'a',
+      states: ['q0', 'q1'],
+      edges: [['q0', 'ε', 'q1']],
+      name: 'n',
+    });
+    const dfa = fixture({ kind: 'DFA', alphabet: '', states: [], name: 'm' });
+    resetAppStore({ automata: [dfa, nfa], activeId: 'n' });
+    st().setViewport('n', { x: 0, y: 0, zoom: 1 });
+    st().setViewport('m', { x: 0, y: 0, zoom: 1 });
+    render(<Canvas />);
+    act(() => st().select({ states: ['q0', 'q1'], transitions: [] }));
+    key('c');
+    act(() => st().setActive('m'));
+    key('v');
+    expect(active().kind).toBe('NFA');
+    expect(active().states.map((s) => s.label)).toEqual(['q0', 'q1']);
+    expect(toasts().at(-1)?.message).toBe('Switched to NFA: ε-transitions need an NFA');
+  });
+
+  it('the menu on a multi-selection copies or deletes it; the background menu pastes', async () => {
+    const user = userEvent.setup();
+    load(three());
+    render(<Canvas />);
+    drag(diagram(), [50, -50], [[250, 50]], ctrl);
+    fireEvent.contextMenu(stateEl('q1'), { clientX: 100, clientY: 0 });
+    expect(
+      within(screen.getByRole('menu'))
+        .getAllByRole('menuitem')
+        .map((i) => i.textContent),
+    ).toEqual(['Copy 2 states', 'Delete 2 states']);
+    expect(st().selection.states).toEqual(['q1', 'q2']);
+    await user.click(screen.getByRole('menuitem', { name: 'Copy 2 states' }));
+    fireEvent.contextMenu(diagram(), { clientX: 400, clientY: 200 });
+    await user.click(screen.getByRole('menuitem', { name: 'Paste' }));
+    expect(byLabel("q1'")).toMatchObject({ x: 350, y: 200 });
+    fireEvent.contextMenu(stateEl("q1'"), { clientX: 350, clientY: 200 });
+    await user.click(screen.getByRole('menuitem', { name: 'Delete 2 states' }));
+    expect(active().states.map((s) => s.label)).toEqual(['q0', 'q1', 'q2']);
+  });
+
+  it('the background menu offers nothing before anything is copied', () => {
+    load(three());
+    render(<Canvas />);
+    fireEvent.contextMenu(diagram(), { clientX: 400, clientY: 200 });
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+});
 
 describe('Fit and Tidy', () => {
   it('Fit fits the states into the canvas', () => {
