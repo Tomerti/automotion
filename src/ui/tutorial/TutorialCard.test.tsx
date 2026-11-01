@@ -65,16 +65,17 @@ it('shows the first step with its counter', () => {
   act(() => startTutorial());
   expect(card()).toHaveAttribute('data-step', '1');
   expect(card()).toHaveAccessibleName('Tutorial');
-  expect(within(card()).getByText('Tutorial · 1 of 16')).toBeInTheDocument();
-  expect(within(card()).getByText(/Add the first state: double-click/)).toBeInTheDocument();
+  expect(within(card()).getByText('Tutorial · 1 of 13')).toBeInTheDocument();
+  expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
+    'Double-click the canvas to add a state.',
+  );
 });
 
-it('shows what the part builds above the steps: words it accepts and rejects, and a picture', () => {
+it('shows the goal: a picture, a few words, and words it accepts and rejects', () => {
   render(<App />);
   act(() => startTutorial());
   const goal = within(card()).getByTestId('tutorial-goal');
-  expect(goal).toHaveTextContent('Part 1 · An even number of zeros');
-  expect(goal).toHaveTextContent(/accepts the ones with an even number of zeros/);
+  expect(goal).toHaveTextContent('Goal: Accept the words with an even number of zeros');
   const examples = within(goal).getByRole('list', { name: 'For example' });
   expect(
     within(examples)
@@ -88,15 +89,39 @@ it('shows what the part builds above the steps: words it accepts and rejects, an
   // Its own picture: none of the canvas's test ids, which the user's states carry.
   expect(within(goal).queryByTestId('diagram')).toBeNull();
   expect(goal.querySelector('[data-testid^="state-"]')).toBeNull();
-  // The goal stays while the steps go by.
+  // The goal stays while the steps go by, and changes with the part.
   at('loop-q1');
-  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent('Part 1');
+  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent('even number of zeros');
   at('delete-q1');
-  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent(
-    'Part 2 · Accept every word',
-  );
+  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent('Goal: Accept every word');
   at('done');
   expect(within(card()).queryByTestId('tutorial-goal')).toBeNull();
+});
+
+it('shows one step at a time, with a few words of why, and fills a progress bar', () => {
+  render(<App />);
+  act(() => startTutorial());
+  const bar = within(card()).getByRole('progressbar', { name: 'Tutorial progress' });
+  expect(bar).toHaveAttribute('aria-valuenow', '0');
+  expect(bar).toHaveAttribute('aria-valuemax', '13');
+  expect(bar.children).toHaveLength(13);
+  expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
+  addAt(100);
+  expect(card()).toHaveAttribute('data-step', '2');
+  expect(within(card()).getAllByTestId('tutorial-step')).toHaveLength(1);
+  expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
+    'Double-click q0, type even and press Enter.',
+  );
+  // The label keeps its subscript.
+  expect(within(card()).getByTestId('tutorial-instruction').querySelector('sub')).toHaveTextContent(
+    '0',
+  );
+  expect(within(card()).getByTestId('tutorial-why')).toHaveTextContent(
+    'It will mean: an even number of zeros so far.',
+  );
+  const filled = within(card()).getByRole('progressbar');
+  expect(filled).toHaveAttribute('aria-valuenow', '1');
+  expect(filled.querySelectorAll('[data-done="true"]')).toHaveLength(1);
 });
 
 it('shows states named in a step as small states, with their punctuation kept on the line', () => {
@@ -119,34 +144,7 @@ it('shows keys inline as <kbd>, a digit key in the symbol font', () => {
   const kbds = [...card().querySelectorAll('.av-tutorial-now kbd')];
   expect(kbds.map((k) => k.textContent)).toEqual(['Shift', '0', 'Enter']);
   expect(kbds.map((k) => k.hasAttribute('data-symbol'))).toEqual([false, true, false]);
-  const now = card().querySelector<HTMLElement>('.av-tutorial-now')!;
-  expect(within(now).getAllByText('0', { selector: 'code' })).not.toHaveLength(0);
-});
-
-it('ticks off each step done and shows the next one on a new line, with subscripts', () => {
-  render(<App />);
-  act(() => startTutorial());
-  expect(within(card()).getAllByTestId('tutorial-step')).toHaveLength(1);
-  addAt(100);
-  expect(card()).toHaveAttribute('data-step', '2');
-  const [done, now] = within(card()).getAllByTestId('tutorial-step');
-  expect(done).toHaveAttribute('data-done', 'true');
-  expect(done).toHaveTextContent('✓Added q0');
-  expect(done!.querySelector('sub')).toHaveTextContent('0');
-  expect(now).toHaveAttribute('data-done', 'false');
-  expect(now).toHaveTextContent(/Name it: double-click it, type even/);
-});
-
-it('heads the steps with the part, and folds a finished part into one ticked line', () => {
-  render(<App />);
-  act(() => startTutorial());
-  expect(within(card()).getByText('Part 1 · An even number of zeros')).toBeInTheDocument();
-  at('delete-q1');
-  expect(within(card()).queryByText(/Part 1/)).toBeNull();
-  expect(within(card()).getByText('Part 2 · Accept every word')).toBeInTheDocument();
-  const [part1, now] = within(card()).getAllByTestId('tutorial-step');
-  expect(part1).toHaveTextContent('✓An even number of zeros');
-  expect(now).toHaveTextContent(/Delete/);
+  expect(within(card()).getByTestId('tutorial-why')).toContainHTML('<code>0</code>');
 });
 
 it('shows words as code', () => {
@@ -154,7 +152,7 @@ it('shows words as code', () => {
   act(() => startTutorial());
   at('run-1010');
   expect(
-    within(card().querySelector<HTMLElement>('.av-tutorial-now')!).getByText('1010', {
+    within(within(card()).getByTestId('tutorial-instruction')).getByText('1010', {
       selector: 'code',
     }),
   ).toBeInTheDocument();
@@ -175,7 +173,7 @@ it('asks to leave a run before an editing step first, in plain ink, not as a mis
   expect(app().trace?.source.id).toBe(id);
 });
 
-it('keeps part 1 on show, its last ✓ included, until Esc closes the run that ended it', () => {
+it('says a part is done while the run that ended it is open, until Esc closes it', () => {
   render(<App />);
   act(() => startTutorial());
   const id = tutorialStore.getState().automatonId!;
@@ -190,14 +188,26 @@ it('keeps part 1 on show, its last ✓ included, until Esc closes the run that e
   act(() => startRun('10'));
   act(() => app().setStep(app().trace!.steps.length - 1));
   expect(card()).toHaveAttribute('data-step', String(idx('delete-q1') + 1));
-  expect(within(card()).getByText('Part 1 · An even number of zeros')).toBeInTheDocument();
-  expect(card()).toHaveTextContent('✓10 is rejected, as it should be');
-  expect(card()).toHaveTextContent(
-    'Part 1 done! Press Esc to get back to editing and start Part 2.',
+  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent('even number of zeros');
+  expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
+    'Part 1 done! Press Esc to start part 2.',
   );
+  expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
   act(() => app().closeTrace());
-  expect(within(card()).getByText('Part 2 · Accept every word')).toBeInTheDocument();
-  expect(card()).toHaveTextContent(/so odd can go/);
+  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent('Accept every word');
+  expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
+    'Click odd and press Delete.',
+  );
+});
+
+it('tells the canvas area how far down it reaches, so a run starts below it', () => {
+  render(<App />);
+  const area = document.querySelector<HTMLElement>('.av-canvas-area')!;
+  expect(area.style.getPropertyValue('--av-tutorial-pad')).toBe('');
+  act(() => startTutorial());
+  expect(area.style.getPropertyValue('--av-tutorial-pad')).toMatch(/^\d+(\.\d+)?px$/);
+  act(() => endTutorial());
+  expect(area.style.getPropertyValue('--av-tutorial-pad')).toBe('');
 });
 
 it('says when another automaton is open and goes back to the tutorial', async () => {
@@ -273,7 +283,7 @@ it('the closing card has Finish, which ends it', async () => {
   render(<App />);
   act(() => startTutorial());
   at('done');
-  expect(card()).toHaveAttribute('data-step', '17');
+  expect(card()).toHaveAttribute('data-step', '14');
   expect(within(card()).getByText('Tutorial · Done')).toBeInTheDocument();
   await user.click(within(card()).getByRole('button', { name: 'Finish' }));
   expect(screen.queryByTestId('tutorial-card')).toBeNull();
@@ -322,6 +332,7 @@ it('keeps keys for the canvas: S still makes the selected state the start state'
   // As clicking the state would: the canvas takes focus and handles the key.
   act(() => screen.getByTestId('canvas').focus());
   await user.keyboard('s');
+  await user.keyboard('a');
   expect(card()).toHaveAttribute('data-step', '4');
 });
 
@@ -333,7 +344,7 @@ it('points at the state itself, not its start arrow', () => {
   act(() => app().edit((a) => ({ ...a, starts: [state.id] })));
   expect(screen.getByTestId('start-arrow')).toBeInTheDocument();
   const ctx = tutorialContext(app(), tutorialStore.getState().automatonId);
-  const target = document.querySelector(STEPS[idx('start')]!.target(ctx)!);
+  const target = document.querySelector(STEPS[idx('start-accepting')]!.target(ctx)!);
   expect(screen.getByTestId('state-q_0')).toContainElement(target as HTMLElement);
 });
 
@@ -341,9 +352,8 @@ it('announces each step from one live region that stays mounted', () => {
   render(<App />);
   act(() => startTutorial());
   const live = card().querySelector('[aria-live="polite"]');
-  expect(live).toHaveTextContent('Add the first state');
+  expect(live).toHaveTextContent('Double-click the canvas to add a state.');
   addAt(100);
   expect(card().querySelector('[aria-live="polite"]')).toBe(live);
   expect(live).toHaveTextContent(/an even number of zeros so far/);
-  expect(live).toHaveTextContent('✓Added q0');
 });

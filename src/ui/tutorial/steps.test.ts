@@ -28,12 +28,6 @@ const evenZeros = (): Automaton =>
 const everything = (): Automaton =>
   tut({ states: ['q_0'], start: 'q_0', accepting: ['q_0'], edges: [['q_0', '0,1', 'q_0']] });
 
-/** `a` with q_0 renamed `any`, as the rename step asks. */
-const named = (a: Automaton): Automaton => ({
-  ...a,
-  states: a.states.map((s) => (s.id === 'q_0' ? { ...s, label: 'any' } : s)),
-});
-
 function ctx(
   automaton: Automaton | undefined,
   more: Partial<TutorialContext> = {},
@@ -56,14 +50,12 @@ const hintText = (id: StepId, c: TutorialContext): string | undefined => {
 };
 
 describe('the step table', () => {
-  it('has sixteen counted steps and a closing card, in the spec order', () => {
+  it('has thirteen counted steps and a closing card, in the spec order', () => {
     expect(STEPS.map((s) => s.id)).toEqual([
       'add-q0',
       'name-q0',
-      'start',
-      'accepting',
+      'start-accepting',
       'add-q1',
-      'name-q1',
       'q0-q1',
       'q1-q0',
       'loop-q0',
@@ -72,12 +64,19 @@ describe('the step table', () => {
       'run-10',
       'delete-q1',
       'loop-01',
-      'rename-q0',
       'run-10-again',
       'done',
     ]);
-    expect(COUNTED_STEPS).toBe(16);
-    expect(STEPS.map((s) => s.part)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3]);
+    expect(COUNTED_STEPS).toBe(13);
+    expect(STEPS.map((s) => s.part)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3]);
+  });
+
+  it('keeps every instruction short, with a few words of why at most', () => {
+    const a = evenZeros();
+    for (const s of STEPS) {
+      expect(s.instruction(ctx(a)).length, s.id).toBeLessThanOrEqual(100);
+      expect(s.why(ctx(a))?.length ?? 0, s.id).toBeLessThanOrEqual(70);
+    }
   });
 });
 
@@ -88,9 +87,8 @@ describe('the goals', () => {
     expect(step('loop-q1').done(ctx(one))).toBe(true);
     expect(advance(0, none, ctx(one)).current).toBe(idx('run-1010'));
     const two = PART_GOALS[2].automaton;
-    expect(two.states.map((s) => s.label)).toEqual(['any']);
+    expect(two.states.map((s) => s.label)).toEqual(['even']);
     expect(step('loop-01').done(ctx(two))).toBe(true);
-    expect(step('rename-q0').done(ctx(two))).toBe(true);
   });
 
   it('give example words that the goal really accepts or rejects', () => {
@@ -126,13 +124,14 @@ describe('done', () => {
   it('follows the structural steps of part 1', () => {
     expect(step('add-q0').done(ctx(tut({})))).toBe(false);
     expect(step('add-q0').done(ctx(tut({ states: ['q_0'] })))).toBe(true);
-    expect(step('start').done(ctx(tut({ states: ['q_0'] })))).toBe(false);
-    expect(step('start').done(ctx(tut({ states: ['q_0'], start: 'q_0' })))).toBe(true);
-    expect(step('accepting').done(ctx(tut({ states: ['q_0'], start: 'q_0' })))).toBe(false);
-    expect(
-      step('accepting').done(ctx(tut({ states: ['q_0'], start: 'q_0', accepting: ['q_0'] }))),
-    ).toBe(true);
-    expect(step('add-q1').done(ctx(tut({ states: ['q_0', 'q_1'] })))).toBe(true);
+    const both = step('start-accepting');
+    expect(both.done(ctx(tut({ states: ['q_0'] })))).toBe(false);
+    expect(both.done(ctx(tut({ states: ['q_0'], start: 'q_0' })))).toBe(false);
+    expect(both.done(ctx(tut({ states: ['q_0'], accepting: ['q_0'] })))).toBe(false);
+    expect(both.done(ctx(tut({ states: ['q_0'], start: 'q_0', accepting: ['q_0'] })))).toBe(true);
+    // The second state counts once it has a name.
+    expect(step('add-q1').done(ctx(tut({ states: ['q_0', 'q_1'] })))).toBe(false);
+    expect(step('add-q1').done(ctx(tut({ states: ['q_0', 'odd'] })))).toBe(true);
   });
 
   it('takes any name of the user’s own for a state, but not another q-number', () => {
@@ -140,14 +139,14 @@ describe('done', () => {
     expect(step('name-q0').done(ctx(tut({ states: ['q_3'] })))).toBe(false);
     expect(step('name-q0').done(ctx(tut({ states: ['even'] })))).toBe(true);
     expect(step('name-q0').done(ctx(tut({ states: ['zero'] })))).toBe(true);
-    expect(step('name-q1').done(ctx(tut({ states: ['even', 'q_0'], start: 'even' })))).toBe(false);
-    expect(step('name-q1').done(ctx(tut({ states: ['even', 'odd'], start: 'even' })))).toBe(true);
+    expect(step('add-q1').done(ctx(tut({ states: ['even', 'q_0'], start: 'even' })))).toBe(false);
+    expect(step('add-q1').done(ctx(tut({ states: ['even', 'odd'], start: 'even' })))).toBe(true);
   });
 
   it('names the start state even when the second state came first', () => {
     const a = tut({ states: ['q_1', 'q_0'], start: 'q_0' });
     expect(step('name-q0').target(ctx(a))).toContain('data-state-id="q_0"');
-    expect(step('name-q1').target(ctx(a))).toContain('data-state-id="q_1"');
+    expect(step('add-q1').target(ctx(a))).toContain('data-state-id="q_1"');
   });
 
   it('compares edge symbols as exact sets', () => {
@@ -172,19 +171,6 @@ describe('done', () => {
     expect(step('delete-q1').done(ctx(one))).toBe(true);
     expect(step('loop-01').done(ctx(one))).toBe(false);
     expect(step('loop-01').done(ctx(everything()))).toBe(true);
-    expect(step('rename-q0').done(ctx(everything()))).toBe(false);
-    expect(step('rename-q0').done(ctx(named(everything())))).toBe(true);
-  });
-
-  it('takes any new name of the user’s own for the rename, but not another q-number', () => {
-    const label = (l: string): TutorialContext =>
-      ctx({ ...everything(), states: everything().states.map((s) => ({ ...s, label: l })) });
-    expect(step('rename-q0').done(label('all'))).toBe(true);
-    expect(step('rename-q0').done(label('q_{12}'))).toBe(false);
-    expect(step('rename-q0').done(label('q3'))).toBe(false);
-    // Still part 1's name: not renamed yet.
-    expect(step('rename-q0').done(label('even'))).toBe(false);
-    expect(step('rename-q0').done(label(' Even'))).toBe(false);
   });
 
   it('the closing card is never done', () => {
@@ -237,7 +223,7 @@ describe('advance', () => {
   it('falls back to a step that came undone, keeping the furthest point', () => {
     const a = { ...evenZeros(), starts: [] };
     const p = advance(idx('loop-q1'), none, ctx(a));
-    expect(p.current).toBe(idx('start'));
+    expect(p.current).toBe(idx('start-accepting'));
     expect(p.progress).toBe(idx('loop-q1'));
   });
 
@@ -260,7 +246,7 @@ describe('advance', () => {
   it('a run does not count while the automaton it needs came undone', () => {
     const broken = { ...evenZeros(), accepting: [] };
     const p = advance(idx('run-1010'), none, ctx(broken, ran(broken, '1010')));
-    expect(p.current).toBe(idx('accepting'));
+    expect(p.current).toBe(idx('start-accepting'));
     expect(p.latched.size).toBe(0);
   });
 
@@ -271,7 +257,7 @@ describe('advance', () => {
   });
 
   it('reaches the closing card after the last run and stays there', () => {
-    const b = named(everything());
+    const b = everything();
     const p = advance(idx('run-10-again'), none, ctx(b, ran(b, '10')));
     expect(p.current).toBe(idx('done'));
     expect(p.progress).toBe(idx('done'));
@@ -285,8 +271,8 @@ describe('advance', () => {
 
   it('keeps the step it fell back to while another automaton is open', () => {
     const a = { ...evenZeros(), starts: [] };
-    const p = advance(idx('loop-q1'), none, ctx(a, { isActive: false }), idx('start'));
-    expect(p).toMatchObject({ progress: idx('loop-q1'), current: idx('start') });
+    const p = advance(idx('loop-q1'), none, ctx(a, { isActive: false }), idx('start-accepting'));
+    expect(p).toMatchObject({ progress: idx('loop-q1'), current: idx('start-accepting') });
   });
 });
 
@@ -311,13 +297,15 @@ describe('hints', () => {
     expect(step('delete-q1').hint(ctx(a, ran(a, '10')))).toEqual({ kind: 'part-done', part: 1 });
   });
 
-  it('asks to select q0 again before pressing A once the selection is gone', () => {
+  it('asks to select q0 again when the selection went halfway through S and A', () => {
     const a = tut({ states: ['q_0'], start: 'q_0' });
-    expect(step('accepting').hint(ctx(a))).toEqual({
+    expect(step('start-accepting').hint(ctx(a))).toEqual({
       kind: 'first',
-      text: 'First, click «q_0» to select it.',
+      text: 'First, click «q_0» again.',
     });
-    expect(step('accepting').hint(ctx(a, { selected: ['q_0'] }))).toBeNull();
+    expect(step('start-accepting').hint(ctx(a, { selected: ['q_0'] }))).toBeNull();
+    // Before either key, the step itself says to click it.
+    expect(step('start-accepting').hint(ctx(tut({ states: ['q_0'] })))).toBeNull();
   });
 
   it('points out an extra state in part 1', () => {
@@ -406,14 +394,14 @@ describe('instructions and targets', () => {
   it('name every key to press, the symbol to type included', () => {
     const a = tut({ states: ['q_0', 'q_1'], start: 'q_0' });
     expect(step('q0-q1').instruction(ctx(a))).toContain(
-      'hold [Shift] and drag from «q_0» to «q_1», then type [0] and press [Enter]',
+      'Hold [Shift] and drag from «q_0» to «q_1», then type [0] and press [Enter]',
     );
-    expect(step('run-10').instruction(ctx(a))).toContain('press [Esc]');
+    expect(step('run-10').instruction(ctx(a))).toContain('Press [Esc]');
   });
 
   it('point at the state, the loop label or the word box', () => {
     const a = tut({ states: ['q_0'], accepting: [] });
-    expect(step('start').target(ctx(a))).toBe(
+    expect(step('start-accepting').target(ctx(a))).toBe(
       '[data-testid="canvas"] [data-state-id="q_0"] .av-state-body',
     );
     const b = tut({

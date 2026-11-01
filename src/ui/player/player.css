@@ -152,13 +152,14 @@ select.av-player-speed:hover {
 
 /*
  * Trace views (they replace the canvas while a trace is open). They stop above the floating
- * player, so the diagrams they fit to view are never drawn behind it, and keep clear of the
- * history bar on both sides, so they stay centred on the window.
+ * player, so the diagrams they fit to view are never drawn behind it, start below the tutorial's
+ * card while one is open (--av-tutorial-pad, set by the card), and keep clear of the history bar
+ * on both sides, so they stay centred on the window.
  */
 
 .av-trace-view,
 .av-subset-view {
-  padding: 0 var(--av-history-inset, 0px)
+  padding: var(--av-tutorial-pad, 0px) var(--av-history-inset, 0px)
     calc(var(--av-dock-h, 0px) + var(--av-dock-bottom, 18px) + 8px);
 }
 .av-trace-view {

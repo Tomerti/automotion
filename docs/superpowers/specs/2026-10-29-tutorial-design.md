@@ -9,8 +9,7 @@ where they disagree.
 A first-time user learns the editor by doing: they build a DFA for **an even number of 0s** over
 Σ = {0, 1} (q0, named `even`, is the start and the only accepting state; q1 is `odd`), run two
 words to see it work, then change it to accept **every** word by deleting q1, giving q0 a
-self-loop on `0,1` and renaming it `any`. The card always shows what the current part is building
-(see *Goals*). Each step is
+self-loop on `0,1`. The card always shows what the current part is building (see *Goals*). Each step is
 done with the real gestures on the real canvas; the tutorial watches the automaton and moves on
 by itself. It never does a step for the user.
 
@@ -40,8 +39,8 @@ by itself. It never does a step for the user.
 ## Steps
 
 Revised 2026-11-01 after feedback that people didn't know what they were building at the start
-and found the instructions confusing (see *Goals*). This table and *Goals* supersede the first
-version's 13 steps.
+and found the instructions confusing, then cut down the same day: less text, fewer steps (see
+*Goals*). This table and *Goals* supersede the first version's 13 steps.
 
 States are found by **role**, never by label, so renaming them is harmless; instructions show
 their current labels as small states (`«label»` in `steps.ts`, with `LabelText` subscripts).
@@ -52,48 +51,44 @@ Within a context `a` (the tutorial automaton):
 - `edge(x, y)` = the symbols of the transition x → y as a set (empty if none).
 - *named* = the label is not a `q`-number (`q_3`, `q3`, `q_{12}`): any name of the user's own.
 
-Each instruction says why before how: what the state stands for, why a word should be accepted,
-what a symbol does to the count. One action per step.
+Each step is one short action (at most 100 characters) and, where it helps, a few muted words
+of why under it (at most 70), both checked by a unit test.
 
-| # | Part | Instruction (gist) | Done when | Pointer |
-|---|------|--------------------|-----------|---------|
-| 1 | 1 | Add the first state: double-click the canvas | ≥ 1 state | – |
-| 2 | 1 | q0 will stand for "an even number of zeros so far": name it `even` | q0 named | q0 |
-| 3 | 1 | Every run starts with no zeros, and zero is even: make even the start state (click, S) | q0 is a start state | q0 |
-| 4 | 1 | A run ending in even read an even number of zeros: make it accepting (A) | q0 accepting | q0 |
-| 5 | 1 | Add a second state | ≥ 2 states | – |
-| 6 | 1 | q1 will stand for "an odd number of zeros so far": name it `odd` | q1 named | q1 |
-| 7 | 1 | Reading a `0` turns an even count odd: Shift + drag even → odd, type 0 | edge(q0,q1) = {0} | q0 |
-| 8 | 1 | …and an odd count back to even: Shift + drag odd → even, type 0 | edge(q1,q0) = {0} | q1 |
-| 9 | 1 | Reading a `1` leaves the count as it is: a loop on even, type 1 | edge(q0,q0) = {1} | q0 |
-| 10 | 1 | The same for odd | edge(q1,q1) = {1} | q1 |
-| 11 | 1 | It's built: run `1010` (two zeros, ends in even, accepted) | latched (see below): run of `1010` reached its verdict, accepted | run pill |
-| 12 | 1 | Now `10` (one zero, ends in odd, rejected): Esc, then run it | latched: run of `10` reached its verdict, rejected | run pill |
-| 13 | 2 | To accept every word there's nothing left to count: delete odd | exactly one state, which is start and accepting | q1 |
-| 14 | 2 | Let even's loop read both symbols, so every run stays there: `0,1` | edge(q0,q0) = {0,1} | q0's loop label |
-| 15 | 2 | even doesn't count anything any more: name it `any` | q0 named, and not `even` / `odd` (part 1's names, any case) | q0 |
-| 16 | 2 | Run `10` again: it ends in any, so now it's accepted | latched: run of `10` reached its verdict, accepted | run pill |
-| 17 | – | Done. "You built a DFA that counts zeros, ran words on it, and changed it to accept every word. You can always press ? for all the controls." | **Finish** button | – |
+| # | Part | Instruction / why | Done when | Pointer |
+|---|------|-------------------|-----------|---------|
+| 1 | 1 | Double-click the canvas to add a state. | ≥ 1 state | – |
+| 2 | 1 | Double-click q0, type `even` and press Enter. / It will mean: an even number of zeros so far. | q0 named | q0 |
+| 3 | 1 | Click even, then press S and A. / Every run starts here, and a run that ends here is accepted. | q0 is a start state and accepting | q0 |
+| 4 | 1 | Add a second state and name it `odd`. / It will mean: an odd number of zeros so far. | q1 named | q1 |
+| 5 | 1 | Hold Shift and drag from even to odd, then type 0 and press Enter. / A `0` makes an even count odd. | edge(q0,q1) = {0} | q0 |
+| 6 | 1 | Hold Shift and drag from odd to even, then type 0 and press Enter. / …and an odd count even again. | edge(q1,q0) = {0} | q1 |
+| 7 | 1 | Hold Shift and drag from even out and back onto it, then type 1 and press Enter. / A `1` leaves the count as it is. | edge(q0,q0) = {1} | q0 |
+| 8 | 1 | Give odd a loop on `1` the same way. | edge(q1,q1) = {1} | q1 |
+| 9 | 1 | Type `1010` in "Test a word" and press Enter. / Two zeros: it should be accepted. | latched (see below): run of `1010` reached its verdict, accepted | run pill |
+| 10 | 1 | Press Esc, then run `10`. / One zero: it should be rejected. | latched: run of `10` reached its verdict, rejected | run pill |
+| 11 | 2 | Click odd and press Delete. / Nothing to count any more, so one state will do. | exactly one state, which is start and accepting | q1 |
+| 12 | 2 | Double-click the loop's `1`, type `0,1` and press Enter. / Then every word stays in even, which accepts. | edge(q0,q0) = {0,1} | q0's loop label |
+| 13 | 2 | Run `10` again. / This time it's accepted. | latched: run of `10` reached its verdict, accepted | run pill |
+| 14 | – | "You built a DFA and changed what it accepts. Press ? any time for all the controls." | **Finish** button | – |
 
-Run steps also require the structural steps before them in their part (see *Progress*), so a run
-only counts on the right automaton. The counter reads "Tutorial · n of 16"; step 17 reads
-"Tutorial · Done". A ✓ line names what was done ("A `0` in even moves to odd"); the delete step's
-says "Down to one state", since the deleted state's label is gone by then.
+Step 3: if one of S and A is done and q0 is no longer selected, a plain-ink "First, click even
+again." comes before it (the other key would do nothing). Run steps also require the structural
+steps before them in their part (see *Progress*), so a run only counts on the right automaton.
+The counter reads "Tutorial · n of 13"; step 14 reads "Tutorial · Done". While the run that ends
+part 1 is open, the step line reads "Part 1 done! Press Esc to start part 2."
 
 ### Goals
 
-A goal box sits at the top of the card, above the checklist, for the whole part (it does not
-scroll with the steps; on phones its picture is hidden to leave room). It holds the part's title,
-one sentence of what to build, example words with ✓ / ✗ (each checked against the goal by a unit
-test), and `GoalPicture`: the finished automaton drawn like the canvas, labels and symbols
-included. It is its own small SVG, with none of `Diagram`'s test ids, which the user's states
-share labels with.
+A goal row sits at the top of the card for the whole part: `GoalPicture` (the finished automaton
+drawn like the canvas, labels and symbols included; its own small SVG, with none of `Diagram`'s
+test ids, which the user's states share labels with), then "**Goal:** …" in a few words and
+example words with ✓ / ✗ (each checked against the goal by a unit test). On phones the picture
+is hidden.
 
-- Part 1: "Build a DFA that reads words made of `0` and `1`, and accepts the ones with an even
-  number of zeros." `1010` ✓ `11` ✓ `10` ✗ `000` ✗; even (start, accepting) and odd, `0` between
-  them both ways, a loop on `1` on each.
-- Part 2: "Change it to accept every word: one state that every run stays in." `10` ✓ `0` ✓
-  `111` ✓; one state any (start, accepting) looping on `0,1`.
+- Part 1: "Accept the words with an even number of zeros". `1010` ✓ `11` ✓ `10` ✗ `000` ✗; even
+  (start, accepting) and odd, `0` between them both ways, a loop on `1` on each.
+- Part 2: "Accept every word". `10` ✓ `0` ✓ `111` ✓; one state even (start, accepting) looping
+  on `0,1`.
 
 Prose says "zeros", not "`0`s": a symbol chip followed by "s" reads badly, and Geist's 0 reads as O.
 
@@ -142,9 +137,15 @@ Hints are pure functions of the context, like `done`.
 
 ### Coach card (`TutorialCard.tsx`)
 
-- Floats in the top-right corner of `.av-canvas-area` (absolute, 12 px inset), above the canvas
-  and trace views, below modals and toasts. Width 300 px; on narrow screens (the existing `max-width: 760px`
-  breakpoint) it spans the width under the kind pill.
+- Floats at the top centre of `.av-canvas-area`, just under the DFA/NFA switch (and where the
+  switch was while a run hides it), centred on the window like the switch and the run pill and
+  clear of the history bar on both sides; above the canvas and trace views, below modals and
+  toasts. Width 460 px (the width less 24 px on phones). It sets `--av-tutorial-pad` on the
+  canvas area (how far down it reaches) and trace views pad their top by it, so a run's tape and
+  verdict start below the card instead of under it.
+- Revised 2026-11-01: no checklist of ticked steps any more. Under the header come the goal row
+  (*Goals*), a progress bar (one segment per counted step, a wider gap between the parts) and the
+  one step to do now: the instruction, its why in muted text, then any hint.
 - Header: "Tutorial · n of 12" in the muted small caps style of other section labels, and a ✕
   icon button "End tutorial" (`aria-label`). There is no Back button: steps are checked live and
   fall back by themselves, so Back would only jump forward again. (Changed from the chat design.)

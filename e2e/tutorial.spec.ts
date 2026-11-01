@@ -50,60 +50,64 @@ test('the first visit offers the tutorial, which walks through building and chan
   const card = page.getByTestId('tutorial-card');
   const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
   await at(1);
-  await expect(card).toContainText('Tutorial · 1 of 16');
-  // What part 1 builds is on show from the start: words, and a picture of the goal.
+  await expect(card).toContainText('Tutorial · 1 of 13');
+  // What part 1 builds is on show from the start: a picture, the goal and example words.
   const goal = card.getByTestId('tutorial-goal');
-  await expect(goal).toContainText('Part 1 · An even number of zeros');
+  await expect(goal).toContainText('Goal: Accept the words with an even number of zeros');
   await expect(goal.getByTestId('tutorial-goal-picture')).toBeVisible();
+  // The card sits centred under the DFA/NFA switch.
+  const pill = (await page.getByTestId('kind-pill').boundingBox())!;
+  const box = (await card.boundingBox())!;
+  expect(Math.abs(box.x + box.width / 2 - (pill.x + pill.width / 2))).toBeLessThan(2);
+  expect(box.y).toBeGreaterThan(pill.y + pill.height);
+  expect(box.y - (pill.y + pill.height)).toBeLessThan(20);
 
-  // Part 1: an even number of 0s.
-  await addStateAt(page, 150, 220);
+  // Part 1: an even number of 0s. States go below the card.
+  await addStateAt(page, 150, 400);
   await at(2);
   await expect(page.getByTestId('tutorial-pointer')).toBeVisible();
   await rename(page, 'q_0', 'even');
   await at(3);
   await clickState(page, 'even');
   await page.keyboard.press('s');
-  await at(4);
   await page.keyboard.press('a');
-  await at(5);
-  await addStateAt(page, 450, 220);
-  await at(6);
+  await at(4);
+  await addStateAt(page, 450, 400);
   // q_0 is free again, so the new state takes it.
   await rename(page, 'q_0', 'odd');
-  await at(7);
+  await at(5);
   await edge(page, 'even', 'odd', '0');
-  await at(8);
+  await at(6);
   await edge(page, 'odd', 'even', '0');
-  await at(9);
+  await at(7);
   await selfLoop(page, 'even', '1');
-  await at(10);
+  await at(8);
   await selfLoop(page, 'odd', '1');
-  await at(11);
+  await at(9);
   await run(page, '1010', true);
-  await at(12);
+  // The run's tape starts below the card, not under it.
+  const tape = (await page.locator('.av-tape').boundingBox())!;
+  expect(tape.y).toBeGreaterThanOrEqual(box.y + (await card.boundingBox())!.height);
+  await at(10);
   await page.keyboard.press('Escape');
   await run(page, '10', false);
-  await at(13);
-  // Part 1 stays on show, its last ✓ included, until Esc closes the run.
+  await at(11);
+  // The card says part 1 is done until Esc closes the run.
   await expect(card).toContainText('Part 1 done!');
-  await expect(card).toContainText('10 is rejected, as it should be');
 
   // Part 2: accept every word.
   await page.keyboard.press('Escape');
-  await expect(goal).toContainText('Part 2 · Accept every word');
+  await expect(goal).toContainText('Goal: Accept every word');
   await clickState(page, 'odd');
   await page.keyboard.press('Delete');
-  await at(14);
+  await at(12);
   await expect(page.getByTestId('state-odd')).toHaveCount(0);
   await page.getByTestId('edge-even-even').getByTestId('edge-label').dblclick();
   await page.getByTestId('symbol-input').fill('0,1');
   await page.keyboard.press('Enter');
-  await at(15);
-  await rename(page, 'even', 'any');
-  await at(16);
+  await at(13);
   await run(page, '10', true);
-  await at(17);
+  await at(14);
   await expect(card).toContainText('Tutorial · Done');
   await card.getByRole('button', { name: 'Finish' }).click();
   await expect(card).toHaveCount(0);
@@ -112,15 +116,15 @@ test('the first visit offers the tutorial, which walks through building and chan
   await popup.getByRole('button', { name: 'Back to building' }).click();
   await expect(popup).toHaveCount(0);
 
-  // Finish also closes the last run, back to editing; the automaton stays: one state, now
-  // named "any", looping on 0 and 1…
+  // Finish also closes the last run, back to editing; the automaton stays: one state looping on
+  // 0 and 1…
   await expect(page.getByTestId('verdict')).toHaveCount(0);
   await expect(page.getByLabel('Word')).toBeVisible();
-  await expect(page.getByTestId('edge-any-any').getByTestId('edge-label')).toHaveText('0,1');
+  await expect(page.getByTestId('edge-even-even').getByTestId('edge-label')).toHaveText('0,1');
   await expect(page.getByRole('navigation', { name: 'History' })).toContainText('Tutorial');
   // …centred: the view fits it, wherever q0 was drawn.
   const canvas = (await page.getByTestId('canvas').boundingBox())!;
-  const centre = await stateCenter(page, 'any');
+  const centre = await stateCenter(page, 'even');
   expect(Math.abs(centre.x - (canvas.x + canvas.width / 2))).toBeLessThan(30);
   expect(Math.abs(centre.y - (canvas.y + canvas.height / 2))).toBeLessThan(30);
 });
@@ -133,7 +137,7 @@ test('quitting the tutorial midway asks first, then removes it from the history'
   await welcome.getByRole('button', { name: 'Start tutorial' }).click();
   const card = page.getByTestId('tutorial-card');
   const history = page.getByRole('navigation', { name: 'History' });
-  await addStateAt(page, 150, 220);
+  await addStateAt(page, 150, 400);
   await expect(card).toHaveAttribute('data-step', '2');
   await expect(history).toContainText('Tutorial');
 

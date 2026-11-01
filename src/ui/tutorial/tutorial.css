@@ -1,21 +1,24 @@
 /*
- * The tutorial: a coach card floating in the canvas's top-right corner, like the run and kind
- * pills, holding a checklist that grows as the user goes, and orange corner brackets (the run's
- * colour) around whatever the step uses. Brackets, not a ring: a ring round a state reads as
- * accepting, or as a run's active state.
+ * The tutorial: a coach card floating at the top centre of the canvas, under the DFA/NFA switch
+ * (and in its place while a run hides it), and orange corner brackets (the run's colour) around
+ * whatever the step uses. Brackets, not a ring: a ring round a state reads as accepting, or as a
+ * run's active state. Trace views start below the card (`--av-tutorial-pad`, set by the card).
  */
 
 .av-tutorial {
   position: absolute;
-  top: var(--av-dock-bottom);
-  right: var(--av-dock-bottom);
+  /* Under the kind pill: its top, its height (34 px) and a gap. */
+  top: calc(var(--av-dock-bottom) + 44px);
+  right: 0;
+  left: 0;
   z-index: 12;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: 320px;
-  max-height: calc(100% - 2 * var(--av-dock-bottom) - 64px);
-  padding: 12px 14px 14px;
+  gap: 9px;
+  /* Centred on the window like the pills, clear of the history bar on both sides. */
+  width: min(460px, calc(100% - 2 * var(--av-history-inset, 0px) - 32px));
+  margin: 0 auto;
+  padding: 10px 14px 12px;
   color: var(--av-ink);
   background: var(--av-surface-raised);
   border: 1px solid var(--av-rule-strong);
@@ -28,8 +31,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex: none;
-  margin: -4px -6px -4px 0;
+  margin: -4px -6px -6px 0;
 }
 .av-tutorial-count {
   font-size: 11px;
@@ -39,39 +41,42 @@
   color: var(--av-ink-muted);
 }
 
-/* The goal of the part: what it builds, words it accepts and rejects, and its picture. */
+/* The goal of the part: its picture, the goal in a few words, words it accepts and rejects. */
 
 .av-tutorial-goal {
-  flex: none;
-  display: grid;
-  gap: 7px;
-  padding: 10px 12px 8px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 10px;
   background: var(--av-surface);
   border: 1px solid var(--av-rule);
   border-radius: 10px;
 }
-.av-tutorial-goal-title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
+.av-tutorial-goal-body {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
 }
 .av-tutorial-goal-text {
   margin: 0;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.35;
+}
+.av-tutorial-goal-text b {
+  font-weight: 600;
 }
 .av-tutorial-examples {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: 3px 10px;
   margin: 0;
   padding: 0;
-  font-size: 13px;
+  font-size: 12.5px;
   list-style: none;
 }
 .av-tutorial-examples li {
   display: inline-flex;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
 }
 .av-tutorial-mark {
@@ -84,16 +89,14 @@
   color: var(--av-red);
 }
 .av-tutorial-goal-picture {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 112px;
-  margin-top: 2px;
+  flex: none;
+  width: 156px;
+  height: 76px;
 }
 .av-goal-edge {
   fill: none;
   stroke: var(--av-edge-stroke, #3a4356);
-  stroke-width: 1.5;
+  stroke-width: 1.6;
 }
 .av-tutorial-goal-picture .av-edge-head {
   fill: var(--av-edge-stroke, #3a4356);
@@ -102,7 +105,7 @@
 .av-goal-accept {
   fill: var(--av-state-fill, #ffffff);
   stroke: var(--av-state-stroke, #1c2333);
-  stroke-width: 1.5;
+  stroke-width: 1.6;
 }
 .av-goal-accept {
   fill: none;
@@ -110,93 +113,58 @@
 .av-goal-label,
 .av-goal-symbols {
   font-family: var(--av-font-ui);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 500;
   text-anchor: middle;
   dominant-baseline: central;
   fill: var(--av-ink);
 }
-.av-goal-label {
-  font-size: 13px;
-}
 .av-goal-symbols {
   font-family: var(--av-font-symbol);
-  font-size: 14px;
+  font-size: 17px;
 }
 
-/* The checklist */
+/* Progress: one segment per step, a wider gap between the two parts. */
 
-.av-tutorial-steps {
-  /* Only the checklist scrolls: the goal above it stays in view. */
-  flex: 0 1 auto;
-  min-height: 0;
-  display: grid;
-  align-content: start;
-  gap: 7px;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  list-style: none;
+.av-tutorial-progress {
+  display: flex;
+  gap: 3px;
 }
-.av-tutorial-step {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  gap: 9px;
-  align-items: start;
-  font-size: 13px;
-  line-height: 18px;
+.av-tutorial-progress span {
+  flex: 1;
+  height: 4px;
+  background: var(--av-rule);
+  border-radius: 2px;
+  transition: background-color 200ms;
 }
-.av-tutorial-step[data-done='true'] .av-tutorial-step-text {
-  color: var(--av-ink-muted);
+.av-tutorial-progress span[data-part-start] {
+  margin-left: 6px;
 }
-.av-tutorial-part-done {
-  font-weight: 600;
-}
-/* The step to do now, set off from the ticked lines above it. */
-.av-tutorial-now {
-  padding-top: 9px;
-  border-top: 1px solid var(--av-rule);
-}
-.av-tutorial-now:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-/* The closing card has no box. */
-.av-tutorial-now:not(:has(.av-tutorial-box)) {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.av-tutorial-box {
-  display: grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--av-surface-raised);
-  border: 1.5px solid var(--av-ink-muted);
-  border-radius: 5px;
-}
-.av-tutorial-box[data-done='true'] {
+.av-tutorial-progress span[data-done='true'] {
   background: var(--av-green);
-  border-color: var(--av-green);
-  animation: av-tutorial-tick 260ms ease-out;
 }
 
-.av-tutorial-body {
+/* The step to do now: what to do, then why in a few words. */
+
+.av-tutorial-now {
   display: grid;
-  gap: 8px;
+  gap: 3px;
   justify-items: start;
-  animation: av-tutorial-step 220ms ease-out;
 }
 .av-tutorial-text {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .av-tutorial-now .av-tutorial-text {
-  margin-top: -1px;
+  animation: av-tutorial-step 220ms ease-out;
+}
+.av-tutorial-why {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--av-ink-muted);
 }
 /*
  * Words and symbols to type, in the symbol font (Geist's 0 reads as O, a slashed one as ∅). Flat,
@@ -339,15 +307,6 @@
   }
 }
 
-@keyframes av-tutorial-tick {
-  from {
-    transform: scale(0.6);
-  }
-  60% {
-    transform: scale(1.15);
-  }
-}
-
 @keyframes av-tutorial-breathe {
   50% {
     transform: translate(calc(var(--dx) * 3px), calc(var(--dy) * 3px));
@@ -356,13 +315,9 @@
 
 @media (max-width: 760px) {
   .av-tutorial {
-    top: 56px;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-height: 55%;
+    width: calc(100% - 24px);
   }
-  /* Room for the steps: the words and sentence say what the picture would. */
+  /* Room for the step: the goal and its words say what the picture would. */
   .av-tutorial-goal-picture {
     display: none;
   }

@@ -57,7 +57,7 @@ export function WelcomeCard({
         </header>
         <p className="av-welcome-tagline">Watch automata come to life.</p>
         <WelcomeDemo />
-        <p className="av-welcome-text">A three-minute tutorial:</p>
+        <p className="av-welcome-text">A short tutorial:</p>
         <ol className="av-welcome-plan">
           {PLAN.map((p, i) => (
             <li key={p.what} className="av-welcome-row">
