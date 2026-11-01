@@ -50,10 +50,10 @@ test('the first visit offers the tutorial, which walks through building and chan
   const card = page.getByTestId('tutorial-card');
   const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
   await at(1);
-  await expect(card).toContainText('Tutorial · 1 of 13');
+  await expect(card).toContainText('Part 1 of 2 · Step 1 of 10');
   // What part 1 builds is on show from the start: a picture, the goal and example words.
   const goal = card.getByTestId('tutorial-goal');
-  await expect(goal).toContainText('Goal: Accept the words with an even number of zeros');
+  await expect(goal).toContainText('Part 1 goal: Accept the words with an even number of zeros');
   await expect(goal.getByTestId('tutorial-goal-picture')).toBeVisible();
   // The card sits centred under the DFA/NFA switch.
   const pill = (await page.getByTestId('kind-pill').boundingBox())!;
@@ -92,12 +92,14 @@ test('the first visit offers the tutorial, which walks through building and chan
   await page.keyboard.press('Escape');
   await run(page, '10', false);
   await at(11);
-  // The card says part 1 is done until Esc closes the run.
-  await expect(card).toContainText('Part 1 done!');
+  // The card says part 1 is done, and what part 2 is, until Esc closes the run.
+  await expect(card.getByTestId('tutorial-part-done')).toContainText('Part 1 complete!');
+  await expect(card).toContainText('Next: Part 2 · Accept every word');
 
   // Part 2: accept every word.
   await page.keyboard.press('Escape');
-  await expect(goal).toContainText('Goal: Accept every word');
+  await expect(goal).toContainText('Part 2 goal: Accept every word');
+  await expect(card).toContainText('Part 2 of 2 · Step 1 of 4');
   await clickState(page, 'odd');
   await page.keyboard.press('Delete');
   await at(12);
@@ -106,8 +108,10 @@ test('the first visit offers the tutorial, which walks through building and chan
   await page.getByTestId('symbol-input').fill('0,1');
   await page.keyboard.press('Enter');
   await at(13);
-  await run(page, '10', true);
+  await rename(page, 'even', 'any');
   await at(14);
+  await run(page, '10', true);
+  await at(15);
   await expect(card).toContainText('Tutorial · Done');
   await card.getByRole('button', { name: 'Finish' }).click();
   await expect(card).toHaveCount(0);
@@ -116,15 +120,15 @@ test('the first visit offers the tutorial, which walks through building and chan
   await popup.getByRole('button', { name: 'Back to building' }).click();
   await expect(popup).toHaveCount(0);
 
-  // Finish also closes the last run, back to editing; the automaton stays: one state looping on
-  // 0 and 1…
+  // Finish also closes the last run, back to editing; the automaton stays: one state, now
+  // named "any", looping on 0 and 1…
   await expect(page.getByTestId('verdict')).toHaveCount(0);
   await expect(page.getByLabel('Word')).toBeVisible();
-  await expect(page.getByTestId('edge-even-even').getByTestId('edge-label')).toHaveText('0,1');
+  await expect(page.getByTestId('edge-any-any').getByTestId('edge-label')).toHaveText('0,1');
   await expect(page.getByRole('navigation', { name: 'History' })).toContainText('Tutorial');
   // …centred: the view fits it, wherever q0 was drawn.
   const canvas = (await page.getByTestId('canvas').boundingBox())!;
-  const centre = await stateCenter(page, 'even');
+  const centre = await stateCenter(page, 'any');
   expect(Math.abs(centre.x - (canvas.x + canvas.width / 2))).toBeLessThan(30);
   expect(Math.abs(centre.y - (canvas.y + canvas.height / 2))).toBeLessThan(30);
 });

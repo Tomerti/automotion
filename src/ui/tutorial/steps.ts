@@ -26,6 +26,7 @@ export type StepId =
   | 'run-10'
   | 'delete-q1'
   | 'loop-01'
+  | 'rename-q0'
   | 'run-10-again'
   | 'done';
 
@@ -63,7 +64,16 @@ export interface Step {
   run?: { word: string; accepted: boolean };
 }
 
-export const COUNTED_STEPS = 13;
+export const COUNTED_STEPS = 14;
+
+/** Each part's name, for the card's header and the hand-over between the parts. */
+export const PART_TITLES: Record<1 | 2, string> = {
+  1: 'Even number of zeros',
+  2: 'Accept every word',
+};
+
+/** What the finished part 1 does, said when it ends. */
+export const PART1_DONE = 'Your DFA accepts exactly the words with an even number of zeros.';
 
 /**
  * What a part builds, shown at the top of the card for the whole part so the steps have a point:
@@ -78,7 +88,7 @@ export interface Goal {
 }
 
 /** The names the steps ask for, which the goal pictures use. */
-export const NAMES = { even: 'even', odd: 'odd' } as const;
+export const NAMES = { even: 'even', odd: 'odd', any: 'any' } as const;
 
 /** A two-symbol picture automaton: states at (x, 0), loops pointing up. */
 function picture(
@@ -134,8 +144,8 @@ export const PART_GOALS: Record<1 | 2, Goal> = {
       { word: '0', accepted: true },
       { word: '111', accepted: true },
     ],
-    automaton: picture([{ id: NAMES.even, x: 0 }], [[NAMES.even, ['0', '1'], NAMES.even]]),
-    description: 'The goal: one state, even (start, accepting), looping on 0 and 1.',
+    automaton: picture([{ id: NAMES.any, x: 0 }], [[NAMES.any, ['0', '1'], NAMES.any]]),
+    description: 'The goal: one state, any (start, accepting), looping on 0 and 1.',
   },
 };
 
@@ -240,8 +250,9 @@ function nfaHint(ctx: TutorialContext): string | null {
 interface StepSpec {
   id: StepId;
   part: 1 | 2 | 3;
-  instruction(l: { q0: string; q1: string }): string;
-  why?(l: { q0: string; q1: string }): string;
+  /** `ctx` for a step that follows the user halfway through it. */
+  instruction(l: { q0: string; q1: string }, ctx: TutorialContext): string;
+  why?(l: { q0: string; q1: string }, ctx: TutorialContext): string;
   done?(ctx: TutorialContext): boolean;
   /** Hints of this step only, after the common ones. */
   hint?(ctx: TutorialContext): string | null;
@@ -253,8 +264,19 @@ interface StepSpec {
   run?: { word: string; accepted: boolean };
 }
 
+/** Whether q0 is a start state, and whether it is accepting. */
+function startAndAccepting(ctx: TutorialContext): { start: boolean; accepting: boolean } {
+  return onAutomaton(ctx, { start: false, accepting: false }, (a, r) => ({
+    start: r.q0 !== undefined && startStates(a).includes(r.q0.id),
+    accepting: r.q0 !== undefined && a.accepting.includes(r.q0.id),
+  }));
+}
+
 /** A state given a name of the user's own (not a `q`-number). */
 const isNamed = (s: State | undefined): boolean => s !== undefined && !DEFAULT_LABEL.test(s.label);
+
+/** Labels part 1 asked for, which part 2's rename must move away from. */
+const PART1_NAMES: readonly string[] = [NAMES.even, NAMES.odd];
 
 const SPECS: StepSpec[] = [
   {
@@ -266,7 +288,7 @@ const SPECS: StepSpec[] = [
   {
     id: 'name-q0',
     part: 1,
-    instruction: (l) => `Double-click ${l.q0}, type \`${NAMES.even}\` and press [Enter].`,
+    instruction: (l) => `Double-click ${l.q0} and rename it \`${NAMES.even}\`.`,
     why: () => 'It will mean: an even number of zeros so far.',
     done: (ctx) => onAutomaton(ctx, false, (_, r) => isNamed(r.q0)),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
@@ -274,8 +296,23 @@ const SPECS: StepSpec[] = [
   {
     id: 'start-accepting',
     part: 1,
-    instruction: (l) => `Click ${l.q0}, then press [S] and [A].`,
-    why: () => 'Every run starts here, and a run that ends here is accepted.',
+    // Says what each key does, and once one is pressed, what it did and what the other is for.
+    instruction: (l, ctx) => {
+      const { start, accepting } = startAndAccepting(ctx);
+      if (start && !accepting) {
+        return `${l.q0} is the start state now. Press [A] to make it accepting too.`;
+      }
+      if (accepting && !start) {
+        return `${l.q0} is accepting now. Press [S] to make it the start state too.`;
+      }
+      return `Click ${l.q0}, then press [S] to make it the start state and [A] to make it accepting.`;
+    },
+    why: (_, ctx) => {
+      const { start, accepting } = startAndAccepting(ctx);
+      if (start && !accepting) return 'An accepting state gets a double ring.';
+      if (accepting && !start) return 'The start state gets an arrow pointing in.';
+      return 'Every run starts here, and a run that ends here is accepted.';
+    },
     done: (ctx) =>
       onAutomaton(
         ctx,
@@ -295,7 +332,7 @@ const SPECS: StepSpec[] = [
   {
     id: 'add-q1',
     part: 1,
-    instruction: () => `Add a second state and name it \`${NAMES.odd}\`.`,
+    instruction: () => `Add a second state and rename it \`${NAMES.odd}\`.`,
     why: () => 'It will mean: an odd number of zeros so far.',
     done: (ctx) => onAutomaton(ctx, false, (_, r) => isNamed(r.q1)),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q1)),
@@ -396,6 +433,23 @@ const SPECS: StepSpec[] = [
       }),
   },
   {
+    id: 'rename-q0',
+    part: 2,
+    instruction: (l) => `Double-click ${l.q0} and rename it \`${NAMES.any}\`.`,
+    why: () => 'It accepts any word now, so give it a name that fits.',
+    // Any name of the user's own will do, but not one part 1 asked for.
+    done: (ctx) =>
+      onAutomaton(
+        ctx,
+        false,
+        (_, r) =>
+          r.q0 !== undefined &&
+          isNamed(r.q0) &&
+          !PART1_NAMES.includes(r.q0.label.trim().toLowerCase()),
+      ),
+    target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
+  },
+  {
     id: 'run-10-again',
     part: 2,
     instruction: () => 'Run `10` again.',
@@ -448,8 +502,8 @@ function toStep(spec: StepSpec, i: number): Step {
   return {
     id: spec.id,
     part: spec.part,
-    instruction: (ctx) => spec.instruction(labels(ctx)),
-    why: (ctx) => spec.why?.(labels(ctx)) ?? null,
+    instruction: (ctx) => spec.instruction(labels(ctx), ctx),
+    why: (ctx) => spec.why?.(labels(ctx), ctx) ?? null,
     done,
     hint,
     target: (ctx) => spec.target?.(ctx) ?? null,

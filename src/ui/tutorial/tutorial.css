@@ -16,7 +16,7 @@
   flex-direction: column;
   gap: 9px;
   /* Centred on the window like the pills, clear of the history bar on both sides. */
-  width: min(460px, calc(100% - 2 * var(--av-history-inset, 0px) - 32px));
+  width: min(500px, calc(100% - 2 * var(--av-history-inset, 0px) - 32px));
   margin: 0 auto;
   padding: 10px 14px 12px;
   color: var(--av-ink);
@@ -45,9 +45,9 @@
 
 .av-tutorial-goal {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
-  padding: 6px 10px;
+  padding: 8px 12px;
   background: var(--av-surface);
   border: 1px solid var(--av-rule);
   border-radius: 10px;
@@ -59,7 +59,7 @@
 }
 .av-tutorial-goal-text {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.35;
 }
 .av-tutorial-goal-text b {
@@ -68,10 +68,10 @@
 .av-tutorial-examples {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px 10px;
+  gap: 4px 12px;
   margin: 0;
   padding: 0;
-  font-size: 12.5px;
+  font-size: 14px;
   list-style: none;
 }
 .av-tutorial-examples li {
@@ -90,8 +90,69 @@
 }
 .av-tutorial-goal-picture {
   flex: none;
-  width: 156px;
-  height: 76px;
+  width: 196px;
+  height: 96px;
+}
+/* Part 2's goal comes in with an orange flash, so the new part is hard to miss. */
+.av-tutorial-goal[data-part='2'] {
+  animation: av-tutorial-new-part 900ms ease-out;
+}
+@keyframes av-tutorial-new-part {
+  from {
+    border-color: var(--av-run);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--av-run) 30%, transparent);
+  }
+}
+
+/* The hand-over between the parts: part 1 done, in green, and what part 2 is. */
+.av-tutorial-part-done {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--av-green) 9%, var(--av-surface-raised));
+  border: 1.5px solid var(--av-green);
+  border-radius: 10px;
+  animation: av-pop-in 220ms ease-out;
+}
+.av-tutorial-part-done p {
+  margin: 0;
+}
+.av-tutorial-part-done-title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--av-green);
+}
+.av-tutorial-part-done-mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  color: var(--av-surface-raised);
+  background: var(--av-green);
+  border-radius: 999px;
+}
+.av-tutorial-part-done-text {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.av-tutorial-part-done .av-tutorial-next {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--av-ink-muted);
+}
+.av-tutorial-next b {
+  font-weight: 600;
+  color: var(--av-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .av-tutorial-goal[data-part='2'],
+  .av-tutorial-part-done {
+    animation: none;
+  }
 }
 .av-goal-edge {
   fill: none;

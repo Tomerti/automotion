@@ -50,7 +50,7 @@ const hintText = (id: StepId, c: TutorialContext): string | undefined => {
 };
 
 describe('the step table', () => {
-  it('has thirteen counted steps and a closing card, in the spec order', () => {
+  it('has fourteen counted steps and a closing card, in the spec order', () => {
     expect(STEPS.map((s) => s.id)).toEqual([
       'add-q0',
       'name-q0',
@@ -64,11 +64,12 @@ describe('the step table', () => {
       'run-10',
       'delete-q1',
       'loop-01',
+      'rename-q0',
       'run-10-again',
       'done',
     ]);
-    expect(COUNTED_STEPS).toBe(13);
-    expect(STEPS.map((s) => s.part)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3]);
+    expect(COUNTED_STEPS).toBe(14);
+    expect(STEPS.map((s) => s.part)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3]);
   });
 
   it('keeps every instruction short, with a few words of why at most', () => {
@@ -87,8 +88,9 @@ describe('the goals', () => {
     expect(step('loop-q1').done(ctx(one))).toBe(true);
     expect(advance(0, none, ctx(one)).current).toBe(idx('run-1010'));
     const two = PART_GOALS[2].automaton;
-    expect(two.states.map((s) => s.label)).toEqual(['even']);
+    expect(two.states.map((s) => s.label)).toEqual(['any']);
     expect(step('loop-01').done(ctx(two))).toBe(true);
+    expect(step('rename-q0').done(ctx(two))).toBe(true);
   });
 
   it('give example words that the goal really accepts or rejects', () => {
@@ -171,6 +173,42 @@ describe('done', () => {
     expect(step('delete-q1').done(ctx(one))).toBe(true);
     expect(step('loop-01').done(ctx(one))).toBe(false);
     expect(step('loop-01').done(ctx(everything()))).toBe(true);
+  });
+
+  it('takes any new name of the user’s own for the last rename, but not part 1’s', () => {
+    const label = (l: string): TutorialContext =>
+      ctx({ ...everything(), states: everything().states.map((s) => ({ ...s, label: l })) });
+    expect(step('rename-q0').done(label('any'))).toBe(true);
+    expect(step('rename-q0').done(label('all'))).toBe(true);
+    expect(step('rename-q0').done(label('q_0'))).toBe(false);
+    // Still part 1's name: not renamed yet.
+    expect(step('rename-q0').done(label('even'))).toBe(false);
+    expect(step('rename-q0').done(label(' Even'))).toBe(false);
+  });
+
+  it('says what S and A do, and once one is pressed, what it did', () => {
+    const at = (spec: Partial<FixtureSpec>) => ctx(tut({ states: ['even'], ...spec }));
+    const s = step('start-accepting');
+    expect(s.instruction(at({}))).toBe(
+      'Click «even», then press [S] to make it the start state and [A] to make it accepting.',
+    );
+    expect(s.instruction(at({ start: 'even' }))).toBe(
+      '«even» is the start state now. Press [A] to make it accepting too.',
+    );
+    expect(s.why(at({ start: 'even' }))).toBe('An accepting state gets a double ring.');
+    expect(s.instruction(at({ accepting: ['even'] }))).toBe(
+      '«even» is accepting now. Press [S] to make it the start state too.',
+    );
+    expect(s.why(at({ accepting: ['even'] }))).toBe('The start state gets an arrow pointing in.');
+  });
+
+  it('asks to rename, not to type a name', () => {
+    const a = evenZeros();
+    expect(step('name-q0').instruction(ctx(tut({ states: ['q_0'] })))).toBe(
+      'Double-click «q_0» and rename it `even`.',
+    );
+    expect(step('add-q1').instruction(ctx(a))).toBe('Add a second state and rename it `odd`.');
+    expect(step('rename-q0').instruction(ctx(a))).toBe('Double-click «even» and rename it `any`.');
   });
 
   it('the closing card is never done', () => {
@@ -257,7 +295,7 @@ describe('advance', () => {
   });
 
   it('reaches the closing card after the last run and stays there', () => {
-    const b = everything();
+    const b = { ...everything(), states: [{ ...everything().states[0]!, label: 'any' }] };
     const p = advance(idx('run-10-again'), none, ctx(b, ran(b, '10')));
     expect(p.current).toBe(idx('done'));
     expect(p.progress).toBe(idx('done'));

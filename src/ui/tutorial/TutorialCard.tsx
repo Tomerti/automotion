@@ -3,7 +3,7 @@ import { appStore, useAppStore } from '../../store/store';
 import { LabelText } from '../LabelText';
 import { CloseIcon } from '../shell/icons';
 import { GoalPicture } from './GoalPicture';
-import { COUNTED_STEPS, PART_GOALS, STEPS } from './steps';
+import { COUNTED_STEPS, PART1_DONE, PART_GOALS, PART_TITLES, STEPS } from './steps';
 import { TutorialPointer } from './TutorialPointer';
 import { finishTutorial, quitTutorial, tutorialContext, useTutorial } from './tutorialStore';
 import './tutorial.css';
@@ -66,11 +66,11 @@ function Markup({ part }: { part: string }): React.JSX.Element {
 function GoalRow({ part }: { part: 1 | 2 }): React.JSX.Element {
   const goal = PART_GOALS[part];
   return (
-    <div className="av-tutorial-goal" data-testid="tutorial-goal">
+    <div className="av-tutorial-goal" data-testid="tutorial-goal" data-part={part}>
       <GoalPicture automaton={goal.automaton} description={goal.description} />
       <div className="av-tutorial-goal-body">
         <p className="av-tutorial-goal-text">
-          <b>Goal:</b> <RichText text={goal.text} />
+          <b>Part {part} goal:</b> <RichText text={goal.text} />
         </p>
         <ul className="av-tutorial-examples" aria-label="For example">
           {goal.examples.map((e) => (
@@ -87,6 +87,27 @@ function GoalRow({ part }: { part: 1 | 2 }): React.JSX.Element {
           ))}
         </ul>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The hand-over between the parts, while the run that ended part 1 is still open: what part 1
+ * achieved, and what part 2 is.
+ */
+function PartDone(): React.JSX.Element {
+  return (
+    <div className="av-tutorial-part-done" data-testid="tutorial-part-done" role="status">
+      <p className="av-tutorial-part-done-title">
+        <span className="av-tutorial-part-done-mark" aria-hidden="true">
+          ✓
+        </span>
+        Part 1 complete!
+      </p>
+      <p className="av-tutorial-part-done-text">{PART1_DONE}</p>
+      <p className="av-tutorial-next">
+        Next: <b>Part 2 · {PART_TITLES[2]}</b>
+      </p>
     </div>
   );
 }
@@ -181,6 +202,9 @@ export function TutorialCard(): React.JSX.Element | null {
   const partDone = hint?.kind === 'part-done' ? hint.part : null;
   const shownPart = partDone ?? step.part;
   const why = partDone ? null : step.why(ctx);
+  // Steps are numbered within their part.
+  const inPart = STEPS.filter((s) => s.part === step.part);
+  const stepInPart = inPart.indexOf(step) + 1;
 
   return (
     <section
@@ -192,7 +216,11 @@ export function TutorialCard(): React.JSX.Element | null {
     >
       <header className="av-tutorial-head">
         <span className="av-tutorial-count">
-          {last ? 'Tutorial · Done' : `Tutorial · ${current + 1} of ${COUNTED_STEPS}`}
+          {last
+            ? 'Tutorial · Done'
+            : partDone
+              ? `Part ${partDone} of 2 · Complete`
+              : `Part ${step.part} of 2 · Step ${stepInPart} of ${inPart.length}`}
         </span>
         <button
           ref={closeRef}
@@ -224,7 +252,12 @@ export function TutorialCard(): React.JSX.Element | null {
         </div>
       ) : (
         <>
-          {shownPart !== 3 && <GoalRow part={shownPart} />}
+          {partDone ? (
+            <PartDone />
+          ) : (
+            // Keyed by part, so part 2's goal comes in with its own entrance.
+            shownPart !== 3 && <GoalRow key={shownPart} part={shownPart} />
+          )}
           {!last && <ProgressBar done={current} />}
           {/* One live region that stays mounted, so screen readers announce each new step and
               hint as it appears. */}
@@ -241,9 +274,7 @@ export function TutorialCard(): React.JSX.Element | null {
             >
               <RichText
                 text={
-                  partDone
-                    ? `Part ${partDone} done! Press [Esc] to start part ${partDone + 1}.`
-                    : step.instruction(ctx)
+                  partDone ? `Press [Esc] to start part ${partDone + 1}.` : step.instruction(ctx)
                 }
               />
             </p>

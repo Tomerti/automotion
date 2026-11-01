@@ -65,7 +65,7 @@ it('shows the first step with its counter', () => {
   act(() => startTutorial());
   expect(card()).toHaveAttribute('data-step', '1');
   expect(card()).toHaveAccessibleName('Tutorial');
-  expect(within(card()).getByText('Tutorial · 1 of 13')).toBeInTheDocument();
+  expect(within(card()).getByText('Part 1 of 2 · Step 1 of 10')).toBeInTheDocument();
   expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
     'Double-click the canvas to add a state.',
   );
@@ -75,7 +75,7 @@ it('shows the goal: a picture, a few words, and words it accepts and rejects', (
   render(<App />);
   act(() => startTutorial());
   const goal = within(card()).getByTestId('tutorial-goal');
-  expect(goal).toHaveTextContent('Goal: Accept the words with an even number of zeros');
+  expect(goal).toHaveTextContent('Part 1 goal: Accept the words with an even number of zeros');
   const examples = within(goal).getByRole('list', { name: 'For example' });
   expect(
     within(examples)
@@ -93,7 +93,10 @@ it('shows the goal: a picture, a few words, and words it accepts and rejects', (
   at('loop-q1');
   expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent('even number of zeros');
   at('delete-q1');
-  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent('Goal: Accept every word');
+  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent(
+    'Part 2 goal: Accept every word',
+  );
+  expect(within(card()).getByText('Part 2 of 2 · Step 1 of 4')).toBeInTheDocument();
   at('done');
   expect(within(card()).queryByTestId('tutorial-goal')).toBeNull();
 });
@@ -103,14 +106,14 @@ it('shows one step at a time, with a few words of why, and fills a progress bar'
   act(() => startTutorial());
   const bar = within(card()).getByRole('progressbar', { name: 'Tutorial progress' });
   expect(bar).toHaveAttribute('aria-valuenow', '0');
-  expect(bar).toHaveAttribute('aria-valuemax', '13');
-  expect(bar.children).toHaveLength(13);
+  expect(bar).toHaveAttribute('aria-valuemax', '14');
+  expect(bar.children).toHaveLength(14);
   expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
   addAt(100);
   expect(card()).toHaveAttribute('data-step', '2');
   expect(within(card()).getAllByTestId('tutorial-step')).toHaveLength(1);
   expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
-    'Double-click q0, type even and press Enter.',
+    'Double-click q0 and rename it even.',
   );
   // The label keeps its subscript.
   expect(within(card()).getByTestId('tutorial-instruction').querySelector('sub')).toHaveTextContent(
@@ -188,12 +191,19 @@ it('says a part is done while the run that ended it is open, until Esc closes it
   act(() => startRun('10'));
   act(() => app().setStep(app().trace!.steps.length - 1));
   expect(card()).toHaveAttribute('data-step', String(idx('delete-q1') + 1));
-  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent('even number of zeros');
+  // Part 1 is done, said in green, with what part 2 is; the goal makes way for it.
+  expect(within(card()).getByText('Part 1 of 2 · Complete')).toBeInTheDocument();
+  const done = within(card()).getByTestId('tutorial-part-done');
+  expect(done).toHaveTextContent('Part 1 complete!');
+  expect(done).toHaveTextContent('Next: Part 2 · Accept every word');
+  expect(within(card()).queryByTestId('tutorial-goal')).toBeNull();
   expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
-    'Part 1 done! Press Esc to start part 2.',
+    'Press Esc to start part 2.',
   );
   expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
   act(() => app().closeTrace());
+  expect(within(card()).queryByTestId('tutorial-part-done')).toBeNull();
+  expect(within(card()).getByTestId('tutorial-goal')).toHaveAttribute('data-part', '2');
   expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent('Accept every word');
   expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
     'Click odd and press Delete.',
@@ -283,7 +293,7 @@ it('the closing card has Finish, which ends it', async () => {
   render(<App />);
   act(() => startTutorial());
   at('done');
-  expect(card()).toHaveAttribute('data-step', '14');
+  expect(card()).toHaveAttribute('data-step', '15');
   expect(within(card()).getByText('Tutorial · Done')).toBeInTheDocument();
   await user.click(within(card()).getByRole('button', { name: 'Finish' }));
   expect(screen.queryByTestId('tutorial-card')).toBeNull();
