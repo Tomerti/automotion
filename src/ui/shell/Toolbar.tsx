@@ -4,9 +4,10 @@ import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, useAppStore } from '../../store/store';
 import { startMinimize, startSubset } from '../../store/traceActions';
-import { exportableSvg, svgToPng } from '../canvas/exportDiagram';
+import { canCopyImage, copyPng, exportableSvg, svgToPng } from '../canvas/exportDiagram';
 import { fitActive, tidyActive } from '../canvas/useCanvasEditing';
 import { downloadBlob, downloadText, slug } from './download';
+import { isTypingTarget } from './help';
 import {
   ConvertIcon,
   ExportIcon,
@@ -68,20 +69,58 @@ async function exportDiagram(
   }
 }
 
+/**
+ * Copy the diagram as the same PNG that Export PNG downloads. Must run straight from the click
+ * or key press (no await before it), or Safari refuses the clipboard write.
+ */
+function copyDiagram(automaton: Automaton | undefined): void {
+  const text = automaton ? exportableSvg(automaton) : null;
+  if (text === null) {
+    toast('Nothing to copy', 'error');
+    return;
+  }
+  if (!canCopyImage()) {
+    toast('This browser can’t copy images: use Export PNG instead', 'error');
+    return;
+  }
+  copyPng(text).then(
+    () => toast('Image copied'),
+    () => toast('Could not copy the image: use Export PNG instead', 'error'),
+  );
+}
+
+/** Ctrl+C (⌘C) copies the diagram, unless there is text to copy or a field has the keyboard. */
+function useCopyShortcut(automaton: Automaton | undefined, disabled: boolean): void {
+  useEffect(() => {
+    if (disabled) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'c')
+        return;
+      if (e.defaultPrevented || isTypingTarget(e.target)) return;
+      if (window.getSelection()?.isCollapsed === false) return;
+      e.preventDefault();
+      copyDiagram(automaton);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [automaton, disabled]);
+}
+
 function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.JSX.Element {
   const { automaton, disabled } = props;
   const { open, setOpen, rootRef, triggerRef } = usePopover();
   const menuRef = useRef<HTMLDivElement>(null);
+  useCopyShortcut(automaton, disabled);
   useEffect(() => {
     if (open) focusFirstItem(menuRef.current);
   }, [open]);
-  const item = (format: 'svg' | 'png', label: string): React.JSX.Element => (
+  const item = (label: string, run: () => void): React.JSX.Element => (
     <button
       type="button"
       role="menuitem"
       onClick={() => {
         setOpen(false);
-        void exportDiagram(automaton, format);
+        run();
       }}
     >
       {label}
@@ -94,7 +133,7 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
         type="button"
         className="av-icon-button"
         aria-label="Export image"
-        title="Export image"
+        title="Copy or export the image"
         aria-haspopup="menu"
         aria-expanded={open}
         disabled={disabled}
@@ -110,8 +149,9 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
           aria-label="Export image"
           onKeyDown={onMenuKeyDown}
         >
-          {item('svg', 'Export SVG')}
-          {item('png', 'Export PNG')}
+          {item('Copy image', () => copyDiagram(automaton))}
+          {item('Export SVG', () => void exportDiagram(automaton, 'svg'))}
+          {item('Export PNG', () => void exportDiagram(automaton, 'png'))}
         </div>
       )}
     </div>

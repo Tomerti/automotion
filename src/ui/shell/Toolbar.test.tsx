@@ -35,7 +35,7 @@ describe('Toolbar', () => {
     expect(btn('Undo')).toHaveAttribute('title', 'Undo (Ctrl+Z)');
     expect(btn('Fit')).toHaveAttribute('title', 'Fit to view');
     expect(btn('Tidy')).toHaveAttribute('title', 'Tidy the layout');
-    expect(btn('Export image')).toHaveAttribute('title', 'Export image');
+    expect(btn('Export image')).toHaveAttribute('title', 'Copy or export the image');
   });
 
   it('Minimize is disabled with a reason on an NFA', () => {
@@ -88,7 +88,8 @@ describe('Toolbar', () => {
     );
     await user.click(btn('Export image'));
     expect(btn('Export image')).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('menuitem', { name: 'Export SVG' })).toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: 'Copy image' })).toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: 'Export SVG' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Export PNG' })).toBeInTheDocument();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).toBeNull();
@@ -98,6 +99,105 @@ describe('Toolbar', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Export SVG' }));
     expect(screen.queryByRole('menu')).toBeNull();
     await waitFor(() => expect(names).toEqual(['my-auto.svg']));
+  });
+
+  describe('copy image', () => {
+    /** Stand-in for the browser's ClipboardItem: keeps what was put on it. */
+    class FakeClipboardItem {
+      readonly items: Record<string, Promise<Blob>>;
+      constructor(items: Record<string, Promise<Blob>>) {
+        this.items = items;
+        // jsdom never renders the PNG; don't let a stray rejection fail the run.
+        for (const blob of Object.values(items)) blob.catch(() => undefined);
+      }
+    }
+    let written: FakeClipboardItem[][];
+
+    /** Call after userEvent.setup(), which installs a clipboard of its own. */
+    function stubClipboard(
+      write: (items: FakeClipboardItem[]) => Promise<void> = async (items) => {
+        written.push(items);
+      },
+    ): void {
+      vi.stubGlobal('ClipboardItem', FakeClipboardItem);
+      Object.defineProperty(navigator, 'clipboard', { value: { write }, configurable: true });
+    }
+
+    const renderWithDiagram = (): void => {
+      render(
+        <>
+          <Toolbar />
+          <input aria-label="Some field" />
+          <div data-testid="canvas">
+            <svg data-testid="diagram">
+              <g />
+            </svg>
+          </div>
+        </>,
+      );
+    };
+
+    beforeEach(() => {
+      written = [];
+      resetAppStore({ automata: [nfa()], activeId: 'n' });
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('Copy image puts one PNG on the clipboard', async () => {
+      const user = userEvent.setup();
+      stubClipboard();
+      renderWithDiagram();
+      await user.click(btn('Export image'));
+      await user.click(screen.getByRole('menuitem', { name: 'Copy image' }));
+      expect(screen.queryByRole('menu')).toBeNull();
+      expect(written).toHaveLength(1);
+      expect(Object.keys(written[0]![0]!.items)).toEqual(['image/png']);
+      await waitFor(() =>
+        expect(toastStore.getState().toasts).toMatchObject([{ message: 'Image copied' }]),
+      );
+    });
+
+    it('Ctrl+C copies the image, but not while typing in a field', async () => {
+      const user = userEvent.setup();
+      stubClipboard();
+      renderWithDiagram();
+      await user.keyboard('{Control>}c{/Control}');
+      expect(written).toHaveLength(1);
+      await user.click(screen.getByLabelText('Some field'));
+      await user.keyboard('{Control>}c{/Control}');
+      expect(written).toHaveLength(1);
+    });
+
+    it('Ctrl+C does nothing while a trace is open', async () => {
+      const user = userEvent.setup();
+      stubClipboard();
+      const active = appStore.getState().automata[0]!;
+      appStore.getState().openTrace(runWord(active, 'a'));
+      renderWithDiagram();
+      await user.keyboard('{Control>}c{/Control}');
+      expect(written).toHaveLength(0);
+    });
+
+    it('says why when the clipboard refuses or the browser can’t copy images', async () => {
+      const user = userEvent.setup();
+      stubClipboard(() => Promise.reject(new Error('denied')));
+      renderWithDiagram();
+      await user.keyboard('{Control>}c{/Control}');
+      await waitFor(() =>
+        expect(toastStore.getState().toasts).toMatchObject([
+          { message: 'Could not copy the image: use Export PNG instead', kind: 'error' },
+        ]),
+      );
+
+      toastStore.setState({ toasts: [] });
+      vi.stubGlobal('ClipboardItem', undefined);
+      await user.keyboard('{Control>}c{/Control}');
+      expect(toastStore.getState().toasts).toMatchObject([
+        { message: 'This browser can’t copy images: use Export PNG instead', kind: 'error' },
+      ]);
+    });
   });
 
   it('Undo/Redo and export are disabled while a trace is open', () => {
