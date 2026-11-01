@@ -95,3 +95,32 @@ test('the copied picture is the downloaded PNG, at any zoom or display scaling',
   expect(await copiedPng(scaled, 'keys')).toEqual(fitted);
   await context.close();
 });
+
+test('exported pictures carry Geist, cut down to the characters drawn', async ({ page }) => {
+  await openNfa(page);
+  const download = page.waitForEvent('download');
+  await exportMenu(page, 'Export SVG');
+  const svg = readFileSync(await (await download).path(), 'utf8');
+  const face = /@font-face \{ font-family: 'Geist';[^}]*base64,([^)]+)\) format\('woff2'\); \}/.exec(
+    svg,
+  );
+  expect(face).not.toBeNull();
+  // A subset, not the whole font.
+  expect(face![1]!.length).toBeLessThan(20_000);
+
+  // Drawn as an image (as for the PNG), the embedded font is used: without it, other pixels.
+  const draw = (text: string): Promise<string> =>
+    page.evaluate(async (t) => {
+      const img = new Image();
+      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(t)}`;
+      await img.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      return canvas.toDataURL();
+    }, text);
+  const withFont = await draw(svg);
+  expect(withFont).toBe(await draw(svg)); // drawing is deterministic
+  expect(await draw(svg.replace(face![0], ''))).not.toBe(withFont);
+});

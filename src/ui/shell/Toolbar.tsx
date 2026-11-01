@@ -4,6 +4,7 @@ import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, useAppStore } from '../../store/store';
 import { startMinimize, startSubset } from '../../store/traceActions';
+import { withEmbeddedFont } from '../canvas/embedFont';
 import { canCopyImage, copyPng, exportableSvg, svgToPng } from '../canvas/exportDiagram';
 import { fitActive, tidyActive } from '../canvas/useCanvasEditing';
 import { downloadBlob, downloadText, slug } from './download';
@@ -52,11 +53,12 @@ async function exportDiagram(
   automaton: Automaton | undefined,
   format: 'svg' | 'png',
 ): Promise<void> {
-  const text = automaton ? exportableSvg(automaton) : null;
-  if (!automaton || text === null) {
+  const raw = automaton ? exportableSvg(automaton) : null;
+  if (!automaton || raw === null) {
     toast('Nothing to export', 'error');
     return;
   }
+  const text = await withEmbeddedFont(raw);
   const filename = `${slug(automaton.name)}.${format}`;
   if (format === 'svg') {
     downloadText(filename, text, 'image/svg+xml');
@@ -83,7 +85,7 @@ function copyDiagram(automaton: Automaton | undefined): void {
     toast('This browser can’t copy images: use Export PNG instead', 'error');
     return;
   }
-  copyPng(text).then(
+  copyPng(withEmbeddedFont(text)).then(
     () => toast('Image copied'),
     () => toast('Could not copy the image: use Export PNG instead', 'error'),
   );

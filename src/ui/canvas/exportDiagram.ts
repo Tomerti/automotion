@@ -106,10 +106,12 @@ export function canCopyImage(): boolean {
 
 /**
  * Put the PNG of standalone SVG text on the clipboard. The write starts at once with the PNG
- * still a promise: Safari allows it only within the click or key press that asked for it.
+ * (and the SVG, which may still be fetching its font) a promise: Safari allows it only within
+ * the click or key press that asked for it.
  */
-export function copyPng(svgText: string): Promise<void> {
-  return navigator.clipboard.write([new ClipboardItem({ 'image/png': svgToPng(svgText) })]);
+export function copyPng(svgText: Promise<string>): Promise<void> {
+  const png = svgText.then((text) => svgToPng(text));
+  return navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
 }
 
 function currentSvg(): SVGSVGElement | null {
