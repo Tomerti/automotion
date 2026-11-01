@@ -106,6 +106,10 @@ Layers, with dependencies pointing downward only:
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain
     fallbacks: SVG/PNG export resolves `var()` against a hidden `.av-theme-light` probe, so exports always
     use the light palette.
+  - Exported pictures (SVG, PNG, Copy image / Ctrl+C) come from one standalone SVG
+    (`canvas/exportDiagram.ts`): the whole automaton, ignoring zoom and pan, PNGs at a fixed
+    `PNG_SCALE`. `canvas/embedFont.ts` embeds Geist 500, cut down to the characters drawn, fetched from
+    Google Fonts at export time. If the diagram's label font or weight changes, change it there too.
 
 Tests are colocated as `*.test.ts(x)`; Playwright specs live in `e2e/`. Interactive elements have stable
 `data-testid`s and accessible names that the e2e specs rely on, so keep them when restyling.

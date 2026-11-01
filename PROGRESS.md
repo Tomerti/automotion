@@ -13,7 +13,6 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
-- [ ] Exported and copied pictures set labels in the system font (Segoe UI on Windows), not Geist: the SVG is drawn as a standalone image, which can't reach the page's web fonts; embed the font (subset, base64 `@font-face`) in the exported SVG
 
 ## Ideas (later)
 
@@ -29,6 +28,7 @@ Nothing in progress: pick the next task from the list below.
 
 - [x] Copy image (first item of the image menu) and Ctrl+C put the diagram on the clipboard as a PNG, to paste straight into a document or chat; Ctrl+C leaves text selections and fields alone
 - [x] The copied picture is the downloaded PNG, and neither depends on the canvas's zoom or pan or on display scaling: the whole automaton at a fixed 2× (`PNG_SCALE`), checked pixel for pixel by e2e `copy-image.spec.ts`
+- [x] Exported and copied pictures set their labels in Geist, like the canvas, instead of the system font (Segoe UI on Windows): a standalone SVG can't reach the page's web fonts, so `embedFont.ts` embeds Geist 500, cut down by Google Fonts (`text=`) to the characters drawn (2 to 3 KB), as a base64 `@font-face`; offline it falls back to the system font
 
 ### Tutorial
 
