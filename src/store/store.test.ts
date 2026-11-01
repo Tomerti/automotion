@@ -354,6 +354,40 @@ describe('store', () => {
       expect(pasted.x).toBe(PASTE_STEP);
     });
 
+    it('copies a whole automaton as a snapshot and pastes it as a named copy in its view', () => {
+      const s = createAppStore({ automata: [dfa('a1'), dfa('a2')], activeId: 'a1' });
+      const st = () => s.getState();
+      st().setViewport('a2', { x: 1, y: 2, zoom: 3 });
+      expect(st().pasteAutomaton()).toBeNull();
+      expect(st().copyAutomaton('missing')).toBe(false);
+      expect(st().copyAutomaton('a2')).toBe(true);
+      // Later edits to the original, or deleting it, don't change what is pasted.
+      st().setActive('a2');
+      st().edit((a) => moveState(a, 'q0', { x: 50, y: 0 }));
+      st().deleteAutomaton('a2');
+      const id = st().pasteAutomaton();
+      const copy = st().automata[0]!;
+      expect(copy.id).toBe(id);
+      expect(copy.name).toBe('a2 copy');
+      expect(x0(copy)).toBe(0);
+      expect(st().activeId).toBe(id);
+      expect(st().viewports[id!]).toEqual({ x: 1, y: 2, zoom: 3 });
+      // Pasting again adds another copy.
+      st().pasteAutomaton();
+      expect(st().automata.map((a) => a.name)).toEqual(['a2 copy 2', 'a2 copy', 'a1']);
+    });
+
+    it('pastes only what was copied last: states or an automaton', () => {
+      const { st, active } = setup();
+      st().copyAutomaton('a1');
+      expect(st().paste()).toBeNull();
+      st().select({ states: ['q0'], transitions: [] });
+      st().copySelection();
+      expect(st().pasteAutomaton()).toBeNull();
+      expect(st().paste()).toEqual({ promoted: false });
+      expect(active().states).toHaveLength(3);
+    });
+
     it('does nothing with no states selected, nothing copied, or a trace open', () => {
       const { st, active } = setup();
       expect(st().copySelection()).toBe(false);

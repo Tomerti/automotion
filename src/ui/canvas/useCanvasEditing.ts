@@ -728,7 +728,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
           }),
         ],
       });
-    } else if (!stateId && !edgeEl && store.clipboard) {
+    } else if (!stateId && !edgeEl && store.clipboard?.kind === 'states') {
       const p = toWorld(e);
       setMenu({ at, items: [item('Paste', () => pasteAt(p))] });
     }
@@ -767,10 +767,13 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
 
   // Copy and paste are listened for app-wide (like undo), so Ctrl+V works right after opening
   // another automaton from the history bar. Typing, selected text and open dialogs keep the
-  // browser's own copy and paste.
+  // browser's own copy and paste; a key already handled (Ctrl+C on a history entry) is left alone.
+  // Ctrl+V pastes what was copied last: states into the open automaton, or a whole automaton
+  // (copied in the history bar) as a new copy of it.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
-      if (!isAdditive(e) || e.shiftKey || e.altKey || isTyping(e.target)) return;
+      if (e.defaultPrevented || !isAdditive(e) || e.shiftKey || e.altKey || isTyping(e.target))
+        return;
       const key = e.key.toLowerCase();
       if (key !== 'c' && key !== 'v') return;
       if (document.querySelector('[aria-modal="true"]')) return;
@@ -783,6 +786,10 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       }
       if (!store.clipboard) return;
       e.preventDefault();
+      if (store.clipboard.kind === 'automaton') {
+        store.pasteAutomaton();
+        return;
+      }
       // At the pointer when it is over the canvas, else a step off where it was copied from.
       const svg = svgRef.current;
       const at =

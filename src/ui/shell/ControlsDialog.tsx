@@ -94,24 +94,23 @@ const TABS: Tab[] = [
     rows: [
       { gesture: { keys: ['S'], on: 'selected state' }, action: 'Toggle start state' },
       { gesture: { keys: ['A'], on: 'selected state' }, action: 'Toggle accepting' },
-      { gesture: { keys: ['Delete'] }, action: 'Delete the selection' },
       {
-        gesture: { keys: ['Delete'], on: 'clicked history entry' },
-        action: 'Delete that automaton',
+        gesture: { keys: ['Delete'], on: 'selection or history entry' },
+        action: 'Delete it',
+        hint: 'A history entry asks first',
       },
-      { gesture: { keys: ['Ctrl', 'C'] }, action: 'Copy the selected states' },
+      {
+        gesture: { keys: ['Ctrl', 'C'], on: 'selection or history entry' },
+        action: 'Copy it',
+        hint: 'With nothing selected, the diagram as a picture',
+      },
       {
         gesture: { keys: ['Ctrl', 'V'] },
-        action: 'Paste them',
-        hint: 'At the pointer, with their arrows; into another automaton too',
+        action: 'Paste',
+        hint: 'States at the pointer; an automaton as a new copy',
       },
       { gesture: { keys: ['Ctrl', 'Z'] }, action: 'Undo' },
       { gesture: { keys: ['Ctrl', 'Y'] }, action: 'Redo' },
-      {
-        gesture: { keys: ['Ctrl', 'C'] },
-        action: 'Copy the diagram as a picture',
-        hint: 'When no state is selected',
-      },
       { gesture: { keys: ['?'] }, action: 'Open this guide' },
     ],
   },
@@ -197,7 +196,7 @@ export function ControlsDialog({
             </button>
           ))}
         </div>
-        {/* Every panel sits in the same grid cell, so the dialog is as tall as the longest tab. */}
+        {/* The dialog is as tall as the open tab; its top stays put (App.css), so the tabs don't move. */}
         <div className="av-guide-panels">
           {TABS.map((t, i) => (
             <ul
@@ -206,9 +205,7 @@ export function ControlsDialog({
               className="av-guide-list"
               role="tabpanel"
               aria-labelledby={`${baseId}-tab-${i}`}
-              aria-hidden={i === tab ? undefined : true}
-              inert={i !== tab}
-              data-current={i === tab}
+              hidden={i !== tab}
             >
               {t.rows.map((r) => (
                 <li key={r.action} className="av-guide-row">

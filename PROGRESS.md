@@ -32,6 +32,8 @@ Nothing in progress: pick the next task from the list below.
 - [x] Pasted names keep their label when free, otherwise gain primes (q_1 → q_1'); accepting is copied, start is not; pasting into another automaton drops arrows to states it lacks, and ε-arrows turn a DFA into an NFA
 - [x] Ctrl+C copies the selected states when there are any, and the diagram as a picture (Copy image) when there are none
 - [x] Right-click: Copy on a state, Copy / Delete N states on a multi-selection, Paste on the empty canvas
+- [x] Ctrl+C on a history entry copies that automaton (a snapshot, with its view); Ctrl+V adds a copy of it, named and opened like Duplicate. Ctrl+V pastes whatever was copied last, states or an automaton
+- [x] Controls popup: as tall as the open tab (its top stays put when switching), not the tallest one; the Keys tab lists each key once (Ctrl+C and Delete cover history entries too)
 
 ### Theme
 
@@ -126,7 +128,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Shift + drag draws a transition (the ring gesture is gone); drag an edge to bend it, drag a loop to rotate it
 - [x] The transition being drawn is a solid arrow; over a state it shows the edge (or self-loop) it will create
 - [x] Geist / Geist Mono instead of STIX Two and Schibsted Grotesk; upright labels
-- [x] Controls popup as tabs (Build, Arrange, Run, Keys) with gesture chips instead of sentences; sized to the tallest tab
+- [x] Controls popup as tabs (Build, Arrange, Run, Keys) with gesture chips instead of sentences; sized to the tallest tab (superseded: now as tall as the open tab)
 - [x] ε or `\epsilon` in the word is the empty word
 - [x] Run and Convert to DFA play at once; Run has a chime, and an accept/reject cue when the verdict appears
 - [x] Run highlight is a slim orange ring and edge instead of the wide yellow highlighter; the Run button is orange too

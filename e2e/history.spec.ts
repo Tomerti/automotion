@@ -101,6 +101,25 @@ test('duplicate an automaton from its ⋯ menu; the copy is edited on its own', 
   await expect(entries.nth(1)).toContainText('Untitled');
 });
 
+test('Ctrl+C on a history entry copies it and Ctrl+V adds a copy', async ({ page }) => {
+  await openApp(page, { clear: true });
+  const bar = page.getByRole('navigation', { name: 'History' });
+  const entries = bar.getByTestId('history-item');
+  await addStateAt(page, 300, 200);
+  await bar.getByRole('button', { name: 'Create' }).click();
+  await expect(entries).toHaveCount(2);
+
+  await entries.nth(1).click();
+  await page.keyboard.press('Control+c');
+  await expect(page.getByText('Copied "Untitled": Ctrl+V adds a copy of it')).toBeVisible();
+  await page.keyboard.press('Control+v');
+  await expect(entries).toHaveCount(3);
+  await expect(entries.first()).toContainText('Untitled copy');
+  await expect(entries.first()).toContainText('DFA · 1 state');
+  await expect(entries.first()).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.av-switcher-name')).toHaveText('Untitled copy');
+});
+
 test('the Delete key deletes a clicked history entry after asking', async ({ page }) => {
   await openApp(page, { clear: true });
   const bar = page.getByRole('navigation', { name: 'History' });

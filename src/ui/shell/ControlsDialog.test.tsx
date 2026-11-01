@@ -39,6 +39,35 @@ describe('Controls popup', () => {
     expect(within(panel).getByText('Toggle start state')).toBeInTheDocument();
   });
 
+  it('the Keys tab lists each key once, Ctrl+C and Delete covering history entries too', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
+    await user.click(within(dialog()!).getByRole('tab', { name: 'Keys' }));
+    const panel = within(dialog()!).getByRole('tabpanel');
+    const rows = Array.from(panel.querySelectorAll('.av-guide-row'));
+    const combos = rows.map((r) =>
+      Array.from(r.querySelectorAll('kbd'))
+        .map((k) => k.textContent)
+        .join('+'),
+    );
+    expect(new Set(combos).size).toBe(combos.length);
+    expect(within(panel).getAllByText('selection or history entry')).toHaveLength(2);
+  });
+
+  it('shows only the open tab, so the dialog is as tall as that tab', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
+    const d = dialog()!;
+    const panels = d.querySelectorAll('[role="tabpanel"]');
+    expect(panels).toHaveLength(4);
+    expect(Array.from(panels).filter((p) => !(p as HTMLElement).hidden)).toHaveLength(1);
+    await user.click(within(d).getByRole('tab', { name: 'Run' }));
+    expect(within(d).getByRole('tabpanel')).toHaveTextContent('Run the word');
+    expect(Array.from(panels).filter((p) => !(p as HTMLElement).hidden)).toHaveLength(1);
+  });
+
   it('arrow keys move between tabs and Tab stays inside the dialog', async () => {
     const user = userEvent.setup();
     render(<App />);

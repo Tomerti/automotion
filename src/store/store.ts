@@ -19,13 +19,18 @@ const NO_SELECTION: Selection = { states: [], transitions: [] };
 export const PASTE_STEP = 40;
 
 /**
- * What Ctrl+C copied (in memory only, never saved), and where the last paste went: pasting again
- * at the same place (or again without a place) steps `repeat` times further along.
+ * What Ctrl+C copied last (in memory only, never saved): states of an automaton, or a whole
+ * automaton from the history bar. For states, `last` is where the last paste went: pasting again
+ * at the same place (or again without a place) steps `repeat` times further along. An automaton
+ * is a snapshot with the view it had, so later edits to it, or deleting it, don't change the paste.
  */
-interface Clipboard {
-  clip: Clip;
-  last: { at: { x: number; y: number } | null; repeat: number } | null;
-}
+export type Clipboard =
+  | {
+      kind: 'states';
+      clip: Clip;
+      last: { at: { x: number; y: number } | null; repeat: number } | null;
+    }
+  | { kind: 'automaton'; automaton: Automaton; viewport?: Viewport };
 
 export interface AppState {
   /** Most recently edited first: edits, undo/redo, creating and adding move one to the front. */
@@ -56,11 +61,18 @@ export interface AppState {
   select(sel: Selection): void;
   /** Copy the selected states of the active automaton (Ctrl+C); false if none is selected. */
   copySelection(): boolean;
+  /** Copy automaton `id` as a whole (Ctrl+C in the history bar); false if there is none. */
+  copyAutomaton(id: string): boolean;
+  /**
+   * Add a copy of the copied automaton, named, placed and opened like `duplicateAutomaton`. Its
+   * id, or `null` when the clipboard holds no automaton.
+   */
+  pasteAutomaton(): string | null;
   /**
    * Paste what was copied into the active automaton as one undo step, centred on `at` (world
    * coordinates), or a step down and right of where it was copied from; the pasted states and
    * the arrows between them become the selection. `promoted`: an ε-arrow turned a DFA into an
-   * NFA. `null` when nothing was copied or a trace is open.
+   * NFA. `null` when no states were copied or a trace is open.
    */
   paste(at?: { x: number; y: number }): { promoted: boolean } | null;
   setViewport(id: string, vp: Viewport): void;
@@ -117,6 +129,20 @@ function initialData(
 export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
   return createStore<AppState>()(
     immer((set, get) => {
+      /** Add and open a copy of `original` named "X copy" (or "X copy 2", …), in `viewport`. */
+      const addCopy = (original: Automaton, viewport: Viewport | undefined): string => {
+        // A copy of "X copy 2" is "X copy 3", not "X copy 2 copy".
+        const base = `${original.name.replace(/ copy(?: \d+)?$/, '')} copy`;
+        const copy: Automaton = { ...original, id: newId(), name: freeName(get().automata, base) };
+        get().addAutomaton(copy);
+        if (viewport) {
+          set((s) => {
+            s.viewports[copy.id] = viewport;
+          });
+        }
+        return copy.id;
+      };
+
       /** Push `snapshot` onto the active history's past (capped) and clear the future. */
       const record = (id: string, snapshot: Automaton): void =>
         set((s) => {
@@ -173,20 +199,8 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
         },
 
         duplicateAutomaton(id) {
-          const { automata, viewports } = get();
-          const original = automata.find((a) => a.id === id);
-          if (!original) return null;
-          // A copy of "X copy 2" is "X copy 3", not "X copy 2 copy".
-          const base = `${original.name.replace(/ copy(?: \d+)?$/, '')} copy`;
-          const copy: Automaton = { ...original, id: newId(), name: freeName(automata, base) };
-          const viewport = viewports[id];
-          get().addAutomaton(copy);
-          if (viewport) {
-            set((s) => {
-              s.viewports[copy.id] = viewport;
-            });
-          }
-          return copy.id;
+          const original = get().automata.find((a) => a.id === id);
+          return original ? addCopy(original, get().viewports[id]) : null;
         },
 
         deleteAutomaton(id) {
@@ -266,15 +280,34 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           const clip = current ? copyStates(current, selection.states) : null;
           if (!clip) return false;
           set((s) => {
-            s.clipboard = { clip, last: null };
+            s.clipboard = { kind: 'states', clip, last: null };
           });
           return true;
+        },
+
+        copyAutomaton(id) {
+          const { automata, viewports } = get();
+          const automaton = automata.find((a) => a.id === id);
+          if (!automaton) return false;
+          const viewport = viewports[id];
+          set((s) => {
+            s.clipboard = viewport
+              ? { kind: 'automaton', automaton, viewport }
+              : { kind: 'automaton', automaton };
+          });
+          return true;
+        },
+
+        pasteAutomaton() {
+          const { clipboard } = get();
+          if (clipboard?.kind !== 'automaton') return null;
+          return addCopy(clipboard.automaton, clipboard.viewport);
         },
 
         paste(at) {
           const { activeId, trace, automata: all, clipboard } = get();
           const current = all.find((a) => a.id === activeId);
-          if (!clipboard || trace || !current) return null;
+          if (clipboard?.kind !== 'states' || trace || !current) return null;
           const { clip, last } = clipboard;
           const again =
             last !== null &&
@@ -291,7 +324,7 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           const result = pasteClip(current, clip, offset);
           get().edit(() => result.automaton);
           set((s) => {
-            s.clipboard = { clip, last: { at: at ?? null, repeat } };
+            s.clipboard = { kind: 'states', clip, last: { at: at ?? null, repeat } };
             s.selection = {
               states: result.stateIds,
               transitions: internalTransitions(result.automaton, result.stateIds),

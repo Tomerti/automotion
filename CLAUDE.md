@@ -46,7 +46,9 @@ Layers, with dependencies pointing downward only:
   - `clipboard.ts`: Ctrl+C / Ctrl+V. `copyStates` snapshots states with their arrows out (to each other
     and to outside states, never into the copy); `pasteClip` adds them with fresh ids, primed labels
     (`q_1'`), accepting but not start, dropping arrows to states the target lacks. Ctrl+C copies
-    states when `selectedStates()` (store) has any, and the diagram as a picture (Toolbar) otherwise.
+    states when `selectedStates()` (store) has any, and the diagram as a picture (Toolbar) otherwise;
+    on a focused history entry it copies that automaton (handled there, `preventDefault` so the
+    window listeners skip it).
   - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
     snapshots (`trace.ts`). Each has a `can*` guard returning a user-facing reason or `null`.
     `subsetConstruction` throws past `MAX_DFA_STATES` (64).
@@ -56,7 +58,8 @@ Layers, with dependencies pointing downward only:
   `import()` (Tidy, subset walkthrough) so elk (~1.5 MB) stays out of the main bundle.
 - `src/store/`: one Zustand store (`store.ts`) holding the automata, active id, selection, per-automaton
   viewports, the open trace, per-automaton undo/redo (capped at 100) and the clipboard
-  (`copySelection` / `paste`; in memory only, never saved). `automata` is kept most
+  (`copySelection` / `paste` for states, `copyAutomaton` / `pasteAutomaton` for a whole automaton:
+  whichever was copied last is what Ctrl+V pastes; in memory only, never saved). `automata` is kept most
   recently edited first: edits, undo/redo, creating and adding move one to the front (switching doesn't),
   and that order is what gets saved, so the app reopens on the last edited automaton. The editing lock lives here:
   `edit`, `checkpoint` and undo/redo do nothing while a trace is open. Selecting, creating or adding an
