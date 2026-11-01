@@ -19,16 +19,30 @@ test('the welcome dialog opens on the first visit only; Controls opens on demand
   await expect(controls).toBeVisible();
 });
 
-test('the theme starts light even on a dark system, and toggles light ↔ dark', async ({ page }) => {
+test('the theme follows the system until light or dark is chosen', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await openApp(page, { clear: true });
   const html = page.locator('html');
-  const toggle = page.getByRole('button', { name: /^Theme:/ });
+  const button = page.getByRole('button', { name: /^Theme:/ });
+  const choose = async (name: string): Promise<void> => {
+    await button.click();
+    await page.getByRole('menuitemradio', { name }).click();
+  };
+  await expect(button).toHaveAccessibleName('Theme: system');
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+  await page.emulateMedia({ colorScheme: 'light' });
   await expect(html).toHaveAttribute('data-theme', 'light');
-  await toggle.click();
+
+  await choose('Dark');
   await expect(html).toHaveAttribute('data-theme', 'dark');
   await page.reload();
   await expect(html).toHaveAttribute('data-theme', 'dark');
-  await toggle.click();
+  await expect(button).toHaveAccessibleName('Theme: dark');
+
+  await choose('System');
   await expect(html).toHaveAttribute('data-theme', 'light');
+  await page.reload();
+  await expect(button).toHaveAccessibleName('Theme: system');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(html).toHaveAttribute('data-theme', 'dark');
 });

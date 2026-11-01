@@ -71,6 +71,14 @@ export const ExportIcon = (): React.JSX.Element => (
   </Icon>
 );
 
+/** Half light, half dark: follow the system. */
+export const SystemThemeIcon = (): React.JSX.Element => (
+  <Icon>
+    <circle cx="10" cy="10" r="6.5" />
+    <path className="av-icon-fill" d="M10 3.5a6.5 6.5 0 0 1 0 13z" />
+  </Icon>
+);
+
 export const LightThemeIcon = (): React.JSX.Element => (
   <Icon>
     <circle cx="10" cy="10" r="3.25" />
@@ -81,6 +89,13 @@ export const LightThemeIcon = (): React.JSX.Element => (
 export const DarkThemeIcon = (): React.JSX.Element => (
   <Icon>
     <path d="M15.5 12.4A6.5 6.5 0 0 1 7.6 4.5a6.5 6.5 0 1 0 7.9 7.9z" />
+  </Icon>
+);
+
+/** The chosen item of a menu. */
+export const CheckIcon = (): React.JSX.Element => (
+  <Icon>
+    <path d="m5 10.5 3.25 3.25L15 7" />
   </Icon>
 );
 

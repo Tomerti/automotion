@@ -1,7 +1,7 @@
 import { AutomatonName } from './AutomatonName';
 import { GitHubIcon, HelpIcon, HistoryIcon } from './icons';
 import { IssuesChip } from './IssuesChip';
-import { ThemeToggle } from './ThemeToggle';
+import { ThemeMenu } from './ThemeMenu';
 import { Toolbar } from './Toolbar';
 
 /** The logo (docs/brand/): a start arrow into an accepting state with a self-loop, without its tile. */
@@ -59,7 +59,7 @@ export function TopBar(props: {
       <div className="av-topbar-end">
         <Toolbar />
         <div className="av-tool-group">
-          <ThemeToggle />
+          <ThemeMenu />
           <button
             type="button"
             className="av-icon-button"
