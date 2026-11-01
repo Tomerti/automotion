@@ -2,6 +2,8 @@ import { useStore } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
+import { clipCenter, copyStates, internalTransitions, pasteClip } from '../core/clipboard';
+import type { Clip } from '../core/clipboard';
 import { syncAlphabet } from '../core/edit';
 import { newId } from '../core/id';
 import { emptyAutomaton } from '../core/model';
@@ -13,6 +15,17 @@ export type { Selection, Viewport } from './types';
 
 const HISTORY_CAP = 100;
 const NO_SELECTION: Selection = { states: [], transitions: [] };
+/** World px between a paste and the next one pasted at the same place. */
+export const PASTE_STEP = 40;
+
+/**
+ * What Ctrl+C copied (in memory only, never saved), and where the last paste went: pasting again
+ * at the same place (or again without a place) steps `repeat` times further along.
+ */
+interface Clipboard {
+  clip: Clip;
+  last: { at: { x: number; y: number } | null; repeat: number } | null;
+}
 
 export interface AppState {
   /** Most recently edited first: edits, undo/redo, creating and adding move one to the front. */
@@ -23,6 +36,7 @@ export interface AppState {
   trace: AnyTrace | null;
   stepIndex: number;
   history: Record<string, { past: Automaton[]; future: Automaton[] }>;
+  clipboard: Clipboard | null;
 
   /** A blank automaton named "Untitled" (or "Untitled 2", …); a DFA unless `kind` says NFA. */
   createAutomaton(kind?: AutomatonKind): string;
@@ -40,6 +54,15 @@ export interface AppState {
   undo(): void;
   redo(): void;
   select(sel: Selection): void;
+  /** Copy the selected states of the active automaton (Ctrl+C); false if none is selected. */
+  copySelection(): boolean;
+  /**
+   * Paste what was copied into the active automaton as one undo step, centred on `at` (world
+   * coordinates), or a step down and right of where it was copied from; the pasted states and
+   * the arrows between them become the selection. `promoted`: an ε-arrow turned a DFA into an
+   * NFA. `null` when nothing was copied or a trace is open.
+   */
+  paste(at?: { x: number; y: number }): { promoted: boolean } | null;
   setViewport(id: string, vp: Viewport): void;
   openTrace(trace: AnyTrace): void;
   setStep(i: number): void;
@@ -69,7 +92,14 @@ function initialData(
   initial: Initial,
 ): Pick<
   AppState,
-  'automata' | 'activeId' | 'selection' | 'viewports' | 'trace' | 'stepIndex' | 'history'
+  | 'automata'
+  | 'activeId'
+  | 'selection'
+  | 'viewports'
+  | 'trace'
+  | 'stepIndex'
+  | 'history'
+  | 'clipboard'
 > {
   const automata = initial.automata ?? [];
   return {
@@ -80,6 +110,7 @@ function initialData(
     trace: null,
     stepIndex: 0,
     history: {},
+    clipboard: null,
   };
 }
 
@@ -229,6 +260,46 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           });
         },
 
+        copySelection() {
+          const { activeId, automata: all, selection } = get();
+          const current = all.find((a) => a.id === activeId);
+          const clip = current ? copyStates(current, selection.states) : null;
+          if (!clip) return false;
+          set((s) => {
+            s.clipboard = { clip, last: null };
+          });
+          return true;
+        },
+
+        paste(at) {
+          const { activeId, trace, automata: all, clipboard } = get();
+          const current = all.find((a) => a.id === activeId);
+          if (!clipboard || trace || !current) return null;
+          const { clip, last } = clipboard;
+          const again =
+            last !== null &&
+            (at === undefined
+              ? last.at === null
+              : last.at !== null && Math.hypot(at.x - last.at.x, at.y - last.at.y) < 1);
+          // Without a place, even the first paste steps off the original.
+          const repeat = again ? last.repeat + 1 : at === undefined ? 1 : 0;
+          const center = clipCenter(clip);
+          const offset = {
+            x: (at ? at.x - center.x : 0) + repeat * PASTE_STEP,
+            y: (at ? at.y - center.y : 0) + repeat * PASTE_STEP,
+          };
+          const result = pasteClip(current, clip, offset);
+          get().edit(() => result.automaton);
+          set((s) => {
+            s.clipboard = { clip, last: { at: at ?? null, repeat } };
+            s.selection = {
+              states: result.stateIds,
+              transitions: internalTransitions(result.automaton, result.stateIds),
+            };
+          });
+          return { promoted: result.promoted };
+        },
+
         setViewport(id, vp) {
           set((s) => {
             s.viewports[id] = vp;
@@ -264,6 +335,15 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
 }
 
 export const appStore: StoreApi<AppState> = createAppStore();
+
+/**
+ * The selected states that exist in the active automaton (undo can leave stale ids selected).
+ * Ctrl+C copies these when there are any, and the diagram as a picture otherwise.
+ */
+export function selectedStates(s: AppState): string[] {
+  const active = s.automata.find((a) => a.id === s.activeId);
+  return active ? s.selection.states.filter((id) => active.states.some((q) => q.id === id)) : [];
+}
 
 /**
  * Subscribe to the app store. Selectors must return stable references: select existing state

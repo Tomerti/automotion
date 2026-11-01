@@ -43,6 +43,10 @@ Layers, with dependencies pointing downward only:
     minimization (it adds a dead state) and the NFA → DFA kind switch skip it via `ignoringIncomplete`,
     so only NFA runs get stuck.
   - `edit.ts`: every edit is a pure `Automaton → Automaton` function, shared by the canvas and the table.
+  - `clipboard.ts`: Ctrl+C / Ctrl+V. `copyStates` snapshots states with their arrows out (to each other
+    and to outside states, never into the copy); `pasteClip` adds them with fresh ids, primed labels
+    (`q_1'`), accepting but not start, dropping arrows to states the target lacks. Ctrl+C copies
+    states when `selectedStates()` (store) has any, and the diagram as a picture (Toolbar) otherwise.
   - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
     snapshots (`trace.ts`). Each has a `can*` guard returning a user-facing reason or `null`.
     `subsetConstruction` throws past `MAX_DFA_STATES` (64).
@@ -51,7 +55,8 @@ Layers, with dependencies pointing downward only:
 - `src/layout/layout.ts`: elkjs wrapper (imports only `core/`). It is always loaded with a dynamic
   `import()` (Tidy, subset walkthrough) so elk (~1.5 MB) stays out of the main bundle.
 - `src/store/`: one Zustand store (`store.ts`) holding the automata, active id, selection, per-automaton
-  viewports, the open trace and per-automaton undo/redo (capped at 100). `automata` is kept most
+  viewports, the open trace, per-automaton undo/redo (capped at 100) and the clipboard
+  (`copySelection` / `paste`; in memory only, never saved). `automata` is kept most
   recently edited first: edits, undo/redo, creating and adding move one to the front (switching doesn't),
   and that order is what gets saved, so the app reopens on the last edited automaton. The editing lock lives here:
   `edit`, `checkpoint` and undo/redo do nothing while a trace is open. Selecting, creating or adding an

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { internalTransitions } from '../../core/clipboard';
 import {
   addState,
   commitEdgeSymbols,
@@ -56,7 +57,19 @@ const NO_SELECTION: Selection = { states: [], transitions: [] };
 
 type Gesture = { pointerId: number; start: Point; moved: boolean } & (
   | { kind: 'pan'; viewport: Viewport }
-  | { kind: 'move'; stateId: StateId; offset: Point }
+  /**
+   * `group`: every state that moves along, by its offset from the grabbed state. `collapse`: a
+   * click (no drag) on a state of a multi-selection selects that state alone.
+   */
+  | {
+      kind: 'move';
+      stateId: StateId;
+      offset: Point;
+      group: { id: StateId; dx: number; dy: number }[];
+      collapse: boolean;
+    }
+  /** Ctrl + drag on the canvas: a selection box from `origin`, adding to `base`. */
+  | { kind: 'box'; origin: Point; base: Selection }
   | { kind: 'draw'; from: StateId }
   /** `grab`: the bend at the press minus the bend through the press point, so the edge doesn't jump. */
   | { kind: 'bend'; transitionId: string; from: Point; to: Point; grab: number }
@@ -66,6 +79,14 @@ type Gesture = { pointerId: number; start: Point; moved: boolean } & (
 
 /** The arrow of a new transition, while it is Shift-dragged and named, in world coordinates. */
 export type RubberBand = Pick<PathGeometry, 'd' | 'end' | 'endAngle'> & { loop: boolean };
+
+/** The selection box being dragged, in world coordinates. */
+export interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 /** A dashed alignment guide, in world coordinates. */
 export interface Guide {
@@ -110,6 +131,28 @@ type Pointer = { clientX: number; clientY: number };
 function activeAutomaton(): Automaton | undefined {
   const s = appStore.getState();
   return s.automata.find((a) => a.id === s.activeId);
+}
+
+/** Ctrl, or ⌘ on a Mac: adds to the selection instead of replacing it. */
+const isAdditive = (e: { ctrlKey: boolean; metaKey: boolean }): boolean => e.ctrlKey || e.metaKey;
+
+/** Add state `id` to the selection (with its arrows to selected states) or take it out. */
+export function toggleStateInSelection(a: Automaton, sel: Selection, id: StateId): Selection {
+  if (sel.states.includes(id)) {
+    return {
+      states: sel.states.filter((x) => x !== id),
+      transitions: sel.transitions.filter((tid) => {
+        const t = a.transitions.find((x) => x.id === tid);
+        return t !== undefined && t.from !== id && t.to !== id;
+      }),
+    };
+  }
+  const states = [...sel.states, id];
+  return { states, transitions: union(sel.transitions, internalTransitions(a, states)) };
+}
+
+function union(a: string[], b: string[]): string[] {
+  return [...new Set([...a, ...b])];
 }
 
 function isTyping(target: EventTarget | null): boolean {
@@ -205,6 +248,12 @@ function commitSymbols(
   return null;
 }
 
+/** Paste what was copied into the active automaton, centred on world point `at` if given. */
+function pasteAt(at?: Point): void {
+  const result = appStore.getState().paste(at);
+  if (result?.promoted) toast('Switched to NFA: ε-transitions need an NFA', 'info');
+}
+
 function commitRename(id: StateId, text: string): string | null {
   const a = activeAutomaton();
   const state = a?.states.find((s) => s.id === id);
@@ -293,6 +342,12 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
   const selection = useAppStore((s) => s.selection);
   const [rubberBand, setRubberBand] = useState<RubberBand | null>(null);
   const [guides, setGuides] = useState<Guide[]>([]);
+  const [box, setBox] = useState<Box | null>(null);
+  /** Where the pointer last was over the canvas (client px), for pasting there. */
+  const pointer = useRef<Point | null>(null);
+  /** The current viewport, for the app-wide paste key listener. */
+  const viewportRef = useRef(viewport);
+  viewportRef.current = viewport;
   const [inline, setInline] = useState<InlineEdit | null>(null);
   const [menu, setMenu] = useState<MenuView | null>(null);
 
@@ -395,7 +450,19 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     svgRef.current?.removeAttribute('data-dragging');
     setRubberBand(null);
     setGuides([]);
+    setBox(null);
     return g;
+  };
+
+  /** Delete the selected arrows and states (Delete key, or Delete on a multi-selection). */
+  const deleteSelection = (sel: Selection): void => {
+    edit((a) => {
+      let out = a;
+      for (const t of sel.transitions) out = removeTransition(out, t);
+      for (const st of sel.states) out = removeState(out, st);
+      return out;
+    });
+    appStore.getState().select(NO_SELECTION);
   };
 
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>): void => {
@@ -407,13 +474,23 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     const store = appStore.getState();
 
     if (locked || (!stateEl && !edgeEl)) {
-      gesture.current = { ...base, kind: 'pan', viewport };
+      gesture.current =
+        !locked && isAdditive(e)
+          ? { ...base, kind: 'box', origin: toWorld(e), base: store.selection }
+          : { ...base, kind: 'pan', viewport };
       return;
     }
     if (stateEl) {
       const state = automaton.states.find((s) => s.id === stateEl.getAttribute('data-state-id'));
       if (!state) return;
-      store.select({ states: [state.id], transitions: [] });
+      // Ctrl + click: add the state to the selection or take it out.
+      if (isAdditive(e) && !e.shiftKey) {
+        store.select(toggleStateInSelection(automaton, store.selection, state.id));
+        return;
+      }
+      const sel = store.selection;
+      const inGroup = sel.states.length > 1 && sel.states.includes(state.id);
+      if (!inGroup || e.shiftKey) store.select({ states: [state.id], transitions: [] });
       if (startEl) {
         gesture.current = { ...base, kind: 'start', stateId: state.id, center: state };
       } else if (e.shiftKey) {
@@ -421,7 +498,18 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       } else {
         const p = toWorld(e);
         const offset = { x: p.x - state.x, y: p.y - state.y };
-        gesture.current = { ...base, kind: 'move', stateId: state.id, offset };
+        const members = inGroup
+          ? automaton.states.filter((s) => sel.states.includes(s.id))
+          : [state];
+        const group = members.map((m) => ({ id: m.id, dx: m.x - state.x, dy: m.y - state.y }));
+        gesture.current = {
+          ...base,
+          kind: 'move',
+          stateId: state.id,
+          offset,
+          group,
+          collapse: inGroup,
+        };
       }
       return;
     }
@@ -431,6 +519,17 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     const from = automaton.states.find((s) => s.id === t?.from);
     const to = automaton.states.find((s) => s.id === t?.to);
     if (!t || !from || !to) return;
+    // Ctrl + click: add the arrow to the selection or take it out.
+    if (isAdditive(e) && !e.shiftKey) {
+      const sel = store.selection;
+      store.select({
+        states: sel.states,
+        transitions: sel.transitions.includes(t.id)
+          ? sel.transitions.filter((x) => x !== t.id)
+          : [...sel.transitions, t.id],
+      });
+      return;
+    }
     store.select({ states: [], transitions: [t.id] });
     if (t.from === t.to) {
       gesture.current = { ...base, kind: 'loop', transitionId: t.id, center: from };
@@ -443,6 +542,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>): void => {
+    pointer.current = { x: e.clientX, y: e.clientY };
     const g = gesture.current;
     if (!g || e.pointerId !== g.pointerId) return;
     const dx = e.clientX - g.start.x;
@@ -465,16 +565,34 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
         x: g.viewport.x + dx,
         y: g.viewport.y + dy,
       });
+    } else if (g.kind === 'box') {
+      const x = Math.min(g.origin.x, p.x);
+      const y = Math.min(g.origin.y, p.y);
+      const width = Math.abs(p.x - g.origin.x);
+      const height = Math.abs(p.y - g.origin.y);
+      setBox({ x, y, width, height });
+      const inside = automaton.states
+        .filter((s) => s.x >= x && s.x <= x + width && s.y >= y && s.y <= y + height)
+        .map((s) => s.id);
+      const states = union(g.base.states, inside);
+      store.select({
+        states,
+        transitions: union(g.base.transitions, internalTransitions(automaton, states)),
+      });
     } else if (g.kind === 'move') {
       let pos = { x: p.x - g.offset.x, y: p.y - g.offset.y };
       let lines: Guide[] = [];
-      // Alt held: free placement, no snapping.
+      // Alt held: free placement, no snapping. A group snaps to the states that stay put.
       if (!e.altKey) {
-        const others = automaton.states.filter((s) => s.id !== g.stateId);
+        const others = automaton.states.filter((s) => !g.group.some((m) => m.id === s.id));
         ({ pos, guides: lines } = alignSnap(pos, others, viewport.zoom));
       }
       setGuides(lines);
-      store.edit((a) => moveState(a, g.stateId, pos), { record: false });
+      store.edit(
+        (a) =>
+          g.group.reduce((out, m) => moveState(out, m.id, { x: pos.x + m.dx, y: pos.y + m.dy }), a),
+        { record: false },
+      );
     } else if (g.kind === 'bend') {
       const raw = bendThrough(g.from, g.to, p) + g.grab;
       const bend = Math.abs(raw) * viewport.zoom < STRAIGHT_SNAP ? 0 : raw;
@@ -515,6 +633,8 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     if (g.kind === 'pan') {
       // A click on the background (no drag) clears the selection.
       if (!g.moved) appStore.getState().select(NO_SELECTION);
+    } else if (g.kind === 'move' && !g.moved && g.collapse) {
+      appStore.getState().select({ states: [g.stateId], transitions: [] });
     } else if (g.kind === 'draw' && g.moved) {
       const target = stateAt(toWorld(e));
       if (target) openNewEdge(g.from, target.id);
@@ -556,7 +676,19 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
         run();
       },
     });
-    if (stateId) {
+    const sel = store.selection;
+    if (stateId && sel.states.length > 1 && sel.states.includes(stateId)) {
+      // Right-click inside a multi-selection acts on the whole selection.
+      // Undo can leave ids of states that are gone in the selection: count only those that exist.
+      const n = automaton.states.filter((s) => sel.states.includes(s.id)).length;
+      setMenu({
+        at,
+        items: [
+          item(`Copy ${n} states`, () => store.copySelection()),
+          item(`Delete ${n} states`, () => deleteSelection(appStore.getState().selection)),
+        ],
+      });
+    } else if (stateId) {
       store.select({ states: [stateId], transitions: [] });
       const turned =
         automaton.starts.includes(stateId) &&
@@ -576,6 +708,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
             : []),
           item('Toggle accepting', () => edit((a) => toggleAccepting(a, stateId))),
           item('Rename', () => openRename(stateId)),
+          item('Copy', () => appStore.getState().copySelection()),
           item('Delete', () => {
             edit((a) => removeState(a, stateId));
             appStore.getState().select(NO_SELECTION);
@@ -595,6 +728,9 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
           }),
         ],
       });
+    } else if (!stateId && !edgeEl && store.clipboard) {
+      const p = toWorld(e);
+      setMenu({ at, items: [item('Paste', () => pasteAt(p))] });
     }
   };
 
@@ -621,15 +757,43 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       states.length + transitions.length > 0
     ) {
       e.preventDefault();
-      edit((a) => {
-        let out = a;
-        for (const t of transitions) out = removeTransition(out, t);
-        for (const s of states) out = removeState(out, s);
-        return out;
-      });
-      appStore.getState().select(NO_SELECTION);
+      deleteSelection({ states, transitions });
     }
   };
+
+  const onPointerLeave = (): void => {
+    pointer.current = null;
+  };
+
+  // Copy and paste are listened for app-wide (like undo), so Ctrl+V works right after opening
+  // another automaton from the history bar. Typing, selected text and open dialogs keep the
+  // browser's own copy and paste.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (!isAdditive(e) || e.shiftKey || e.altKey || isTyping(e.target)) return;
+      const key = e.key.toLowerCase();
+      if (key !== 'c' && key !== 'v') return;
+      if (document.querySelector('[aria-modal="true"]')) return;
+      const store = appStore.getState();
+      if (store.trace) return;
+      if (key === 'c') {
+        if (window.getSelection()?.isCollapsed === false) return;
+        if (store.copySelection()) e.preventDefault();
+        return;
+      }
+      if (!store.clipboard) return;
+      e.preventDefault();
+      // At the pointer when it is over the canvas, else a step off where it was copied from.
+      const svg = svgRef.current;
+      const at =
+        pointer.current && svg
+          ? screenToWorld(pointer.current, svg.getBoundingClientRect(), viewportRef.current)
+          : undefined;
+      pasteAt(at);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   // Undo/redo are listened for app-wide.
   useEffect(() => {
@@ -714,12 +878,13 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     selection,
     rubberBand: rubberBand ?? inline?.draft ?? null,
     guides,
+    box,
     inline: inlineView,
     /** Id of the state or transition whose label the inline input covers. */
     editing: inline?.covers,
     menu,
     closeMenu,
-    containerProps: { onKeyDown, onPointerMove, onPointerUp, onPointerCancel },
+    containerProps: { onKeyDown, onPointerMove, onPointerUp, onPointerCancel, onPointerLeave },
     svgProps: { onPointerDown, onDoubleClick, onContextMenu },
   };
 }

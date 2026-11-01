@@ -32,6 +32,8 @@
 ### Arrange
 
 - Drag states to move them; they snap into line with their neighbours (hold Alt to place freely).
+- Ctrl + drag on the empty canvas selects the states in a box, and Ctrl + click adds a state to the selection or takes it out. Dragging a selected state moves the whole selection.
+- **Ctrl+C** copies the selected states and **Ctrl+V** pastes them at the pointer, with the arrows between them and their arrows to the rest of the automaton: build a chain once, then repeat it. Pasted names get a prime (q₁ → q₁′). Pasting works in another automaton too.
 - Drag an arrow to bend it, or a self-loop to turn it around its state.
 - **Tidy** lays the whole automaton out automatically, and **Fit** brings it into view. Pan by dragging the canvas, zoom by scrolling.
 
@@ -55,7 +57,7 @@
 
 - Everything autosaves in your browser. The history sidebar lists every automaton with a thumbnail, most recently edited first; rename, duplicate, export or delete one from its ⋯ menu.
 - Import and export automata as JSON files, one or all at once, and export a diagram as SVG or PNG.
-- Copy the diagram as a picture (**Ctrl+C**, or Copy image in the export menu) and paste it straight into a document or chat. Copied or downloaded, the picture is always the whole automaton at the same size, however far the canvas is zoomed or panned.
+- Copy the diagram as a picture (**Ctrl+C** with no state selected, or Copy image in the export menu) and paste it straight into a document or chat. Copied or downloaded, the picture is always the whole automaton at the same size, however far the canvas is zoomed or panned.
 - Light and dark themes: it follows your system by default, or pick Light or Dark from the theme menu. Press **?** for the controls guide at any time.
 
 ## Development

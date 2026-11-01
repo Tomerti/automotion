@@ -60,6 +60,7 @@ function EditableCanvas(props: {
     selection,
     rubberBand,
     guides,
+    box,
     inline,
     editing,
     menu,
@@ -126,6 +127,16 @@ function EditableCanvas(props: {
             y2={g.y2}
           />
         ))}
+        {box && (
+          <rect
+            className="av-select-box"
+            data-testid="select-box"
+            x={box.x}
+            y={box.y}
+            width={box.width}
+            height={box.height}
+          />
+        )}
         {rubberBand && (
           <g
             className="av-rubber-band"

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { Automaton } from '../../core/model';
 import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
-import { appStore, useAppStore } from '../../store/store';
+import { appStore, selectedStates, useAppStore } from '../../store/store';
 import { startMinimize, startSubset } from '../../store/traceActions';
 import { withEmbeddedFont } from '../canvas/embedFont';
 import { canCopyImage, copyPng, exportableSvg, svgToPng } from '../canvas/exportDiagram';
@@ -91,7 +91,10 @@ function copyDiagram(automaton: Automaton | undefined): void {
   );
 }
 
-/** Ctrl+C (⌘C) copies the diagram, unless there is text to copy or a field has the keyboard. */
+/**
+ * Ctrl+C (⌘C) copies the diagram, unless there is text to copy, a field has the keyboard or
+ * states are selected (then the canvas copies those).
+ */
 function useCopyShortcut(automaton: Automaton | undefined, disabled: boolean): void {
   useEffect(() => {
     if (disabled) return;
@@ -100,6 +103,7 @@ function useCopyShortcut(automaton: Automaton | undefined, disabled: boolean): v
         return;
       if (e.defaultPrevented || isTypingTarget(e.target)) return;
       if (window.getSelection()?.isCollapsed === false) return;
+      if (selectedStates(appStore.getState()).length > 0) return;
       e.preventDefault();
       copyDiagram(automaton);
     };
