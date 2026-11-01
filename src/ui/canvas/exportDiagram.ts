@@ -64,8 +64,14 @@ export function diagramToSvgString(svg: SVGSVGElement, automaton: Automaton): st
   return new XMLSerializer().serializeToString(clone);
 }
 
+/**
+ * Pixels per diagram unit in a PNG. Fixed, so a copied or downloaded picture is the same at
+ * any canvas zoom and display scaling: its size comes from the automaton alone.
+ */
+export const PNG_SCALE = 2;
+
 /** Rasterise standalone SVG text to a PNG (white background). */
-export function svgToPng(svgText: string, scale = 2): Promise<Blob> {
+export function svgToPng(svgText: string, scale = PNG_SCALE): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const box = /viewBox="[^"]*? [^"]*? ([\d.]+) ([\d.]+)"/.exec(svgText);
     const w = Math.ceil(Number(box?.[1] ?? 0) * scale);
@@ -91,6 +97,19 @@ export function svgToPng(svgText: string, scale = 2): Promise<Blob> {
     img.onerror = () => reject(new Error('Could not render the diagram'));
     img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgText)}`;
   });
+}
+
+/** Whether this browser can put an image on the clipboard. */
+export function canCopyImage(): boolean {
+  return typeof ClipboardItem !== 'undefined' && typeof navigator.clipboard?.write === 'function';
+}
+
+/**
+ * Put the PNG of standalone SVG text on the clipboard. The write starts at once with the PNG
+ * still a promise: Safari allows it only within the click or key press that asked for it.
+ */
+export function copyPng(svgText: string): Promise<void> {
+  return navigator.clipboard.write([new ClipboardItem({ 'image/png': svgToPng(svgText) })]);
 }
 
 function currentSvg(): SVGSVGElement | null {

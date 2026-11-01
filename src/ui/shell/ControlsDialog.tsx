@@ -93,6 +93,7 @@ const TABS: Tab[] = [
       },
       { gesture: { keys: ['Ctrl', 'Z'] }, action: 'Undo' },
       { gesture: { keys: ['Ctrl', 'Y'] }, action: 'Redo' },
+      { gesture: { keys: ['Ctrl', 'C'] }, action: 'Copy the diagram as a picture' },
       { gesture: { keys: ['?'] }, action: 'Open this guide' },
     ],
   },
