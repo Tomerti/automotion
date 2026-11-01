@@ -18,7 +18,7 @@
 
 ### Learn
 
-- A first visit offers a two-minute interactive tutorial: build a DFA for an even number of 0s, run it, then change it to accept every word. A checklist in the corner ticks off each step as you do it, shows the next one, checks your automaton as you go and points at what to use. Restart it from the Controls popup (**?**).
+- A first visit offers a short interactive tutorial: build a DFA for an even number of 0s, run it, then change it to accept every word. A card under the DFA/NFA switch shows what you are building (a picture of the finished automaton and example words), one short step at a time with a progress bar; it checks your automaton as you go and points at what to use. Restart it from the Controls popup (**?**).
 
 ### Build
 

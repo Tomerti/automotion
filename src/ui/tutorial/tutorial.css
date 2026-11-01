@@ -1,21 +1,24 @@
 /*
- * The tutorial: a coach card floating in the canvas's top-right corner, like the run and kind
- * pills, holding a checklist that grows as the user goes, and orange corner brackets (the run's
- * colour) around whatever the step uses. Brackets, not a ring: a ring round a state reads as
- * accepting, or as a run's active state.
+ * The tutorial: a coach card floating at the top centre of the canvas, under the DFA/NFA switch
+ * (and in its place while a run hides it), and orange corner brackets (the run's colour) around
+ * whatever the step uses. Brackets, not a ring: a ring round a state reads as accepting, or as a
+ * run's active state. Trace views start below the card (`--av-tutorial-pad`, set by the card).
  */
 
 .av-tutorial {
   position: absolute;
-  top: var(--av-dock-bottom);
-  right: var(--av-dock-bottom);
+  /* Under the kind pill: its top, its height (34 px) and a gap. */
+  top: calc(var(--av-dock-bottom) + 44px);
+  right: 0;
+  left: 0;
   z-index: 12;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
-  width: 300px;
-  max-height: calc(100% - 2 * var(--av-dock-bottom) - 64px);
-  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  /* Centred on the window like the pills, clear of the history bar on both sides. */
+  width: min(540px, calc(100% - 2 * var(--av-history-inset, 0px) - 32px));
+  margin: 0 auto;
+  padding: 10px 14px 12px;
   color: var(--av-ink);
   background: var(--av-surface-raised);
   border: 1px solid var(--av-rule-strong);
@@ -28,7 +31,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: -4px -6px -4px 0;
+  margin: -4px -6px -6px 0;
 }
 .av-tutorial-count {
   font-size: 11px;
@@ -38,83 +41,195 @@
   color: var(--av-ink-muted);
 }
 
-/* The checklist */
+/* The goal of the part: its picture, the goal in a few words, words it accepts and rejects. */
 
-.av-tutorial-steps {
+.av-tutorial-goal {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--av-surface);
+  border: 1px solid var(--av-rule);
+  border-radius: 10px;
+}
+.av-tutorial-goal-body {
   display: grid;
-  align-content: start;
-  gap: 7px;
+  gap: 5px;
+  min-width: 0;
+}
+.av-tutorial-goal-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.av-tutorial-goal-text b {
+  font-weight: 600;
+}
+.av-tutorial-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
+  font-size: 14px;
   list-style: none;
 }
-.av-tutorial-part {
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--av-ink-muted);
+.av-tutorial-examples li {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
 }
-.av-tutorial-step {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  gap: 9px;
-  align-items: start;
-  font-size: 13px;
-  line-height: 18px;
+.av-tutorial-mark {
+  font-weight: 700;
 }
-.av-tutorial-step[data-done='true'] .av-tutorial-step-text {
-  color: var(--av-ink-muted);
+.av-tutorial-examples [data-accepted='true'] .av-tutorial-mark {
+  color: var(--av-green);
 }
-.av-tutorial-part-done {
-  font-weight: 600;
+.av-tutorial-examples [data-accepted='false'] .av-tutorial-mark {
+  color: var(--av-red);
 }
-/* The step to do now, set off from the ticked lines above it. */
-.av-tutorial-now {
-  padding-top: 9px;
-  border-top: 1px solid var(--av-rule);
+.av-tutorial-goal-picture {
+  flex: none;
+  width: 250px;
+  height: 122px;
 }
-.av-tutorial-now:first-child,
-.av-tutorial-part + .av-tutorial-now {
-  padding-top: 0;
-  border-top: 0;
+/* Part 2's goal comes in with an orange flash, so the new part is hard to miss. */
+.av-tutorial-goal[data-part='2'] {
+  animation: av-tutorial-new-part 900ms ease-out;
 }
-/* The closing card has no box. */
-.av-tutorial-now:not(:has(.av-tutorial-box)) {
-  grid-template-columns: minmax(0, 1fr);
+@keyframes av-tutorial-new-part {
+  from {
+    border-color: var(--av-run);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--av-run) 30%, transparent);
+  }
 }
 
-.av-tutorial-box {
+/* The hand-over between the parts: part 1 done, in green, and what part 2 is. */
+.av-tutorial-part-done {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--av-green) 9%, var(--av-surface-raised));
+  border: 1.5px solid var(--av-green);
+  border-radius: 10px;
+  animation: av-pop-in 220ms ease-out;
+}
+.av-tutorial-part-done p {
+  margin: 0;
+}
+.av-tutorial-part-done-title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--av-green);
+}
+.av-tutorial-part-done-mark {
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
   color: var(--av-surface-raised);
-  border: 1.5px solid var(--av-ink-muted);
-  border-radius: 5px;
-}
-.av-tutorial-box[data-done='true'] {
   background: var(--av-green);
-  border-color: var(--av-green);
-  animation: av-tutorial-tick 260ms ease-out;
+  border-radius: 999px;
+}
+.av-tutorial-part-done-text {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.av-tutorial-part-done .av-tutorial-next {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--av-ink-muted);
+}
+.av-tutorial-next b {
+  font-weight: 600;
+  color: var(--av-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .av-tutorial-goal[data-part='2'],
+  .av-tutorial-part-done {
+    animation: none;
+  }
+}
+.av-goal-edge {
+  fill: none;
+  stroke: var(--av-edge-stroke, #3a4356);
+  stroke-width: 1.6;
+}
+.av-tutorial-goal-picture .av-edge-head {
+  fill: var(--av-edge-stroke, #3a4356);
+}
+.av-goal-state,
+.av-goal-accept {
+  fill: var(--av-state-fill, #ffffff);
+  stroke: var(--av-state-stroke, #1c2333);
+  stroke-width: 1.6;
+}
+.av-goal-accept {
+  fill: none;
+}
+.av-goal-label,
+.av-goal-symbols {
+  font-family: var(--av-font-ui);
+  font-size: 17px;
+  font-weight: 500;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: var(--av-ink);
+}
+/* State names a little smaller than the symbols, so "even" stays inside its accepting ring. */
+.av-goal-label {
+  font-size: 14px;
+}
+.av-goal-symbols {
+  font-family: var(--av-font-symbol);
+  font-size: 17px;
 }
 
-.av-tutorial-body {
+/* Progress: one segment per step, a wider gap between the two parts. */
+
+.av-tutorial-progress {
+  display: flex;
+  gap: 3px;
+}
+.av-tutorial-progress span {
+  flex: 1;
+  height: 4px;
+  background: var(--av-rule);
+  border-radius: 2px;
+  transition: background-color 200ms;
+}
+.av-tutorial-progress span[data-part-start] {
+  margin-left: 6px;
+}
+.av-tutorial-progress span[data-done='true'] {
+  background: var(--av-green);
+}
+
+/* The step to do now: what to do, then why in a few words. */
+
+.av-tutorial-now {
   display: grid;
-  gap: 8px;
+  gap: 3px;
   justify-items: start;
-  animation: av-tutorial-step 220ms ease-out;
 }
 .av-tutorial-text {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .av-tutorial-now .av-tutorial-text {
-  margin-top: -1px;
+  animation: av-tutorial-step 220ms ease-out;
+}
+.av-tutorial-why {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--av-ink-muted);
 }
 /*
  * Words and symbols to type, in the symbol font (Geist's 0 reads as O, a slashed one as ∅). Flat,
@@ -135,6 +250,24 @@
 .av-tutorial kbd {
   margin: 0 1px;
   vertical-align: 1px;
+}
+
+/* A key cap or state and the punctuation after it, kept on one line. */
+.av-tutorial-nowrap {
+  white-space: nowrap;
+}
+
+/* A state named in the text: its label in a small state, as it looks on the canvas. */
+.av-tutorial-state {
+  display: inline-block;
+  padding: 0 6px;
+  font-size: 0.93em;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--av-state-fill, transparent);
+  border: 1.5px solid var(--av-state-stroke, currentColor);
+  border-radius: 999px;
 }
 
 /* Something to do before the step (leave a run, select the state): not a mistake, so plain ink. */
@@ -239,15 +372,6 @@
   }
 }
 
-@keyframes av-tutorial-tick {
-  from {
-    transform: scale(0.6);
-  }
-  60% {
-    transform: scale(1.15);
-  }
-}
-
 @keyframes av-tutorial-breathe {
   50% {
     transform: translate(calc(var(--dx) * 3px), calc(var(--dy) * 3px));
@@ -256,11 +380,11 @@
 
 @media (max-width: 760px) {
   .av-tutorial {
-    top: 56px;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-height: 45%;
+    width: calc(100% - 24px);
+  }
+  /* Room for the step: the goal and its words say what the picture would. */
+  .av-tutorial-goal-picture {
+    display: none;
   }
 }
 

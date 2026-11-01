@@ -91,11 +91,18 @@ Layers, with dependencies pointing downward only:
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
   - `tutorial/`: the interactive tutorial. `steps.ts` is a pure step table (each step's `done`,
     `hint`, pointer `target`) over the tutorial automaton and the open trace, with `advance()`
-    (moves on, falls back within a part, latches runs at their verdict). Its texts mark keys as
-    `[Shift]` (rendered as `<kbd>`) and words/symbols to type in backticks (`<code>`, in the
-    dotted-zero `--av-font-symbol`, since Geist's 0 reads as O). `tutorialStore.ts`
-    subscribes to `appStore` while a tutorial runs. `TutorialCard` floats in the canvas corner as
-    a checklist (the current part's finished steps ticked, the step to do last); its X asks, then
+    (moves on, falls back within a part, latches runs at their verdict), and `PART_GOALS`: what
+    each part builds (a few words, example words, the finished automaton), shown at the top of
+    the card with `GoalPicture.tsx` (its own SVG, no `Diagram` test ids). Each step is one short
+    `instruction` plus an optional few-word `why` (lengths capped by a test); the states are named
+    `even` / `odd`, and `any` at the end. Its texts mark keys as
+    `[Shift]` (rendered as `<kbd>`), states as `«even»` (a small state), and words/symbols to
+    type in backticks (`<code>`, in the dotted-zero `--av-font-symbol`, since Geist's 0 reads as
+    O); prose says "zeros", not "`0`s". `tutorialStore.ts`
+    subscribes to `appStore` while a tutorial runs. `TutorialCard` floats at the top centre under the
+    DFA/NFA switch: the part's goal (a green "Part 1 complete!" panel at the hand-over), a
+    progress bar and the one step to do now. It sets
+    `--av-tutorial-pad` on the canvas area so trace views start below it; its X asks, then
     `quitTutorial()` removes the tutorial automaton (Finish keeps it). `TutorialPointer` frames
     the target with orange corner brackets (portal, follows it each frame; not a ring, which would
     read as accepting), and `WelcomeCard` is the first-visit dialog (key `automotion:seen-help`, set when it is answered,
