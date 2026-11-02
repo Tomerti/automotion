@@ -33,16 +33,52 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
+        env:
+          # e2e/latex-samples.spec.ts exports LaTeX through the app into this folder.
+          LATEX_SAMPLES_DIR: latex-samples
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+      - uses: actions/upload-artifact@v7
+        with:
+          name: latex-samples
+          path: latex-samples/
+          if-no-files-found: error
+          retention-days: 7
+
+  # Compile the LaTeX the app exported in e2e with a real TeX engine.
+  latex:
+    needs: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: latex-samples
+          path: latex-samples
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-pictures
+      - name: Compile every exported .tex
+        working-directory: latex-samples
+        run: |
+          for f in *.tex; do
+            echo "::group::$f"
+            pdflatex -interaction=nonstopmode -halt-on-error "$f"
+            echo "::endgroup::"
+          done
+      - uses: actions/upload-artifact@v7
+        with:
+          name: latex-pdfs
+          path: latex-samples/*.pdf
+          retention-days: 7
 
   # Publish to GitHub Pages only from a push to master, and only once every check has passed.
   deploy:
-    needs: [check, e2e]
+    needs: [check, e2e, latex]
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
