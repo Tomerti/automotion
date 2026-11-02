@@ -46,6 +46,10 @@ export const diagramStyles = `
 .av-state[data-active="true"] .av-state-label { fill: var(--av-active-text, #1c2333); }
 .av-state[data-error="true"] .av-state-body { stroke: var(--av-error, #c42f36); stroke-width: 3; }
 .av-state[data-error="true"] .av-state-ring { stroke: var(--av-error, #c42f36); }
+.av-state-issue { fill-opacity: 0.12; stroke-width: 2.5; stroke-dasharray: 6 4; pointer-events: none; animation: av-issue-pulse 0.9s ease-in-out infinite alternate; }
+.av-state[data-issue="error"] .av-state-issue { fill: var(--av-error, #c42f36); stroke: var(--av-error, #c42f36); }
+.av-state[data-issue="warning"] .av-state-issue { fill: var(--av-warn, #8a5a00); stroke: var(--av-warn, #8a5a00); }
+@keyframes av-issue-pulse { from { opacity: 1; } to { opacity: 0.4; } }
 
 .av-edge[data-selected="true"] .av-edge-path { stroke: var(--av-selected, #d9480f); stroke-width: 2.5; }
 .av-edge[data-selected="true"] .av-edge-head { fill: var(--av-selected, #d9480f); }
@@ -57,5 +61,6 @@ export const diagramStyles = `
 
 @media (prefers-reduced-motion: reduce) {
   .av-state, .av-state-body, .av-state-ring, .av-state-label, .av-edge-hit, .av-edge-path, .av-edge-head { transition: none; }
+  .av-state-issue { animation: none; }
 }
 `;

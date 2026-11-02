@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { Issue } from '../../core/validate';
 import { validate } from '../../core/validate';
 import { appStore, useAppStore } from '../../store/store';
+import { clearIssueMarks, showIssueMarks } from '../canvas/issueMarks';
 import { WarningIcon } from './icons';
 import { IssuesList } from './IssuesList';
 import { usePopover } from './usePopover';
@@ -10,6 +11,12 @@ function IssuesPopover({ issues }: { issues: Issue[] }): React.JSX.Element {
   const { open, setOpen, rootRef, triggerRef } = usePopover();
   const n = issues.length;
   const hasError = issues.some((i) => i.severity === 'error');
+  // While open, the canvas rings the states the issues are about.
+  useEffect(() => {
+    if (!open) return;
+    showIssueMarks(issues);
+    return clearIssueMarks;
+  }, [open, issues]);
   return (
     <div className="av-issues-anchor" ref={rootRef}>
       <button

@@ -26,6 +26,7 @@ function renderSvg(): SVGSVGElement {
         selectedStates: ['q0'],
         selectedTransitions: ['q0->q1'],
         editing: 'q1',
+        issueMarks: { q1: 'error' },
       },
       children: [
         createElement('line', { key: 'band', 'data-testid': 'rubber-band' }),
@@ -85,6 +86,8 @@ describe('diagramToSvgString', () => {
     expect(text).not.toMatch(/<g [^>]*data-editing=/);
     expect(text).not.toContain('class="av-state-hit"');
     expect(text).not.toContain('class="av-edge-hit"');
+    expect(text).not.toContain('class="av-state-issue"');
+    expect(text).not.toMatch(/<g [^>]*data-issue=/);
     // The stylesheet legitimately mentions the selector; no element may carry it.
     expect(text).not.toMatch(/<g [^>]*data-selected="true"/);
     expect(text).toContain('data-selected="false"');

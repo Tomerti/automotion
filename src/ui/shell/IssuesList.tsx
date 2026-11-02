@@ -1,17 +1,10 @@
-import { parseLabel } from '../../core/label';
 import type { Issue } from '../../core/validate';
 import type { Selection } from '../../store/store';
+import { LabelText } from '../LabelText';
 
 interface Props {
   issues: Issue[];
   onSelect: (sel: Selection) => void;
-}
-
-/** Issue text with state labels' subscripts rendered (`q_1 is unreachable` reads q₁). */
-function Message({ text }: { text: string }): React.JSX.Element {
-  return (
-    <>{parseLabel(text).map((seg, i) => (seg.sub ? <sub key={i}>{seg.text}</sub> : seg.text))}</>
-  );
 }
 
 /** Validation issues, errors first; clicking one selects the state or transition it is about. */
@@ -35,7 +28,9 @@ export function IssuesList({ issues, onSelect }: Props): React.JSX.Element {
               })
             }
           >
-            <Message text={issue.message} />
+            {/* One element: the row is a flex box, where loose text and <sub>s each became
+                an item, spaced apart and wrapped on their own. */}
+            <LabelText text={issue.message} />
           </button>
         </li>
       ))}

@@ -116,19 +116,31 @@ describe('validate', () => {
     ]);
   });
 
-  it('an incomplete DFA is one error naming the first missing transition', () => {
+  it('an incomplete DFA is one error per incomplete state, naming its missing symbols', () => {
     const a = fixture({
       kind: 'DFA',
-      alphabet: 'ab',
+      alphabet: 'abc',
       states: ['q0', 'q1', 'q2'],
       start: 'q0',
-      edges: [['q0', 'a', 'q1']],
+      edges: [
+        ['q0', 'a', 'q1'],
+        ['q1', 'a', 'q1'],
+        ['q1', 'b', 'q1'],
+        ['q1', 'c', 'q1'],
+      ],
     });
     expect(validate(a).filter((i) => i.code === 'incomplete-dfa')).toEqual([
       {
         severity: 'error',
         code: 'incomplete-dfa',
-        message: "DFA is incomplete: no 'b' transition from q0 (and 4 more)",
+        message: "q0 needs transitions on 'b' and 'c'",
+        stateId: 'q0',
+      },
+      {
+        severity: 'error',
+        code: 'incomplete-dfa',
+        message: "q2 needs transitions on 'a', 'b' and 'c'",
+        stateId: 'q2',
       },
     ]);
     const oneMissing = fixture({
@@ -138,9 +150,7 @@ describe('validate', () => {
       start: 'q0',
       edges: [['q0', 'a', 'q1']],
     });
-    expect(validate(oneMissing).map((i) => i.message)).toContain(
-      "DFA is incomplete: no 'a' transition from q1",
-    );
+    expect(validate(oneMissing).map((i) => i.message)).toContain("q1 needs a transition on 'a'");
     expect(hasErrors(ignoringIncomplete(validate(oneMissing)))).toBe(false);
     const noTransitions = fixture({ kind: 'DFA', alphabet: '', states: ['q0', 'q1'], start: 'q0' });
     expect(validate(noTransitions)).toContainEqual({

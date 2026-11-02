@@ -7,7 +7,7 @@ const LOOP_ALLOWANCE = 28; // room for self-loops and edge labels around a state
 
 /** Elements that exist only for pointer interaction. */
 const INTERACTION_ONLY =
-  '[data-testid="rubber-band"], [data-testid="snap-guide"], [data-testid="gap-guide"], .av-state-hit, .av-edge-hit';
+  '[data-testid="rubber-band"], [data-testid="snap-guide"], [data-testid="gap-guide"], .av-state-hit, .av-edge-hit, .av-state-issue';
 
 /**
  * Replace each var() with its light-theme value: a hidden probe carrying `.av-theme-light`
@@ -57,6 +57,7 @@ export function diagramToSvgString(svg: SVGSVGElement, automaton: Automaton): st
     el.setAttribute('data-selected', 'false');
   });
   clone.querySelectorAll('[data-editing]').forEach((el) => el.removeAttribute('data-editing'));
+  clone.querySelectorAll('[data-issue]').forEach((el) => el.removeAttribute('data-issue'));
   clone.querySelectorAll('style').forEach((style) => {
     style.textContent = resolveCustomProperties(style.textContent ?? '');
   });
