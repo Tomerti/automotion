@@ -1,12 +1,12 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import type { Automaton } from '../../core/model';
+import type { Automaton, Transition } from '../../core/model';
 import { EPSILON } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
 import { arbNfa } from '../../core/testing/arbitraries';
 import { parseLatex } from '../../persistence/latexImport';
 import { latexDocument, latexPicture, latexSnippet } from './exportLatex';
-import { START_ANGLE, autoLoopAngle } from './geometry';
+import { START_ANGLE, autoBend, autoLoopAngle, labelSideOf } from './geometry';
 
 const parity: Automaton = {
   ...fixture({
@@ -68,6 +68,34 @@ describe('latexPicture', () => {
     const apex = 0.75 * 0.3915 * chord * Math.sin(Math.PI / 6) * 50; // bend left=30
     a.transitions = a.transitions.map((t) => ({ ...t, bend: -apex }));
     expect(latexPicture(a)).toContain('(p) edge [bend right=30, swap] node {$a,b$} (q);');
+  });
+
+  it('writes the label side the arrow has: swap puts it on the right of from→to', () => {
+    const chord = 4; // cm
+    const apex = 0.75 * 0.3915 * chord * Math.sin(Math.PI / 6) * 50; // bend left=30
+    const pq = (t: Partial<Transition>): Automaton => {
+      const a = fixture({
+        kind: 'NFA',
+        alphabet: 'a',
+        states: ['p', 'q'],
+        edges: [['p', 'a', 'q']],
+      });
+      a.states = [
+        { id: 'p', label: 'p', x: 0, y: 0 },
+        { id: 'q', label: 'q', x: 200, y: 0 },
+      ];
+      a.transitions = a.transitions.map((x) => ({ ...x, ...t }));
+      return a;
+    };
+    expect(latexPicture(pq({ labelSide: 'right' }))).toContain('(p) edge [swap] node {$a$} (q);');
+    expect(latexPicture(pq({ labelSide: 'left' }))).toContain('(p) edge node {$a$} (q);');
+    // Inside the curve: the side `auto` doesn't pick for that bend.
+    expect(latexPicture(pq({ bend: apex, labelSide: 'right' }))).toContain(
+      '(p) edge [bend left=30, swap] node {$a$} (q);',
+    );
+    expect(latexPicture(pq({ bend: -apex, labelSide: 'left' }))).toContain(
+      '(p) edge [bend right=30] node {$a$} (q);',
+    );
   });
 
   it('keeps a straightened pair of opposite edges straight', () => {
@@ -164,9 +192,13 @@ const arbDrawn: fc.Arbitrary<Automaton> = arbNfa({ maxStates: 5, epsilon: true }
         minLength: a.transitions.length,
         maxLength: a.transitions.length,
       }),
+      sides: fc.array(fc.option(fc.constantFrom('left' as const, 'right' as const)), {
+        minLength: a.transitions.length,
+        maxLength: a.transitions.length,
+      }),
       extraStart: fc.boolean(),
     })
-    .map(({ xy, startAngles, bends, loops, extraStart }) => {
+    .map(({ xy, startAngles, bends, loops, sides, extraStart }) => {
       // Keep states apart so none sits on another.
       const states = a.states.map((s, i) => {
         const [x, y] = xy[i] as [number, number];
@@ -185,7 +217,12 @@ const arbDrawn: fc.Arbitrary<Automaton> = arbNfa({ maxStates: 5, epsilon: true }
           return deg === null || deg === undefined ? t : { ...t, loopAngle: (deg * Math.PI) / 180 };
         }
         const bend = bends[i];
-        return bend === null || bend === undefined ? t : { ...t, bend };
+        const side = sides[i];
+        return {
+          ...t,
+          ...(bend === null || bend === undefined ? {} : { bend }),
+          ...(side === null || side === undefined ? {} : { labelSide: side }),
+        };
       });
       const starts = extraStart && states.length > 1 ? ['q0', 'q1'] : a.starts;
       return { ...a, name: 'Random', kind: 'NFA' as const, states, transitions, starts };
@@ -247,6 +284,14 @@ describe('round trip', () => {
             const chord = p && q ? Math.hypot(q.x - p.x, q.y - p.y) : 0;
             const tolerance = 0.75 * 0.3915 * chord * ((0.05 * Math.PI) / 180 + 0.005) + 0.5;
             expect(Math.abs((bt.bend ?? 0) - t.bend)).toBeLessThanOrEqual(tolerance);
+          }
+          if (t.from !== t.to) {
+            // The label is drawn on the same side of the arrow (self-loops keep theirs outside).
+            const reverse = (x: Automaton, u: Transition) =>
+              x.transitions.some((r) => r.from === u.to && r.to === u.from);
+            const sideOf = (x: Automaton, u: Transition) =>
+              labelSideOf(u.bend ?? autoBend(reverse(x, u)), u.labelSide);
+            expect(sideOf(back, bt)).toBe(sideOf(a, t));
           }
         }
         expect(back.transitions.some((t) => t.symbols.includes(EPSILON))).toBe(

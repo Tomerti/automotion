@@ -77,7 +77,8 @@ Layers, with dependencies pointing downward only:
   2026-10-29: files tagged `"automaton-vis"` still import (`LEGACY_FORMAT`), and `migrateLegacyKeys()`
   (first thing in `main.tsx`) moves old `automaton-vis:*` localStorage keys to `automotion:*`.
   LaTeX: `latexImport.ts` (`parseLatex`) reads every `tikzpicture` of a `.tex` file as an automaton,
-  leniently (positioning, `edge`/`to`/`--`, loops, bends, `initial` or a drawn start arrow) and
+  leniently (positioning, `edge`/`to`/`--`, loops, bends, label sides from `swap`/`'`/`auto=right`
+  or `node[below]`, `initial` or a drawn start arrow) and
   validates it with the zod schema; `latexText.ts` holds the shared conventions (`PX_PER_CM` = 50,
   label/symbol escaping both ways, the `% AutoMotion NFA: name` comment that round-trips kind and
   name). The writer is `ui/canvas/exportLatex.ts` (it needs the canvas geometry: automatic bends and

@@ -6,7 +6,7 @@ import {
   metaComment,
   symbolsToTex,
 } from '../../persistence/latexText';
-import { START_ANGLE, autoLoopAngle } from './geometry';
+import { START_ANGLE, autoBend, autoLoopAngle, labelSideOf } from './geometry';
 
 /** The TikZ libraries the picture uses. */
 export const TIKZ_LIBRARIES = 'automata, arrows.meta';
@@ -64,18 +64,22 @@ function nodeNames(states: readonly State[]): Map<string, string> {
 /** The edge options for a transition between two different states. */
 function bendOptions(a: Automaton, t: Transition, from: State, to: State): string[] {
   const hasReverse = a.transitions.some((r) => r.from === t.to && r.to === t.from);
+  // `auto` puts the label on the left of from→to; `swap` on the right.
+  const swap = labelSideOf(t.bend ?? autoBend(hasReverse), t.labelSide) === 'right' ? ['swap'] : [];
+  return [...bendOnly(t, from, to, hasReverse), ...swap];
+}
+
+function bendOnly(t: Transition, from: State, to: State, hasReverse: boolean): string[] {
   if (t.bend === undefined) return hasReverse ? ['bend left'] : [];
   const chord = Math.hypot(to.x - from.x, to.y - from.y) || 1;
   const ratio = Math.abs(t.bend) / (BEND_APEX * chord);
   const dir = t.bend > 0 ? 'bend left' : 'bend right';
-  // A bend to the right curves away from `auto`'s side: swap the label onto the bulge.
-  const swap = t.bend > 0 ? [] : ['swap'];
-  if (ratio > 1) return [`${dir}=90`, `looseness=${num(ratio)}`, ...swap];
+  if (ratio > 1) return [`${dir}=90`, `looseness=${num(ratio)}`];
   // Tenths of a degree: on a long edge a whole degree moves the curve by several px.
   const degrees = Math.round((Math.asin(ratio) * 1800) / Math.PI) / 10;
   // Straight: say so when the pair would otherwise read back as the automatic curve.
   if (degrees === 0) return hasReverse ? ['bend left=0'] : [];
-  return [`${dir}=${degrees}`, ...swap];
+  return [`${dir}=${degrees}`];
 }
 
 function loopOptions(a: Automaton, t: Transition, state: State): string[] {

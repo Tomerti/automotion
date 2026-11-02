@@ -132,6 +132,37 @@ describe('parseLatex', () => {
     expect(back?.bend).toBeCloseTo(0.75 * 0.3915 * 6 * Math.sin((40 * Math.PI) / 180) * 50);
   });
 
+  it('reads which side of the arrow its label is on', () => {
+    /** The label side of p → q, drawn by `path` with p at (0,0) and q at `q`. */
+    const side = (path: string, q = '4,0', picture = '->, auto') => {
+      const a = one(String.raw`
+        \begin{tikzpicture}[${picture}]
+          \node[state] (p) at (0,0) {$p$};
+          \node[state] (q) at (${q}) {$q$};
+          ${path};
+        \end{tikzpicture}`);
+      expect(a.transitions).toHaveLength(1);
+      return a.transitions[0]?.labelSide;
+    };
+    // `auto` is the left of p → q, which is where AutoMotion puts a straight arrow's label.
+    expect(side(String.raw`\path (p) edge node {$a$} (q)`)).toBeUndefined();
+    expect(side(String.raw`\path (p) edge [swap] node {$a$} (q)`)).toBe('right');
+    expect(side(String.raw`\path (p) edge node[swap] {$a$} (q)`)).toBe('right');
+    expect(side(String.raw`\path (p) edge node['] {$a$} (q)`)).toBe('right');
+    expect(side(String.raw`\draw (p) to[swap] node {$a$} (q)`)).toBe('right');
+    expect(side(String.raw`\path (p) edge node {$a$} (q)`, '4,0', '->, auto=right')).toBe('right');
+    // A right bend's automatic label is outside, on its right: `auto` alone puts it inside.
+    expect(side(String.raw`\path (p) edge [bend right] node {$a$} (q)`)).toBe('left');
+    expect(side(String.raw`\path (p) edge [bend right, swap] node {$a$} (q)`)).toBeUndefined();
+    // A label placed by hand: the side it is put on, whatever `auto` says.
+    expect(side(String.raw`\draw (p) -- node[above] {$a$} (q)`)).toBeUndefined();
+    expect(side(String.raw`\draw (p) -- node[below] {$a$} (q)`)).toBe('right');
+    expect(side(String.raw`\draw (p) -- node[below=2pt] {$a$} (q)`)).toBe('right');
+    expect(side(String.raw`\draw (p) -- node[right] {$a$} (q)`, '0,4')).toBe('right');
+    expect(side(String.raw`\draw (p) -- node[left] {$a$} (q)`, '0,4')).toBeUndefined();
+    expect(side(String.raw`\draw (p) -- node[below] {$a$} (q)`, '-4,0')).toBeUndefined();
+  });
+
   it('reads a start arrow drawn by hand, and a label after the target', () => {
     const a = one(String.raw`
       \begin{tikzpicture}

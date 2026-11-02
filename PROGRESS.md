@@ -31,6 +31,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Copy LaTeX (toolbar export menu) puts just the `tikzpicture` on the clipboard, after a comment naming the libraries it needs
 - [x] Import… takes `.tex` files: every `tikzpicture` with states becomes an automaton. Reads hand-written TikZ too: nodes `at (x,y)`, by `right=of q0` / `right of=q0` or inside a path; `edge`, `to` and `--`; `loop above`, `bend left=45`, `in`/`out`; `initial` or an arrow drawn into a state; ε as `\varepsilon` / `\epsilon`; symbols comma-separated
 - [x] A `% AutoMotion NFA: name` comment before each exported picture keeps the name and kind on the way back; otherwise the name comes from the file and the kind from the transitions (a DFA when deterministic)
+- [x] An arrow's label side (`labelSide`) survives LaTeX both ways: export writes `swap` when the label is on the right of from→to (`auto` puts it on the left); import reads `swap` / `'` on the edge or its label, `auto=right`, and labels placed by hand (`node[below]`), keeping `labelSide` only where it differs from the automatic side
 
 ### Equal spacing
 

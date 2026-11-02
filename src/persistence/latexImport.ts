@@ -1,7 +1,7 @@
 import { syncAlphabet } from '../core/edit';
 import { newId } from '../core/id';
 import { EPSILON } from '../core/model';
-import type { Automaton, AutomatonKind, State, Sym, Transition } from '../core/model';
+import type { Automaton, AutomatonKind, LabelSide, State, Sym, Transition } from '../core/model';
 import type { ParseResult } from './fileFormat';
 import {
   BEND_APEX,
@@ -212,7 +212,11 @@ interface Edge {
   from: string;
   to: string;
   opts: Map<string, string>;
+  /** The options of its label node(s): `node[swap] {a}`, `node[below] {a}`. */
+  labelOpts: Map<string, string>;
   symbols: Sym[];
+  /** Drawn to → from (`<-`): the label's left and right are the other way round. */
+  reversed: boolean;
 }
 
 interface PictureContext {
@@ -224,6 +228,8 @@ interface PictureContext {
   onGrid: boolean;
   scale: number;
   initialWhere: string;
+  /** `auto=right` on the picture: labels go on the right of each arrow, not the left. */
+  autoRight: boolean;
   /** Only nodes styled `state` are states, if any node is; else every named node is. */
   stateStyled: boolean;
 }
@@ -365,7 +371,12 @@ function walkPath(ctx: PictureContext, tokens: readonly Token[]): void {
   // Cast, not annotated: TypeScript would narrow it to null for good.
   let current = null as Place | null;
   let pathOpts: string[] = [];
-  let pending: { kind: 'edge' | 'to'; opts: string[]; labels: string[] } | null = null;
+  let pending: {
+    kind: 'edge' | 'to';
+    opts: string[];
+    labels: string[];
+    labelOpts: string[];
+  } | null = null;
   /** The last transition drawn, for a label placed after its target. */
   const seg: { last: Edge | null } = { last: null };
 
@@ -377,7 +388,8 @@ function walkPath(ctx: PictureContext, tokens: readonly Token[]): void {
       const [a, b] = dir < 0 ? [to.state, from.state] : [from.state, to.state];
       const symbols: Sym[] = [];
       for (const label of p.labels) symbols.push(...texToSymbols(label));
-      seg.last = { from: a, to: b, opts, symbols };
+      const labelOpts = parseOptions(p.labelOpts);
+      seg.last = { from: a, to: b, opts, labelOpts, symbols, reversed: dir < 0 };
       ctx.edges.push(seg.last);
       return;
     }
@@ -402,20 +414,23 @@ function walkPath(ctx: PictureContext, tokens: readonly Token[]): void {
       if (pending) pending.opts.push(tok.text);
       else pathOpts = [...pathOpts, tok.text];
     } else if (tok.t === 'word' && (tok.text === 'edge' || tok.text === 'to')) {
-      pending = { kind: tok.text, opts: [], labels: [] };
+      pending = { kind: tok.text, opts: [], labels: [], labelOpts: [] };
     } else if (tok.t === 'line') {
-      pending = { kind: 'to', opts: [], labels: [] };
+      pending = { kind: 'to', opts: [], labels: [], labelOpts: [] };
     } else if (tok.t === 'dots') {
       // `.. controls (a) and (b) ..`: skip to the second `..`; the next coordinate is the target.
       let j = i + 1;
       while (j < tokens.length && tokens[j]?.t !== 'dots') j++;
       i = j;
-      pending = { kind: 'to', opts: [], labels: [] };
+      pending = { kind: 'to', opts: [], labels: [], labelOpts: [] };
     } else if (tok.t === 'word' && (tok.text === 'node' || tok.text === 'coordinate')) {
       const node = readNode(tokens, i + 1, tok.text === 'node');
       i = node.next - 1;
       if (pending) {
-        if (node.label !== undefined) pending.labels.push(node.label);
+        if (node.label !== undefined) {
+          pending.labels.push(node.label);
+          pending.labelOpts.push(...node.opts);
+        }
         continue;
       }
       const opts = parseOptions(node.opts);
@@ -424,6 +439,7 @@ function walkPath(ctx: PictureContext, tokens: readonly Token[]): void {
         const along = [...opts.keys()].some((k) => POSITION_ON_PATH.test(k));
         if (seg.last && node.label !== undefined && along) {
           seg.last.symbols.push(...texToSymbols(node.label));
+          for (const [k, v] of opts) seg.last.labelOpts.set(k, v);
         }
         continue;
       }
@@ -499,6 +515,38 @@ function statements(body: string): { command: string; rest: string }[] {
 }
 
 /** Bend (world px, positive to the left on screen) of an edge's options, or undefined for automatic. */
+const SWAP = (opts: Map<string, string>): boolean => opts.has('swap') || opts.has("'");
+
+/**
+ * The side of from → to its label is drawn on. A label placed by hand (`node[below]`) is on the
+ * side it is placed; otherwise `auto` puts it on the left (`auto=right`: the right), and `swap`
+ * (or `'`) on the edge or its label moves it across.
+ */
+function labelSideOfEdge(ctx: PictureContext, edge: Edge, from: Vec, to: Vec): LabelSide {
+  const flip = (side: LabelSide): LabelSide => (side === 'left' ? 'right' : 'left');
+  // The way the path is drawn: from → to, or to → from when it reads `<-`.
+  const [p, q] = edge.reversed ? [to, from] : [from, to];
+  const place = { x: 0, y: 0 };
+  for (const key of edge.labelOpts.keys()) {
+    for (const word of key.split(' ')) {
+      const d = DIRECTIONS[word];
+      if (d) {
+        place.x += d.x;
+        place.y += d.y;
+      }
+    }
+  }
+  const cross = (q.x - p.x) * place.y - (q.y - p.y) * place.x;
+  let side: LabelSide;
+  if (Math.abs(cross) > 1e-9) side = cross > 0 ? 'left' : 'right';
+  else {
+    const auto = edge.opts.get('auto');
+    side = auto === 'right' || (auto === undefined && ctx.autoRight) ? 'right' : 'left';
+    if (SWAP(edge.opts) !== SWAP(edge.labelOpts)) side = flip(side);
+  }
+  return edge.reversed ? flip(side) : side;
+}
+
 function bendOf(edge: Edge, from: Vec, to: Vec, hasReverse: boolean): number | undefined {
   const chord = Math.hypot(to.x - from.x, to.y - from.y);
   const looseness = Number(edge.opts.get('looseness') ?? '1') || 1;
@@ -561,6 +609,7 @@ function pictureOptionsContext(optionText: string): Omit<PictureContext, 'stateS
     onGrid: opts.has('on grid'),
     scale: Number(opts.get('scale') ?? '1') || 1,
     initialWhere: opts.get('initial where') ?? 'left',
+    autoRight: opts.get('auto') === 'right',
   };
 }
 
@@ -632,6 +681,9 @@ function readPicture(
       const bend = bendOf(e, a, b, pairs.has(`${e.to}\u0000${e.from}`));
       // Kept even when ~0: `bend left=0` on a pair says straight, not the automatic curve.
       if (bend !== undefined) t.bend = Math.abs(bend) < 1e-9 ? 0 : bend;
+      // Only when it isn't where AutoMotion would put it anyway: outside the curve, left if straight.
+      const side = labelSideOfEdge(ctx, e, a, b);
+      if (side !== ((t.bend ?? 0) < 0 ? 'right' : 'left')) t.labelSide = side;
     }
     if (!existing) transitions.push(t);
   }
