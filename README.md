@@ -58,7 +58,7 @@
 
 - Everything autosaves in your browser. The history sidebar lists every automaton with a thumbnail, most recently edited first; rename, duplicate, export or delete one from its ⋯ menu. Click one and press **Ctrl+C**, then **Ctrl+V** to add a copy of it.
 - Import and export automata as JSON files, one or all at once, and export a diagram as SVG or PNG.
-- Export an automaton as LaTeX (a TikZ picture with the `automata` library, laid out as on the canvas) to compile on its own, or copy the picture straight into your document. Import reads `.tex` files back, including hand-written TikZ automata: each `tikzpicture` becomes an automaton.
+- Export an automaton as LaTeX (a TikZ picture with the `automata` library, laid out as on the canvas) to compile on its own, or copy the picture straight into your document. Export all writes every automaton into one `.tex` document, a page each. Import reads `.tex` files back, including hand-written TikZ automata: each `tikzpicture` becomes an automaton. Or copy a `tikzpicture` from anywhere (Overleaf, lecture notes) and press **Ctrl+V** in the app.
 - Copy the diagram as a picture (**Ctrl+C** with no state selected, or Copy image in the export menu) and paste it straight into a document or chat. Copied or downloaded, the picture is always the whole automaton at the same size, however far the canvas is zoomed or panned.
 - Light and dark themes: it follows your system by default, or pick Light or Dark from the theme menu. Press **?** for the controls guide at any time.
 

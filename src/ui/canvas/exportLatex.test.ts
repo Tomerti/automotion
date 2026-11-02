@@ -5,7 +5,7 @@ import { EPSILON } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
 import { arbNfa } from '../../core/testing/arbitraries';
 import { parseLatex } from '../../persistence/latexImport';
-import { latexDocument, latexPicture, latexSnippet } from './exportLatex';
+import { latexDocument, latexDocumentAll, latexPicture, latexSnippet } from './exportLatex';
 import { START_ANGLE, autoBend, autoLoopAngle, labelSideOf } from './geometry';
 
 const parity: Automaton = {
@@ -147,6 +147,27 @@ describe('latexDocument and latexSnippet', () => {
     expect(doc).toContain('\\usetikzlibrary{automata, arrows.meta}');
     expect(doc).toContain('% AutoMotion DFA: Even number of 0s\n\\begin{tikzpicture}');
     expect(doc.endsWith('\\end{document}\n')).toBe(true);
+  });
+
+  it('latexDocumentAll: one picture per automaton with states, reading back as each of them', () => {
+    const nfa: Automaton = {
+      ...parity,
+      id: 'other',
+      name: 'Another one',
+      kind: 'NFA',
+    };
+    const empty: Automaton = { ...parity, id: 'empty', name: 'Blank', states: [], transitions: [] };
+    const doc = latexDocumentAll([parity, empty, nfa]);
+    expect(doc.startsWith('\\documentclass[tikz, border=10pt]{standalone}\n')).toBe(true);
+    expect(doc.match(/\\begin\{tikzpicture\}/g)).toHaveLength(2);
+    expect(doc).not.toContain('Blank');
+    expect(doc.endsWith('\\end{document}\n')).toBe(true);
+    const result = parseLatex(doc, 'fallback');
+    if (!result.ok) throw new Error(result.error);
+    expect(result.automata.map((a) => [a.name, a.kind])).toEqual([
+      ['Even number of 0s', 'DFA'],
+      ['Another one', 'NFA'],
+    ]);
   });
 
   it('the snippet says what it needs', () => {

@@ -246,7 +246,32 @@ describe('HistoryBar actions', () => {
     render(<HistoryBar />);
     await openAction(user, 'Blank', 'Export JSON');
     await user.click(screen.getByRole('button', { name: 'Export all' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Export all as JSON' }));
     expect(files).toEqual(['blank.automaton.json', 'automata.automaton.json']);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('Export all as LaTeX downloads one .tex with a picture per automaton that has states', async () => {
+    const user = userEvent.setup();
+    const blobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((b: Blob) => {
+      blobs.push(b);
+      return 'blob:x';
+    });
+    URL.revokeObjectURL = vi.fn();
+    const files: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      files.push(this.download);
+    });
+    render(<HistoryBar />);
+    await user.click(screen.getByRole('button', { name: 'Export all' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Export all as LaTeX' }));
+    expect(files).toEqual(['automata.tex']);
+    const text = (await blobs[0]?.text()) ?? '';
+    expect(text).toContain('% AutoMotion DFA: Parity');
+    expect(text).not.toContain('Blank'); // no states: nothing to draw
   });
 
   it('Export LaTeX downloads that automaton as a .tex document', async () => {

@@ -1,3 +1,4 @@
+import type { Automaton } from '../../core/model';
 import { parseFile } from '../../persistence/fileFormat';
 import type { ParseResult } from '../../persistence/fileFormat';
 import { looksLikeLatex, nameFromFile, parseLatex } from '../../persistence/latexImport';
@@ -13,16 +14,26 @@ function parse(file: File, text: string, existing: Set<string>): ParseResult {
   return latex ? parseLatex(text, nameFromFile(file.name)) : parseFile(text, existing);
 }
 
-/** Read a file and add its automata to the store; toast the outcome. */
-export async function importFile(file: File): Promise<void> {
-  const text = await file.text();
-  const existing = new Set(appStore.getState().automata.map((a) => a.id));
-  const result = parse(file, text, existing);
+/** Add parsed automata to the store (each opens as it is added); toast the outcome. */
+function addParsed(result: ParseResult, done: (n: number) => string): void {
   if (!result.ok) {
     toast(result.error, 'error');
     return;
   }
   for (const a of result.automata) appStore.getState().addAutomaton(a);
-  const n = result.automata.length;
-  toast(n === 1 ? 'Imported 1 automaton' : `Imported ${n} automata`);
+  toast(done(result.automata.length));
+}
+
+const count = (n: number): string => (n === 1 ? '1 automaton' : `${n} automata`);
+
+/** Read a file and add its automata to the store; toast the outcome. */
+export async function importFile(file: File): Promise<void> {
+  const text = await file.text();
+  const existing = new Set(appStore.getState().automata.map((a: Automaton) => a.id));
+  addParsed(parse(file, text, existing), (n) => `Imported ${count(n)}`);
+}
+
+/** Add the automata of pasted LaTeX (TikZ), named `name` unless the text names them. */
+export function importLatexText(text: string, name: string): void {
+  addParsed(parseLatex(text, name), (n) => `Pasted ${count(n)} from LaTeX`);
 }

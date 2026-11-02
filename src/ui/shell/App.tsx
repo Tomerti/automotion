@@ -13,6 +13,7 @@ import { closeCelebration, startTutorial, useTutorial } from '../tutorial/tutori
 import { WelcomeCard } from '../tutorial/WelcomeCard';
 import { ControlsDialog } from './ControlsDialog';
 import { useControlsHelp, useWelcome } from './help';
+import { usePasteLatex } from './pasteLatex';
 import { HistoryBar } from './HistoryBar';
 import { useHistoryOpen } from './historyPrefs';
 import { importFile } from './importFile';
@@ -60,6 +61,7 @@ function useDockHeight(): [React.RefObject<HTMLDivElement | null>, number] {
 
 export default function App(): React.JSX.Element {
   useAutosave({ onFail: (m) => toast(m, 'error') });
+  usePasteLatex();
   const trace = useAppStore((s) => s.trace);
   const stepIndex = useAppStore((s) => s.stepIndex);
   const setStep = useAppStore((s) => s.setStep);

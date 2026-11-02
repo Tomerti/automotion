@@ -1,0 +1,31 @@
+{
+  "format": "automotion",
+  "version": 2,
+  "automata": [
+    {
+      "id": "latex-features",
+      "name": "Every LaTeX feature (NFA) #1 & 100% {x}",
+      "kind": "NFA",
+      "alphabet": ["a", "0", "#", "%", "&", "_", "$", "{", "}", "~", "^"],
+      "states": [
+        { "id": "set", "label": "{q_0,q_1}", "x": 100, "y": 200, "startAngle": -2.356194490192345 },
+        { "id": "empty", "label": "∅", "x": 300, "y": 200, "startAngle": 1.5707963267948966 },
+        { "id": "prime", "label": "q_{12}'", "x": 500, "y": 200 },
+        { "id": "word", "label": "even", "x": 300, "y": 380 },
+        { "id": "special", "label": "a&b #2 50% x_y", "x": 500, "y": 380 }
+      ],
+      "starts": ["set", "empty"],
+      "accepting": ["prime", "special"],
+      "transitions": [
+        { "id": "t1", "from": "set", "to": "empty", "symbols": ["a", "ε"] },
+        { "id": "t2", "from": "empty", "to": "set", "symbols": ["0"], "labelSide": "right" },
+        { "id": "t3", "from": "empty", "to": "prime", "symbols": ["#", "%"], "bend": -90 },
+        { "id": "t4", "from": "prime", "to": "word", "symbols": ["&", "_"], "bend": 30, "labelSide": "right" },
+        { "id": "t5", "from": "word", "to": "special", "symbols": ["$", "{", "}"], "labelSide": "right" },
+        { "id": "t6", "from": "special", "to": "special", "symbols": ["~", "^"], "loopAngle": 0.6 },
+        { "id": "t7", "from": "word", "to": "word", "symbols": ["a"], "loopAngle": 3.141592653589793 },
+        { "id": "t8", "from": "set", "to": "set", "symbols": ["ε"] }
+      ]
+    }
+  ]
+}

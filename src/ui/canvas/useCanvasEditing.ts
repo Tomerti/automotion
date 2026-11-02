@@ -21,6 +21,7 @@ import {
 import type { Automaton, StateId } from '../../core/model';
 import { appStore, useAppStore } from '../../store/store';
 import type { Selection, Viewport } from '../../store/types';
+import { deferPaste, systemClipboardMayBeNewer } from '../shell/pasteLatex';
 import { toast } from '../shell/toastStore';
 import type { MenuItem } from './ContextMenu';
 import {
@@ -783,19 +784,26 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
         if (store.copySelection()) e.preventDefault();
         return;
       }
+      // Nothing of the app's own: the `paste` event may still bring LaTeX (pasteLatex.ts).
       if (!store.clipboard) return;
-      e.preventDefault();
-      if (store.clipboard.kind === 'automaton') {
-        store.pasteAutomaton();
-        return;
-      }
       // At the pointer when it is over the canvas, else a step off where it was copied from.
       const svg = svgRef.current;
       const at =
         pointer.current && svg
           ? screenToWorld(pointer.current, svg.getBoundingClientRect(), viewportRef.current)
           : undefined;
-      pasteAt(at);
+      const run = (): void => {
+        const { clipboard, pasteAutomaton } = appStore.getState();
+        if (clipboard?.kind === 'automaton') pasteAutomaton();
+        else if (clipboard) pasteAt(at);
+      };
+      // Something may have been copied elsewhere since: let the paste event look at it first.
+      if (systemClipboardMayBeNewer()) {
+        deferPaste(run);
+        return;
+      }
+      e.preventDefault();
+      run();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
