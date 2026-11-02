@@ -9,7 +9,6 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; consider a more compact layout or pan/zoom in trace views (the transition table is gone in v2)
-- [ ] Equal-spacing snap guides (Notability-style) in addition to center alignment
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
@@ -23,6 +22,11 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### Equal spacing
+
+- [x] A dragged state on a row of states (snapped to their y) also snaps along it to equal gaps: one existing gap past either end, or halfway between two states (where it fits); columns likewise. The nearer of an equal gap and a column alignment wins, Alt skips both
+- [x] Each equal gap gets a marker: a pink dimension line with end ticks just under the row (beside a column), on every gap in the row that matches the dragged state's; never exported
 
 ### Copy and paste
 

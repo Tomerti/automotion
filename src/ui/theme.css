@@ -67,6 +67,7 @@
   --av-taken-band: var(--av-highlighter-band);
   --av-error: var(--av-red);
   --av-guide: var(--av-accent);
+  --av-guide-gap: #c2255c;
 
   /* Marker tints for partition blocks (diagram fills and legend swatches) */
   --av-tint-0: #c9dbff;
@@ -97,6 +98,7 @@
 
   --av-accent: #8fa7ff;
   --av-on-accent: #10142a;
+  --av-guide-gap: #f783ac;
   --av-red: #ff7b7b;
   --av-green: #5ed39a;
   --av-warn: #e8b85a;

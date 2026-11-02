@@ -48,7 +48,7 @@ const TABS: Tab[] = [
       {
         gesture: { mouse: 'drag', on: 'a state' },
         action: 'Move it',
-        hint: 'The rest of the selection moves along. Snaps into line; hold Alt to place freely',
+        hint: 'The rest of the selection moves along. Snaps into line and to equal gaps; hold Alt to place freely',
       },
       {
         gesture: { mouse: 'drag', on: 'an arrow' },

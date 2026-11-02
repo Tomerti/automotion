@@ -30,6 +30,7 @@ function renderSvg(): SVGSVGElement {
       children: [
         createElement('line', { key: 'band', 'data-testid': 'rubber-band' }),
         createElement('line', { key: 'guide', 'data-testid': 'snap-guide' }),
+        createElement('g', { key: 'gap', 'data-testid': 'gap-guide' }),
       ],
     }),
   );
@@ -80,6 +81,7 @@ describe('diagramToSvgString', () => {
     const text = diagramToSvgString(renderSvg(), abDfa);
     expect(text).not.toContain('rubber-band"');
     expect(text).not.toContain('snap-guide"');
+    expect(text).not.toContain('gap-guide"');
     expect(text).not.toMatch(/<g [^>]*data-editing=/);
     expect(text).not.toContain('class="av-state-hit"');
     expect(text).not.toContain('class="av-edge-hit"');

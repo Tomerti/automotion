@@ -78,7 +78,8 @@ Layers, with dependencies pointing downward only:
   - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
     states, tints, visibility). Its `data-testid`s and `data-*` attributes are a contract used by tests,
     e2e and export. `useCanvasEditing.ts` holds all editing gestures; pointer capture starts only once a
-    drag crosses 3 px, so double-clicks keep their real target. Pure math is in `geometry.ts` / `viewport.ts`.
+    drag crosses 3 px, so double-clicks keep their real target. Pure math is in `geometry.ts` / `viewport.ts`;
+    `snap.ts` snaps a dragged state (alignment guides and equal-gap markers, both kept out of exports).
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button.
   - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip,

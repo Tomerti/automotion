@@ -7,12 +7,25 @@ import { ContextMenu } from './ContextMenu';
 import { Diagram } from './Diagram';
 import { Arrowhead } from './EdgeView';
 import { InlineInput } from './InlineInput';
+import type { Gap } from './snap';
 import { DEFAULT_VIEWPORT, historyInset, useCanvasEditing } from './useCanvasEditing';
 import { fitToViewInset } from './viewport';
 import './Canvas.css';
 
 /** Same fallback the trace views use when the element has no measurable size (jsdom). */
 const FALLBACK_SIZE = { width: 800, height: 500 };
+/** Half the length of the end ticks on an equal-gap marker, in world units. */
+const GAP_TICK = 5;
+
+/** An equal-gap marker as a dimension line: the gap's span with a tick across each end. */
+function gapMarkerPath({ x1, y1, x2, y2 }: Gap): string {
+  const [tx, ty] = y1 === y2 ? [0, GAP_TICK] : [GAP_TICK, 0];
+  return (
+    `M${x1} ${y1}L${x2} ${y2}` +
+    `M${x1 - tx} ${y1 - ty}L${x1 + tx} ${y1 + ty}` +
+    `M${x2 - tx} ${y2 - ty}L${x2 + tx} ${y2 + ty}`
+  );
+}
 
 export function Canvas(): React.JSX.Element {
   const automata = useAppStore((s) => s.automata);
@@ -60,6 +73,7 @@ function EditableCanvas(props: {
     selection,
     rubberBand,
     guides,
+    gaps,
     box,
     inline,
     editing,
@@ -125,6 +139,14 @@ function EditableCanvas(props: {
             y1={g.y1}
             x2={g.x2}
             y2={g.y2}
+          />
+        ))}
+        {gaps.map((g) => (
+          <path
+            key={`${g.x1},${g.y1}`}
+            className="av-gap-guide"
+            data-testid="gap-guide"
+            d={gapMarkerPath(g)}
           />
         ))}
         {box && (
