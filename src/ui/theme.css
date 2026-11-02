@@ -100,14 +100,16 @@
   --av-red: #ff7b7b;
   --av-green: #5ed39a;
   --av-warn: #e8b85a;
-  --av-highlighter: #ff922b;
-  --av-highlighter-soft: #5a2d0c;
-  --av-highlighter-band: #ff922b38;
-  --av-highlighter-ink: #ffa94d;
-  /* --av-run and --av-on-run stay the light ones: the Run pill is one orange in both themes. */
+  /*
+   * The oranges are the light ones: --av-run, --av-on-run, --av-highlighter and
+   * --av-highlighter-ink aren't redeclared, so a run looks the same in both themes. Only the
+   * tints under them are dark: the soft fill is dark enough that the read cell's #d9480f letter
+   * keeps light mode's contrast, and the band is a little stronger to show on dark paper.
+   */
+  --av-highlighter-soft: #3a1a0c;
+  --av-highlighter-band: #f7670738;
 
   --av-edge-stroke: #b9c0cc;
-  --av-active-stroke: var(--av-highlighter);
   --av-active-text: #fff4e6;
 
   --av-tint-0: #2a4680;
