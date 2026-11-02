@@ -34,7 +34,7 @@
 - Drag states to move them; they snap into line with their neighbours, and along a row or column to where the gaps come out equal (past either end, or halfway between two states), with a marker on each equal gap. Hold Alt to place freely.
 - Ctrl + drag on the empty canvas selects the states in a box, and Ctrl + click adds a state to the selection or takes it out. Dragging a selected state moves the whole selection.
 - **Ctrl+C** copies the selected states and **Ctrl+V** pastes them at the pointer, with the arrows between them and their arrows to the rest of the automaton: build a chain once, then repeat it. Pasted names get a prime (q₁ → q₁′). Pasting works in another automaton too.
-- Drag an arrow to bend it, or a self-loop to turn it around its state.
+- Drag an arrow to bend it, or a self-loop to turn it around its state (in 45° steps; hold Alt to turn freely).
 - **Tidy** lays the whole automaton out automatically, and **Fit** brings it into view. Pan by dragging the canvas, zoom by scrolling.
 
 ### Run a word

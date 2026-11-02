@@ -822,6 +822,32 @@ describe('Canvas editing', () => {
     expect(st().history.m?.past).toHaveLength(2);
   });
 
+  it('a dragged self-loop snaps to 45° unless Alt is held', () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q0']]));
+    render(<Canvas />);
+    // Up round to just off down-right: snaps to 45°.
+    drag(
+      screen.getByTestId('edge-q0-q0'),
+      [0, -60],
+      [
+        [40, -40],
+        [60, 55],
+      ],
+    );
+    expect(active().transitions[0]?.loopAngle).toBeCloseTo(Math.PI / 4);
+    // On round to just off straight down, with Alt: kept as dragged.
+    drag(
+      screen.getByTestId('edge-q0-q0'),
+      [42, 42],
+      [
+        [30, 50],
+        [5, 80],
+      ],
+      { altKey: true },
+    );
+    expect(active().transitions[0]?.loopAngle).toBeCloseTo(Math.atan2(80, 5));
+  });
+
   it('dragging the start arrow turns it around its state, snapping to 45° unless Alt is held', () => {
     load({ ...two(), starts: ['q0'] });
     render(<Canvas />);

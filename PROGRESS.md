@@ -184,6 +184,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Drag states to reposition them
 - [x] Draw states and transitions directly on the canvas
 - [x] Turn a start arrow to come from any direction (drag it; snaps to 45°, Alt for free)
+- [x] A dragged self-loop snaps to 45° steps too (Alt for free)
 
 ### Running a word
 
