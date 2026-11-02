@@ -557,6 +557,32 @@ describe('Canvas editing', () => {
     expect(active().transitions[1]).not.toHaveProperty('loopAngle');
   });
 
+  it('Label on other side in the edge menu flips the label, as one undo step; loops have none', async () => {
+    const user = userEvent.setup();
+    const a = two('DFA', 'ab', [
+      ['q0', 'a', 'q1'],
+      ['q1', 'b', 'q1'],
+    ]);
+    // Bent down: the automatic label is below (right of q0 → q1).
+    load({
+      ...a,
+      transitions: a.transitions.map((t) => (t.from === t.to ? t : { ...t, bend: -30 })),
+    });
+    render(<Canvas />);
+    const flip = async () => {
+      fireEvent.contextMenu(screen.getByTestId('edge-q0-q1'), { clientX: 50, clientY: 30 });
+      await user.click(screen.getByRole('menuitem', { name: 'Label on other side' }));
+    };
+    await flip();
+    expect(active().transitions[0]?.labelSide).toBe('left');
+    expect(st().history.m?.past).toHaveLength(1);
+    await flip();
+    expect(active().transitions[0]?.labelSide).toBe('right');
+
+    fireEvent.contextMenu(screen.getByTestId('edge-q1-q1'), { clientX: 100, clientY: -60 });
+    expect(screen.queryByRole('menuitem', { name: 'Label on other side' })).toBeNull();
+  });
+
   it('the edge context menu edits symbols and deletes; Escape and outside clicks close it', async () => {
     const user = userEvent.setup();
     load(two('DFA', 'ab', [['q0', 'a', 'q1']]));
@@ -567,7 +593,7 @@ describe('Canvas editing', () => {
       within(screen.getByRole('menu'))
         .getAllByRole('menuitem')
         .map((i) => i.textContent),
-    ).toEqual(['Edit symbols', 'Straighten', 'Delete']);
+    ).toEqual(['Edit symbols', 'Label on other side', 'Straighten', 'Delete']);
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).toBeNull();
 
@@ -796,6 +822,82 @@ describe('Canvas editing', () => {
       ],
     );
     expect(active().transitions[0]?.bend).toBeCloseTo(40);
+  });
+
+  it('dragging an edge label moves it to the side of the arrow the pointer is on, in one undo step', () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q1']]));
+    render(<Canvas />);
+    const label = () => within(screen.getByTestId('edge-q0-q1')).getByTestId('edge-label');
+    expect(Number(label().getAttribute('y'))).toBeCloseTo(-14);
+    fireEvent.pointerDown(label(), at(50, -14));
+    // Still above the arrow: nothing changes yet.
+    fireEvent.pointerMove(diagram(), at(50, -4));
+    expect(active().transitions[0]).not.toHaveProperty('labelSide');
+    fireEvent.pointerMove(diagram(), at(52, 9));
+    expect(active().transitions[0]?.labelSide).toBe('right');
+    expect(Number(label().getAttribute('y'))).toBeCloseTo(14);
+    fireEvent.pointerMove(diagram(), at(52, -9));
+    fireEvent.pointerMove(diagram(), at(52, 12));
+    fireEvent.pointerUp(diagram(), at(52, 12));
+    expect(active().transitions[0]?.labelSide).toBe('right');
+    // The arrow itself is not bent.
+    expect(active().transitions[0]).not.toHaveProperty('bend');
+    expect(st().selection).toEqual({ states: [], transitions: ['q0->q1'] });
+    expect(st().history.m?.past).toHaveLength(1);
+    act(() => st().undo());
+    expect(active().transitions[0]).not.toHaveProperty('labelSide');
+  });
+
+  it('a label dragged along its own side records no history', () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q1']]));
+    render(<Canvas />);
+    const label = within(screen.getByTestId('edge-q0-q1')).getByTestId('edge-label');
+    drag(label, [50, -14], [[70, -30]]);
+    expect(active().transitions[0]).not.toHaveProperty('labelSide');
+    expect(st().history.m?.past ?? []).toHaveLength(0);
+  });
+
+  it('on a bent edge the label moves inside the curve, and dragging the arrow still bends it', () => {
+    const a = two('DFA', 'a', [['q0', 'a', 'q1']]);
+    load({ ...a, transitions: a.transitions.map((t) => ({ ...t, bend: 40 })) });
+    render(<Canvas />);
+    const label = within(screen.getByTestId('edge-q0-q1')).getByTestId('edge-label');
+    // Between the chord and the apex (40 up) is the inside of the curve.
+    drag(
+      label,
+      [50, -54],
+      [
+        [50, -40],
+        [50, -20],
+      ],
+    );
+    expect(active().transitions[0]).toMatchObject({ bend: 40, labelSide: 'right' });
+    drag(
+      screen.getByTestId('edge-q0-q1'),
+      [50, -40],
+      [
+        [50, -50],
+        [50, -60],
+      ],
+    );
+    expect(active().transitions[0]).toMatchObject({ labelSide: 'right' });
+    expect(active().transitions[0]?.bend).toBeCloseTo(60);
+  });
+
+  it("dragging a self-loop's label still rotates the loop", () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q0']]));
+    render(<Canvas />);
+    const label = within(screen.getByTestId('edge-q0-q0')).getByTestId('edge-label');
+    drag(
+      label,
+      [0, -80],
+      [
+        [40, -60],
+        [80, 0],
+      ],
+    );
+    expect(active().transitions[0]?.loopAngle).toBeCloseTo(0);
+    expect(active().transitions[0]).not.toHaveProperty('labelSide');
   });
 
   it('dragging a self-loop rotates it toward the pointer', () => {

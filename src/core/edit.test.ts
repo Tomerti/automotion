@@ -19,6 +19,7 @@ import {
   renameState,
   setEdgeBend,
   setEdgeSymbols,
+  setLabelSide,
   setKind,
   setLoopAngle,
   setStart,
@@ -295,6 +296,15 @@ describe('derived alphabet and edge shape', () => {
     expect(bent.transitions[0]?.bend).toBe(20);
     expect('bend' in (setEdgeBend(bent, id, undefined).transitions[0] ?? {})).toBe(false);
     expect(setLoopAngle(a, id, 1).transitions[0]?.loopAngle).toBe(1);
+  });
+
+  it('sets and clears the side of an edge label', () => {
+    const a = dfa();
+    const id = a.transitions[0]?.id ?? '';
+    const below = setLabelSide(a, id, 'right');
+    expect(below.transitions[0]?.labelSide).toBe('right');
+    expect(below.transitions[1]).not.toHaveProperty('labelSide');
+    expect(setLabelSide(below, id, undefined).transitions[0]).not.toHaveProperty('labelSide');
   });
 
   it('turns a start arrow and restores it to the default', () => {

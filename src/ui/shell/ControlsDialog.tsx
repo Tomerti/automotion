@@ -56,6 +56,11 @@ const TABS: Tab[] = [
         hint: 'A self-loop turns around its state, in 45° steps; hold Alt to turn freely',
       },
       {
+        gesture: { mouse: 'drag', on: 'an arrow’s symbols' },
+        action: 'Move them to the other side',
+        hint: 'Above or below it; inside or outside a curve',
+      },
+      {
         gesture: { mouse: 'drag', on: 'the start arrow' },
         action: 'Turn it around its state',
         hint: 'Snaps to 45° steps; hold Alt to turn freely',

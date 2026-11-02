@@ -16,6 +16,7 @@ const transitionSchema = z.object({
   symbols: z.array(z.string()),
   bend: z.number().optional(),
   loopAngle: z.number().optional(),
+  labelSide: z.enum(['left', 'right']).optional(),
 });
 
 export const automatonSchema = z

@@ -33,7 +33,9 @@ Layers, with dependencies pointing downward only:
 - `src/core/`: pure TypeScript, no React. Must not import from `layout/`, `store/`, `persistence/` or `ui/`.
   - `model.ts`: one `Automaton` type for DFAs and NFAs (`kind` selects the rules). States carry their own
     `x`/`y` (and an optional `startAngle`, the direction their start arrow comes from; default the
-    left); at most one `Transition` per (from, to) pair, holding all its `symbols`. `EPSILON = 'ε'`
+    left); at most one `Transition` per (from, to) pair, holding all its `symbols` (and an optional
+    `bend`, `loopAngle`, and `labelSide`: the side of from→to its symbols are drawn on, absent
+    meaning outside the curve; `geometry.ts` `labelSideOf`). `EPSILON = 'ε'`
     never appears in `alphabet`; the symbol type is `Sym` (not `Symbol`). `starts` lists the start
     states: at most one on a DFA, any number on an NFA (accepting when a run from any of them does);
     `startStates(a)` ignores stale ids. Converting a multi-start NFA first adds a single start state

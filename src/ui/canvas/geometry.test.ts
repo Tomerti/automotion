@@ -7,6 +7,8 @@ import {
   edgeGeometry,
   hitState,
   labelFontSize,
+  labelSideAt,
+  labelSideOf,
   selfLoopGeometry,
   snapAngle,
   startArrowGeometry,
@@ -39,6 +41,47 @@ describe('edgeGeometry', () => {
     const g = edgeGeometry(A, B, CURVE_OFFSET);
     expect(Math.hypot(g.end.x - B.x, g.end.y - B.y)).toBeCloseTo(STATE_RADIUS);
     expect(Math.abs(g.label.y)).toBeGreaterThan(CURVE_OFFSET / 2);
+  });
+});
+
+describe('edge label side', () => {
+  // A → B runs left to right on screen, so its left is above (y < 0).
+  it("puts a straight edge's label above by default and below on the right", () => {
+    expect(edgeGeometry(A, B, 0).label.y).toBeCloseTo(-14);
+    expect(edgeGeometry(A, B, 0, 'left').label.y).toBeCloseTo(-14);
+    expect(edgeGeometry(A, B, 0, 'right').label.y).toBeCloseTo(14);
+    expect(edgeGeometry(A, B, 0, 'right').label.x).toBeCloseTo(100);
+  });
+  it("moves a curved edge's label inside the curve, between the chord and the apex", () => {
+    const outside = edgeGeometry(A, B, 40);
+    const inside = edgeGeometry(A, B, 40, 'right');
+    // Either side of the apex, LABEL_GAP (14) away: inside is still above the chord.
+    expect(inside.label.y - outside.label.y).toBeCloseTo(28);
+    expect(inside.label.y).toBeLessThan(0);
+    expect(inside.label.x).toBeCloseTo(outside.label.x);
+    expect(inside.d).toBe(outside.d);
+  });
+  it('keeps the side the user chose whichever way the edge bends', () => {
+    const down = edgeGeometry(A, B, -40);
+    expect(down.label.y - edgeGeometry(A, B, -40, 'left').label.y).toBeCloseTo(28);
+    expect(edgeGeometry(A, B, -40, 'right')).toEqual(down);
+  });
+  it('labelSideOf: the chosen side, else outside the curve (left when straight)', () => {
+    expect(labelSideOf(0, undefined)).toBe('left');
+    expect(labelSideOf(30, undefined)).toBe('left');
+    expect(labelSideOf(-30, undefined)).toBe('right');
+    expect(labelSideOf(-30, 'left')).toBe('left');
+  });
+  it('labelSideAt: the side of the drawn curve a point is on', () => {
+    expect(labelSideAt(A, B, 0, { x: 100, y: -5 })).toBe('left');
+    expect(labelSideAt(A, B, 0, { x: 100, y: 5 })).toBe('right');
+    // Bent up by 40: a point between the chord and the apex is below (right of) the curve.
+    expect(labelSideAt(A, B, 40, { x: 100, y: -20 })).toBe('right');
+    expect(labelSideAt(A, B, 40, { x: 100, y: -60 })).toBe('left');
+    // The drawn apex is a little beyond the bend (the ends sit on the circles): 45 up is inside.
+    expect(labelSideAt(A, B, 40, { x: 100, y: -45 })).toBe('right');
+    // B → A runs right to left: its left is below.
+    expect(labelSideAt(B, A, 0, { x: 100, y: 5 })).toBe('left');
   });
 });
 
@@ -80,6 +123,15 @@ describe('transitionGeometry', () => {
       transitions: m.transitions.map((t) => (t.from === 'q0' ? { ...t, bend: -10 } : t)),
     };
     expect(transitionGeometry(bent, q0, q1)).toEqual(edgeGeometry(q0, q1, -10));
+  });
+  it('draws the label on the side stored on the transition', () => {
+    const below = {
+      ...m,
+      transitions: m.transitions.map((t) =>
+        t.from === 'q0' ? { ...t, labelSide: 'right' as const } : t,
+      ),
+    };
+    expect(transitionGeometry(below, q0, q1)).toEqual(edgeGeometry(q0, q1, CURVE_OFFSET, 'right'));
   });
   it('places a new self-loop away from neighbors and the start arrow', () => {
     // q1's only neighbor is to its left, so its loop goes right; q0's left is the start arrow.

@@ -11,6 +11,7 @@ import {
   removeTransition,
   renameState,
   setEdgeBend,
+  setLabelSide,
   setLoopAngle,
   setStart,
   setStartAngle,
@@ -27,6 +28,8 @@ import {
   bendThrough,
   hitState,
   labelFontSize,
+  labelSideAt,
+  labelSideOf,
   loopAngleToward,
   snapAngle,
   STATE_RADIUS,
@@ -76,6 +79,8 @@ type Gesture = { pointerId: number; start: Point; moved: boolean } & (
   | { kind: 'draw'; from: StateId }
   /** `grab`: the bend at the press minus the bend through the press point, so the edge doesn't jump. */
   | { kind: 'bend'; transitionId: string; from: Point; to: Point; grab: number }
+  /** An edge's label dragged across it. `recorded`: the undo checkpoint is taken (on the first flip). */
+  | { kind: 'label'; transitionId: string; from: Point; to: Point; bend: number; recorded: boolean }
   | { kind: 'loop'; transitionId: string; center: Point }
   | { kind: 'start'; stateId: StateId; center: Point }
 );
@@ -275,6 +280,15 @@ function straighten(a: Automaton, transitionId: string): Automaton {
   };
 }
 
+/** Draw an edge's label on the other side of it from where it is drawn now. */
+function flipLabel(a: Automaton, transitionId: string): Automaton {
+  const t = a.transitions.find((x) => x.id === transitionId);
+  if (!t) return a;
+  const hasReverse = a.transitions.some((o) => o.from === t.to && o.to === t.from);
+  const side = labelSideOf(t.bend ?? autoBend(hasReverse), t.labelSide);
+  return setLabelSide(a, transitionId, side === 'left' ? 'right' : 'left');
+}
+
 /** World position of an edge's label, read from the rendered diagram. */
 function edgeLabelPoint(edgeEl: Element, fallback: Point): Point {
   const label = edgeEl.querySelector('[data-testid="edge-label"]');
@@ -394,6 +408,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       stateEl: el?.closest('[data-state-id]') ?? null,
       startEl: el?.closest('[data-testid="start-arrow"]') ?? null,
       edgeEl: el?.closest('[data-transition-id]') ?? null,
+      labelEl: el?.closest('[data-testid="edge-label"]') ?? null,
     };
   };
 
@@ -423,7 +438,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     containerRef.current?.focus();
     setMenu(null);
     const base = { pointerId: e.pointerId, start: { x: e.clientX, y: e.clientY }, moved: false };
-    const { stateEl, startEl, edgeEl } = targets(e.target);
+    const { stateEl, startEl, edgeEl, labelEl } = targets(e.target);
     const store = appStore.getState();
 
     if (locked || (!stateEl && !edgeEl)) {
@@ -489,8 +504,21 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     } else {
       const hasReverse = automaton.transitions.some((o) => o.from === t.to && o.to === t.from);
       const bend = t.bend ?? autoBend(hasReverse);
-      const grab = bend - bendThrough(from, to, toWorld(e));
-      gesture.current = { ...base, kind: 'bend', transitionId: t.id, from, to, grab };
+      if (labelEl) {
+        // The label moves across the arrow; the arrow itself is bent by dragging its line.
+        gesture.current = {
+          ...base,
+          kind: 'label',
+          transitionId: t.id,
+          from,
+          to,
+          bend,
+          recorded: false,
+        };
+      } else {
+        const grab = bend - bendThrough(from, to, toWorld(e));
+        gesture.current = { ...base, kind: 'bend', transitionId: t.id, from, to, grab };
+      }
     }
   };
 
@@ -509,6 +537,8 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
         appStore.getState().checkpoint();
         svgRef.current?.setAttribute('data-dragging', '');
       }
+      // A label drag checkpoints on its first flip instead (see the 'label' branch below).
+      if (g.kind === 'label') svgRef.current?.setAttribute('data-dragging', '');
     }
     const store = appStore.getState();
     const p = toWorld(e);
@@ -550,6 +580,16 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       const raw = bendThrough(g.from, g.to, p) + g.grab;
       const bend = Math.abs(raw) * viewport.zoom < STRAIGHT_SNAP ? 0 : raw;
       store.edit((a) => setEdgeBend(a, g.transitionId, bend), { record: false });
+    } else if (g.kind === 'label') {
+      const side = labelSideAt(g.from, g.to, g.bend, p);
+      const t = activeAutomaton()?.transitions.find((x) => x.id === g.transitionId);
+      if (!t || side === labelSideOf(g.bend, t.labelSide)) return;
+      // One undo step for the whole drag, and none for a drag that never crosses the arrow.
+      if (!g.recorded) {
+        store.checkpoint();
+        g.recorded = true;
+      }
+      store.edit((a) => setLabelSide(a, g.transitionId, side), { record: false });
     } else if (g.kind === 'loop') {
       const raw = loopAngleToward(g.center, p);
       // Alt held: any angle, no snapping.
@@ -672,10 +712,14 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       });
     } else if (edgeEl && transitionId) {
       store.select({ states: [], transitions: [transitionId] });
+      const t = automaton.transitions.find((x) => x.id === transitionId);
       setMenu({
         at,
         items: [
           item('Edit symbols', () => openEdgeEdit(transitionId, edgeEl)),
+          ...(t && t.from !== t.to
+            ? [item('Label on other side', () => edit((a) => flipLabel(a, transitionId)))]
+            : []),
           item('Straighten', () => edit((a) => straighten(a, transitionId))),
           item('Delete', () => {
             edit((a) => removeTransition(a, transitionId));

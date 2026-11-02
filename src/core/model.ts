@@ -30,7 +30,15 @@ export interface Transition {
   bend?: number;
   /** Self-loops only: direction of the loop (radians, screen coordinates). Absent: automatic. */
   loopAngle?: number;
+  /**
+   * Not self-loops: the side of the arrow its symbols are drawn on, looking along from→to on
+   * screen (for an arrow pointing right, left is above). Absent: automatic (outside the curve;
+   * left when straight).
+   */
+  labelSide?: LabelSide;
 }
+
+export type LabelSide = 'left' | 'right';
 
 export interface Automaton {
   id: string;
