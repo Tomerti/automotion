@@ -41,7 +41,8 @@ Layers, with dependencies pointing downward only:
     `startStates(a)` ignores stale ids. Converting a multi-start NFA first adds a single start state
     `q_s` with ε-transitions to the old ones (`withSingleStart` in `subset.ts`).
   - `validate.ts` returns `Issue[]` (errors/warnings) and never throws; the UI disables actions with the
-    reason instead. An incomplete DFA is an error (code `incomplete-dfa`) that blocks a run, but
+    reason instead. An incomplete DFA is an error (code `incomplete-dfa`, one per incomplete state,
+    with its `stateId`) that blocks a run, but
     minimization (it adds a dead state) and the NFA → DFA kind switch skip it via `ignoringIncomplete`,
     so only NFA runs get stuck.
   - `edit.ts`: every edit is a pure `Automaton → Automaton` function, shared by the canvas and the table.
@@ -91,7 +92,8 @@ Layers, with dependencies pointing downward only:
     `snap.ts` snaps a dragged state (alignment guides and equal-gap markers, both kept out of exports).
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button.
-  - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip,
+  - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip (while its popover is open, `canvas/issueMarks.ts` rings
+    the states the issues are about; the canvas paints only non-incomplete errors red all the time),
     theme menu (System / Light / Dark: `theme.ts` resolves it to `<html data-theme>`; the welcome's
     `ThemeSwitch` picks it too, and both follow `saveTheme` through `useThemePref` in `themeChoices.ts`), Controls popup), the left history bar (`HistoryBar.tsx`, floating over the full-width canvas so everything stays
     centred on the window; fits keep `--av-history-inset` clear on both sides: every automaton with a

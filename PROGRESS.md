@@ -25,6 +25,12 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Issues
+
+- [x] The issues popover lays each message out as one line of text: a label's subscript (q₀) no longer floats apart from its letter, and the row no longer wraps in pieces
+- [x] An incomplete DFA is one issue per incomplete state, naming all its missing symbols ("q₀ needs transitions on '0' and '1'"), instead of the first gap plus "(and N more)"; clicking one selects the state
+- [x] While the issues popover is open, every state an issue is about gets a pulsing dashed ring in the issue's color (red for errors, amber for warnings), so it is easy to find on the canvas; closed, the canvas stays clean (an incomplete DFA is normal mid-build). Never exported
+
 ### LaTeX
 
 - [x] Export LaTeX (an entry's ⋯ menu, and the toolbar's export menu) downloads a standalone `.tex` document: the diagram as a TikZ picture (`automata` library) laid out as on the canvas, 50 px to the cm, with start arrow and loop directions and bends; diagonal start arrows, which `initial where` can't place, are plain `\draw[<-]` arrows

@@ -15,6 +15,7 @@ export interface DiagramHighlight {
   edgeSymbols?: Record<string, Sym[]>; // label override per transition id (subset: built so far)
   errorStates?: StateId[];
   errorTransitions?: string[];
+  issueMarks?: Record<StateId, 'error' | 'warning'>; // states the issues popover points at
   selectedStates?: StateId[];
   selectedTransitions?: string[];
   editing?: string; // id of the state or transition whose label is being edited in place
@@ -118,6 +119,7 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
               error={has(highlight.errorStates, s.id)}
               faded={has(highlight.faded, s.id)}
               tint={highlight.tints?.[s.id]}
+              issue={highlight.issueMarks?.[s.id]}
               editing={highlight.editing === s.id}
             />
           ))}

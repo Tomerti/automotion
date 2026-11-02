@@ -111,25 +111,30 @@ export function validate(a: Automaton): Issue[] {
   }
 
   if (a.kind === 'DFA') {
-    const missing = a.states.flatMap((st) =>
-      a.alphabet
-        .filter((sym) => !a.transitions.some((t) => t.from === st.id && t.symbols.includes(sym)))
-        .map((sym) => `'${sym}' transition from ${st.label}`),
-    );
-    const [first] = missing;
     // The alphabet comes from the transitions, so states with none have no symbol to miss.
     // A lone state with no transitions is a complete DFA over the empty alphabet.
-    const reason =
-      a.states.length > 1 && a.alphabet.length === 0
-        ? 'it has no transitions yet'
-        : first !== undefined
-          ? `no ${first}${missing.length > 1 ? ` (and ${missing.length - 1} more)` : ''}`
-          : null;
-    if (reason !== null) {
+    if (a.states.length > 1 && a.alphabet.length === 0) {
       issues.push({
         severity: 'error',
         code: 'incomplete-dfa',
-        message: `DFA is incomplete: ${reason}`,
+        message: 'DFA is incomplete: it has no transitions yet',
+      });
+    }
+    // One issue per incomplete state, so it can be clicked to and marked on the canvas.
+    for (const st of a.states) {
+      const missing = a.alphabet
+        .filter((sym) => !a.transitions.some((t) => t.from === st.id && t.symbols.includes(sym)))
+        .map((sym) => `'${sym}'`);
+      const last = missing.pop();
+      if (last === undefined) continue;
+      issues.push({
+        severity: 'error',
+        code: 'incomplete-dfa',
+        message:
+          missing.length === 0
+            ? `${st.label} needs a transition on ${last}`
+            : `${st.label} needs transitions on ${missing.join(', ')} and ${last}`,
+        stateId: st.id,
       });
     }
   }

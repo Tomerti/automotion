@@ -11,6 +11,8 @@ export interface StateNodeProps {
   error: boolean;
   faded: boolean;
   tint?: number;
+  /** Pointed at by the open issues popover: ringed in the issue's color. */
+  issue?: 'error' | 'warning';
   /** Its label is being edited in place: hide the drawn one under the input. */
   editing?: boolean;
 }
@@ -18,6 +20,8 @@ export interface StateNodeProps {
 /** Subscripts are set at this share of the label size, lowered by SUB_SHIFT of the label size. */
 const SUB_SCALE = 0.7;
 const SUB_SHIFT = 0.25;
+/** How far outside the circle an issue ring sits. */
+const ISSUE_GAP = 7;
 
 /**
  * Label text as tspans: subscript runs smaller and lowered, the run after one raised back.
@@ -48,7 +52,7 @@ function LabelText(props: { label: string; fontSize: number }): React.JSX.Elemen
 }
 
 export function StateNode(props: StateNodeProps): React.JSX.Element {
-  const { state, accepting, start, active, selected, error, faded, tint, editing } = props;
+  const { state, accepting, start, active, selected, error, faded, tint, issue, editing } = props;
   return (
     <g
       className="av-state"
@@ -61,11 +65,13 @@ export function StateNode(props: StateNodeProps): React.JSX.Element {
       data-error={String(error)}
       data-faded={String(faded)}
       data-tint={tint === undefined ? undefined : String(tint)}
+      data-issue={issue}
       data-editing={editing ? 'true' : undefined}
       transform={`translate(${state.x} ${state.y})`}
     >
       {/* Invisible hit area a little larger than the circle. */}
       <circle className="av-state-hit" r={STATE_RADIUS + HIT_MARGIN} />
+      {issue && <circle className="av-state-issue" r={STATE_RADIUS + ISSUE_GAP} />}
       <circle className="av-state-body" r={STATE_RADIUS} />
       {accepting && <circle className="av-state-ring" r={STATE_RADIUS - ACCEPT_INSET} />}
       <LabelText label={state.label} fontSize={labelFontSize(state.label)} />

@@ -139,6 +139,18 @@ describe('Diagram', () => {
     expect(screen.getByTestId('edge-q1-q0')).toHaveAttribute('data-error', 'true');
   });
 
+  it('rings the states the issues popover points at, in the issue color', () => {
+    render(
+      <Diagram automaton={abDfa} viewport={vp} highlight={{ issueMarks: { q1: 'warning' } }} />,
+    );
+    const q1 = screen.getByTestId('state-q1');
+    expect(q1).toHaveAttribute('data-issue', 'warning');
+    expect(q1.querySelector('.av-state-issue')).not.toBeNull();
+    const q0 = screen.getByTestId('state-q0');
+    expect(q0).not.toHaveAttribute('data-issue');
+    expect(q0.querySelector('.av-state-issue')).toBeNull();
+  });
+
   it('hides states and edges outside visibleStates/visibleTransitions', () => {
     render(<Diagram automaton={abDfa} viewport={vp} highlight={{ visibleStates: ['q0'] }} />);
     expect(screen.getByTestId('state-q0')).toBeInTheDocument();

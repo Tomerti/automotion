@@ -44,6 +44,29 @@ describe('IssuesList', () => {
     expect(screen.getByText('No issues')).toBeInTheDocument();
   });
 
+  it('keeps the message in one element, so the row lays out as a dot and one text', () => {
+    // The row is a flex box: text and <sub> as separate items were spaced apart and wrapped.
+    render(
+      <IssuesList
+        issues={[{ severity: 'error', message: "q_0 needs a transition on '1'", stateId: 'q' }]}
+        onSelect={() => {}}
+      />,
+    );
+    const button = screen.getByRole('button', { name: "q0 needs a transition on '1'" });
+    expect(button.childNodes).toHaveLength(1);
+    expect(button.querySelector('sub')).toHaveTextContent('0');
+  });
+
+  it('leaves quoted symbols alone', () => {
+    render(
+      <IssuesList
+        issues={[{ severity: 'error', message: "q_1 needs a transition on 'a_b'" }]}
+        onSelect={() => {}}
+      />,
+    );
+    expect(screen.getByRole('button').querySelectorAll('sub')).toHaveLength(1);
+  });
+
   it('renders subscripts in state labels', () => {
     render(
       <IssuesList

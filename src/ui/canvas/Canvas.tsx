@@ -1,12 +1,13 @@
 import { useEffect, useMemo } from 'react';
 import type { Automaton } from '../../core/model';
-import { validate } from '../../core/validate';
+import { ignoringIncomplete, validate } from '../../core/validate';
 import { appStore, useAppStore } from '../../store/store';
 import type { Viewport } from '../../store/types';
 import { ContextMenu } from './ContextMenu';
 import { Diagram } from './Diagram';
 import { Arrowhead } from './EdgeView';
 import { InlineInput } from './InlineInput';
+import { useIssueMarks } from './issueMarks';
 import type { Gap } from './snap';
 import { DEFAULT_VIEWPORT, historyInset, useCanvasEditing } from './useCanvasEditing';
 import { fitToViewInset } from './viewport';
@@ -97,8 +98,11 @@ function EditableCanvas(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const issueMarks = useIssueMarks();
   const errors = useMemo(() => {
-    const issues = validate(automaton).filter((i) => i.severity === 'error');
+    // An incomplete DFA is normal mid-build: its states are marked only while the issues
+    // popover is open (`issueMarks`), not painted red all the time.
+    const issues = ignoringIncomplete(validate(automaton)).filter((i) => i.severity === 'error');
     return {
       errorStates: issues.flatMap((i) => (i.stateId ? [i.stateId] : [])),
       errorTransitions: issues.flatMap((i) => (i.transitionId ? [i.transitionId] : [])),
@@ -108,11 +112,12 @@ function EditableCanvas(props: {
   const highlight = useMemo(
     () => ({
       ...errors,
+      issueMarks,
       selectedStates: selection.states,
       selectedTransitions: selection.transitions,
       editing,
     }),
-    [errors, selection, editing],
+    [errors, issueMarks, selection, editing],
   );
 
   return (
