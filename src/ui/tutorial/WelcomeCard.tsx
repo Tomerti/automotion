@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { CloseIcon } from '../shell/icons';
+import { ThemeSwitch } from '../shell/ThemeSwitch';
 import { useModalDialog } from '../shell/useModalDialog';
 import { WelcomeDemo } from './WelcomeDemo';
 import './tutorial.css';
@@ -14,7 +15,8 @@ const PLAN: { what: string; how: string }[] = [
 /**
  * The first visit's welcome: an offer of the tutorial, centred over the canvas (in line with the
  * run pill, covering the empty canvas's hint). Escape, the backdrop, the close button and Not now
- * dismiss it.
+ * dismiss it. Under the demo, a switch picks the theme (the top bar's theme menu does the same),
+ * restyling the demo as you choose.
  */
 export function WelcomeCard({
   onStart,
@@ -57,6 +59,10 @@ export function WelcomeCard({
         </header>
         <p className="av-welcome-tagline">Watch automata come to life.</p>
         <WelcomeDemo />
+        <div className="av-welcome-theme">
+          <span className="av-welcome-text">Theme</span>
+          <ThemeSwitch />
+        </div>
         <p className="av-welcome-text">A short tutorial:</p>
         <ol className="av-welcome-plan">
           {PLAN.map((p, i) => (

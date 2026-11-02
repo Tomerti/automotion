@@ -448,6 +448,17 @@
   left: calc(var(--av-cell) / 2 - 5px);
   border-width: 0 5px 7px;
 }
+/* The theme switch under the demo: the label on the left, the switch on the right. */
+.av-welcome-theme {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 16px;
+}
+.av-welcome-theme .av-welcome-text {
+  margin: 0;
+}
 .av-welcome-text {
   margin: 0 0 2px;
   font-size: 11px;
