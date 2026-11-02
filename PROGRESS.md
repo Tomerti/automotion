@@ -15,8 +15,6 @@ Nothing in progress: pick the next task from the list below.
       incomplete DFA): consider muting it, or saying in the card that it is expected
 - [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
 
-- [ ] LaTeX follow-ups: Export all as one `.tex` file (one picture per automaton); paste LaTeX from the clipboard (Ctrl+V on the canvas) as an import; the exported LaTeX is checked by tests but has not been compiled in CI (no TeX there)
-
 - [ ] Copy and paste follow-ups: Ctrl+X (cut), Ctrl+A (select all), and Shift + click as an alternative to Ctrl + click (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
 
 ## Ideas (later)
@@ -32,6 +30,9 @@ Nothing in progress: pick the next task from the list below.
 - [x] Import… takes `.tex` files: every `tikzpicture` with states becomes an automaton. Reads hand-written TikZ too: nodes `at (x,y)`, by `right=of q0` / `right of=q0` or inside a path; `edge`, `to` and `--`; `loop above`, `bend left=45`, `in`/`out`; `initial` or an arrow drawn into a state; ε as `\varepsilon` / `\epsilon`; symbols comma-separated
 - [x] A `% AutoMotion NFA: name` comment before each exported picture keeps the name and kind on the way back; otherwise the name comes from the file and the kind from the transitions (a DFA when deterministic)
 - [x] An arrow's label side (`labelSide`) survives LaTeX both ways: export writes `swap` when the label is on the right of from→to (`auto` puts it on the left); import reads `swap` / `'` on the edge or its label, `auto=right`, and labels placed by hand (`node[below]`), keeping `labelSide` only where it differs from the automatic side
+- [x] Export all is a menu: Export all as JSON, or Export all as LaTeX (one standalone `.tex`, a `tikzpicture` and page per automaton with states, importing back as every one of them)
+- [x] Ctrl+V with TikZ on the clipboard (copied from Overleaf, notes, …) adds the automata it draws, like Import. The app's own copy still pastes while the window has kept the focus since it was made; once it lost the focus, the paste event looks for LaTeX first (`pasteLatex.ts`)
+- [x] CI compiles the exported LaTeX: e2e `latex-samples.spec.ts` exports through the app (every writer feature, and Export all), and the `latex` job runs pdflatex on each file before deploy
 
 ### Equal spacing
 

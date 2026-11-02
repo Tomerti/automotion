@@ -21,8 +21,9 @@ https://tomerti.github.io/automotion/.
 - `npm run typecheck`, `npm run lint`, `npm run build`
 - `npm run e2e`: Playwright (Chromium) against a production build served by `vite preview` on port 4173.
   First time: `npx playwright install chromium`. One spec: `npx playwright test e2e/convert.spec.ts`.
-- CI (`.github/workflows/ci.yml`) runs typecheck, lint, unit tests and e2e on every push/PR, and deploys
-  to GitHub Pages from `master` only after those pass.
+- CI (`.github/workflows/ci.yml`) runs typecheck, lint, unit tests and e2e on every push/PR, then
+  compiles the LaTeX that e2e `latex-samples.spec.ts` exported (`LATEX_SAMPLES_DIR`) with pdflatex
+  (job `latex`; there is no TeX locally), and deploys to GitHub Pages from `master` only after all pass.
 - Don't run `npm run format` (`prettier --write .`) on this Windows checkout: it rewrites line endings
   repo-wide. Format only the files you touch.
 
@@ -82,7 +83,11 @@ Layers, with dependencies pointing downward only:
   validates it with the zod schema; `latexText.ts` holds the shared conventions (`PX_PER_CM` = 50,
   label/symbol escaping both ways, the `% AutoMotion NFA: name` comment that round-trips kind and
   name). The writer is `ui/canvas/exportLatex.ts` (it needs the canvas geometry: automatic bends and
-  loop directions); `importFile.ts` picks LaTeX by the `.tex` extension or a `\begin{tikzpicture}`.
+  loop directions; `latexDocumentAll` is Export all, a page per automaton); `importFile.ts` picks
+  LaTeX by the `.tex` extension or a `\begin{tikzpicture}`. Ctrl+V with TikZ on the system clipboard
+  imports it too (`ui/shell/pasteLatex.ts`, the window's `paste` event): the canvas's Ctrl+V pastes
+  the app's own clipboard at once while the window kept the focus since the app's last copy, and
+  otherwise defers to the paste event (`deferPaste`) in case something was copied elsewhere.
 - `src/ui/`:
   - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
     states, tints, visibility). Its `data-testid`s and `data-*` attributes are a contract used by tests,
