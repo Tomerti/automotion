@@ -307,15 +307,15 @@ describe('Canvas editing', () => {
     expect(active().transitions).toEqual([]);
   });
 
-  it('typing \\epsilon turns into ε as it is typed', async () => {
+  it('typing \\eps turns into ε as it is typed', async () => {
     const user = userEvent.setup();
     load(two('NFA'));
     render(<Canvas />);
     drawEdge();
     const input = screen.getByTestId('symbol-input');
-    await user.type(input, 'a, \\epsilo');
-    expect(input).toHaveValue('a, \\epsilo');
-    await user.type(input, 'n');
+    await user.type(input, 'a, \\ep');
+    expect(input).toHaveValue('a, \\ep');
+    await user.type(input, 's');
     expect(input).toHaveValue('a, ε');
     await user.type(input, ', b{Enter}');
     expect(active().transitions[0]?.symbols).toEqual(['a', 'ε', 'b']);

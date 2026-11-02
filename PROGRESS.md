@@ -75,6 +75,8 @@ Nothing in progress: pick the next task from the list below.
 
 ### Fixes
 
+- [x] The ε shortcut is `\eps` instead of `\epsilon` (in symbols and in the word box); the
+      Controls popup, run box tooltip and README say so
 - [x] State labels stuttered on every run step at 125%/150% display scaling: the taken edge label's pop was a transform animation on SVG text, which made Chrome redraw the diagram soft and shifted while it ran; it pops by font size now (e2e `welcome-demo.spec.ts` checks at 1.5×)
 - [x] At 100% too, with GPU raster (seen on Windows Chrome), each state's `q` hopped 1 px up and down on every run step (subscripts held still): hinting put its baseline on a different pixel row on different repaints. Diagram text is unhinted now (`text-rendering: geometricPrecision`); Playwright's bundled Chromium doesn't show it, so it was measured from screencast frames in real Chrome
 - [x] A 0 in the tutorial's words and on the run tape read as ∅ (Geist Mono's slashed zero): both are set in Geist now, and Geist Mono is no longer loaded
@@ -132,7 +134,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] The transition being drawn is a solid arrow; over a state it shows the edge (or self-loop) it will create
 - [x] Geist / Geist Mono instead of STIX Two and Schibsted Grotesk; upright labels
 - [x] Controls popup as tabs (Build, Arrange, Run, Keys) with gesture chips instead of sentences; sized to the tallest tab (superseded: now as tall as the open tab)
-- [x] ε or `\epsilon` in the word is the empty word
+- [x] ε or `\eps` in the word is the empty word
 - [x] Run and Convert to DFA play at once; Run has a chime, and an accept/reject cue when the verdict appears
 - [x] Run highlight is a slim orange ring and edge instead of the wide yellow highlighter; the Run button is orange too
 - [x] Theme toggle is light ↔ dark only, light by default (no longer follows the system; superseded: see Theme above)
@@ -140,7 +142,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Minimizing an already minimal DFA ends with "Already minimal" instead of Save; names never stack "(min)" or "→ DFA"
 - [x] A toggles accepting, S toggles start on the selected state (Enter/Space no longer do)
 - [x] Alignment snapping with guides while dragging (Alt skips)
-- [x] `\epsilon` types ε; ε on a DFA turns it into an NFA
+- [x] `\eps` types ε; ε on a DFA turns it into an NFA
 - [x] `\emptyset` types ∅ in a state name
 - [x] Remove the transition table, issues panel and sidebar; derived alphabet; issues chip
 - [x] Minimal top bar with automaton switcher; floating run pill; light/dark theme toggle

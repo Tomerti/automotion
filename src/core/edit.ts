@@ -236,11 +236,11 @@ export function renameAutomaton(a: Automaton, name: string): Automaton {
 }
 
 /** What a user may type for ε in a symbol input. */
-export const EPSILON_ALIASES = ['\\epsilon', 'eps', EPSILON];
+export const EPSILON_ALIASES = ['\\eps', 'eps', EPSILON];
 
-/** Live input normalization: `\epsilon` turns into ε as soon as it is typed. */
+/** Live input normalization: `\eps` turns into ε as soon as it is typed. */
 export function normalizeSymbolText(text: string): string {
-  return text.replaceAll('\\epsilon', EPSILON);
+  return text.replaceAll('\\eps', EPSILON);
 }
 
 /** Live state-name normalization: `\emptyset` turns into ∅ (the dead state's usual name). */

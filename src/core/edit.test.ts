@@ -255,13 +255,13 @@ describe('parseSymbolInput', () => {
     }));
   it('empty input is an empty list', () =>
     expect(parseSymbolInput('  ', 'DFA')).toEqual({ ok: true, symbols: [] }));
-  it('accepts \\epsilon as ε', () =>
-    expect(parseSymbolInput('a, \\epsilon', 'NFA')).toEqual({ ok: true, symbols: ['a', 'ε'] }));
+  it('accepts \\eps as ε', () =>
+    expect(parseSymbolInput('a, \\eps', 'NFA')).toEqual({ ok: true, symbols: ['a', 'ε'] }));
 });
 
 describe('normalizeSymbolText', () => {
-  it('replaces \\epsilon with ε while typing', () =>
-    expect(normalizeSymbolText('a,\\epsilon')).toBe('a,ε'));
+  it('replaces \\eps with ε while typing', () =>
+    expect(normalizeSymbolText('a,\\eps')).toBe('a,ε'));
 });
 
 describe('normalizeStateLabel', () => {

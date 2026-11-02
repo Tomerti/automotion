@@ -130,11 +130,11 @@ describe('runWord', () => {
 });
 
 describe('readWord', () => {
-  it('reads ε and \\epsilon as the empty word', () => {
+  it('reads ε and \\eps as the empty word', () => {
     expect(readWord('ε')).toBe('');
-    expect(readWord('\\epsilon')).toBe('');
+    expect(readWord('\\eps')).toBe('');
     expect(readWord('aεb')).toBe('ab');
-    expect(readWord('a\\epsilonb')).toBe('ab');
+    expect(readWord('a\\epsb')).toBe('ab');
     expect(readWord('0010')).toBe('0010');
   });
 });
