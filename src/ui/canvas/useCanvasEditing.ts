@@ -46,9 +46,9 @@ const ZOOM_STEP = 1.1;
 const LABEL_HIT_RADIUS = 12;
 /** A dragged edge whose bend is within this many screen px of straight snaps straight. */
 const STRAIGHT_SNAP = 6;
-/** A dragged start arrow snaps to the nearest multiple of 45° within this many radians (~8°). */
-const START_ANGLE_STEP = Math.PI / 4;
-const START_ANGLE_SNAP = 0.14;
+/** A dragged start arrow or self-loop snaps to the nearest multiple of 45° within this many radians (~8°). */
+const ANGLE_STEP = Math.PI / 4;
+const ANGLE_SNAP = 0.14;
 /** Keep in sync with .av-edge-label in diagramStyles.ts. */
 const EDGE_LABEL_FONT_SIZE = 15;
 
@@ -551,12 +551,14 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       const bend = Math.abs(raw) * viewport.zoom < STRAIGHT_SNAP ? 0 : raw;
       store.edit((a) => setEdgeBend(a, g.transitionId, bend), { record: false });
     } else if (g.kind === 'loop') {
-      const angle = loopAngleToward(g.center, p);
+      const raw = loopAngleToward(g.center, p);
+      // Alt held: any angle, no snapping.
+      const angle = e.altKey ? raw : snapAngle(raw, ANGLE_STEP, ANGLE_SNAP);
       store.edit((a) => setLoopAngle(a, g.transitionId, angle), { record: false });
     } else if (g.kind === 'start') {
       const raw = loopAngleToward(g.center, p);
       // Alt held: any angle, no snapping.
-      const angle = e.altKey ? raw : snapAngle(raw, START_ANGLE_STEP, START_ANGLE_SNAP);
+      const angle = e.altKey ? raw : snapAngle(raw, ANGLE_STEP, ANGLE_SNAP);
       store.edit((a) => setStartAngle(a, g.stateId, angle), { record: false });
     } else {
       const from = automaton.states.find((s) => s.id === g.from);

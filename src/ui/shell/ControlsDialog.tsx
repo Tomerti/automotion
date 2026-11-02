@@ -53,7 +53,7 @@ const TABS: Tab[] = [
       {
         gesture: { mouse: 'drag', on: 'an arrow' },
         action: 'Bend it',
-        hint: 'A self-loop turns around its state',
+        hint: 'A self-loop turns around its state, in 45° steps; hold Alt to turn freely',
       },
       {
         gesture: { mouse: 'drag', on: 'the start arrow' },
