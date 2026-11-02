@@ -116,7 +116,7 @@ Layers, with dependencies pointing downward only:
     verdict banner), inert and `aria-hidden`; while the welcome is open its `data-testid`s
     (`diagram`, `run-token`, …) exist twice. Finish fits the view and opens `FinishedCard`
     (a random joke from `cheers.ts`, confetti, a fanfare from `player/sound.ts`); ticked steps
-    stay silent. `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish; its `--av-run` is the same orange in both themes.
+    stay silent. `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish; its `--av-run`, like the run's highlighter, is the same orange in both themes (dark mode only darkens the tints).
   - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
     the canvas uses `<tspan>`s).
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain

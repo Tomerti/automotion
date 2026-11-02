@@ -40,6 +40,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] The theme follows the system (light or dark, switching live when the system does) unless the theme menu in the top bar forces Light or Dark; System is the default and the choice is remembered
 - [x] The welcome dialog has its own System / Light / Dark switch under the demo (`ThemeSwitch.tsx`); it and the theme menu show the same choice (`useThemePref`)
 - [x] The run's orange (Run, Start tutorial, Finish, selection) is the light theme's `#d9480f` with white text in dark mode too, instead of a paler orange with dark text
+- [x] The run's highlighter (token, halo, taken edges, active states, the tape's read cell) is light mode's `#f76707` / `#d9480f` in dark mode too; only its tints stay dark, the read cell's a little darker so its letter keeps light mode's contrast
 
 ### Copy image
 
