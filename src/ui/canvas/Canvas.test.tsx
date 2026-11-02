@@ -307,15 +307,15 @@ describe('Canvas editing', () => {
     expect(active().transitions).toEqual([]);
   });
 
-  it('typing \\epsilon turns into ε as it is typed', async () => {
+  it('typing \\eps turns into ε as it is typed', async () => {
     const user = userEvent.setup();
     load(two('NFA'));
     render(<Canvas />);
     drawEdge();
     const input = screen.getByTestId('symbol-input');
-    await user.type(input, 'a, \\epsilo');
-    expect(input).toHaveValue('a, \\epsilo');
-    await user.type(input, 'n');
+    await user.type(input, 'a, \\ep');
+    expect(input).toHaveValue('a, \\ep');
+    await user.type(input, 's');
     expect(input).toHaveValue('a, ε');
     await user.type(input, ', b{Enter}');
     expect(active().transitions[0]?.symbols).toEqual(['a', 'ε', 'b']);
@@ -557,6 +557,32 @@ describe('Canvas editing', () => {
     expect(active().transitions[1]).not.toHaveProperty('loopAngle');
   });
 
+  it('Label on other side in the edge menu flips the label, as one undo step; loops have none', async () => {
+    const user = userEvent.setup();
+    const a = two('DFA', 'ab', [
+      ['q0', 'a', 'q1'],
+      ['q1', 'b', 'q1'],
+    ]);
+    // Bent down: the automatic label is below (right of q0 → q1).
+    load({
+      ...a,
+      transitions: a.transitions.map((t) => (t.from === t.to ? t : { ...t, bend: -30 })),
+    });
+    render(<Canvas />);
+    const flip = async () => {
+      fireEvent.contextMenu(screen.getByTestId('edge-q0-q1'), { clientX: 50, clientY: 30 });
+      await user.click(screen.getByRole('menuitem', { name: 'Label on other side' }));
+    };
+    await flip();
+    expect(active().transitions[0]?.labelSide).toBe('left');
+    expect(st().history.m?.past).toHaveLength(1);
+    await flip();
+    expect(active().transitions[0]?.labelSide).toBe('right');
+
+    fireEvent.contextMenu(screen.getByTestId('edge-q1-q1'), { clientX: 100, clientY: -60 });
+    expect(screen.queryByRole('menuitem', { name: 'Label on other side' })).toBeNull();
+  });
+
   it('the edge context menu edits symbols and deletes; Escape and outside clicks close it', async () => {
     const user = userEvent.setup();
     load(two('DFA', 'ab', [['q0', 'a', 'q1']]));
@@ -567,7 +593,7 @@ describe('Canvas editing', () => {
       within(screen.getByRole('menu'))
         .getAllByRole('menuitem')
         .map((i) => i.textContent),
-    ).toEqual(['Edit symbols', 'Straighten', 'Delete']);
+    ).toEqual(['Edit symbols', 'Label on other side', 'Straighten', 'Delete']);
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).toBeNull();
 
@@ -798,6 +824,82 @@ describe('Canvas editing', () => {
     expect(active().transitions[0]?.bend).toBeCloseTo(40);
   });
 
+  it('dragging an edge label moves it to the side of the arrow the pointer is on, in one undo step', () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q1']]));
+    render(<Canvas />);
+    const label = () => within(screen.getByTestId('edge-q0-q1')).getByTestId('edge-label');
+    expect(Number(label().getAttribute('y'))).toBeCloseTo(-14);
+    fireEvent.pointerDown(label(), at(50, -14));
+    // Still above the arrow: nothing changes yet.
+    fireEvent.pointerMove(diagram(), at(50, -4));
+    expect(active().transitions[0]).not.toHaveProperty('labelSide');
+    fireEvent.pointerMove(diagram(), at(52, 9));
+    expect(active().transitions[0]?.labelSide).toBe('right');
+    expect(Number(label().getAttribute('y'))).toBeCloseTo(14);
+    fireEvent.pointerMove(diagram(), at(52, -9));
+    fireEvent.pointerMove(diagram(), at(52, 12));
+    fireEvent.pointerUp(diagram(), at(52, 12));
+    expect(active().transitions[0]?.labelSide).toBe('right');
+    // The arrow itself is not bent.
+    expect(active().transitions[0]).not.toHaveProperty('bend');
+    expect(st().selection).toEqual({ states: [], transitions: ['q0->q1'] });
+    expect(st().history.m?.past).toHaveLength(1);
+    act(() => st().undo());
+    expect(active().transitions[0]).not.toHaveProperty('labelSide');
+  });
+
+  it('a label dragged along its own side records no history', () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q1']]));
+    render(<Canvas />);
+    const label = within(screen.getByTestId('edge-q0-q1')).getByTestId('edge-label');
+    drag(label, [50, -14], [[70, -30]]);
+    expect(active().transitions[0]).not.toHaveProperty('labelSide');
+    expect(st().history.m?.past ?? []).toHaveLength(0);
+  });
+
+  it('on a bent edge the label moves inside the curve, and dragging the arrow still bends it', () => {
+    const a = two('DFA', 'a', [['q0', 'a', 'q1']]);
+    load({ ...a, transitions: a.transitions.map((t) => ({ ...t, bend: 40 })) });
+    render(<Canvas />);
+    const label = within(screen.getByTestId('edge-q0-q1')).getByTestId('edge-label');
+    // Between the chord and the apex (40 up) is the inside of the curve.
+    drag(
+      label,
+      [50, -54],
+      [
+        [50, -40],
+        [50, -20],
+      ],
+    );
+    expect(active().transitions[0]).toMatchObject({ bend: 40, labelSide: 'right' });
+    drag(
+      screen.getByTestId('edge-q0-q1'),
+      [50, -40],
+      [
+        [50, -50],
+        [50, -60],
+      ],
+    );
+    expect(active().transitions[0]).toMatchObject({ labelSide: 'right' });
+    expect(active().transitions[0]?.bend).toBeCloseTo(60);
+  });
+
+  it("dragging a self-loop's label still rotates the loop", () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q0']]));
+    render(<Canvas />);
+    const label = within(screen.getByTestId('edge-q0-q0')).getByTestId('edge-label');
+    drag(
+      label,
+      [0, -80],
+      [
+        [40, -60],
+        [80, 0],
+      ],
+    );
+    expect(active().transitions[0]?.loopAngle).toBeCloseTo(0);
+    expect(active().transitions[0]).not.toHaveProperty('labelSide');
+  });
+
   it('dragging a self-loop rotates it toward the pointer', () => {
     load(two('DFA', 'a', [['q0', 'a', 'q0']]));
     render(<Canvas />);
@@ -820,6 +922,32 @@ describe('Canvas editing', () => {
     );
     expect(active().transitions[0]?.loopAngle).toBeCloseTo(Math.PI / 2);
     expect(st().history.m?.past).toHaveLength(2);
+  });
+
+  it('a dragged self-loop snaps to 45° unless Alt is held', () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q0']]));
+    render(<Canvas />);
+    // Up round to just off down-right: snaps to 45°.
+    drag(
+      screen.getByTestId('edge-q0-q0'),
+      [0, -60],
+      [
+        [40, -40],
+        [60, 55],
+      ],
+    );
+    expect(active().transitions[0]?.loopAngle).toBeCloseTo(Math.PI / 4);
+    // On round to just off straight down, with Alt: kept as dragged.
+    drag(
+      screen.getByTestId('edge-q0-q0'),
+      [42, 42],
+      [
+        [30, 50],
+        [5, 80],
+      ],
+      { altKey: true },
+    );
+    expect(active().transitions[0]?.loopAngle).toBeCloseTo(Math.atan2(80, 5));
   });
 
   it('dragging the start arrow turns it around its state, snapping to 45° unless Alt is held', () => {
@@ -897,6 +1025,26 @@ describe('Canvas editing', () => {
     fireEvent.pointerMove(diagram(), at(205, 6));
     fireEvent.pointerUp(diagram(), at(205, 6));
     expect(guides()).toHaveLength(0);
+  });
+
+  it('a dragged state snaps to an equal gap along a row, marking the equal gaps', () => {
+    load(fixture({ kind: 'DFA', alphabet: 'a', states: ['q0', 'q1', 'q2'], name: 'm' }));
+    render(<Canvas />);
+    const gaps = () => screen.queryAllByTestId('gap-guide');
+    fireEvent.pointerDown(stateEl('q2'), at(200, 0));
+    fireEvent.pointerMove(diagram(), at(150, 60));
+    expect(gaps()).toHaveLength(0);
+    fireEvent.pointerMove(diagram(), at(205, 3));
+    expect(active().states[2]).toMatchObject({ x: 200, y: 0 });
+    expect(gaps()).toHaveLength(2);
+    expect(gaps()[0]).toHaveClass('av-gap-guide');
+    // Alt places freely, without markers.
+    fireEvent.pointerMove(diagram(), at(205, 3, { altKey: true }));
+    expect(active().states[2]).toMatchObject({ x: 205, y: 3 });
+    expect(gaps()).toHaveLength(0);
+    fireEvent.pointerMove(diagram(), at(205, 3));
+    fireEvent.pointerUp(diagram(), at(205, 3));
+    expect(gaps()).toHaveLength(0);
   });
 
   it('snapping works in screen px under zoom, and Alt turns it off', () => {

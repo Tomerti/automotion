@@ -9,7 +9,6 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; consider a more compact layout or pan/zoom in trace views (the transition table is gone in v2)
-- [ ] Equal-spacing snap guides (Notability-style) in addition to center alignment
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
@@ -33,6 +32,15 @@ Nothing in progress: pick the next task from the list below.
 - [x] Import… takes `.tex` files: every `tikzpicture` with states becomes an automaton. Reads hand-written TikZ too: nodes `at (x,y)`, by `right=of q0` / `right of=q0` or inside a path; `edge`, `to` and `--`; `loop above`, `bend left=45`, `in`/`out`; `initial` or an arrow drawn into a state; ε as `\varepsilon` / `\epsilon`; symbols comma-separated
 - [x] A `% AutoMotion NFA: name` comment before each exported picture keeps the name and kind on the way back; otherwise the name comes from the file and the kind from the transitions (a DFA when deterministic)
 
+### Equal spacing
+
+- [x] A dragged state on a row of states (snapped to their y) also snaps along it to equal gaps: one existing gap past either end, or halfway between two states (where it fits); columns likewise. The nearer of an equal gap and a column alignment wins, Alt skips both
+- [x] Each equal gap gets a marker: a pink dimension line with end ticks just under the row (beside a column), on every gap in the row that matches the dragged state's; never exported
+
+### Arrow labels
+
+- [x] An arrow's symbols can go on either side of it: drag them across the arrow (they snap to the side the pointer is on, one undo step; dragging the line still bends it), or right-click the arrow → Label on other side. On a curve the other side is inside it. Stored as `labelSide` (left / right of from→to), so the label stays put when the arrow is bent or its states move; self-loops keep theirs outside
+
 ### Copy and paste
 
 - [x] Select several states: Ctrl + drag on the empty canvas draws a selection box, Ctrl + click adds or removes a state (or arrow); the arrows between selected states are selected too
@@ -47,6 +55,9 @@ Nothing in progress: pick the next task from the list below.
 ### Theme
 
 - [x] The theme follows the system (light or dark, switching live when the system does) unless the theme menu in the top bar forces Light or Dark; System is the default and the choice is remembered
+- [x] The welcome dialog has its own System / Light / Dark switch under the demo (`ThemeSwitch.tsx`); it and the theme menu show the same choice (`useThemePref`)
+- [x] The run's orange (Run, Start tutorial, Finish, selection) is the light theme's `#d9480f` with white text in dark mode too, instead of a paler orange with dark text
+- [x] The run's highlighter (token, halo, taken edges, active states, the tape's read cell) is light mode's `#f76707` / `#d9480f` in dark mode too; only its tints stay dark, the read cell's a little darker so its letter keeps light mode's contrast
 
 ### Copy image
 
@@ -81,6 +92,8 @@ Nothing in progress: pick the next task from the list below.
 
 ### Fixes
 
+- [x] The ε shortcut is `\eps` instead of `\epsilon` (in symbols and in the word box); the
+      Controls popup, run box tooltip and README say so
 - [x] State labels stuttered on every run step at 125%/150% display scaling: the taken edge label's pop was a transform animation on SVG text, which made Chrome redraw the diagram soft and shifted while it ran; it pops by font size now (e2e `welcome-demo.spec.ts` checks at 1.5×)
 - [x] At 100% too, with GPU raster (seen on Windows Chrome), each state's `q` hopped 1 px up and down on every run step (subscripts held still): hinting put its baseline on a different pixel row on different repaints. Diagram text is unhinted now (`text-rendering: geometricPrecision`); Playwright's bundled Chromium doesn't show it, so it was measured from screencast frames in real Chrome
 - [x] A 0 in the tutorial's words and on the run tape read as ∅ (Geist Mono's slashed zero): both are set in Geist now, and Geist Mono is no longer loaded
@@ -138,7 +151,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] The transition being drawn is a solid arrow; over a state it shows the edge (or self-loop) it will create
 - [x] Geist / Geist Mono instead of STIX Two and Schibsted Grotesk; upright labels
 - [x] Controls popup as tabs (Build, Arrange, Run, Keys) with gesture chips instead of sentences; sized to the tallest tab (superseded: now as tall as the open tab)
-- [x] ε or `\epsilon` in the word is the empty word
+- [x] ε or `\eps` in the word is the empty word
 - [x] Run and Convert to DFA play at once; Run has a chime, and an accept/reject cue when the verdict appears
 - [x] Run highlight is a slim orange ring and edge instead of the wide yellow highlighter; the Run button is orange too
 - [x] Theme toggle is light ↔ dark only, light by default (no longer follows the system; superseded: see Theme above)
@@ -146,7 +159,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Minimizing an already minimal DFA ends with "Already minimal" instead of Save; names never stack "(min)" or "→ DFA"
 - [x] A toggles accepting, S toggles start on the selected state (Enter/Space no longer do)
 - [x] Alignment snapping with guides while dragging (Alt skips)
-- [x] `\epsilon` types ε; ε on a DFA turns it into an NFA
+- [x] `\eps` types ε; ε on a DFA turns it into an NFA
 - [x] `\emptyset` types ∅ in a state name
 - [x] Remove the transition table, issues panel and sidebar; derived alphabet; issues chip
 - [x] Minimal top bar with automaton switcher; floating run pill; light/dark theme toggle
@@ -184,6 +197,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Drag states to reposition them
 - [x] Draw states and transitions directly on the canvas
 - [x] Turn a start arrow to come from any direction (drag it; snaps to 45°, Alt for free)
+- [x] A dragged self-loop snaps to 45° steps too (Alt for free)
 
 ### Running a word
 

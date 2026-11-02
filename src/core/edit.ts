@@ -1,6 +1,6 @@
 import { newId } from './id';
 import { EPSILON } from './model';
-import type { Automaton, AutomatonKind, StateId, Sym, Transition } from './model';
+import type { Automaton, AutomatonKind, LabelSide, StateId, Sym, Transition } from './model';
 import { hasErrors, ignoringIncomplete, validate } from './validate';
 import type { Issue } from './validate';
 
@@ -129,6 +129,24 @@ export function setEdgeBend(
   };
 }
 
+/** Draw an edge's symbols on `side` of it; `undefined` restores the automatic side. */
+export function setLabelSide(
+  a: Automaton,
+  transitionId: string,
+  side: LabelSide | undefined,
+): Automaton {
+  return {
+    ...a,
+    transitions: a.transitions.map((t) => {
+      if (t.id !== transitionId) return t;
+      if (side !== undefined) return { ...t, labelSide: side };
+      const rest = { ...t };
+      delete rest.labelSide;
+      return rest;
+    }),
+  };
+}
+
 /**
  * Turn a state's start arrow so it comes from `angle` (see `State.startAngle`); `undefined`
  * restores the default (from the left).
@@ -236,11 +254,11 @@ export function renameAutomaton(a: Automaton, name: string): Automaton {
 }
 
 /** What a user may type for ε in a symbol input. */
-export const EPSILON_ALIASES = ['\\epsilon', 'eps', EPSILON];
+export const EPSILON_ALIASES = ['\\eps', 'eps', EPSILON];
 
-/** Live input normalization: `\epsilon` turns into ε as soon as it is typed. */
+/** Live input normalization: `\eps` turns into ε as soon as it is typed. */
 export function normalizeSymbolText(text: string): string {
-  return text.replaceAll('\\epsilon', EPSILON);
+  return text.replaceAll('\\eps', EPSILON);
 }
 
 /** Live state-name normalization: `\emptyset` turns into ∅ (the dead state's usual name). */

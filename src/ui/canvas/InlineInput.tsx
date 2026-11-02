@@ -9,7 +9,7 @@ export interface InlineInputProps {
   at: Point;
   /** On-screen font size (px), so the text matches the label it replaces. */
   fontSize: number;
-  /** Live rewrite of the text as it is typed (e.g. `\epsilon` → ε). */
+  /** Live rewrite of the text as it is typed (e.g. `\eps` → ε). */
   normalize?(text: string): string;
   /** Enter pressed. Returns an error to show (the input stays open) or null when done. */
   onSubmit(text: string): string | null;

@@ -17,6 +17,7 @@ export const diagramStyles = `
 .av-state-hit { fill: transparent; stroke: none; }
 .av-edge-hit { fill: none; stroke: transparent; stroke-width: 12; stroke-linecap: round; transition: stroke 0.2s; }
 .av-snap-guide { stroke: var(--av-guide, #2d4fd0); stroke-width: 1; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; pointer-events: none; }
+.av-gap-guide { fill: none; stroke: var(--av-guide-gap, #c2255c); stroke-width: 1.25; stroke-linecap: round; vector-effect: non-scaling-stroke; pointer-events: none; }
 .av-state[data-editing="true"] .av-state-label, .av-edge[data-editing="true"] .av-edge-label { visibility: hidden; }
 .av-edge-path { fill: none; stroke: var(--av-edge-stroke, #3a4356); stroke-width: 1.4; stroke-linecap: round; transition: stroke 0.2s, stroke-width 0.2s; }
 .av-edge-head { fill: var(--av-edge-stroke, #3a4356); transition: fill 0.2s; }

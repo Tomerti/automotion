@@ -19,6 +19,7 @@ import {
   renameState,
   setEdgeBend,
   setEdgeSymbols,
+  setLabelSide,
   setKind,
   setLoopAngle,
   setStart,
@@ -255,13 +256,13 @@ describe('parseSymbolInput', () => {
     }));
   it('empty input is an empty list', () =>
     expect(parseSymbolInput('  ', 'DFA')).toEqual({ ok: true, symbols: [] }));
-  it('accepts \\epsilon as ε', () =>
-    expect(parseSymbolInput('a, \\epsilon', 'NFA')).toEqual({ ok: true, symbols: ['a', 'ε'] }));
+  it('accepts \\eps as ε', () =>
+    expect(parseSymbolInput('a, \\eps', 'NFA')).toEqual({ ok: true, symbols: ['a', 'ε'] }));
 });
 
 describe('normalizeSymbolText', () => {
-  it('replaces \\epsilon with ε while typing', () =>
-    expect(normalizeSymbolText('a,\\epsilon')).toBe('a,ε'));
+  it('replaces \\eps with ε while typing', () =>
+    expect(normalizeSymbolText('a,\\eps')).toBe('a,ε'));
 });
 
 describe('normalizeStateLabel', () => {
@@ -295,6 +296,15 @@ describe('derived alphabet and edge shape', () => {
     expect(bent.transitions[0]?.bend).toBe(20);
     expect('bend' in (setEdgeBend(bent, id, undefined).transitions[0] ?? {})).toBe(false);
     expect(setLoopAngle(a, id, 1).transitions[0]?.loopAngle).toBe(1);
+  });
+
+  it('sets and clears the side of an edge label', () => {
+    const a = dfa();
+    const id = a.transitions[0]?.id ?? '';
+    const below = setLabelSide(a, id, 'right');
+    expect(below.transitions[0]?.labelSide).toBe('right');
+    expect(below.transitions[1]).not.toHaveProperty('labelSide');
+    expect(setLabelSide(below, id, undefined).transitions[0]).not.toHaveProperty('labelSide');
   });
 
   it('turns a start arrow and restores it to the default', () => {

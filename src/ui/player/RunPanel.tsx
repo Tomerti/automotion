@@ -7,7 +7,7 @@ import { playRunSound } from './sound';
 
 /**
  * The floating "test a word" pill at the bottom of the canvas; Enter runs, with a chime, and the
- * player starts playing at once. ε (or `\epsilon`) is the empty word. The shell keeps it
+ * player starts playing at once. ε (or `\eps`) is the empty word. The shell keeps it
  * mounted but `hidden` while a trace is open, so the word survives for the next run.
  */
 export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.Element {
@@ -33,7 +33,7 @@ export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.El
       <input
         aria-label="Word"
         placeholder="Test a word…"
-        title="Type ε (or \epsilon), or leave it empty, to test the empty word"
+        title="Type ε (or \eps), or leave it empty, to test the empty word"
         autoComplete="off"
         spellCheck={false}
         value={word}

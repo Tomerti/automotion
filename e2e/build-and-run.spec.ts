@@ -55,13 +55,13 @@ test('build a DFA, rename a state, and run a word', async ({ page }) => {
   await expect(page.getByTestId('verdict')).toContainText('Accepted');
 });
 
-test('\\epsilon turns into ε and makes the automaton an NFA', async ({ page }) => {
+test('\\eps turns into ε and makes the automaton an NFA', async ({ page }) => {
   await openApp(page, { clear: true });
   await addStateAt(page, 150, 150);
   await addStateAt(page, 400, 150);
   await shiftDrag(page, 'q_0', 'q_1');
   const input = page.getByTestId('symbol-input');
-  await input.pressSequentially('\\epsilon');
+  await input.pressSequentially('\\eps');
   await expect(input).toHaveValue('ε');
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('edge-q_0-q_1').getByTestId('edge-label')).toHaveText('ε');

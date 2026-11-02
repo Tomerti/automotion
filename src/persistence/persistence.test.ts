@@ -32,6 +32,17 @@ describe('fileFormat', () => {
     expect(parseFile(serialize([a]), new Set())).toEqual({ ok: true, automata: [a] });
   });
 
+  it('keeps the side of an edge label; rejects an unknown side', () => {
+    const s = sample();
+    const a = {
+      ...s,
+      transitions: s.transitions.map((t) => ({ ...t, labelSide: 'right' as const })),
+    };
+    expect(parseFile(serialize([a]), new Set())).toEqual({ ok: true, automata: [a] });
+    const bad = serialize([a]).replace('"labelSide": "right"', '"labelSide": "up"');
+    expect(parseFile(bad, new Set()).ok).toBe(false);
+  });
+
   it('serializes with the format header and 2-space indent', () => {
     const text = serialize([sample()]);
     expect(text).toContain('\n  "format": "automotion"');

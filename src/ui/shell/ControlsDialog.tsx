@@ -36,7 +36,7 @@ const TABS: Tab[] = [
       {
         gesture: { mouse: 'double', on: 'an arrow' },
         action: 'Edit its symbols',
-        hint: 'Type \\epsilon for ε',
+        hint: 'Type \\eps for ε',
       },
       { gesture: { mouse: 'right', on: 'state or arrow' }, action: 'More options' },
     ],
@@ -48,12 +48,17 @@ const TABS: Tab[] = [
       {
         gesture: { mouse: 'drag', on: 'a state' },
         action: 'Move it',
-        hint: 'The rest of the selection moves along. Snaps into line; hold Alt to place freely',
+        hint: 'The rest of the selection moves along. Snaps into line and to equal gaps; hold Alt to place freely',
       },
       {
         gesture: { mouse: 'drag', on: 'an arrow' },
         action: 'Bend it',
-        hint: 'A self-loop turns around its state',
+        hint: 'A self-loop turns around its state, in 45° steps; hold Alt to turn freely',
+      },
+      {
+        gesture: { mouse: 'drag', on: 'an arrow’s symbols' },
+        action: 'Move them to the other side',
+        hint: 'Above or below it; inside or outside a curve',
       },
       {
         gesture: { mouse: 'drag', on: 'the start arrow' },

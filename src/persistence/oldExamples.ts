@@ -110,7 +110,8 @@ export function isUntouchedOldExample(a: Automaton): boolean {
           t.to === to &&
           sameSet(t.symbols, symbols) &&
           t.bend === undefined &&
-          t.loopAngle === undefined,
+          t.loopAngle === undefined &&
+          t.labelSide === undefined,
       ),
     );
   return statesMatch && transitionsMatch;

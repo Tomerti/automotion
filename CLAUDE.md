@@ -33,7 +33,9 @@ Layers, with dependencies pointing downward only:
 - `src/core/`: pure TypeScript, no React. Must not import from `layout/`, `store/`, `persistence/` or `ui/`.
   - `model.ts`: one `Automaton` type for DFAs and NFAs (`kind` selects the rules). States carry their own
     `x`/`y` (and an optional `startAngle`, the direction their start arrow comes from; default the
-    left); at most one `Transition` per (from, to) pair, holding all its `symbols`. `EPSILON = 'ε'`
+    left); at most one `Transition` per (from, to) pair, holding all its `symbols` (and an optional
+    `bend`, `loopAngle`, and `labelSide`: the side of from→to its symbols are drawn on, absent
+    meaning outside the curve; `geometry.ts` `labelSideOf`). `EPSILON = 'ε'`
     never appears in `alphabet`; the symbol type is `Sym` (not `Symbol`). `starts` lists the start
     states: at most one on a DFA, any number on an NFA (accepting when a run from any of them does);
     `startStates(a)` ignores stale ids. Converting a multi-start NFA first adds a single start state
@@ -84,11 +86,13 @@ Layers, with dependencies pointing downward only:
   - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
     states, tints, visibility). Its `data-testid`s and `data-*` attributes are a contract used by tests,
     e2e and export. `useCanvasEditing.ts` holds all editing gestures; pointer capture starts only once a
-    drag crosses 3 px, so double-clicks keep their real target. Pure math is in `geometry.ts` / `viewport.ts`.
+    drag crosses 3 px, so double-clicks keep their real target. Pure math is in `geometry.ts` / `viewport.ts`;
+    `snap.ts` snaps a dragged state (alignment guides and equal-gap markers, both kept out of exports).
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button.
   - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip,
-    theme menu (System / Light / Dark: `theme.ts` resolves it to `<html data-theme>`), Controls popup), the left history bar (`HistoryBar.tsx`, floating over the full-width canvas so everything stays
+    theme menu (System / Light / Dark: `theme.ts` resolves it to `<html data-theme>`; the welcome's
+    `ThemeSwitch` picks it too, and both follow `saveTheme` through `useThemePref` in `themeChoices.ts`), Controls popup), the left history bar (`HistoryBar.tsx`, floating over the full-width canvas so everything stays
     centred on the window; fits keep `--av-history-inset` clear on both sides: every automaton with a
     `canvas/Thumbnail.tsx` picture, newest edit first, a ⋯ menu per entry for rename / duplicate /
     export / delete (`store.duplicateAutomaton`), Delete/Backspace on a focused entry deletes it (after a confirm), Create (a blank DFA
@@ -121,7 +125,7 @@ Layers, with dependencies pointing downward only:
     verdict banner), inert and `aria-hidden`; while the welcome is open its `data-testid`s
     (`diagram`, `run-token`, …) exist twice. Finish fits the view and opens `FinishedCard`
     (a random joke from `cheers.ts`, confetti, a fanfare from `player/sound.ts`); ticked steps
-    stay silent. `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish.
+    stay silent. `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish; its `--av-run`, like the run's highlighter, is the same orange in both themes (dark mode only darkens the tints).
   - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
     the canvas uses `<tspan>`s).
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain

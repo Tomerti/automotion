@@ -1,22 +1,16 @@
-import { useEffect, useReducer, useRef, useState } from 'react';
-import { CheckIcon, DarkThemeIcon, LightThemeIcon, SystemThemeIcon } from './icons';
-import { followSystemTheme, readTheme, saveTheme, systemTheme, THEME_PREFS } from './theme';
+import { useEffect, useReducer, useRef } from 'react';
+import { CheckIcon } from './icons';
+import { followSystemTheme, saveTheme, systemTheme, THEME_PREFS } from './theme';
 import type { ThemePref } from './theme';
+import { THEME_ICON as ICON, THEME_LABEL as LABEL, useThemePref } from './themeChoices';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
-
-const LABEL: Record<ThemePref, string> = { system: 'System', light: 'Light', dark: 'Dark' };
-const ICON: Record<ThemePref, () => React.JSX.Element> = {
-  system: SystemThemeIcon,
-  light: LightThemeIcon,
-  dark: DarkThemeIcon,
-};
 
 /**
  * The theme button: its icon shows the current choice, and it opens a menu to follow the
  * system (the default) or force light or dark.
  */
 export function ThemeMenu(): React.JSX.Element {
-  const [pref, setPref] = useState<ThemePref>(readTheme);
+  const pref = useThemePref();
   const { open, setOpen, rootRef, triggerRef } = usePopover();
   const menuRef = useRef<HTMLDivElement>(null);
   // Re-render when the system switches, so "System (dark)" stays true.
@@ -34,7 +28,6 @@ export function ThemeMenu(): React.JSX.Element {
   const shown = pref === 'system' ? `system (${systemTheme()})` : pref;
   const choose = (next: ThemePref): void => {
     saveTheme(next);
-    setPref(next);
     setOpen(false);
     triggerRef.current?.focus();
   };

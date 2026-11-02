@@ -7,7 +7,7 @@ import type { RunStep, RunTrace } from './trace';
 import { hasErrors, ignoringIncomplete, validate } from './validate';
 
 /**
- * The word to run for what the user typed: `\epsilon` reads as ε, and ε is the empty word, so
+ * The word to run for what the user typed: `\eps` reads as ε, and ε is the empty word, so
  * `ε` runs the empty word and `aεb` runs `ab`.
  */
 export function readWord(text: string): string {
