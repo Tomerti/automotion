@@ -36,7 +36,7 @@ const TABS: Tab[] = [
       {
         gesture: { mouse: 'double', on: 'an arrow' },
         action: 'Edit its symbols',
-        hint: 'Type \\epsilon for ε',
+        hint: 'Type \\eps for ε',
       },
       { gesture: { mouse: 'right', on: 'state or arrow' }, action: 'More options' },
     ],
