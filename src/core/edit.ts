@@ -1,6 +1,6 @@
 import { newId } from './id';
 import { EPSILON } from './model';
-import type { Automaton, AutomatonKind, StateId, Sym, Transition } from './model';
+import type { Automaton, AutomatonKind, LabelSide, StateId, Sym, Transition } from './model';
 import { hasErrors, ignoringIncomplete, validate } from './validate';
 import type { Issue } from './validate';
 
@@ -124,6 +124,24 @@ export function setEdgeBend(
       if (bend !== undefined) return { ...t, bend };
       const rest = { ...t };
       delete rest.bend;
+      return rest;
+    }),
+  };
+}
+
+/** Draw an edge's symbols on `side` of it; `undefined` restores the automatic side. */
+export function setLabelSide(
+  a: Automaton,
+  transitionId: string,
+  side: LabelSide | undefined,
+): Automaton {
+  return {
+    ...a,
+    transitions: a.transitions.map((t) => {
+      if (t.id !== transitionId) return t;
+      if (side !== undefined) return { ...t, labelSide: side };
+      const rest = { ...t };
+      delete rest.labelSide;
       return rest;
     }),
   };

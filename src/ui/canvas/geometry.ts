@@ -1,5 +1,5 @@
 import { labelDisplayText } from '../../core/label';
-import type { Automaton, State } from '../../core/model';
+import type { Automaton, LabelSide, State } from '../../core/model';
 
 export type Point = { x: number; y: number };
 
@@ -62,17 +62,42 @@ export function snapAngle(angle: number, step: number, tolerance: number): numbe
   return snapped <= -Math.PI ? snapped + 2 * Math.PI : snapped;
 }
 
+/** The side an edge's label is drawn on: `labelSide` when set, else outside the curve (left when straight). */
+export function labelSideOf(bend: number, labelSide: LabelSide | undefined): LabelSide {
+  return labelSide ?? (bend < 0 ? 'right' : 'left');
+}
+
+/**
+ * The side of the edge from → to, bent by `bend`, that `p` is on: the side whose label spot is
+ * nearer. The two spots mirror each other across the drawn curve's apex, so this splits at the
+ * curve's tangent there.
+ */
+export function labelSideAt(from: Point, to: Point, bend: number, p: Point): LabelSide {
+  const dist = (side: LabelSide): number => {
+    const { label } = edgeGeometry(from, to, bend, side);
+    return Math.hypot(p.x - label.x, p.y - label.y);
+  };
+  return dist('right') < dist('left') ? 'right' : 'left';
+}
+
 /**
  * Edge from one state circle to another. `bend` is the apex's signed offset from the chord
- * (0 = straight), positive to the left of from→to (screen view).
+ * (0 = straight), positive to the left of from→to (screen view). The label goes on `labelSide`
+ * (see `labelSideOf`).
  */
-export function edgeGeometry(from: Point, to: Point, bend: number): PathGeometry {
+export function edgeGeometry(
+  from: Point,
+  to: Point,
+  bend: number,
+  labelSide?: LabelSide,
+): PathGeometry {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const len = Math.hypot(dx, dy) || 1;
   // Left of the direction of travel as seen on screen (y grows downward).
   const normal = { x: dy / len, y: -dx / len };
   const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+  const side = labelSideOf(bend, labelSide) === 'left' ? 1 : -1;
 
   if (bend === 0) {
     const ux = dx / len;
@@ -81,7 +106,7 @@ export function edgeGeometry(from: Point, to: Point, bend: number): PathGeometry
     const end = { x: to.x - ux * STATE_RADIUS, y: to.y - uy * STATE_RADIUS };
     return {
       d: `M ${pt(start)} L ${pt(end)}`,
-      label: { x: mid.x + normal.x * LABEL_GAP, y: mid.y + normal.y * LABEL_GAP },
+      label: { x: mid.x + side * normal.x * LABEL_GAP, y: mid.y + side * normal.y * LABEL_GAP },
       end,
       endAngle: Math.atan2(uy, ux),
     };
@@ -89,7 +114,6 @@ export function edgeGeometry(from: Point, to: Point, bend: number): PathGeometry
 
   // Quadratic control point placed so the curve's apex is `bend` from the chord.
   const ctrl = { x: mid.x + normal.x * bend * 2, y: mid.y + normal.y * bend * 2 };
-  const side = Math.sign(bend);
   const toward = (c: Point, target: Point): Point => {
     const vx = target.x - c.x;
     const vy = target.y - c.y;
@@ -163,7 +187,7 @@ export function transitionGeometry(a: Automaton, from: State, to: State): PathGe
   const own = a.transitions.find((t) => t.from === from.id && t.to === to.id);
   if (from.id !== to.id) {
     const hasReverse = a.transitions.some((t) => t.from === to.id && t.to === from.id);
-    return edgeGeometry(from, to, own?.bend ?? autoBend(hasReverse));
+    return edgeGeometry(from, to, own?.bend ?? autoBend(hasReverse), own?.labelSide);
   }
   if (own?.loopAngle !== undefined) return selfLoopGeometry(from, own.loopAngle);
   const neighbors: Point[] = a.transitions

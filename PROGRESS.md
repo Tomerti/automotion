@@ -28,6 +28,10 @@ Nothing in progress: pick the next task from the list below.
 - [x] A dragged state on a row of states (snapped to their y) also snaps along it to equal gaps: one existing gap past either end, or halfway between two states (where it fits); columns likewise. The nearer of an equal gap and a column alignment wins, Alt skips both
 - [x] Each equal gap gets a marker: a pink dimension line with end ticks just under the row (beside a column), on every gap in the row that matches the dragged state's; never exported
 
+### Arrow labels
+
+- [x] An arrow's symbols can go on either side of it: drag them across the arrow (they snap to the side the pointer is on, one undo step; dragging the line still bends it), or right-click the arrow → Label on other side. On a curve the other side is inside it. Stored as `labelSide` (left / right of from→to), so the label stays put when the arrow is bent or its states move; self-loops keep theirs outside
+
 ### Copy and paste
 
 - [x] Select several states: Ctrl + drag on the empty canvas draws a selection box, Ctrl + click adds or removes a state (or arrow); the arrows between selected states are selected too
