@@ -55,6 +55,17 @@ export function applyTheme(pref: ThemePref): void {
   document.documentElement.setAttribute('data-theme', resolveTheme(pref));
 }
 
+const saved = new Set<(pref: ThemePref) => void>();
+
+/**
+ * Call `listener` with each choice `saveTheme` makes, so every control showing the choice (the
+ * theme menu, the welcome's switch) agrees. Returns the unsubscribe.
+ */
+export function onThemeSaved(listener: (pref: ThemePref) => void): () => void {
+  saved.add(listener);
+  return () => saved.delete(listener);
+}
+
 /** Apply and remember `pref`. Storage is best-effort. */
 export function saveTheme(pref: ThemePref): void {
   applyTheme(pref);
@@ -65,6 +76,7 @@ export function saveTheme(pref: ThemePref): void {
   } catch {
     // Not persisted; the choice still holds for this visit.
   }
+  saved.forEach((l) => l(pref));
 }
 
 /**

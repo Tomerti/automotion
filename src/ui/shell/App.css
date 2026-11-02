@@ -606,6 +606,41 @@ input.av-switcher-input {
   background: var(--av-hover);
 }
 
+/* The welcome's System / Light / Dark switch, a smaller DFA/NFA pill with icons. */
+.av-theme-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--av-surface-raised);
+  border: 1px solid var(--av-rule-strong);
+  border-radius: 999px;
+}
+.av-theme-switch button,
+.av-theme-switch button[aria-pressed='true'] {
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 11px 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--av-ink-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+}
+.av-theme-switch .av-icon {
+  width: 15px;
+  height: 15px;
+}
+.av-theme-switch button:hover:not(:disabled) {
+  color: var(--av-ink);
+  background: transparent;
+}
+.av-theme-switch button[aria-pressed='true'],
+.av-theme-switch button[aria-pressed='true']:hover:not(:disabled) {
+  color: var(--av-ink);
+  background: var(--av-hover);
+}
+
 /* Empty state (no automaton) */
 
 .av-canvas-empty {

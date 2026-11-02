@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it } from 'vitest';
 import { resetAppStore } from '../../store/store';
 import App from '../shell/App';
 import { SEEN_HELP_KEY } from '../shell/help';
+import { applyTheme, THEME_KEY } from '../shell/theme';
 import { endTutorial } from './tutorialStore';
 
 const welcome = () => screen.queryByRole('dialog', { name: 'Welcome' });
@@ -11,6 +12,8 @@ const welcome = () => screen.queryByRole('dialog', { name: 'Welcome' });
 beforeEach(() => {
   resetAppStore();
   localStorage.removeItem(SEEN_HELP_KEY);
+  localStorage.removeItem(THEME_KEY);
+  applyTheme('system');
 });
 afterEach(() => {
   act(() => endTutorial());
@@ -70,12 +73,36 @@ it('Not now and Escape close it without a tutorial', async () => {
   expect(welcome()).toBeNull();
 });
 
+it('picks the theme, like the top bar theme menu, without closing', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  const pick = within(within(welcome()!).getByRole('group', { name: 'Theme' }));
+  expect(pick.getAllByRole('button').map((b) => b.textContent)).toEqual([
+    'System',
+    'Light',
+    'Dark',
+  ]);
+  expect(pick.getByRole('button', { name: 'System' })).toHaveAttribute('aria-pressed', 'true');
+
+  await user.click(pick.getByRole('button', { name: 'Dark' }));
+  expect(welcome()).not.toBeNull();
+  expect(pick.getByRole('button', { name: 'Dark' })).toHaveAttribute('aria-pressed', 'true');
+  expect(pick.getByRole('button', { name: 'System' })).toHaveAttribute('aria-pressed', 'false');
+  expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
+  expect(localStorage.getItem(THEME_KEY)).toBe('dark');
+  expect(screen.getByRole('button', { name: 'Theme: dark' })).toBeInTheDocument();
+
+  await user.click(pick.getByRole('button', { name: 'System' }));
+  expect(localStorage.getItem(THEME_KEY)).toBeNull();
+  expect(screen.getByRole('button', { name: 'Theme: system' })).toBeInTheDocument();
+});
+
 it('keeps Tab inside the dialog', async () => {
   const user = userEvent.setup();
   render(<App />);
   const d = welcome()!;
   expect(d).toHaveFocus();
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 7; i++) {
     await user.tab();
     expect(d).toContainElement(document.activeElement as HTMLElement);
   }

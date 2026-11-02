@@ -104,8 +104,7 @@
   --av-highlighter-soft: #5a2d0c;
   --av-highlighter-band: #ff922b38;
   --av-highlighter-ink: #ffa94d;
-  --av-run: #ff922b;
-  --av-on-run: #1f1206;
+  /* --av-run and --av-on-run stay the light ones: the Run pill is one orange in both themes. */
 
   --av-edge-stroke: #b9c0cc;
   --av-active-stroke: var(--av-highlighter);
