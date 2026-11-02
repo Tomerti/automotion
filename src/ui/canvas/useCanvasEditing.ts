@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { internalTransitions } from '../../core/clipboard';
 import {
   addState,
@@ -34,6 +34,7 @@ import {
   type PathGeometry,
   type Point,
 } from './geometry';
+import { snapPosition, type Snap } from './snap';
 import { fitToViewInset, screenToWorld, zoomAt } from './viewport';
 
 export const DEFAULT_VIEWPORT: Viewport = { x: 0, y: 0, zoom: 1 };
@@ -45,8 +46,6 @@ const ZOOM_STEP = 1.1;
 const LABEL_HIT_RADIUS = 12;
 /** A dragged edge whose bend is within this many screen px of straight snaps straight. */
 const STRAIGHT_SNAP = 6;
-/** A dragged state within this many screen px of another's x or y snaps to it. */
-const ALIGN_SNAP = 8;
 /** A dragged start arrow snaps to the nearest multiple of 45° within this many radians (~8°). */
 const START_ANGLE_STEP = Math.PI / 4;
 const START_ANGLE_SNAP = 0.14;
@@ -54,6 +53,10 @@ const START_ANGLE_SNAP = 0.14;
 const EDGE_LABEL_FONT_SIZE = 15;
 
 const NO_SELECTION: Selection = { states: [], transitions: [] };
+const NO_SNAP_MARKS: SnapMarks = { guides: [], gaps: [] };
+
+/** The snap guides and equal-gap markers of the state being dragged. */
+type SnapMarks = Omit<Snap, 'pos'>;
 
 type Gesture = { pointerId: number; start: Point; moved: boolean } & (
   | { kind: 'pan'; viewport: Viewport }
@@ -86,14 +89,6 @@ export interface Box {
   y: number;
   width: number;
   height: number;
-}
-
-/** A dashed alignment guide, in world coordinates. */
-export interface Guide {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
 }
 
 interface InlineEdit {
@@ -280,50 +275,6 @@ function straighten(a: Automaton, transitionId: string): Automaton {
   };
 }
 
-/**
- * Snap a dragged state's position to other states' x and y (each axis on its own, within
- * ALIGN_SNAP screen px), with a guide through every state on each snapped line.
- */
-export function alignSnap(
-  pos: Point,
-  others: Point[],
-  zoom: number,
-): { pos: Point; guides: Guide[] } {
-  const nearest = (axis: 'x' | 'y'): number | undefined => {
-    let best: number | undefined;
-    for (const o of others) {
-      const d = Math.abs(o[axis] - pos[axis]) * zoom;
-      if (d <= ALIGN_SNAP && (best === undefined || d < Math.abs(best - pos[axis]) * zoom)) {
-        best = o[axis];
-      }
-    }
-    return best;
-  };
-  const x = nearest('x');
-  const y = nearest('y');
-  const snapped = { x: x ?? pos.x, y: y ?? pos.y };
-  const guides: Guide[] = [];
-  if (x !== undefined) {
-    const ys = [snapped.y, ...others.filter((o) => o.x === x).map((o) => o.y)];
-    guides.push({
-      x1: x,
-      y1: Math.min(...ys) - STATE_RADIUS,
-      x2: x,
-      y2: Math.max(...ys) + STATE_RADIUS,
-    });
-  }
-  if (y !== undefined) {
-    const xs = [snapped.x, ...others.filter((o) => o.y === y).map((o) => o.x)];
-    guides.push({
-      x1: Math.min(...xs) - STATE_RADIUS,
-      y1: y,
-      x2: Math.max(...xs) + STATE_RADIUS,
-      y2: y,
-    });
-  }
-  return { pos: snapped, guides };
-}
-
 /** World position of an edge's label, read from the rendered diagram. */
 function edgeLabelPoint(edgeEl: Element, fallback: Point): Point {
   const label = edgeEl.querySelector('[data-testid="edge-label"]');
@@ -341,13 +292,15 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
   const locked = useAppStore((s) => s.trace !== null);
   const selection = useAppStore((s) => s.selection);
   const [rubberBand, setRubberBand] = useState<RubberBand | null>(null);
-  const [guides, setGuides] = useState<Guide[]>([]);
+  const [snapMarks, setSnapMarks] = useState<SnapMarks>(NO_SNAP_MARKS);
   const [box, setBox] = useState<Box | null>(null);
   /** Where the pointer last was over the canvas (client px), for pasting there. */
   const pointer = useRef<Point | null>(null);
   /** The current viewport, for the app-wide paste key listener. */
   const viewportRef = useRef(viewport);
-  viewportRef.current = viewport;
+  useLayoutEffect(() => {
+    viewportRef.current = viewport;
+  });
   const [inline, setInline] = useState<InlineEdit | null>(null);
   const [menu, setMenu] = useState<MenuView | null>(null);
 
@@ -449,7 +402,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     gesture.current = null;
     svgRef.current?.removeAttribute('data-dragging');
     setRubberBand(null);
-    setGuides([]);
+    setSnapMarks(NO_SNAP_MARKS);
     setBox(null);
     return g;
   };
@@ -581,13 +534,13 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       });
     } else if (g.kind === 'move') {
       let pos = { x: p.x - g.offset.x, y: p.y - g.offset.y };
-      let lines: Guide[] = [];
+      let marks = NO_SNAP_MARKS;
       // Alt held: free placement, no snapping. A group snaps to the states that stay put.
       if (!e.altKey) {
         const others = automaton.states.filter((s) => !g.group.some((m) => m.id === s.id));
-        ({ pos, guides: lines } = alignSnap(pos, others, viewport.zoom));
+        ({ pos, ...marks } = snapPosition(pos, others, viewport.zoom));
       }
-      setGuides(lines);
+      setSnapMarks(marks);
       store.edit(
         (a) =>
           g.group.reduce((out, m) => moveState(out, m.id, { x: pos.x + m.dx, y: pos.y + m.dy }), a),
@@ -847,7 +800,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
           gesture.current = null;
           svgRef.current?.removeAttribute('data-dragging');
           setRubberBand(null);
-          setGuides([]);
+          setSnapMarks(NO_SNAP_MARKS);
           setInline(null);
           setMenu(null);
         }
@@ -884,7 +837,8 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     svgRef,
     selection,
     rubberBand: rubberBand ?? inline?.draft ?? null,
-    guides,
+    guides: snapMarks.guides,
+    gaps: snapMarks.gaps,
     box,
     inline: inlineView,
     /** Id of the state or transition whose label the inline input covers. */

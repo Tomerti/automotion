@@ -899,6 +899,26 @@ describe('Canvas editing', () => {
     expect(guides()).toHaveLength(0);
   });
 
+  it('a dragged state snaps to an equal gap along a row, marking the equal gaps', () => {
+    load(fixture({ kind: 'DFA', alphabet: 'a', states: ['q0', 'q1', 'q2'], name: 'm' }));
+    render(<Canvas />);
+    const gaps = () => screen.queryAllByTestId('gap-guide');
+    fireEvent.pointerDown(stateEl('q2'), at(200, 0));
+    fireEvent.pointerMove(diagram(), at(150, 60));
+    expect(gaps()).toHaveLength(0);
+    fireEvent.pointerMove(diagram(), at(205, 3));
+    expect(active().states[2]).toMatchObject({ x: 200, y: 0 });
+    expect(gaps()).toHaveLength(2);
+    expect(gaps()[0]).toHaveClass('av-gap-guide');
+    // Alt places freely, without markers.
+    fireEvent.pointerMove(diagram(), at(205, 3, { altKey: true }));
+    expect(active().states[2]).toMatchObject({ x: 205, y: 3 });
+    expect(gaps()).toHaveLength(0);
+    fireEvent.pointerMove(diagram(), at(205, 3));
+    fireEvent.pointerUp(diagram(), at(205, 3));
+    expect(gaps()).toHaveLength(0);
+  });
+
   it('snapping works in screen px under zoom, and Alt turns it off', () => {
     load(two());
     st().setViewport('m', { x: 0, y: 0, zoom: 2 });
