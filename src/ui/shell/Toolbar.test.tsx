@@ -35,7 +35,7 @@ describe('Toolbar', () => {
     expect(btn('Undo')).toHaveAttribute('title', 'Undo (Ctrl+Z)');
     expect(btn('Fit')).toHaveAttribute('title', 'Fit to view');
     expect(btn('Tidy')).toHaveAttribute('title', 'Tidy the layout');
-    expect(btn('Export image')).toHaveAttribute('title', 'Copy or export the image');
+    expect(btn('Export image')).toHaveAttribute('title', 'Copy or export the image or its LaTeX');
   });
 
   it('Minimize is disabled with a reason on an NFA', () => {
@@ -156,6 +156,28 @@ describe('Toolbar', () => {
       expect(Object.keys(written[0]![0]!.items)).toEqual(['image/png']);
       await waitFor(() =>
         expect(toastStore.getState().toasts).toMatchObject([{ message: 'Image copied' }]),
+      );
+    });
+
+    it('Copy LaTeX puts the TikZ picture on the clipboard as text', async () => {
+      const user = userEvent.setup();
+      const texts: string[] = [];
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: async (t: string) => {
+            texts.push(t);
+          },
+        },
+        configurable: true,
+      });
+      renderWithDiagram();
+      await user.click(btn('Export image'));
+      await user.click(screen.getByRole('menuitem', { name: 'Copy LaTeX' }));
+      expect(texts).toHaveLength(1);
+      expect(texts[0]).toMatch(/^% AutoMotion NFA: .*\n% Needs \\usepackage\{tikz\}/);
+      expect(texts[0]).toContain('\\begin{tikzpicture}');
+      await waitFor(() =>
+        expect(toastStore.getState().toasts).toMatchObject([{ message: 'LaTeX copied' }]),
       );
     });
 

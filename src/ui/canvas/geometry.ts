@@ -165,16 +165,23 @@ export function transitionGeometry(a: Automaton, from: State, to: State): PathGe
     const hasReverse = a.transitions.some((t) => t.from === to.id && t.to === from.id);
     return edgeGeometry(from, to, own?.bend ?? autoBend(hasReverse));
   }
-  if (own?.loopAngle !== undefined) return selfLoopGeometry(from, own.loopAngle);
+  return selfLoopGeometry(from, own?.loopAngle ?? autoLoopAngle(a, from));
+}
+
+/**
+ * Direction of `state`'s self-loop when it has no `loopAngle`: away from its neighbors and its
+ * start arrow.
+ */
+export function autoLoopAngle(a: Automaton, state: State): number {
   const neighbors: Point[] = a.transitions
-    .filter((t) => t.from !== t.to && (t.from === from.id || t.to === from.id))
-    .map((t) => a.states.find((s) => s.id === (t.from === from.id ? t.to : t.from)))
+    .filter((t) => t.from !== t.to && (t.from === state.id || t.to === state.id))
+    .map((t) => a.states.find((s) => s.id === (t.from === state.id ? t.to : t.from)))
     .filter((s): s is State => s !== undefined);
   // Treat the direction the start arrow comes from as occupied.
-  if (a.starts.includes(from.id)) {
-    neighbors.push(polar(from, START_ARROW_CLEARANCE, from.startAngle ?? START_ANGLE));
+  if (a.starts.includes(state.id)) {
+    neighbors.push(polar(state, START_ARROW_CLEARANCE, state.startAngle ?? START_ANGLE));
   }
-  return selfLoopGeometry(from, bestLoopAngle(from, neighbors));
+  return bestLoopAngle(state, neighbors);
 }
 
 /**

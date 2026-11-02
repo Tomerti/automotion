@@ -74,6 +74,12 @@ Layers, with dependencies pointing downward only:
   changed (`oldExamples.ts`) and saves the result. The project was called Automaton Vis until
   2026-10-29: files tagged `"automaton-vis"` still import (`LEGACY_FORMAT`), and `migrateLegacyKeys()`
   (first thing in `main.tsx`) moves old `automaton-vis:*` localStorage keys to `automotion:*`.
+  LaTeX: `latexImport.ts` (`parseLatex`) reads every `tikzpicture` of a `.tex` file as an automaton,
+  leniently (positioning, `edge`/`to`/`--`, loops, bends, `initial` or a drawn start arrow) and
+  validates it with the zod schema; `latexText.ts` holds the shared conventions (`PX_PER_CM` = 50,
+  label/symbol escaping both ways, the `% AutoMotion NFA: name` comment that round-trips kind and
+  name). The writer is `ui/canvas/exportLatex.ts` (it needs the canvas geometry: automatic bends and
+  loop directions); `importFile.ts` picks LaTeX by the `.tex` extension or a `\begin{tikzpicture}`.
 - `src/ui/`:
   - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
     states, tints, visibility). Its `data-testid`s and `data-*` attributes are a contract used by tests,
