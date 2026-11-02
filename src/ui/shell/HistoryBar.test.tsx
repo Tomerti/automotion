@@ -121,6 +121,7 @@ describe('HistoryBar actions', () => {
       'Rename',
       'Duplicate',
       'Export JSON',
+      'Export LaTeX',
       'Delete',
     ]);
     expect(entries[0]).toHaveFocus();
@@ -246,6 +247,61 @@ describe('HistoryBar actions', () => {
     await openAction(user, 'Blank', 'Export JSON');
     await user.click(screen.getByRole('button', { name: 'Export all' }));
     expect(files).toEqual(['blank.automaton.json', 'automata.automaton.json']);
+  });
+
+  it('Export LaTeX downloads that automaton as a .tex document', async () => {
+    const user = userEvent.setup();
+    const blobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((b: Blob) => {
+      blobs.push(b);
+      return 'blob:x';
+    });
+    URL.revokeObjectURL = vi.fn();
+    const files: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      files.push(this.download);
+    });
+    render(<HistoryBar />);
+    await openAction(user, 'Parity', 'Export LaTeX');
+    expect(files).toEqual(['parity.tex']);
+    const text = await blobs[0]?.text();
+    expect(text).toContain('\\documentclass[tikz, border=10pt]{standalone}');
+    expect(text).toContain('% AutoMotion DFA: Parity');
+    expect(text).toContain('\\node[state, initial, initial text={}] (q0)');
+  });
+
+  it('Import… takes a LaTeX file, one automaton per tikzpicture', async () => {
+    const user = userEvent.setup();
+    render(<HistoryBar />);
+    const tex = String.raw`
+      \begin{tikzpicture}
+        \node[state, initial] (a) at (0,0) {$a$};
+        \node[state, accepting] (b) at (2,0) {$b$};
+        \path[->] (a) edge node {0} (b);
+      \end{tikzpicture}
+      \begin{tikzpicture}
+        \node[state, initial] (c) at (0,0) {$c$};
+      \end{tikzpicture}`;
+    await user.upload(screen.getByLabelText('Import file'), new File([tex], 'homework 3.tex'));
+    await waitFor(() => expect(st().automata).toHaveLength(4));
+    expect(names().slice(0, 2)).toEqual(['homework 3 2', 'homework 3 1']);
+    expect(toastStore.getState().toasts[0]?.message).toBe('Imported 2 automata');
+  });
+
+  it('Import reports a LaTeX file it can’t read', async () => {
+    const user = userEvent.setup();
+    render(<HistoryBar />);
+    await user.upload(
+      screen.getByLabelText('Import file'),
+      new File(['\\section{Hi}'], 'notes.tex'),
+    );
+    await waitFor(() => expect(toastStore.getState().toasts).toHaveLength(1));
+    expect(toastStore.getState().toasts[0]).toMatchObject({
+      message: 'No tikzpicture found in the LaTeX file',
+      kind: 'error',
+    });
   });
 
   it('Import… opens the file picker; a picked file is added, opened and toasted', async () => {

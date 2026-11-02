@@ -6,6 +6,7 @@ import { appStore, selectedStates, useAppStore } from '../../store/store';
 import { startMinimize, startSubset } from '../../store/traceActions';
 import { withEmbeddedFont } from '../canvas/embedFont';
 import { canCopyImage, copyPng, exportableSvg, svgToPng } from '../canvas/exportDiagram';
+import { latexDocument, latexSnippet } from '../canvas/exportLatex';
 import { fitActive, tidyActive } from '../canvas/useCanvasEditing';
 import { downloadBlob, downloadText, slug } from './download';
 import { isTypingTarget } from './help';
@@ -91,6 +92,30 @@ function copyDiagram(automaton: Automaton | undefined): void {
   );
 }
 
+/** Copy the diagram as a TikZ picture, to paste into a LaTeX document. */
+function copyLatex(automaton: Automaton | undefined): void {
+  if (!automaton || automaton.states.length === 0) {
+    toast('Nothing to copy', 'error');
+    return;
+  }
+  if (typeof navigator.clipboard?.writeText !== 'function') {
+    toast('This browser can’t copy text: use Export LaTeX instead', 'error');
+    return;
+  }
+  navigator.clipboard.writeText(latexSnippet(automaton)).then(
+    () => toast('LaTeX copied'),
+    () => toast('Could not copy the LaTeX: use Export LaTeX instead', 'error'),
+  );
+}
+
+function exportLatex(automaton: Automaton | undefined): void {
+  if (!automaton || automaton.states.length === 0) {
+    toast('Nothing to export', 'error');
+    return;
+  }
+  downloadText(`${slug(automaton.name)}.tex`, latexDocument(automaton), 'application/x-tex');
+}
+
 /**
  * Ctrl+C (⌘C) copies the diagram, unless there is text to copy, a field has the keyboard or
  * states are selected (then the canvas copies those).
@@ -139,7 +164,7 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
         type="button"
         className="av-icon-button"
         aria-label="Export image"
-        title="Copy or export the image"
+        title="Copy or export the image or its LaTeX"
         aria-haspopup="menu"
         aria-expanded={open}
         disabled={disabled}
@@ -158,6 +183,9 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
           {item('Copy image', () => copyDiagram(automaton))}
           {item('Export SVG', () => void exportDiagram(automaton, 'svg'))}
           {item('Export PNG', () => void exportDiagram(automaton, 'png'))}
+          <div role="separator" className="av-menu-sep" />
+          {item('Copy LaTeX', () => copyLatex(automaton))}
+          {item('Export LaTeX', () => exportLatex(automaton))}
         </div>
       )}
     </div>

@@ -4,9 +4,10 @@ import { emptyAutomaton } from '../../core/model';
 import type { Automaton } from '../../core/model';
 import { serialize } from '../../persistence/fileFormat';
 import { appStore, useAppStore } from '../../store/store';
+import { latexDocument } from '../canvas/exportLatex';
 import { Thumbnail } from '../canvas/Thumbnail';
 import { downloadText, slug } from './download';
-import { importFile } from './importFile';
+import { IMPORT_ACCEPT, importFile } from './importFile';
 import { toast } from './toastStore';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
 
@@ -15,7 +16,7 @@ const THUMB_WIDTH = 176;
 const THUMB_HEIGHT = 92;
 const MIME = 'application/json';
 /** Room the ⋯ menu needs below its button before it opens upward instead. */
-const MENU_ROOM = 180;
+const MENU_ROOM = 215;
 
 /** Delete `a` after confirming; the canvas is never left without an automaton. */
 function deleteWithConfirm(a: Automaton): void {
@@ -39,6 +40,11 @@ function copyWithToast(a: Automaton): void {
 
 function exportOne(a: Automaton): void {
   downloadText(`${slug(a.name)}.automaton.json`, serialize([a]), MIME);
+}
+
+/** A standalone LaTeX document (TikZ) that compiles to the diagram. */
+function exportLatex(a: Automaton): void {
+  downloadText(`${slug(a.name)}.tex`, latexDocument(a), 'application/x-tex');
 }
 
 /** The name input that replaces an entry while it is renamed; Enter or blur commits. */
@@ -143,6 +149,7 @@ function EntryMenu(props: {
           {item('Rename', onRename, { disabled: !canRename })}
           {item('Duplicate', () => appStore.getState().duplicateAutomaton(automaton.id))}
           {item('Export JSON', () => exportOne(automaton))}
+          {item('Export LaTeX', () => exportLatex(automaton))}
           <div role="separator" className="av-menu-sep" />
           {item('Delete', () => deleteWithConfirm(automaton), { danger: true })}
         </div>
@@ -154,7 +161,7 @@ function EntryMenu(props: {
 /**
  * The left bar: every automaton, most recently edited first, with a picture of its diagram.
  * Clicking one opens it; Delete on it, or its ⋯ menu, deletes it after asking; the menu also
- * renames, duplicates and exports. Ctrl+C on one copies it, and Ctrl+V (anywhere) adds a copy. Create sits at the top, Import and Export all at the bottom.
+ * renames, duplicates and exports (JSON or LaTeX). Ctrl+C on one copies it, and Ctrl+V (anywhere) adds a copy. Create sits at the top, Import and Export all at the bottom.
  */
 export function HistoryBar(): React.JSX.Element {
   const automata = useAppStore((s) => s.automata);
@@ -252,7 +259,11 @@ export function HistoryBar(): React.JSX.Element {
         })}
       </ul>
       <div className="av-history-actions av-history-files">
-        <button type="button" onClick={() => fileInput.current?.click()}>
+        <button
+          type="button"
+          title="Import automata from AutoMotion JSON or LaTeX (TikZ) files"
+          onClick={() => fileInput.current?.click()}
+        >
           Import…
         </button>
         <button
@@ -265,7 +276,7 @@ export function HistoryBar(): React.JSX.Element {
       <input
         ref={fileInput}
         type="file"
-        accept=".json,application/json"
+        accept={IMPORT_ACCEPT}
         aria-label="Import file"
         hidden
         onChange={(e) => {
