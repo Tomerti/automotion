@@ -4,7 +4,7 @@ import { emptyAutomaton } from '../../core/model';
 import type { Automaton } from '../../core/model';
 import { serialize } from '../../persistence/fileFormat';
 import { appStore, useAppStore } from '../../store/store';
-import { latexDocument } from '../canvas/exportLatex';
+import { latexDocument, latexDocumentAll } from '../canvas/exportLatex';
 import { Thumbnail } from '../canvas/Thumbnail';
 import { downloadText, slug } from './download';
 import { IMPORT_ACCEPT, importFile } from './importFile';
@@ -45,6 +45,62 @@ function exportOne(a: Automaton): void {
 /** A standalone LaTeX document (TikZ) that compiles to the diagram. */
 function exportLatex(a: Automaton): void {
   downloadText(`${slug(a.name)}.tex`, latexDocument(a), 'application/x-tex');
+}
+
+/** Export all: every automaton as one JSON file, or as one LaTeX document (a page each). */
+function ExportAllMenu(props: { automata: readonly Automaton[] }): React.JSX.Element {
+  const { automata } = props;
+  const { open, setOpen, rootRef, triggerRef } = usePopover();
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (open) focusFirstItem(menuRef.current);
+  }, [open]);
+  const item = (label: string, run: () => void): React.JSX.Element => (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={() => {
+        setOpen(false);
+        run();
+      }}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <div className="av-menu-anchor av-history-export" ref={rootRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Export every automaton as JSON, or as one LaTeX (TikZ) document"
+        onClick={() => setOpen(!open)}
+      >
+        Export all
+      </button>
+      {open && (
+        <div
+          ref={menuRef}
+          className="av-popover av-menu av-menu-end av-menu-up"
+          role="menu"
+          aria-label="Export all"
+          onKeyDown={onMenuKeyDown}
+        >
+          {item('Export all as JSON', () =>
+            downloadText('automata.automaton.json', serialize([...automata]), MIME),
+          )}
+          {item('Export all as LaTeX', () => {
+            if (!automata.some((a) => a.states.length > 0)) {
+              toast('Nothing to export: no automaton has states', 'error');
+              return;
+            }
+            downloadText('automata.tex', latexDocumentAll(automata), 'application/x-tex');
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** The name input that replaces an entry while it is renamed; Enter or blur commits. */
@@ -266,12 +322,7 @@ export function HistoryBar(): React.JSX.Element {
         >
           Import…
         </button>
-        <button
-          type="button"
-          onClick={() => downloadText('automata.automaton.json', serialize(automata), MIME)}
-        >
-          Export all
-        </button>
+        <ExportAllMenu automata={automata} />
       </div>
       <input
         ref={fileInput}

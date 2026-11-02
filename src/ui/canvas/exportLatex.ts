@@ -154,12 +154,22 @@ export function latexSnippet(a: Automaton): string {
 
 /** A standalone document that compiles on its own to just the diagram. */
 export function latexDocument(a: Automaton): string {
+  return latexDocumentAll([a]);
+}
+
+/**
+ * One standalone document with a picture per automaton that has states (each its own page, as
+ * `standalone`'s `tikz` option makes them), every picture after its AutoMotion comment.
+ */
+export function latexDocumentAll(automata: readonly Automaton[]): string {
+  const pictures = automata
+    .filter((a) => a.states.length > 0)
+    .flatMap((a) => [metaComment(a.kind, a.name), latexPicture(a)]);
   return [
     '\\documentclass[tikz, border=10pt]{standalone}',
     `\\usetikzlibrary{${TIKZ_LIBRARIES}}`,
     '\\begin{document}',
-    metaComment(a.kind, a.name),
-    latexPicture(a),
+    ...pictures,
     '\\end{document}',
     '',
   ].join('\n');

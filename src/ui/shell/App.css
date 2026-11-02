@@ -353,6 +353,20 @@ input.av-switcher-input {
   padding: 8px 10px 10px;
   border-top: 1px solid var(--av-rule);
 }
+/* Export all's menu: the anchor takes the button's share of the row; the menu opens upward. */
+.av-history-export {
+  flex: 1;
+}
+.av-history-actions .av-history-export > button {
+  width: 100%;
+}
+.av-history-actions .av-menu [role^='menuitem'] {
+  flex: none;
+}
+.av-menu-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
 .av-history-entry {
   position: relative;
 }
