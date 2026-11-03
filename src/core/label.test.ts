@@ -45,12 +45,15 @@ describe('labelBaselineOffset', () => {
     expect(labelBaselineOffset('q')).toBeCloseTo(labelBaselineOffset('a'), 3);
   });
 
-  it('counts lowered subscripts', () => {
-    // Its subscript 0 hangs 0.25 + 0.7 × 0.016 below the baseline, past q's own tail.
-    const sub = 0.25 + 0.7 * 0.016;
-    expect(labelBaselineOffset('q_0')).toBeCloseTo((0.547 - sub) / 2, 3);
-    expect(labelBaselineOffset('q_0')).toBeLessThan(labelBaselineOffset('q'));
-    expect(labelBaselineOffset('q_{12}')).toBeCloseTo(labelBaselineOffset('q_0'), 1);
+  it('leaves subscripts hanging too: `q₀` centres its `q` like `a`', () => {
+    expect(labelBaselineOffset('q_0')).toBeCloseTo(labelBaselineOffset('a'), 3);
+    expect(labelBaselineOffset('q_{12}')).toBe(labelBaselineOffset('q'));
+    expect(labelBaselineOffset('q_1x')).toBe(labelBaselineOffset('qx'));
+  });
+
+  it('centres a label that is all subscript on the subscript', () => {
+    // A 1 is 0.719 tall, set at 0.7 on a baseline lowered by 0.25 em.
+    expect(labelBaselineOffset('_1')).toBeCloseTo((0.7 * 0.719 - 0.25 - 0.25) / 2, 3);
   });
 
   it('counts unknown characters as capitals and an empty label as nothing', () => {
