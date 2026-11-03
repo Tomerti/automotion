@@ -3,6 +3,7 @@ import type { Automaton, State } from '../../core/model';
 import { Arrowhead } from '../canvas/EdgeView';
 import type { Point } from '../../core/geometry';
 import { startArrowGeometry, STATE_RADIUS, transitionGeometry } from '../../core/geometry';
+import { labelBaselineOffset } from '../../core/label';
 
 /** Inner ring of an accepting state, as on the canvas. */
 const ACCEPT_RING = STATE_RADIUS - 4;
@@ -10,6 +11,8 @@ const ACCEPT_RING = STATE_RADIUS - 4;
 const MARGIN = 12;
 /** Start arrows are this long past the circle (geometry's START_ARROW_LENGTH). */
 const START_ARROW = 32;
+/** State names' font size: keep in sync with `.av-goal-label` in tutorial.css. */
+const GOAL_LABEL_SIZE = 14;
 
 /**
  * A goal automaton as a small labelled picture, like the canvas draws it (states, start arrow,
@@ -83,7 +86,11 @@ export const GoalPicture = memo(function GoalPicture(props: {
           {automaton.accepting.includes(s.id) && (
             <circle className="av-goal-accept" cx={s.x} cy={s.y} r={ACCEPT_RING} />
           )}
-          <text className="av-goal-label" x={s.x} y={s.y}>
+          <text
+            className="av-goal-label"
+            x={s.x}
+            y={s.y + GOAL_LABEL_SIZE * labelBaselineOffset(s.label)}
+          >
             {s.label}
           </text>
         </g>

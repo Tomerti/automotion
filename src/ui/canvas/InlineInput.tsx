@@ -33,6 +33,12 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
   /** Set once Enter or Escape closed the input, so a blur on unmount does nothing. */
   const closed = useRef(false);
 
+  // Open with the caret after the text, to type more of it (an arrow's next symbol).
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    input?.setSelectionRange(input.value.length, input.value.length);
+  }, []);
+
   useLayoutEffect(() => {
     if (caret.current === null) return;
     inputRef.current?.setSelectionRange(caret.current, caret.current);

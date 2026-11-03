@@ -12,10 +12,12 @@ import { downloadBlob, downloadText, slug } from './download';
 import { isTypingTarget } from './help';
 import {
   ConvertIcon,
-  ExportIcon,
+  CopyIcon,
+  DownloadIcon,
   FitIcon,
   MinimizeIcon,
   RedoIcon,
+  ShareIcon,
   TidyIcon,
   UndoIcon,
 } from './icons';
@@ -145,16 +147,29 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
   useEffect(() => {
     if (open) focusFirstItem(menuRef.current);
   }, [open]);
-  const item = (label: string, run: () => void): React.JSX.Element => (
+  /** Copies show a clipboard icon, exports (file downloads) a download icon. */
+  const item = (
+    label: string,
+    how: 'copy' | 'download',
+    run: () => void,
+    shortcut?: { aria: string; text: string },
+  ): React.JSX.Element => (
     <button
       type="button"
       role="menuitem"
+      aria-keyshortcuts={shortcut?.aria}
       onClick={() => {
         setOpen(false);
         run();
       }}
     >
+      {how === 'copy' ? <CopyIcon /> : <DownloadIcon />}
       {label}
+      {shortcut && (
+        <kbd className="av-menu-shortcut" aria-hidden="true">
+          {shortcut.text}
+        </kbd>
+      )}
     </button>
   );
   return (
@@ -163,29 +178,32 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
         ref={triggerRef}
         type="button"
         className="av-icon-button"
-        aria-label="Export image"
-        title="Copy or export the image or its LaTeX"
+        aria-label="Copy or export"
+        title="Copy or export the picture or its LaTeX"
         aria-haspopup="menu"
         aria-expanded={open}
         disabled={disabled}
         onClick={() => setOpen(!open)}
       >
-        <ExportIcon />
+        <ShareIcon />
       </button>
       {open && !disabled && (
         <div
           ref={menuRef}
-          className="av-popover av-menu av-menu-end"
+          className="av-popover av-menu av-menu-end av-export-menu"
           role="menu"
-          aria-label="Export image"
+          aria-label="Copy or export"
           onKeyDown={onMenuKeyDown}
         >
-          {item('Copy image', () => copyDiagram(automaton))}
-          {item('Export SVG', () => void exportDiagram(automaton, 'svg'))}
-          {item('Export PNG', () => void exportDiagram(automaton, 'png'))}
+          {item('Copy image', 'copy', () => copyDiagram(automaton), {
+            aria: 'Control+C',
+            text: 'Ctrl+C',
+          })}
+          {item('Export SVG', 'download', () => void exportDiagram(automaton, 'svg'))}
+          {item('Export PNG', 'download', () => void exportDiagram(automaton, 'png'))}
           <div role="separator" className="av-menu-sep" />
-          {item('Copy LaTeX', () => copyLatex(automaton))}
-          {item('Export LaTeX', () => exportLatex(automaton))}
+          {item('Copy LaTeX', 'copy', () => copyLatex(automaton))}
+          {item('Export LaTeX', 'download', () => exportLatex(automaton))}
         </div>
       )}
     </div>

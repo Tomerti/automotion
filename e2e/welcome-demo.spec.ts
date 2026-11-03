@@ -13,17 +13,29 @@ test('the welcome demo keeps its state labels steady while it runs', async ({ pa
   const demo = page.getByTestId('welcome-demo');
   await expect(demo).toBeVisible();
   // The states' colour fades would change the label pixels too: take them out of the picture.
+  // So would the token, whose glow passes the corner of q0's label on its way round the loop.
   await page.addStyleTag({
     content: `.av-welcome-demo .av-state-body, .av-welcome-demo .av-state-label,
-      .av-welcome-demo .av-state-ring { transition: none !important; }`,
+      .av-welcome-demo .av-state-ring { transition: none !important; }
+      .av-welcome-demo .av-run-token { visibility: hidden !important; }`,
   });
   await page.waitForTimeout(400); // past the dialog's pop-in
 
   const states = demo.locator('.av-state');
-  const boxes = await demo.locator('.av-state-label').evaluateAll((ts) =>
-    ts.map((t) => {
-      const r = t.getBoundingClientRect();
-      return { x: r.x - 1, y: r.y - 1, width: r.width + 2, height: r.height + 2 };
+  // Each label's box, kept inside the accepting ring (whose colour changes with the run): the
+  // label's em box is taller than its letters and reaches the ring's corners.
+  const boxes = await demo.locator('.av-state').evaluateAll((gs) =>
+    gs.map((g) => {
+      const r = g.querySelector('.av-state-label')!.getBoundingClientRect();
+      const c = g.querySelector('.av-state-body')!.getBoundingClientRect();
+      const cx = c.x + c.width / 2;
+      const cy = c.y + c.height / 2;
+      const half = (c.width / 2) * 0.5;
+      const x = Math.max(r.x - 1, cx - half);
+      const y = Math.max(r.y - 1, cy - half);
+      const right = Math.min(r.right + 1, cx + half);
+      const bottom = Math.min(r.bottom + 1, cy + half);
+      return { x, y, width: right - x, height: bottom - y };
     }),
   );
   const lit = (): Promise<(string | null)[]> =>

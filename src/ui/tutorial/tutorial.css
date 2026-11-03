@@ -180,9 +180,11 @@
   dominant-baseline: central;
   fill: var(--av-ink);
 }
-/* State names a little smaller than the symbols, so "even" stays inside its accepting ring. */
+/* State names a little smaller than the symbols, so "even" stays inside its accepting ring.
+   On the alphabetic baseline: GoalPicture centres their ink (labelBaselineOffset). */
 .av-goal-label {
   font-size: 14px;
+  dominant-baseline: alphabetic;
 }
 .av-goal-symbols {
   font-family: var(--av-font-symbol);

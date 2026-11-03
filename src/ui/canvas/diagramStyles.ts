@@ -11,7 +11,7 @@ export const diagramStyles = `
 .av-diagram { background: var(--av-canvas-bg, transparent); font-family: var(--av-font, Geist, system-ui, sans-serif); text-rendering: geometricPrecision; user-select: none; }
 .av-state-body { fill: var(--av-state-fill, #ffffff); stroke: var(--av-state-stroke, #1c2333); stroke-width: 1.75; transition: fill 0.2s, stroke 0.2s, opacity 0.2s; }
 .av-state-ring { fill: none; stroke: var(--av-state-stroke, #1c2333); stroke-width: 1.5; transition: stroke 0.2s; }
-.av-state-label { fill: var(--av-text, #1c2333); font-size: 15px; font-weight: 500; text-anchor: middle; dominant-baseline: central; pointer-events: none; transition: fill 0.2s; }
+.av-state-label { fill: var(--av-text, #1c2333); font-size: 15px; font-weight: 500; text-anchor: middle; pointer-events: none; transition: fill 0.2s; }
 .av-state { transition: opacity 0.2s, transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1); }
 .av-diagram[data-dragging] .av-state { transition: opacity 0.2s; }
 .av-state-hit { fill: transparent; stroke: none; }

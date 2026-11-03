@@ -138,13 +138,36 @@ describe('done', () => {
     expect(step('add-q1').done(ctx(tut({ states: ['q_0', 'odd'] })))).toBe(true);
   });
 
-  it('takes any name of the user’s own for a state, but not another q-number', () => {
+  it('takes only the name the step asks for, capitals and spaces aside', () => {
     expect(step('name-q0').done(ctx(tut({ states: ['q_0'] })))).toBe(false);
     expect(step('name-q0').done(ctx(tut({ states: ['q_3'] })))).toBe(false);
     expect(step('name-q0').done(ctx(tut({ states: ['even'] })))).toBe(true);
-    expect(step('name-q0').done(ctx(tut({ states: ['zero'] })))).toBe(true);
+    expect(step('name-q0').done(ctx(tut({ states: ['Even '] })))).toBe(true);
+    expect(step('name-q0').done(ctx(tut({ states: ['evem'] })))).toBe(false);
+    expect(step('name-q0').done(ctx(tut({ states: ['zero'] })))).toBe(false);
     expect(step('add-q1').done(ctx(tut({ states: ['even', 'q_0'], start: 'even' })))).toBe(false);
     expect(step('add-q1').done(ctx(tut({ states: ['even', 'odd'], start: 'even' })))).toBe(true);
+    expect(step('add-q1').done(ctx(tut({ states: ['even', 'od'], start: 'even' })))).toBe(false);
+  });
+
+  it('flags a wrong name, but not a state still to be renamed', () => {
+    expect(step('name-q0').hint(ctx(tut({ states: ['q_0'] })))).toBeNull();
+    expect(hintText('name-q0', ctx(tut({ states: ['evem'] })))).toBe(
+      '«evem» should be named `even`: double-click it to fix the name.',
+    );
+    expect(step('add-q1').hint(ctx(tut({ states: ['even', 'q_1'], start: 'even' })))).toBeNull();
+    expect(hintText('add-q1', ctx(tut({ states: ['even', 'od'], start: 'even' })))).toBe(
+      '«od» should be named `odd`: double-click it to fix the name.',
+    );
+  });
+
+  it('goes back to the name step when a name is changed to a wrong one later', () => {
+    const a = evenZeros();
+    const typo = {
+      ...a,
+      states: a.states.map((s) => (s.id === 'even' ? { ...s, label: 'evem' } : s)),
+    };
+    expect(advance(idx('run-1010'), none, ctx(typo)).current).toBe(idx('name-q0'));
   });
 
   it('names the start state even when the second state came first', () => {
@@ -177,15 +200,19 @@ describe('done', () => {
     expect(step('loop-01').done(ctx(everything()))).toBe(true);
   });
 
-  it('takes any new name of the user’s own for the last rename, but not part 1’s', () => {
+  it('takes only `any` for the last rename, and flags another name', () => {
     const label = (l: string): TutorialContext =>
       ctx({ ...everything(), states: everything().states.map((s) => ({ ...s, label: l })) });
     expect(step('rename-q0').done(label('any'))).toBe(true);
-    expect(step('rename-q0').done(label('all'))).toBe(true);
+    expect(step('rename-q0').done(label('Any'))).toBe(true);
+    expect(step('rename-q0').done(label('all'))).toBe(false);
+    expect(hintText('rename-q0', label('all'))).toBe(
+      '«all» should be named `any`: double-click it to fix the name.',
+    );
     expect(step('rename-q0').done(label('q_0'))).toBe(false);
-    // Still part 1's name: not renamed yet.
+    // Still part 1's name: not renamed yet, so no hint either.
     expect(step('rename-q0').done(label('even'))).toBe(false);
-    expect(step('rename-q0').done(label(' Even'))).toBe(false);
+    expect(step('rename-q0').hint(label(' Even'))).toBeNull();
   });
 
   it('says what S and A do, one key per step', () => {

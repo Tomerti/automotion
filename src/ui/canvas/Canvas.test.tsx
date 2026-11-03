@@ -285,14 +285,40 @@ describe('Canvas editing', () => {
     expect(active().transitions).toHaveLength(1);
   });
 
-  it('a new edge onto an existing one merges the symbols', async () => {
+  it('a new edge onto an existing one edits that arrow’s symbols in place', async () => {
     const user = userEvent.setup();
     load(two('NFA', 'ab', [['q0', 'a', 'q1']]));
     render(<Canvas />);
     drawEdge();
-    await user.type(screen.getByTestId('symbol-input'), 'b, a{Enter}');
+    // No second arrow and input on top of the first: its own label turns into the input,
+    // with what it reads already there.
+    expect(screen.queryByTestId('rubber-band')).toBeNull();
+    expect(screen.getByTestId('edge-q0-q1')).toHaveAttribute('data-editing', 'true');
+    const input = screen.getByTestId('symbol-input');
+    expect(input).toHaveValue('a, ');
+    await user.type(input, 'b, a{Enter}');
     expect(active().transitions).toEqual([
       expect.objectContaining({ id: 'q0->q1', symbols: ['a', 'b'] }),
+    ]);
+  });
+
+  it('a new self-loop onto an existing one edits that loop, and Escape leaves it as it was', async () => {
+    const user = userEvent.setup();
+    load(two('DFA', 'a', [['q0', 'a', 'q0']]));
+    render(<Canvas />);
+    drag(
+      stateEl('q0'),
+      [0, 0],
+      [
+        [60, -40],
+        [5, 5],
+      ],
+      { shiftKey: true },
+    );
+    expect(screen.getByTestId('edge-q0-q0')).toHaveAttribute('data-editing', 'true');
+    await user.type(screen.getByTestId('symbol-input'), 'b{Escape}');
+    expect(active().transitions).toEqual([
+      expect.objectContaining({ id: 'q0->q0', symbols: ['a'] }),
     ]);
   });
 
