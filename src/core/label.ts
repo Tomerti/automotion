@@ -46,3 +46,65 @@ export function labelDisplayText(label: string): string {
     .map((s) => s.text)
     .join('');
 }
+
+/** Subscripts are set at this share of the label size, lowered by SUB_SHIFT of the label size. */
+export const SUB_SCALE = 0.7;
+export const SUB_SHIFT = 0.25;
+
+/**
+ * How far each glyph's ink reaches above and below the baseline, in thousandths of an em, as
+ * measured in Geist 500 (the diagram's label font). Characters not listed count as capitals.
+ */
+const INK_GROUPS: [chars: string, above: number, below: number][] = [
+  ['aceos', 547, 16],
+  ['mn', 547, 0],
+  ['u', 531, 16],
+  ['rvwxz', 531, 0],
+  ['pq', 547, 156],
+  ['g', 547, 172],
+  ['y', 531, 156],
+  ['j', 719, 156],
+  ['t', 656, 0],
+  ['bdJU', 719, 16],
+  ['0356789CGOS', 734, 16],
+  ['2', 734, 0],
+  ['Q', 734, 78],
+  ['{}', 766, 125],
+  ['()[]', 750, 109],
+  ['∅', 719, 94],
+  ["'′", 719, -437],
+  [',', 125, 156],
+  ['.', 125, 0],
+  ['-', 344, -234],
+  ['+', 531, -47],
+  ['ε', 469, 16],
+  ['δ', 703, 16],
+];
+const CAPITAL_INK: [number, number] = [719, 0];
+const INK = new Map<string, [number, number]>(
+  INK_GROUPS.flatMap(([chars, above, below]) =>
+    Array.from(chars).map((ch): [string, [number, number]] => [ch, [above, below]]),
+  ),
+);
+
+/**
+ * Where to put a label's alphabetic baseline, in ems below the point it is centred on, so that
+ * its ink (subscripts included) is centred there vertically. Centring the font's em box instead
+ * (`dominant-baseline: central`) leaves a `q₀` low: its letters sit low in the box and the
+ * subscript hangs below them.
+ */
+export function labelBaselineOffset(label: string): number {
+  let above = -Infinity;
+  let below = -Infinity;
+  for (const seg of parseLabel(label)) {
+    const scale = seg.sub ? SUB_SCALE : 1;
+    const shift = seg.sub ? SUB_SHIFT : 0;
+    for (const ch of seg.text) {
+      if (ch.trim() === '') continue;
+      const [a, b] = INK.get(ch) ?? CAPITAL_INK;
+      above = Math.max(above, (scale * a) / 1000 - shift);
+      below = Math.max(below, (scale * b) / 1000 + shift);
+    }
+  }
+  return above === -Infinity ? 0 : (above - below) / 2;
+}

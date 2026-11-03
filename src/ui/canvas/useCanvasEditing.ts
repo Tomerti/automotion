@@ -372,6 +372,16 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     const a = automaton.states.find((s) => s.id === from);
     const b = automaton.states.find((s) => s.id === to);
     if (!a || !b) return;
+    // There is one arrow per pair: drawing it again adds to the existing arrow's symbols, typed
+    // in place of its label rather than in a second input on top of it.
+    const existing = automaton.transitions.find((t) => t.from === from && t.to === to);
+    const existingEl = Array.from(
+      svgRef.current?.querySelectorAll('[data-transition-id]') ?? [],
+    ).find((el) => el.getAttribute('data-transition-id') === existing?.id);
+    if (existing && existingEl) {
+      openEdgeEdit(existing.id, existingEl, { append: true });
+      return;
+    }
     // The input sits where the new edge's label will be drawn.
     const { d, label, end, endAngle } = transitionGeometry(automaton, a, b);
     openInline({
@@ -386,15 +396,21 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     });
   };
 
-  const openEdgeEdit = (transitionId: string, edgeEl: Element): void => {
+  /** `append`: the caret goes after a separator, ready for one more symbol. */
+  const openEdgeEdit = (
+    transitionId: string,
+    edgeEl: Element,
+    opts: { append?: boolean } = {},
+  ): void => {
     const t = automaton.transitions.find((x) => x.id === transitionId);
     const a = automaton.states.find((s) => s.id === t?.from);
     const b = automaton.states.find((s) => s.id === t?.to);
     if (!t || !a || !b) return;
+    const symbols = t.symbols.join(', ');
     openInline({
       testId: 'symbol-input',
       label: 'Transition symbols',
-      initial: t.symbols.join(', '),
+      initial: opts.append && symbols !== '' ? `${symbols}, ` : symbols,
       at: edgeLabelPoint(edgeEl, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }),
       fontSize: EDGE_LABEL_FONT_SIZE,
       covers: t.id,

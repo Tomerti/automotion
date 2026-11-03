@@ -24,7 +24,15 @@ const btn = (name: string) => screen.getByRole('button', { name });
 describe('Toolbar', () => {
   it('disables everything without an active automaton', () => {
     render(<Toolbar />);
-    for (const n of ['Undo', 'Redo', 'Fit', 'Tidy', 'Convert to DFA', 'Minimize', 'Export image']) {
+    for (const n of [
+      'Undo',
+      'Redo',
+      'Fit',
+      'Tidy',
+      'Convert to DFA',
+      'Minimize',
+      'Copy or export',
+    ]) {
       expect(btn(n)).toBeDisabled();
     }
   });
@@ -35,7 +43,10 @@ describe('Toolbar', () => {
     expect(btn('Undo')).toHaveAttribute('title', 'Undo (Ctrl+Z)');
     expect(btn('Fit')).toHaveAttribute('title', 'Fit to view');
     expect(btn('Tidy')).toHaveAttribute('title', 'Tidy the layout');
-    expect(btn('Export image')).toHaveAttribute('title', 'Copy or export the image or its LaTeX');
+    expect(btn('Copy or export')).toHaveAttribute(
+      'title',
+      'Copy or export the picture or its LaTeX',
+    );
   });
 
   it('Minimize is disabled with a reason on an NFA', () => {
@@ -86,16 +97,20 @@ describe('Toolbar', () => {
         </div>
       </>,
     );
-    await user.click(btn('Export image'));
-    expect(btn('Export image')).toHaveAttribute('aria-expanded', 'true');
+    await user.click(btn('Copy or export'));
+    expect(btn('Copy or export')).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('menuitem', { name: 'Copy image' })).toHaveFocus();
     expect(screen.getByRole('menuitem', { name: 'Export SVG' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Export PNG' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Copy image' })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Control+C',
+    );
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).toBeNull();
-    expect(btn('Export image')).toHaveFocus();
+    expect(btn('Copy or export')).toHaveFocus();
 
-    await user.click(btn('Export image'));
+    await user.click(btn('Copy or export'));
     await user.click(screen.getByRole('menuitem', { name: 'Export SVG' }));
     expect(screen.queryByRole('menu')).toBeNull();
     await waitFor(() => expect(names).toEqual(['my-auto.svg']));
@@ -149,7 +164,7 @@ describe('Toolbar', () => {
       const user = userEvent.setup();
       stubClipboard();
       renderWithDiagram();
-      await user.click(btn('Export image'));
+      await user.click(btn('Copy or export'));
       await user.click(screen.getByRole('menuitem', { name: 'Copy image' }));
       expect(screen.queryByRole('menu')).toBeNull();
       expect(written).toHaveLength(1);
@@ -171,7 +186,7 @@ describe('Toolbar', () => {
         configurable: true,
       });
       renderWithDiagram();
-      await user.click(btn('Export image'));
+      await user.click(btn('Copy or export'));
       await user.click(screen.getByRole('menuitem', { name: 'Copy LaTeX' }));
       expect(texts).toHaveLength(1);
       expect(texts[0]).toMatch(/^% AutoMotion NFA: .*\n% Needs \\usepackage\{tikz\}/);
@@ -256,7 +271,7 @@ describe('Toolbar', () => {
     const active = appStore.getState().automata[0]!;
     appStore.getState().openTrace(runWord(active, 'a'));
     render(<Toolbar />);
-    for (const n of ['Undo', 'Redo', 'Export image']) expect(btn(n)).toBeDisabled();
+    for (const n of ['Undo', 'Redo', 'Copy or export']) expect(btn(n)).toBeDisabled();
   });
 
   it('Undo/Redo call the store and follow history', async () => {

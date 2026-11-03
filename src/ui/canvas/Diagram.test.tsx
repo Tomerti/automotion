@@ -3,6 +3,7 @@ import { afterEach, describe, it, expect } from 'vitest';
 import { fixture } from '../../core/testing/fixtures';
 import { Diagram } from './Diagram';
 import { selfLoopGeometry } from '../../core/geometry';
+import { labelBaselineOffset } from '../../core/label';
 
 const vp = { x: 0, y: 0, zoom: 1 };
 const abDfa = fixture({
@@ -66,6 +67,15 @@ describe('Diagram', () => {
     expect(after).not.toHaveAttribute('font-size');
     const plainLabel = screen.getByTestId('state-p').querySelector('.av-state-label');
     expect(plainLabel?.querySelectorAll('tspan')).toHaveLength(1);
+  });
+
+  it('places each label’s baseline so its ink is centred on the state', () => {
+    const a = fixture({ kind: 'DFA', alphabet: 'a', states: ['q_0', 'B'] });
+    render(<Diagram automaton={a} viewport={vp} />);
+    const y = (id: string) =>
+      Number(screen.getByTestId(id).querySelector('.av-state-label')?.getAttribute('y'));
+    expect(y('state-q_0')).toBeCloseTo(15 * labelBaselineOffset('q_0'), 1);
+    expect(y('state-B')).toBeCloseTo(15 * labelBaselineOffset('B'), 1);
   });
 
   it('hides the drawn label of the state or edge being edited in place', () => {

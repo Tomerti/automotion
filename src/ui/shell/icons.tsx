@@ -65,9 +65,26 @@ export const MinimizeIcon = (): React.JSX.Element => (
   </Icon>
 );
 
-export const ExportIcon = (): React.JSX.Element => (
+/** An arrow down onto a line: save a file. */
+export const DownloadIcon = (): React.JSX.Element => (
   <Icon>
     <path d="M10 3.5v9.5M6.25 9.5 10 13.25l3.75-3.75M4 16.5h12" />
+  </Icon>
+);
+
+/** Two overlapping sheets: put it on the clipboard. */
+export const CopyIcon = (): React.JSX.Element => (
+  <Icon>
+    <rect x="7" y="7" width="9.5" height="9.5" rx="2" />
+    <path d="M13 4.75v-.25a1.5 1.5 0 0 0-1.5-1.5h-6.5A1.5 1.5 0 0 0 3.5 4.5v6.5A1.5 1.5 0 0 0 5 12.5h.25" />
+  </Icon>
+);
+
+/** An arrow up out of a tray: take it out of the app, copied or saved. */
+export const ShareIcon = (): React.JSX.Element => (
+  <Icon>
+    <path d="M10 12.5V3.25M6.5 6.75 10 3.25l3.5 3.5" />
+    <path d="M7 9.5H5.5A1.5 1.5 0 0 0 4 11v4a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 16 15v-4a1.5 1.5 0 0 0-1.5-1.5H13" />
   </Icon>
 );
 

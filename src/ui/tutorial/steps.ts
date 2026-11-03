@@ -268,8 +268,19 @@ interface StepSpec {
 /** A state given a name of the user's own (not a `q`-number). */
 const isNamed = (s: State | undefined): boolean => s !== undefined && !DEFAULT_LABEL.test(s.label);
 
-/** Labels part 1 asked for, which part 2's rename must move away from. */
-const PART1_NAMES: readonly string[] = [NAMES.even, NAMES.odd];
+/** The state is named `name` (spaces around it and capitals aside). */
+const hasName = (s: State | undefined, name: string): boolean =>
+  s !== undefined && s.label.trim().toLowerCase() === name;
+
+/**
+ * "«evem» should be `even`" once the state is renamed to anything but `name`; `unfinished` lists
+ * names it may still have before the rename (part 1's, in part 2).
+ */
+function wrongName(s: State | undefined, name: string, unfinished: string[] = []): string | null {
+  if (!s || !isNamed(s) || hasName(s, name)) return null;
+  if (unfinished.some((n) => hasName(s, n))) return null;
+  return `${chip(s.label)} should be named \`${name}\`: double-click it to fix the name.`;
+}
 
 const SPECS: StepSpec[] = [
   {
@@ -283,7 +294,8 @@ const SPECS: StepSpec[] = [
     part: 1,
     instruction: (l) => `Double-click ${l.q0} and rename it \`${NAMES.even}\`.`,
     why: () => 'It will mean: an even number of zeros so far.',
-    done: (ctx) => onAutomaton(ctx, false, (_, r) => isNamed(r.q0)),
+    done: (ctx) => onAutomaton(ctx, false, (_, r) => hasName(r.q0, NAMES.even)),
+    hint: (ctx) => onAutomaton(ctx, null, (_, r) => wrongName(r.q0, NAMES.even)),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
   {
@@ -316,7 +328,8 @@ const SPECS: StepSpec[] = [
     part: 1,
     instruction: () => `Add a second state and rename it \`${NAMES.odd}\`.`,
     why: () => 'It will mean: an odd number of zeros so far.',
-    done: (ctx) => onAutomaton(ctx, false, (_, r) => isNamed(r.q1)),
+    done: (ctx) => onAutomaton(ctx, false, (_, r) => hasName(r.q1, NAMES.odd)),
+    hint: (ctx) => onAutomaton(ctx, null, (_, r) => wrongName(r.q1, NAMES.odd)),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q1)),
   },
   {
@@ -419,16 +432,9 @@ const SPECS: StepSpec[] = [
     part: 2,
     instruction: (l) => `Double-click ${l.q0} and rename it \`${NAMES.any}\`.`,
     why: () => 'It accepts any word now, so give it a name that fits.',
-    // Any name of the user's own will do, but not one part 1 asked for.
-    done: (ctx) =>
-      onAutomaton(
-        ctx,
-        false,
-        (_, r) =>
-          r.q0 !== undefined &&
-          isNamed(r.q0) &&
-          !PART1_NAMES.includes(r.q0.label.trim().toLowerCase()),
-      ),
+    done: (ctx) => onAutomaton(ctx, false, (_, r) => hasName(r.q0, NAMES.any)),
+    // Still part 1's name is just not renamed yet.
+    hint: (ctx) => onAutomaton(ctx, null, (_, r) => wrongName(r.q0, NAMES.any, [NAMES.even])),
     target: (ctx) => onAutomaton(ctx, null, (_, r) => stateTarget(r.q0)),
   },
   {

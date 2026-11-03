@@ -1,4 +1,4 @@
-import { parseLabel } from '../../core/label';
+import { labelBaselineOffset, parseLabel, SUB_SCALE, SUB_SHIFT } from '../../core/label';
 import type { State } from '../../core/model';
 import { ACCEPT_INSET, HIT_MARGIN, labelFontSize, STATE_RADIUS } from '../../core/geometry';
 
@@ -17,22 +17,21 @@ export interface StateNodeProps {
   editing?: boolean;
 }
 
-/** Subscripts are set at this share of the label size, lowered by SUB_SHIFT of the label size. */
-const SUB_SCALE = 0.7;
-const SUB_SHIFT = 0.25;
 /** How far outside the circle an issue ring sits. */
 const ISSUE_GAP = 7;
 
 /**
  * Label text as tspans: subscript runs smaller and lowered, the run after one raised back.
- * Shifts are in px of the label size, so lowering and raising cancel out exactly.
+ * Shifts are in px of the label size, so lowering and raising cancel out exactly. The baseline
+ * is placed so the ink, not the font's em box, is centred on the state.
  */
 function LabelText(props: { label: string; fontSize: number }): React.JSX.Element {
   const { label, fontSize } = props;
   const shift = fontSize * SUB_SHIFT;
   const segments = parseLabel(label);
+  const y = Math.round(fontSize * labelBaselineOffset(label) * 100) / 100;
   return (
-    <text className="av-state-label" style={{ fontSize }}>
+    <text className="av-state-label" y={y} style={{ fontSize }}>
       {segments.map((seg, i) => {
         const lowered = segments[i - 1]?.sub ?? false;
         const dy = seg.sub === lowered ? undefined : seg.sub ? shift : -shift;
