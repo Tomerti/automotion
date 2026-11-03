@@ -2,7 +2,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, it, expect } from 'vitest';
 import { fixture } from '../../core/testing/fixtures';
 import { Diagram } from './Diagram';
-import { selfLoopGeometry } from './geometry';
+import { selfLoopGeometry } from '../../core/geometry';
 
 const vp = { x: 0, y: 0, zoom: 1 };
 const abDfa = fixture({

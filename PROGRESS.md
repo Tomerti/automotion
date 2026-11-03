@@ -17,11 +17,20 @@ Nothing in progress: pick the next task from the list below.
 
 - [ ] Copy and paste follow-ups: Ctrl+X (cut), Ctrl+A (select all), and Shift + click as an alternative to Ctrl + click (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
 
+- [ ] Tidy: run the layout in a Web Worker so a 64-state layout (~1 s) doesn't block the page; `To minimize`-style DFAs (6 states, many cross arrows) still come out busier than a hand layout
+
 ## Ideas (later)
 
 - [ ] Regex → NFA
 
 ## Done
+
+### Tidy
+
+- [x] Tidy lays automata out the way they are drawn by hand instead of ELK's layered layout alone (which staggered states and ran arrows back straight through other states): it tries a row, a circle, ELK layered variants and a stress layout per connected part, bends each arrow clear of the states, points start arrows into free space, and keeps the candidate that reads best on the curves the canvas actually draws (crossings, arrows through states, overlapping labels, bunched arrows, left-to-right flow, size)
+- [x] Tidy also resets hand-made bends, loop and start arrow directions and label sides that no longer fit, in the same undo step; separate parts are stacked, the start state's first
+- [x] `geometry.ts` moved to `core/` so the layout can score with the canvas's own curves
+- [x] 64 states (the subset construction maximum) lay out in about a second; small automata in about 0.1 s
 
 ### Issues
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { Point } from './geometry';
+import type { Point } from '../../core/geometry';
 
 export interface MenuItem {
   label: string;

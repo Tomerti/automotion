@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATE_RADIUS } from './geometry';
+import { STATE_RADIUS } from '../../core/geometry';
 import { GAP_OFFSET, snapPosition } from './snap';
 
 const R = STATE_RADIUS;

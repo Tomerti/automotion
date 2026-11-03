@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { State, StateId } from '../../core/model';
 import type { RunStep, RunTrace } from '../../core/trace';
 import { Diagram } from '../canvas/Diagram';
-import { STATE_RADIUS } from '../canvas/geometry';
+import { STATE_RADIUS } from '../../core/geometry';
 import { LabelText } from '../LabelText';
 import { moveDurationMs, prefersReducedMotion, usePlaybackSpeed } from './playback';
 import { playRunSound, playVerdictSound } from './sound';

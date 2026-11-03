@@ -237,7 +237,7 @@ shows the input word with the current position marked.
 | Start / accepting | Context menu, or `S` / `A` with a state selected |
 | Delete | Select, then `Delete`; removing a state removes its edges |
 | Pan / zoom | Drag the background or hold space; scroll wheel; "Fit to view" button |
-| Tidy | Runs elkjs on the current automaton and animates states to new positions (undoable) |
+| Tidy | Picks the best-reading of several candidate layouts (a row, a circle, elkjs layered, stress), scored on the drawn curves, and redraws positions, bends and start arrows (undoable) |
 | Undo / redo | `Ctrl+Z` / `Ctrl+Shift+Z` |
 
 ## 8. Transition table (`ui/table/`)

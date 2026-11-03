@@ -1,6 +1,6 @@
 import { parseLabel } from '../../core/label';
 import type { State } from '../../core/model';
-import { ACCEPT_INSET, HIT_MARGIN, labelFontSize, STATE_RADIUS } from './geometry';
+import { ACCEPT_INSET, HIT_MARGIN, labelFontSize, STATE_RADIUS } from '../../core/geometry';
 
 export interface StateNodeProps {
   state: State;

@@ -1,5 +1,5 @@
 import type { Automaton } from '../../core/model';
-import { STATE_RADIUS } from './geometry';
+import { STATE_RADIUS } from '../../core/geometry';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PADDING = 32;

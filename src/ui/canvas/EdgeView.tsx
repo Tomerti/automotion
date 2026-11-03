@@ -1,4 +1,4 @@
-import type { Point } from './geometry';
+import type { Point } from '../../core/geometry';
 
 export interface EdgeViewProps {
   transitionId: string;
