@@ -31,8 +31,10 @@ Nothing in progress: pick the next task from the list below.
       aside): a typo like `evem` no longer passes, and a red hint says «evem» should be named
       `even`. Renaming a state wrongly later sends part 1 back to its name step. Part 2's last
       rename no longer takes any name of one's own
-- [x] State labels are centred on their ink instead of the font's em box: `q₀` sat ~3 px low,
-      `even` 2 px (canvas, exports and the tutorial's goal pictures)
+- [x] State labels are centred on the body of their letters instead of the font's em box: `q₀`
+      sat ~3 px low, `even` 2 px (canvas, exports and the tutorial's goal pictures). A lowered
+      subscript counts, a descender doesn't: centring all the ink left `any` high, its `y`'s
+      tail pulling the letters up
 - [x] Drawing an arrow that already exists (Shift + drag onto the same pair, or the same loop)
       edits that arrow in place: its label turns into the input, reading `0, ` with the caret at
       the end, instead of a second input on top of it

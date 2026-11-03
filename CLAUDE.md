@@ -148,9 +148,11 @@ Layers, with dependencies pointing downward only:
     stay silent. `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish; its `--av-run`, like the run's highlighter, is the same orange in both themes (dark mode only darkens the tints).
   - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
     the canvas uses `<tspan>`s). Canvas and goal-picture state labels sit on the alphabetic baseline
-    at `labelBaselineOffset` (`core/label.ts`), which centres their ink (subscripts included) from
-    per-glyph Geist 500 ink metrics; `dominant-baseline: central` centred the em box and left `q₀`
-    ~3 px low. Edge labels still use `central` (digits come out centred that way).
+    at `labelBaselineOffset` (`core/label.ts`), which centres the body of the letters (tallest top
+    down to the baseline or a lowered subscript's bottom; descenders like `y`'s tail left hanging)
+    from per-glyph Geist 500 ink metrics. `dominant-baseline: central` centred the em box and left
+    `q₀` ~3 px low; centring all the ink left `any` high. Edge labels still use `central` (digits
+    come out centred that way).
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain
     fallbacks: SVG/PNG export resolves `var()` against a hidden `.av-theme-light` probe, so exports always
     use the light palette.

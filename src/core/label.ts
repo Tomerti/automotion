@@ -88,10 +88,19 @@ const INK = new Map<string, [number, number]>(
 );
 
 /**
+ * The most of a glyph's ink below the baseline that counts: a round letter's overshoot. A
+ * descender (the tail of `y`, `q`, `j`, a comma) hangs below the letters and the eye centres
+ * them without it.
+ */
+const MAX_BODY_BELOW = 16;
+
+/**
  * Where to put a label's alphabetic baseline, in ems below the point it is centred on, so that
- * its ink (subscripts included) is centred there vertically. Centring the font's em box instead
- * (`dominant-baseline: central`) leaves a `q₀` low: its letters sit low in the box and the
- * subscript hangs below them.
+ * the body of its letters is centred there vertically: from the tallest letter's top down to
+ * the baseline, or to the bottom of a lowered subscript, descenders left hanging. Centring the
+ * font's em box instead (`dominant-baseline: central`) leaves a `q₀` low: its letters sit low
+ * in the box and the subscript hangs below them. Centring all the ink leaves `any` high: the
+ * `y`'s tail pulls the letters up.
  */
 export function labelBaselineOffset(label: string): number {
   let above = -Infinity;
@@ -103,7 +112,7 @@ export function labelBaselineOffset(label: string): number {
       if (ch.trim() === '') continue;
       const [a, b] = INK.get(ch) ?? CAPITAL_INK;
       above = Math.max(above, (scale * a) / 1000 - shift);
-      below = Math.max(below, (scale * b) / 1000 + shift);
+      below = Math.max(below, (scale * Math.min(b, MAX_BODY_BELOW)) / 1000 + shift);
     }
   }
   return above === -Infinity ? 0 : (above - below) / 2;

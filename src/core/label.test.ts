@@ -39,8 +39,14 @@ describe('labelBaselineOffset', () => {
     expect(labelBaselineOffset('even')).toBeCloseTo((0.547 - 0.016) / 2, 3);
   });
 
-  it('counts descenders and lowered subscripts', () => {
-    // q: 0.547 up, 0.156 down; its subscript 0 hangs 0.25 + 0.7 × 0.016 below the baseline.
+  it('leaves descenders hanging: `any` centres like `ann`', () => {
+    expect(labelBaselineOffset('any')).toBeCloseTo(labelBaselineOffset('ann'), 3);
+    expect(labelBaselineOffset('any')).toBeCloseTo((0.547 - 0.016) / 2, 3);
+    expect(labelBaselineOffset('q')).toBeCloseTo(labelBaselineOffset('a'), 3);
+  });
+
+  it('counts lowered subscripts', () => {
+    // Its subscript 0 hangs 0.25 + 0.7 × 0.016 below the baseline, past q's own tail.
     const sub = 0.25 + 0.7 * 0.016;
     expect(labelBaselineOffset('q_0')).toBeCloseTo((0.547 - sub) / 2, 3);
     expect(labelBaselineOffset('q_0')).toBeLessThan(labelBaselineOffset('q'));
