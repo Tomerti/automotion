@@ -1,4 +1,4 @@
-import type { Point } from '../canvas/geometry';
+import type { Point } from '../../core/geometry';
 import { fitToView } from '../canvas/viewport';
 
 export type SplitLayout = 'row' | 'column';

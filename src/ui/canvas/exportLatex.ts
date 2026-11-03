@@ -6,7 +6,7 @@ import {
   metaComment,
   symbolsToTex,
 } from '../../persistence/latexText';
-import { START_ANGLE, autoBend, autoLoopAngle, labelSideOf } from './geometry';
+import { START_ANGLE, autoBend, autoLoopAngle, labelSideOf } from '../../core/geometry';
 
 /** The TikZ libraries the picture uses. */
 export const TIKZ_LIBRARIES = 'automata, arrows.meta';

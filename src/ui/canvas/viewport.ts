@@ -1,5 +1,5 @@
 import type { Viewport } from '../../store/types';
-import { STATE_RADIUS, type Point } from './geometry';
+import { STATE_RADIUS, type Point } from '../../core/geometry';
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;

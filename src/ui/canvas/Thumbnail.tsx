@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import type { Automaton, State } from '../../core/model';
 import { Arrowhead } from './EdgeView';
-import { startArrowGeometry, STATE_RADIUS, transitionGeometry } from './geometry';
+import { startArrowGeometry, STATE_RADIUS, transitionGeometry } from '../../core/geometry';
 import { fitToView } from './viewport';
 
 /** Inner ring of an accepting state, as on the canvas. */

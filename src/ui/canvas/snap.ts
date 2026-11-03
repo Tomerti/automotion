@@ -1,4 +1,4 @@
-import { STATE_RADIUS, type Point } from './geometry';
+import { STATE_RADIUS, type Point } from '../../core/geometry';
 
 /** A dragged state within this many screen px of a snap position snaps to it. */
 export const SNAP_DISTANCE = 8;

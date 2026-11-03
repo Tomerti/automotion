@@ -1,8 +1,8 @@
 import { memo } from 'react';
 import type { Automaton, State } from '../../core/model';
 import { Arrowhead } from '../canvas/EdgeView';
-import type { Point } from '../canvas/geometry';
-import { startArrowGeometry, STATE_RADIUS, transitionGeometry } from '../canvas/geometry';
+import type { Point } from '../../core/geometry';
+import { startArrowGeometry, STATE_RADIUS, transitionGeometry } from '../../core/geometry';
 
 /** Inner ring of an accepting state, as on the canvas. */
 const ACCEPT_RING = STATE_RADIUS - 4;

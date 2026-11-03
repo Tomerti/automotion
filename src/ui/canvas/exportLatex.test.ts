@@ -6,7 +6,7 @@ import { fixture } from '../../core/testing/fixtures';
 import { arbNfa } from '../../core/testing/arbitraries';
 import { parseLatex } from '../../persistence/latexImport';
 import { latexDocument, latexDocumentAll, latexPicture, latexSnippet } from './exportLatex';
-import { START_ANGLE, autoBend, autoLoopAngle, labelSideOf } from './geometry';
+import { START_ANGLE, autoBend, autoLoopAngle, labelSideOf } from '../../core/geometry';
 
 const parity: Automaton = {
   ...fixture({

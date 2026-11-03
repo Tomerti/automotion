@@ -1356,6 +1356,26 @@ describe('Fit and Tidy', () => {
     ]);
   });
 
+  it('Tidy redraws arrows and start arrows too, undone with the positions', async () => {
+    const a = two('DFA', 'a', [['q0', 'a', 'q1']]);
+    const messy: Automaton = {
+      ...a,
+      states: a.states.map((s) => ({ ...s, startAngle: 1 })),
+      transitions: a.transitions.map((t) => ({ ...t, bend: 120, labelSide: 'right' as const })),
+    };
+    load(messy);
+    render(<Canvas />);
+    sizeCanvas(640, 480);
+    const expected = await layoutAutomaton(active());
+    await act(() => tidyActive());
+    expect(active().states).toEqual(expected.states);
+    expect(active().transitions).toEqual(expected.transitions);
+    expect(active().transitions[0]).not.toHaveProperty('bend');
+    expect(active().transitions[0]).not.toHaveProperty('labelSide');
+    act(() => st().undo());
+    expect(active()).toEqual(messy);
+  });
+
   it('Tidy reports a layout failure and leaves no undo entry', async () => {
     toastStore.setState({ toasts: [] });
     load(two('DFA', 'a', [['q0', 'a', 'q1']]));

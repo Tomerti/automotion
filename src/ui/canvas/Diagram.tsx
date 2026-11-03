@@ -3,7 +3,7 @@ import type { Viewport } from '../../store/types';
 import { Arrowhead, EdgeView } from './EdgeView';
 import { StateNode } from './StateNode';
 import { diagramStyles } from './diagramStyles';
-import { startArrowGeometry, transitionGeometry } from './geometry';
+import { startArrowGeometry, transitionGeometry } from '../../core/geometry';
 
 export interface DiagramHighlight {
   active?: StateId[];

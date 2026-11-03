@@ -1,5 +1,5 @@
-import { labelDisplayText } from '../../core/label';
-import type { Automaton, LabelSide, State } from '../../core/model';
+import { labelDisplayText } from './label';
+import type { Automaton, LabelSide, State, StateId } from './model';
 
 export type Point = { x: number; y: number };
 
@@ -98,30 +98,17 @@ export function edgeGeometry(
   const normal = { x: dy / len, y: -dx / len };
   const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
   const side = labelSideOf(bend, labelSide) === 'left' ? 1 : -1;
+  const { start, ctrl, end } = edgeCurve(from, to, bend);
 
   if (bend === 0) {
-    const ux = dx / len;
-    const uy = dy / len;
-    const start = { x: from.x + ux * STATE_RADIUS, y: from.y + uy * STATE_RADIUS };
-    const end = { x: to.x - ux * STATE_RADIUS, y: to.y - uy * STATE_RADIUS };
     return {
       d: `M ${pt(start)} L ${pt(end)}`,
       label: { x: mid.x + side * normal.x * LABEL_GAP, y: mid.y + side * normal.y * LABEL_GAP },
       end,
-      endAngle: Math.atan2(uy, ux),
+      endAngle: Math.atan2(dy / len, dx / len),
     };
   }
 
-  // Quadratic control point placed so the curve's apex is `bend` from the chord.
-  const ctrl = { x: mid.x + normal.x * bend * 2, y: mid.y + normal.y * bend * 2 };
-  const toward = (c: Point, target: Point): Point => {
-    const vx = target.x - c.x;
-    const vy = target.y - c.y;
-    const l = Math.hypot(vx, vy) || 1;
-    return { x: c.x + (vx / l) * STATE_RADIUS, y: c.y + (vy / l) * STATE_RADIUS };
-  };
-  const start = toward(from, ctrl);
-  const end = toward(to, ctrl);
   const apex = {
     x: 0.25 * start.x + 0.5 * ctrl.x + 0.25 * end.x,
     y: 0.25 * start.y + 0.5 * ctrl.y + 0.25 * end.y,
@@ -134,13 +121,43 @@ export function edgeGeometry(
   };
 }
 
+/**
+ * The quadratic curve `edgeGeometry` draws, from circle to circle: a straight edge (bend 0) has
+ * its control point midway.
+ */
+export function edgeCurve(
+  from: Point,
+  to: Point,
+  bend: number,
+): { start: Point; ctrl: Point; end: Point } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const normal = { x: dy / len, y: -dx / len };
+  const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+  if (bend === 0) {
+    const ux = dx / len;
+    const uy = dy / len;
+    return {
+      start: { x: from.x + ux * STATE_RADIUS, y: from.y + uy * STATE_RADIUS },
+      ctrl: mid,
+      end: { x: to.x - ux * STATE_RADIUS, y: to.y - uy * STATE_RADIUS },
+    };
+  }
+  // Control point placed so the curve's apex is `bend` from the chord.
+  const ctrl = { x: mid.x + normal.x * bend * 2, y: mid.y + normal.y * bend * 2 };
+  const toward = (c: Point, target: Point): Point => {
+    const vx = target.x - c.x;
+    const vy = target.y - c.y;
+    const l = Math.hypot(vx, vy) || 1;
+    return { x: c.x + (vx / l) * STATE_RADIUS, y: c.y + (vy / l) * STATE_RADIUS };
+  };
+  return { start: toward(from, ctrl), ctrl, end: toward(to, ctrl) };
+}
+
 /** Loop leaving and re-entering the circle around `angle` (radians, screen coordinates). */
 export function selfLoopGeometry(center: Point, angle: number): PathGeometry {
-  const start = polar(center, STATE_RADIUS, angle - LOOP_HALF_SPREAD);
-  const end = polar(center, STATE_RADIUS, angle + LOOP_HALF_SPREAD);
-  const reach = STATE_RADIUS + LOOP_SIZE * 1.8;
-  const c1 = polar(center, reach, angle - LOOP_HALF_SPREAD * 1.6);
-  const c2 = polar(center, reach, angle + LOOP_HALF_SPREAD * 1.6);
+  const { start, c1, c2, end } = selfLoopCurve(center, angle);
   const apex = {
     x: (start.x + 3 * c1.x + 3 * c2.x + end.x) / 8,
     y: (start.y + 3 * c1.y + 3 * c2.y + end.y) / 8,
@@ -153,6 +170,20 @@ export function selfLoopGeometry(center: Point, angle: number): PathGeometry {
     },
     end,
     endAngle: Math.atan2(end.y - c2.y, end.x - c2.x),
+  };
+}
+
+/** The cubic curve `selfLoopGeometry` draws. */
+export function selfLoopCurve(
+  center: Point,
+  angle: number,
+): { start: Point; c1: Point; c2: Point; end: Point } {
+  const reach = STATE_RADIUS + LOOP_SIZE * 1.8;
+  return {
+    start: polar(center, STATE_RADIUS, angle - LOOP_HALF_SPREAD),
+    c1: polar(center, reach, angle - LOOP_HALF_SPREAD * 1.6),
+    c2: polar(center, reach, angle + LOOP_HALF_SPREAD * 1.6),
+    end: polar(center, STATE_RADIUS, angle + LOOP_HALF_SPREAD),
   };
 }
 
@@ -179,6 +210,13 @@ export function bestLoopAngle(center: Point, neighbors: Point[]): number {
   return Math.atan2(Math.sin(best), Math.cos(best));
 }
 
+/** The bend the diagram draws the edge from → to with: its own `bend`, else the automatic one. */
+export function drawnBend(a: Automaton, from: StateId, to: StateId): number {
+  const own = a.transitions.find((t) => t.from === from && t.to === to);
+  if (own?.bend !== undefined) return own.bend;
+  return autoBend(a.transitions.some((t) => t.from === to && t.to === from));
+}
+
 /**
  * The transition from → to as the diagram draws it: its own `bend` / `loopAngle` when it exists,
  * else the automatic one. A preview of a new edge uses this too, so it matches the edge it creates.
@@ -186,10 +224,41 @@ export function bestLoopAngle(center: Point, neighbors: Point[]): number {
 export function transitionGeometry(a: Automaton, from: State, to: State): PathGeometry {
   const own = a.transitions.find((t) => t.from === from.id && t.to === to.id);
   if (from.id !== to.id) {
-    const hasReverse = a.transitions.some((t) => t.from === to.id && t.to === from.id);
-    return edgeGeometry(from, to, own?.bend ?? autoBend(hasReverse), own?.labelSide);
+    return edgeGeometry(from, to, drawnBend(a, from.id, to.id), own?.labelSide);
   }
   return selfLoopGeometry(from, own?.loopAngle ?? autoLoopAngle(a, from));
+}
+
+/**
+ * The transition from → to as the diagram draws it, as `segments` + 1 points along its curve,
+ * from circle to circle.
+ */
+export function transitionPolyline(a: Automaton, from: State, to: State, segments = 16): Point[] {
+  const out: Point[] = [];
+  if (from.id === to.id) {
+    const own = a.transitions.find((t) => t.from === from.id && t.to === to.id);
+    const { start, c1, c2, end } = selfLoopCurve(from, own?.loopAngle ?? autoLoopAngle(a, from));
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const u = 1 - t;
+      const w = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t] as const;
+      out.push({
+        x: w[0] * start.x + w[1] * c1.x + w[2] * c2.x + w[3] * end.x,
+        y: w[0] * start.y + w[1] * c1.y + w[2] * c2.y + w[3] * end.y,
+      });
+    }
+    return out;
+  }
+  const { start, ctrl, end } = edgeCurve(from, to, drawnBend(a, from.id, to.id));
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const u = 1 - t;
+    out.push({
+      x: u * u * start.x + 2 * u * t * ctrl.x + t * t * end.x,
+      y: u * u * start.y + 2 * u * t * ctrl.y + t * t * end.y,
+    });
+  }
+  return out;
 }
 
 /**

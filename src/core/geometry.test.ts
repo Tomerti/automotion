@@ -13,9 +13,10 @@ import {
   snapAngle,
   startArrowGeometry,
   transitionGeometry,
+  transitionPolyline,
 } from './geometry';
-import type { State } from '../../core/model';
-import { fixture } from '../../core/testing/fixtures';
+import type { State } from './model';
+import { fixture } from './testing/fixtures';
 
 const O = { x: 0, y: 0 };
 const A = { x: 0, y: 0 };
@@ -217,5 +218,38 @@ describe('hitState', () => {
     expect(hitState(O, { x: STATE_RADIUS, y: 0 })).toBe(true);
     expect(hitState(O, { x: 0, y: STATE_RADIUS + HIT_MARGIN })).toBe(true);
     expect(hitState(O, { x: STATE_RADIUS + HIT_MARGIN + 1, y: 0 })).toBe(false);
+  });
+});
+
+describe('transitionPolyline', () => {
+  const a = fixture({
+    kind: 'DFA',
+    alphabet: 'ab',
+    states: ['p', 'q'],
+    edges: [
+      ['p', 'a', 'q'],
+      ['q', 'b', 'p'],
+      ['q', 'a', 'q'],
+    ],
+  });
+  const [p, q] = a.states as [State, State];
+
+  it('follows the drawn curve from circle to circle', () => {
+    const pts = transitionPolyline(a, p, q, 8);
+    const g = transitionGeometry(a, p, q);
+    expect(pts).toHaveLength(9);
+    expect(pts[8]!.x).toBeCloseTo(g.end.x);
+    expect(pts[8]!.y).toBeCloseTo(g.end.y);
+    expect(Math.hypot(pts[0]!.x - p.x, pts[0]!.y - p.y)).toBeCloseTo(STATE_RADIUS);
+    // p ⇄ q curve (automatic bend): the middle sample is the apex, off the chord.
+    expect(Math.abs(pts[4]!.y - p.y)).toBeGreaterThan(CURVE_OFFSET / 2);
+  });
+
+  it('draws a self-loop from its state back to it', () => {
+    const pts = transitionPolyline(a, q, q, 8);
+    for (const end of [pts[0]!, pts[8]!]) {
+      expect(Math.hypot(end.x - q.x, end.y - q.y)).toBeCloseTo(STATE_RADIUS);
+    }
+    expect(Math.hypot(pts[4]!.x - q.x, pts[4]!.y - q.y)).toBeGreaterThan(STATE_RADIUS + 20);
   });
 });

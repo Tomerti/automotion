@@ -36,7 +36,7 @@ Layers, with dependencies pointing downward only:
     `x`/`y` (and an optional `startAngle`, the direction their start arrow comes from; default the
     left); at most one `Transition` per (from, to) pair, holding all its `symbols` (and an optional
     `bend`, `loopAngle`, and `labelSide`: the side of from→to its symbols are drawn on, absent
-    meaning outside the curve; `geometry.ts` `labelSideOf`). `EPSILON = 'ε'`
+    meaning outside the curve; `core/geometry.ts` `labelSideOf`). `EPSILON = 'ε'`
     never appears in `alphabet`; the symbol type is `Sym` (not `Symbol`). `starts` lists the start
     states: at most one on a DFA, any number on an NFA (accepting when a run from any of them does);
     `startStates(a)` ignores stale ids. Converting a multi-start NFA first adds a single start state
@@ -56,10 +56,22 @@ Layers, with dependencies pointing downward only:
   - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
     snapshots (`trace.ts`). Each has a `can*` guard returning a user-facing reason or `null`.
     `subsetConstruction` throws past `MAX_DFA_STATES` (64).
+  - `geometry.ts`: how the diagram is drawn, as pure math (state radius, edge curves with their
+    automatic bends, self-loops and their automatic direction, start arrows, label spots).
+    `transitionPolyline` samples an arrow's drawn curve; the layout scores layouts with it.
   - `testing/fixtures.ts` (`fixture()`: ids equal labels) and `testing/arbitraries.ts` (fast-check
     generators) back the property tests.
-- `src/layout/layout.ts`: elkjs wrapper (imports only `core/`). It is always loaded with a dynamic
-  `import()` (Tidy, subset walkthrough) so elk (~1.5 MB) stays out of the main bundle.
+- `src/layout/` (imports only `core/`): `layoutAutomaton` (Tidy, subset walkthrough results). Each
+  connected part gets several candidate layouts (`candidates.ts`: a row and a circle in reading
+  order (`order.ts`, BFS / DFS from the start), ELK layered variants, a stress layout of its own),
+  each with its arrows bent clear of states and its start arrows pointed into free space
+  (`aesthetics.ts` `assignBends` / `assignStartAngles`), and the cheapest by `layoutCost` wins:
+  crossings, arrows through states, labels on states / labels / arrows, bunched arrows, arrows
+  forward in reading order not pointing right, skewed angles, length, bends and area, all on the
+  curves the canvas draws. The weights were tuned on `samples.ts` (typical course automata;
+  `layout.test.ts` checks them). Tidy replaces positions, bends, loop and start arrow directions
+  and label sides. It is always loaded with a dynamic `import()` so elk (~1.5 MB) stays out of the
+  main bundle.
 - `src/store/`: one Zustand store (`store.ts`) holding the automata, active id, selection, per-automaton
   viewports, the open trace, per-automaton undo/redo (capped at 100) and the clipboard
   (`copySelection` / `paste` for states, `copyAutomaton` / `pasteAutomaton` for a whole automaton:
@@ -93,7 +105,7 @@ Layers, with dependencies pointing downward only:
   - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
     states, tints, visibility). Its `data-testid`s and `data-*` attributes are a contract used by tests,
     e2e and export. `useCanvasEditing.ts` holds all editing gestures; pointer capture starts only once a
-    drag crosses 3 px, so double-clicks keep their real target. Pure math is in `geometry.ts` / `viewport.ts`;
+    drag crosses 3 px, so double-clicks keep their real target. Pure math is in `core/geometry.ts` / `viewport.ts`;
     `snap.ts` snaps a dragged state (alignment guides and equal-gap markers, both kept out of exports).
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button.

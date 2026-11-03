@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATE_RADIUS } from './geometry';
+import { STATE_RADIUS } from '../../core/geometry';
 import { fitToView, fitToViewInset, screenToWorld, zoomAt } from './viewport';
 
 describe('screenToWorld', () => {

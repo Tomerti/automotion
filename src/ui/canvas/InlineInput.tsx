@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import type { Point } from './geometry';
+import type { Point } from '../../core/geometry';
 
 export interface InlineInputProps {
   testId: string;

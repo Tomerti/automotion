@@ -18,7 +18,7 @@ import {
   toggleAccepting,
   toggleStart,
 } from '../../core/edit';
-import type { Automaton, StateId } from '../../core/model';
+import type { Automaton, State, StateId, Transition } from '../../core/model';
 import { appStore, useAppStore } from '../../store/store';
 import type { Selection, Viewport } from '../../store/types';
 import { deferPaste, systemClipboardMayBeNewer } from '../shell/pasteLatex';
@@ -37,7 +37,7 @@ import {
   transitionGeometry,
   type PathGeometry,
   type Point,
-} from './geometry';
+} from '../../core/geometry';
 import { snapPosition, type Snap } from './snap';
 import { fitToViewInset, screenToWorld, zoomAt } from './viewport';
 
@@ -205,20 +205,42 @@ export async function tidyActive(): Promise<void> {
   }
   const now = appStore.getState();
   if (now.activeId !== a.id || activeAutomaton() !== a || now.trace) return;
-  const pos = new Map(laidOut.states.map((s) => [s.id, s]));
   // Checkpoint and edit together, after the await, so a dropped layout leaves no undo entry.
   now.checkpoint();
-  now.edit(
-    (cur) => ({
-      ...cur,
-      states: cur.states.map((s) => {
-        const p = pos.get(s.id);
-        return p ? { ...s, x: p.x, y: p.y } : s;
-      }),
-    }),
-    { record: false },
-  );
+  now.edit((cur) => withDrawing(cur, laidOut), { record: false });
   fitActive();
+}
+
+/**
+ * `a` drawn as `laidOut` draws it: each state's position and start arrow direction, each
+ * transition's bend, loop direction and label side (absent there means automatic here too).
+ */
+function withDrawing(a: Automaton, laidOut: Automaton): Automaton {
+  const states = new Map(laidOut.states.map((s) => [s.id, s]));
+  const transitions = new Map(laidOut.transitions.map((t) => [t.id, t]));
+  return {
+    ...a,
+    states: a.states.map((s) => {
+      const p = states.get(s.id);
+      if (!p) return s;
+      const next: State = { ...s, x: p.x, y: p.y };
+      delete next.startAngle;
+      if (p.startAngle !== undefined) next.startAngle = p.startAngle;
+      return next;
+    }),
+    transitions: a.transitions.map((t) => {
+      const p = transitions.get(t.id);
+      if (!p) return t;
+      const next: Transition = { ...t };
+      delete next.bend;
+      delete next.loopAngle;
+      delete next.labelSide;
+      if (p.bend !== undefined) next.bend = p.bend;
+      if (p.loopAngle !== undefined) next.loopAngle = p.loopAngle;
+      if (p.labelSide !== undefined) next.labelSide = p.labelSide;
+      return next;
+    }),
+  };
 }
 
 /**
