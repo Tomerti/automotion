@@ -18,6 +18,31 @@ test('Ctrl+V with TikZ on the clipboard adds the automaton it draws', async ({ p
   for (const label of ['p', 'r']) await expect(page.getByTestId(`state-${label}`)).toBeVisible();
 });
 
+test('Import → Paste LaTeX… adds the automaton pasted into its box', async ({ page }) => {
+  await openApp(page, { clear: true });
+  await page.getByRole('button', { name: 'Import', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Paste LaTeX…' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Paste LaTeX' });
+  await expect(dialog).toContainText('press Ctrl+V on the canvas');
+  await dialog.getByRole('textbox').fill(TIKZ);
+  await dialog.getByRole('button', { name: 'Add automata' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText('Added 1 automaton from LaTeX')).toBeVisible();
+  for (const label of ['p', 'r']) await expect(page.getByTestId(`state-${label}`)).toBeVisible();
+});
+
+test('a .tex file dropped on the app is imported', async ({ page }) => {
+  await openApp(page, { clear: true });
+  const drop = await page.evaluateHandle((text) => {
+    const dt = new DataTransfer();
+    dt.items.add(new File([text], 'dropped.tex', { type: 'application/x-tex' }));
+    return dt;
+  }, TIKZ);
+  await page.dispatchEvent('.av-app', 'drop', { dataTransfer: drop });
+  await expect(page.getByText('Imported 1 automaton')).toBeVisible();
+  await expect(page.getByTestId('state-p')).toBeVisible();
+});
+
 test('states copied in the app paste until the window loses the focus', async ({ page }) => {
   await openApp(page, { clear: true });
   await addStateAt(page, 0, 0);

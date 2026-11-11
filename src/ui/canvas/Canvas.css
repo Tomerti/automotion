@@ -86,16 +86,34 @@
   outline-offset: -2px;
 }
 
+/*
+ * The empty canvas's hint: two centred lines, each sitting in the gap between two rows of the
+ * paper's dots. The dots are 20 px apart, on multiples of 20 px from the top of the canvas
+ * (App.css, .av-canvas-area), so each line is 20 px tall and the block starts on a dot row near
+ * the middle (`round()`; without it, the plain middle). The second line is the smaller aside.
+ */
 .av-canvas-hint {
+  --av-dot-gap: 20px;
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 16px;
+  top: calc(50% - var(--av-dot-gap));
+  top: calc(round(nearest, 50%, var(--av-dot-gap)) - var(--av-dot-gap));
+  left: 0;
+  right: 0;
+  padding: 0 16px;
   text-align: center;
   font-size: 14px;
+  line-height: var(--av-dot-gap);
   color: var(--av-ink-muted);
   opacity: 0.75;
   pointer-events: none;
   user-select: none;
+}
+.av-canvas-hint p {
+  margin: 0;
+}
+.av-canvas-hint span {
+  white-space: nowrap;
+}
+.av-canvas-hint-small {
+  font-size: 12.5px;
 }

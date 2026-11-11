@@ -130,13 +130,15 @@ describe('subsetConstruction', () => {
   });
 
   it('canConvert rejects DFAs, missing start and errors', () => {
-    expect(canConvert(evenZeros)).toBe('Conversion needs an NFA');
+    expect(canConvert(evenZeros)).toBe('Already a DFA: Convert to DFA turns an NFA into one');
     expect(canConvert({ ...endsInAb, starts: [] })).toBe('Set a start state first');
     expect(canConvert({ ...endsInAb, alphabet: ['a'] })).toBe(
       'Fix the errors in the automaton first',
     );
     expect(canConvert(endsInAb)).toBeNull();
-    expect(() => subsetConstruction(evenZeros)).toThrow('Conversion needs an NFA');
+    expect(() => subsetConstruction(evenZeros)).toThrow(
+      'Already a DFA: Convert to DFA turns an NFA into one',
+    );
   });
 
   it('property: result is a valid complete DFA accepting the same language', () =>

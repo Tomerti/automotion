@@ -65,7 +65,9 @@ const splitter = fixture({
 
 describe('canMinimize', () => {
   it('checks DFA, start, errors in order', () => {
-    expect(canMinimize({ ...redundant, kind: 'NFA' })).toBe('Minimization needs a DFA');
+    expect(canMinimize({ ...redundant, kind: 'NFA' })).toBe(
+      'Minimization needs a DFA: use Convert to DFA first',
+    );
     expect(canMinimize({ ...redundant, starts: [] })).toBe('Set a start state first');
     expect(canMinimize({ ...redundant, starts: ['zzz'] })).toBe('Set a start state first');
     expect(

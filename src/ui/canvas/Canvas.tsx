@@ -177,7 +177,14 @@ function EditableCanvas(props: {
       </Diagram>
       {automaton.states.length === 0 && (
         <div className="av-canvas-hint" data-testid="canvas-hint">
-          Double-click to add a state · Press ? for controls
+          {/* Each phrase stays whole: a narrow canvas breaks the line at its dot. */}
+          <p>
+            <span>Double-click to add a state ·</span> <span>Press ? for controls</span>
+          </p>
+          <p className="av-canvas-hint-small">
+            <span>Ctrl+V pastes LaTeX (TikZ) code ·</span>{' '}
+            <span>Drop a .json / .tex file to import</span>
+          </p>
         </div>
       )}
       {inline && (

@@ -16,7 +16,7 @@ import { useControlsHelp, useWelcome } from './help';
 import { usePasteLatex } from './pasteLatex';
 import { HistoryBar } from './HistoryBar';
 import { useHistoryOpen } from './historyPrefs';
-import { importFile } from './importFile';
+import { importFile, isImportable } from './importFile';
 import { KindPill } from './KindPill';
 import { toast } from './toastStore';
 import { Toasts } from './Toasts';
@@ -80,7 +80,7 @@ export default function App(): React.JSX.Element {
       onDrop={(e) => {
         e.preventDefault();
         for (const f of Array.from(e.dataTransfer.files)) {
-          if (f.name.toLowerCase().endsWith('.json')) void importFile(f);
+          if (isImportable(f.name)) void importFile(f);
         }
       }}
     >

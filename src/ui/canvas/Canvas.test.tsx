@@ -114,6 +114,9 @@ describe('Canvas editing', () => {
     expect(screen.getByTestId('canvas-hint')).toHaveTextContent(
       'Double-click to add a state · Press ? for controls',
     );
+    expect(screen.getByTestId('canvas-hint')).toHaveTextContent(
+      'Ctrl+V pastes LaTeX (TikZ) code · Drop a .json / .tex file to import',
+    );
     fireEvent.doubleClick(diagram(), { clientX: 200, clientY: 150 });
     expect(screen.queryByTestId('canvas-hint')).toBeNull();
   });

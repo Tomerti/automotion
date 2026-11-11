@@ -8,6 +8,7 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
+- [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
 - [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; consider a more compact layout or pan/zoom in trace views (the transition table is gone in v2)
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
@@ -24,6 +25,16 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### Discoverability (2026-11-11)
+
+- [x] The empty canvas also says Ctrl+V pastes an automaton’s LaTeX (TikZ) code and that .json / .tex files can be
+      dropped; dropping a .tex file imports it (only .json did)
+- [x] Import is a menu: Import file… or Paste LaTeX… (a dialog to paste TikZ into, which also
+      teaches Ctrl+V on the canvas); errors stay in the dialog
+- [x] Save and minimize at the end of Convert to DFA; disabled reasons say what to do
+      ("Minimization needs a DFA: use Convert to DFA first", "Already a DFA: …"); the
+      toolbar keeps the Convert to DFA / Minimize labels down to 900 px (was 1080 px)
 
 ### Feedback fixes (2026-11-03)
 
