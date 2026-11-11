@@ -14,9 +14,11 @@ import { WelcomeCard } from '../tutorial/WelcomeCard';
 import { ControlsDialog } from './ControlsDialog';
 import { useControlsHelp, useWelcome } from './help';
 import { usePasteLatex } from './pasteLatex';
+import { HintStrip } from './HintStrip';
+import { startHintLearning } from './hintsLearned';
 import { HistoryBar } from './HistoryBar';
 import { useHistoryOpen } from './historyPrefs';
-import { importFile } from './importFile';
+import { importFile, isImportable } from './importFile';
 import { KindPill } from './KindPill';
 import { toast } from './toastStore';
 import { Toasts } from './Toasts';
@@ -62,6 +64,7 @@ function useDockHeight(): [React.RefObject<HTMLDivElement | null>, number] {
 export default function App(): React.JSX.Element {
   useAutosave({ onFail: (m) => toast(m, 'error') });
   usePasteLatex();
+  useEffect(startHintLearning, []);
   const trace = useAppStore((s) => s.trace);
   const stepIndex = useAppStore((s) => s.stepIndex);
   const setStep = useAppStore((s) => s.setStep);
@@ -80,7 +83,7 @@ export default function App(): React.JSX.Element {
       onDrop={(e) => {
         e.preventDefault();
         for (const f of Array.from(e.dataTransfer.files)) {
-          if (f.name.toLowerCase().endsWith('.json')) void importFile(f);
+          if (isImportable(f.name)) void importFile(f);
         }
       }}
     >
@@ -105,6 +108,7 @@ export default function App(): React.JSX.Element {
             data-testid="dock"
             data-mode={trace ? 'trace' : 'run'}
           >
+            {!trace && <HintStrip />}
             <RunPanel hidden={trace !== null} />
             {trace && step && (
               <TracePlayer

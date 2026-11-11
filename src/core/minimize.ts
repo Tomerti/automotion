@@ -8,7 +8,7 @@ import { hasErrors, ignoringIncomplete, validate } from './validate';
 
 /** Why `a` can't be minimized, or null when it can. */
 export function canMinimize(a: Automaton): string | null {
-  if (a.kind !== 'DFA') return 'Minimization needs a DFA';
+  if (a.kind !== 'DFA') return 'Minimization needs a DFA: use Convert to DFA first';
   if (startStates(a).length === 0) return 'Set a start state first';
   if (hasErrors(ignoringIncomplete(validate(a)))) return 'Fix the errors in the automaton first';
   return null;

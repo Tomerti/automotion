@@ -104,6 +104,19 @@ describe('SubsetTraceView', () => {
     expect(s.automata.map((a) => a.name)).toContain('ends ab → DFA');
     expect(s.automata.find((a) => a.id === s.activeId)?.kind).toBe('DFA');
   });
+
+  it('Save and minimize saves the DFA and opens its minimization', async () => {
+    const user = userEvent.setup();
+    await open();
+    expect(screen.queryByRole('button', { name: 'Save and minimize' })).toBeNull();
+    lastStep();
+    await user.click(screen.getByRole('button', { name: 'Save and minimize' }));
+    const s = appStore.getState();
+    const saved = s.automata.find((a) => a.id === s.activeId);
+    expect(saved?.name).toBe('ends ab → DFA');
+    expect(s.trace?.kind).toBe('minimize');
+    expect(s.trace?.kind === 'minimize' && s.trace.source).toBe(saved);
+  });
 });
 
 describe('SubsetTraceView with several start states', () => {

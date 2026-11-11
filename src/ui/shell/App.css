@@ -554,6 +554,146 @@ input.av-switcher-input {
   transform: translateX(-50%);
 }
 
+/* The hint strip (HintStrip.tsx) floats in the dock, just above the run pill. */
+.av-dock[data-mode='run'] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.av-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  align-items: center;
+  justify-content: center;
+  max-width: min(720px, 100%);
+  padding: 4px 4px 4px 12px;
+  font-size: 12.5px;
+  color: var(--av-ink-muted);
+  background: color-mix(in srgb, var(--av-surface-raised) 88%, transparent);
+  border: 1px solid var(--av-rule);
+  border-radius: 999px;
+  box-shadow: var(--av-shadow-float);
+  backdrop-filter: blur(6px);
+  animation: av-hint-in 180ms ease-out;
+}
+@keyframes av-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .av-hints {
+    animation: none;
+  }
+}
+.av-hint-item,
+.av-hint-part {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.av-hint-sep {
+  opacity: 0.6;
+}
+.av-hint-action {
+  color: var(--av-ink);
+}
+.av-hints .av-gesture {
+  flex-direction: row;
+  gap: 5px;
+  align-items: center;
+}
+.av-hints .av-gesture-on {
+  color: var(--av-ink-muted);
+}
+.av-hint-go {
+  min-height: 24px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--av-on-run);
+  background: var(--av-run);
+  border-color: var(--av-run);
+  border-radius: 999px;
+}
+.av-hint-go:hover {
+  filter: brightness(1.08);
+}
+.av-hint-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  color: var(--av-ink-muted);
+  background: transparent;
+  border-color: transparent;
+  border-radius: 999px;
+}
+.av-hint-close:hover {
+  color: var(--av-ink);
+  background: var(--av-hover);
+}
+.av-hint-close .av-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Paste LaTeX dialog (Import → Paste LaTeX…) */
+.av-paste-latex {
+  width: min(560px, 100%);
+}
+.av-paste-latex-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13.5px;
+  color: var(--av-ink-muted);
+}
+.av-paste-latex-text {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 180px;
+  padding: 10px 12px;
+  font-family: var(--av-font-symbol, ui-monospace, monospace);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--av-ink);
+  background: var(--av-paper);
+  border: 1px solid var(--av-rule-strong);
+  border-radius: 8px;
+  resize: vertical;
+}
+.av-paste-latex-text[aria-invalid='true'] {
+  border-color: var(--av-red);
+}
+.av-paste-latex-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--av-red);
+}
+.av-paste-latex-foot {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.av-paste-latex-tip {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--av-ink-muted);
+}
+.av-paste-latex-foot .av-primary {
+  flex: none;
+}
+
 .av-runpill {
   display: flex;
   gap: 4px;
@@ -932,7 +1072,8 @@ kbd {
 
 /* Narrower screens: labels fold into their icons, then the tools get their own row. */
 
-@media (max-width: 1080px) {
+/* The toolbar's labels (Convert to DFA, Minimize) fit down to ~860 px; below, icons only. */
+@media (max-width: 900px) {
   .av-button-text {
     display: none;
   }

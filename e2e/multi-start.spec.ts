@@ -20,7 +20,7 @@ test('two start states on an NFA: a run from the second, then the q_s step of Co
   await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'true');
   await page.getByTestId('trace-player').getByRole('button', { name: 'Close' }).click();
 
-  await page.getByRole('button', { name: 'Convert to DFA' }).click();
+  await page.getByRole('toolbar', { name: 'Automaton tools' }).getByRole('button', { name: 'Convert to DFA' }).click();
   // The conversion plays at once: stop it and go back to its first step.
   await page.getByRole('button', { name: 'Pause' }).click();
   const first = page.getByRole('button', { name: 'First' });

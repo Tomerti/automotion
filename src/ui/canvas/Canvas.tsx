@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import type { Automaton } from '../../core/model';
 import { ignoringIncomplete, validate } from '../../core/validate';
+import { learn } from '../shell/hintsLearned';
 import { appStore, useAppStore } from '../../store/store';
 import type { Viewport } from '../../store/types';
 import { ContextMenu } from './ContextMenu';
@@ -81,6 +82,12 @@ function EditableCanvas(props: {
     menu,
     closeMenu,
   } = useCanvasEditing(automaton, viewport);
+
+  // The hint strip's "Right-click: more options" retires once the menu has been used.
+  const menuOpen = menu !== null;
+  useEffect(() => {
+    if (menuOpen) learn('menu');
+  }, [menuOpen]);
 
   // First time this automaton is shown: fit it once; later pans and zooms are kept.
   useEffect(() => {
@@ -177,7 +184,10 @@ function EditableCanvas(props: {
       </Diagram>
       {automaton.states.length === 0 && (
         <div className="av-canvas-hint" data-testid="canvas-hint">
-          Double-click to add a state · Press ? for controls
+          <p className="av-canvas-hint-main">Double-click to add a state · Press ? for controls</p>
+          <p className="av-canvas-hint-alt">
+            Or paste a TikZ picture with Ctrl+V, or drop a .json or .tex file here
+          </p>
         </div>
       )}
       {inline && (

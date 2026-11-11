@@ -53,14 +53,20 @@ describe('Toolbar', () => {
     resetAppStore({ automata: [nfa()], activeId: 'n' });
     render(<Toolbar />);
     expect(btn('Minimize')).toBeDisabled();
-    expect(btn('Minimize')).toHaveAttribute('title', 'Minimization needs a DFA');
+    expect(btn('Minimize')).toHaveAttribute(
+      'title',
+      'Minimization needs a DFA: use Convert to DFA first',
+    );
   });
 
   it('Convert to DFA is disabled with a reason on a DFA', () => {
     resetAppStore({ automata: [{ ...nfa(), kind: 'DFA' }], activeId: 'n' });
     render(<Toolbar />);
     expect(btn('Convert to DFA')).toBeDisabled();
-    expect(btn('Convert to DFA')).toHaveAttribute('title', 'Conversion needs an NFA');
+    expect(btn('Convert to DFA')).toHaveAttribute(
+      'title',
+      'Already a DFA: Convert to DFA turns an NFA into one',
+    );
   });
 
   it('Convert to DFA shows an error toast when the DFA would be too large', async () => {

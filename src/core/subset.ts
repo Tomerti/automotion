@@ -8,7 +8,7 @@ import { hasErrors, validate } from './validate';
 
 /** Why `a` can't be converted to a DFA, or null when it can. */
 export function canConvert(a: Automaton): string | null {
-  if (a.kind !== 'NFA') return 'Conversion needs an NFA';
+  if (a.kind !== 'NFA') return 'Already a DFA: Convert to DFA turns an NFA into one';
   if (startStates(a).length === 0) return 'Set a start state first';
   if (hasErrors(validate(a))) return 'Fix the errors in the automaton first';
   return null;

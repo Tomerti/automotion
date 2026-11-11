@@ -329,11 +329,12 @@ describe('HistoryBar actions', () => {
     });
   });
 
-  it('Import… opens the file picker; a picked file is added, opened and toasted', async () => {
+  it('Import → Import file… opens the file picker; a picked file is added, opened and toasted', async () => {
     const user = userEvent.setup();
     render(<HistoryBar />);
     const pick = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
-    await user.click(screen.getByRole('button', { name: 'Import…' }));
+    await user.click(screen.getByRole('button', { name: 'Import' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Import file…' }));
     expect(pick).toHaveBeenCalledTimes(1);
     pick.mockRestore();
     const a = { ...parity, id: 'imp1', name: 'In 1' };
@@ -344,6 +345,46 @@ describe('HistoryBar actions', () => {
     expect(st().activeId).toBe('imp2');
     expect(items()[0]).toHaveTextContent('In 2');
     expect(toastStore.getState().toasts[0]?.message).toBe('Imported 2 automata');
+  });
+
+  it('Import → Paste LaTeX… adds the automata pasted into its box', async () => {
+    const user = userEvent.setup();
+    render(<HistoryBar />);
+    await user.click(screen.getByRole('button', { name: 'Import' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Paste LaTeX…' }));
+    const dialog = screen.getByRole('dialog', { name: 'Paste LaTeX' });
+    const box = within(dialog).getByRole('textbox');
+    expect(box).toHaveFocus();
+    expect(dialog).toHaveTextContent('press Ctrl+V on the canvas');
+    const tex = String.raw`\begin{tikzpicture}
+      \node[state, initial] (a) at (0,0) {$a$};
+      \node[state, accepting] (b) at (2,0) {$b$};
+      \path[->] (a) edge node {0} (b);
+    \end{tikzpicture}`;
+    await user.click(box);
+    await user.paste(tex);
+    await user.click(within(dialog).getByRole('button', { name: 'Add automata' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(st().automata).toHaveLength(3);
+    expect(st().automata[0]?.states.map((q) => q.label)).toEqual(['a', 'b']);
+    expect(toastStore.getState().toasts[0]?.message).toBe('Added 1 automaton from LaTeX');
+  });
+
+  it('Paste LaTeX… keeps the dialog open with the error when the text is no TikZ picture', async () => {
+    const user = userEvent.setup();
+    render(<HistoryBar />);
+    await user.click(screen.getByRole('button', { name: 'Import' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Paste LaTeX…' }));
+    const dialog = screen.getByRole('dialog', { name: 'Paste LaTeX' });
+    await user.click(within(dialog).getByRole('button', { name: 'Add automata' }));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Paste a tikzpicture first');
+    await user.type(within(dialog).getByRole('textbox'), 'hello');
+    expect(within(dialog).queryByRole('alert')).toBeNull();
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    expect(within(dialog).getByRole('alert')).toBeInTheDocument();
+    expect(st().automata).toHaveLength(2);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('Import reports a bad file as an error toast', async () => {

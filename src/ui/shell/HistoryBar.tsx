@@ -8,6 +8,7 @@ import { latexDocument, latexDocumentAll } from '../canvas/exportLatex';
 import { Thumbnail } from '../canvas/Thumbnail';
 import { downloadText, slug } from './download';
 import { IMPORT_ACCEPT, importFile } from './importFile';
+import { PasteLatexDialog } from './PasteLatexDialog';
 import { toast } from './toastStore';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
 
@@ -97,6 +98,59 @@ function ExportAllMenu(props: { automata: readonly Automaton[] }): React.JSX.Ele
             }
             downloadText('automata.tex', latexDocumentAll(automata), 'application/x-tex');
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Import: a file (JSON or LaTeX) through the picker, or LaTeX pasted into a dialog. */
+function ImportMenu(props: { onPickFile: () => void; onPasteLatex: () => void }) {
+  const { onPickFile, onPasteLatex } = props;
+  const { open, setOpen, rootRef, triggerRef } = usePopover();
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (open) focusFirstItem(menuRef.current);
+  }, [open]);
+  const item = (label: string, hint: string, run: () => void): React.JSX.Element => (
+    <button
+      type="button"
+      role="menuitem"
+      title={hint}
+      onClick={() => {
+        setOpen(false);
+        run();
+      }}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <div className="av-menu-anchor av-history-export" ref={rootRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Import automata from a JSON or LaTeX (TikZ) file, or paste LaTeX"
+        onClick={() => setOpen(!open)}
+      >
+        Import
+      </button>
+      {open && (
+        <div
+          ref={menuRef}
+          className="av-popover av-menu av-menu-up"
+          role="menu"
+          aria-label="Import"
+          onKeyDown={onMenuKeyDown}
+        >
+          {item(
+            'Import file…',
+            'An AutoMotion JSON file, or a .tex file with TikZ pictures',
+            onPickFile,
+          )}
+          {item('Paste LaTeX…', 'Paste a TikZ picture (from Overleaf, notes, …)', onPasteLatex)}
         </div>
       )}
     </div>
@@ -225,6 +279,7 @@ export function HistoryBar(): React.JSX.Element {
   const tracing = useAppStore((s) => s.trace !== null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [pastingLatex, setPastingLatex] = useState(false);
 
   /** Rename edits the open automaton, so open it first (never while a trace is open). */
   const startRename = (id: string): void => {
@@ -315,13 +370,10 @@ export function HistoryBar(): React.JSX.Element {
         })}
       </ul>
       <div className="av-history-actions av-history-files">
-        <button
-          type="button"
-          title="Import automata from AutoMotion JSON or LaTeX (TikZ) files"
-          onClick={() => fileInput.current?.click()}
-        >
-          Import…
-        </button>
+        <ImportMenu
+          onPickFile={() => fileInput.current?.click()}
+          onPasteLatex={() => setPastingLatex(true)}
+        />
         <ExportAllMenu automata={automata} />
       </div>
       <input
@@ -336,6 +388,7 @@ export function HistoryBar(): React.JSX.Element {
           for (const f of files) void importFile(f);
         }}
       />
+      {pastingLatex && <PasteLatexDialog onClose={() => setPastingLatex(false)} />}
     </nav>
   );
 }

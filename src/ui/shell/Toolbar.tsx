@@ -263,7 +263,7 @@ export function Toolbar(): React.JSX.Element {
         <IconButton
           label="Convert to DFA"
           text
-          title={convertReason ?? 'Convert to DFA, step by step'}
+          title={convertReason ?? 'Convert to DFA: watch the subset construction, step by step'}
           icon={<ConvertIcon />}
           disabled={none || convertReason !== null}
           onClick={() => void startSubset((m) => toast(m, 'error'))}
@@ -271,7 +271,7 @@ export function Toolbar(): React.JSX.Element {
         <IconButton
           label="Minimize"
           text
-          title={minimizeReason ?? 'Minimize, step by step'}
+          title={minimizeReason ?? 'Minimize: merge equivalent states, step by step'}
           icon={<MinimizeIcon />}
           disabled={none || minimizeReason !== null}
           onClick={startMinimize}
