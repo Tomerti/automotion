@@ -8,8 +8,7 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
-- [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the walkthroughs are suggested by the tip line, but the tutorial never shows them)
-- [ ] Tip line: a Mac shows Ctrl where ⌘ is meant (same for the Controls popup); consider platform-aware key names
+- [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
 - [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; consider a more compact layout or pan/zoom in trace views (the transition table is gone in v2)
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
@@ -29,13 +28,6 @@ Nothing in progress: pick the next task from the list below.
 
 ### Discoverability (2026-11-11)
 
-- [x] A tip line above Test a word (`HintStrip.tsx`, picked by the pure `hints.ts`) says what
-      to do next: Shift + drag with no transitions yet, S / A / Ctrl + click / Ctrl+C /
-      right-click on a selected state, drag / Ctrl+C / Delete on a multi-selection, a missing
-      start or accepting state, and Convert to DFA or Minimize (with a button) once the
-      automaton is ready. Each part retires after 3 uses (`hintsLearned.ts`, counted from store
-      changes; key `automotion:hints-learned`), × retires the whole tip; hidden during the
-      tutorial and while a trace is open
 - [x] The empty canvas also says Ctrl+V pastes a TikZ picture and that .json / .tex files can be
       dropped; dropping a .tex file imports it (only .json did)
 - [x] Import is a menu: Import file… or Paste LaTeX… (a dialog to paste TikZ into, which also

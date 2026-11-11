@@ -28,7 +28,6 @@
 - Switch an automaton between DFA and NFA. Adding an ε-transition to a DFA makes it an NFA. DFAs may be partial: a missing transition rejects.
 - The issues chip in the top bar explains what is wrong (no start state, two transitions on one symbol in a DFA, unreachable states, …), and actions that need a valid automaton say why they are disabled.
 - Undo and redo (Ctrl+Z, Ctrl+Y) for each automaton.
-- A tip line above **Test a word** says what you can do next: Shift + drag while there are no transitions, **S** / **A** / Ctrl+C / right-click on a selected state, Convert to DFA or Minimize once the automaton is ready. Each tip goes quiet once you have used it a few times; its × hides it for good.
 
 ### Arrange
 
@@ -52,7 +51,7 @@
 - **Convert to DFA** walks through the subset construction, with the NFA and the DFA being built side by side, one move and ε-closure per step. An NFA with several start states first gets a single new start state with ε-transitions to the old ones.
 - **Minimize** walks through partition refinement (Moore's algorithm) for a DFA, and says so when it is already minimal.
 - Save either result as a new automaton. At the end of a conversion, **Save and minimize** saves the DFA and goes straight on to minimizing it.
-- Both are suggested in the tip line above **Test a word** when the automaton is ready, and a disabled button says why ("Minimization needs a DFA: use Convert to DFA first").
+- A disabled button says why, and what to do instead ("Minimization needs a DFA: use Convert to DFA first").
 
 ### Keep your work
 

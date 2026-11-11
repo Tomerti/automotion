@@ -14,8 +14,6 @@ import { WelcomeCard } from '../tutorial/WelcomeCard';
 import { ControlsDialog } from './ControlsDialog';
 import { useControlsHelp, useWelcome } from './help';
 import { usePasteLatex } from './pasteLatex';
-import { HintStrip } from './HintStrip';
-import { startHintLearning } from './hintsLearned';
 import { HistoryBar } from './HistoryBar';
 import { useHistoryOpen } from './historyPrefs';
 import { importFile, isImportable } from './importFile';
@@ -64,7 +62,6 @@ function useDockHeight(): [React.RefObject<HTMLDivElement | null>, number] {
 export default function App(): React.JSX.Element {
   useAutosave({ onFail: (m) => toast(m, 'error') });
   usePasteLatex();
-  useEffect(startHintLearning, []);
   const trace = useAppStore((s) => s.trace);
   const stepIndex = useAppStore((s) => s.stepIndex);
   const setStep = useAppStore((s) => s.setStep);
@@ -108,7 +105,6 @@ export default function App(): React.JSX.Element {
             data-testid="dock"
             data-mode={trace ? 'trace' : 'run'}
           >
-            {!trace && <HintStrip />}
             <RunPanel hidden={trace !== null} />
             {trace && step && (
               <TracePlayer

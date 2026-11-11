@@ -60,7 +60,7 @@ test('the subset walkthrough paints its diagrams fitted from the first frame', a
   await item(page, 'Ends in ab (NFA)').click();
 
   await recordTraceFits(page);
-  await page.getByRole('toolbar', { name: 'Automaton tools' }).getByRole('button', { name: 'Convert to DFA' }).click();
+  await page.getByRole('button', { name: 'Convert to DFA' }).click();
   await expect(page.getByRole('button', { name: 'Last' })).toBeVisible();
 
   expect(await paintedFits(page)).toHaveLength(1);
