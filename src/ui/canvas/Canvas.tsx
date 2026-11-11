@@ -177,9 +177,15 @@ function EditableCanvas(props: {
       </Diagram>
       {automaton.states.length === 0 && (
         <div className="av-canvas-hint" data-testid="canvas-hint">
-          <p className="av-canvas-hint-main">Double-click to add a state · Press ? for controls</p>
-          <p className="av-canvas-hint-alt">
-            Or paste an automaton’s LaTeX (TikZ) code with Ctrl+V, or drop a .json or .tex file here
+          <p>
+            <span className="av-canvas-hint-left">Double-click to add a state</span>
+            <span aria-hidden="true"> · </span>
+            <span>Press ? for controls</span>
+          </p>
+          <p className="av-canvas-hint-small">
+            <span className="av-canvas-hint-left">Ctrl+V pastes LaTeX (TikZ) code</span>
+            <span aria-hidden="true"> · </span>
+            <span>Drop a .json / .tex file to import</span>
           </p>
         </div>
       )}

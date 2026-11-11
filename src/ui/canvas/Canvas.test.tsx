@@ -115,7 +115,7 @@ describe('Canvas editing', () => {
       'Double-click to add a state · Press ? for controls',
     );
     expect(screen.getByTestId('canvas-hint')).toHaveTextContent(
-      'Or paste an automaton’s LaTeX (TikZ) code with Ctrl+V, or drop a .json or .tex file here',
+      'Ctrl+V pastes LaTeX (TikZ) code · Drop a .json / .tex file to import',
     );
     fireEvent.doubleClick(diagram(), { clientX: 200, clientY: 150 });
     expect(screen.queryByTestId('canvas-hint')).toBeNull();
