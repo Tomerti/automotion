@@ -112,7 +112,7 @@ const TABS: Tab[] = [
       {
         gesture: { keys: ['Ctrl', 'V'] },
         action: 'Paste',
-        hint: 'States at the pointer; an automaton as a new copy; a TikZ picture as new automata (also Import → Paste LaTeX…)',
+        hint: 'States at the pointer; an automaton as a new copy; LaTeX (TikZ) code as new automata (also Import → Paste LaTeX…)',
       },
       { gesture: { keys: ['Ctrl', 'Z'] }, action: 'Undo' },
       { gesture: { keys: ['Ctrl', 'Y'] }, action: 'Redo' },

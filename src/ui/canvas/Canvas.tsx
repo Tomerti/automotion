@@ -179,7 +179,7 @@ function EditableCanvas(props: {
         <div className="av-canvas-hint" data-testid="canvas-hint">
           <p className="av-canvas-hint-main">Double-click to add a state · Press ? for controls</p>
           <p className="av-canvas-hint-alt">
-            Or paste a TikZ picture with Ctrl+V, or drop a .json or .tex file here
+            Or paste an automaton’s LaTeX (TikZ) code with Ctrl+V, or drop a .json or .tex file here
           </p>
         </div>
       )}

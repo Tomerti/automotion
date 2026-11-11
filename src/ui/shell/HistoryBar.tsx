@@ -147,10 +147,14 @@ function ImportMenu(props: { onPickFile: () => void; onPasteLatex: () => void })
         >
           {item(
             'Import file…',
-            'An AutoMotion JSON file, or a .tex file with TikZ pictures',
+            'An AutoMotion JSON file, or a .tex file with LaTeX (TikZ) automata',
             onPickFile,
           )}
-          {item('Paste LaTeX…', 'Paste a TikZ picture (from Overleaf, notes, …)', onPasteLatex)}
+          {item(
+            'Paste LaTeX…',
+            'Paste an automaton’s LaTeX (TikZ) code, from Overleaf, notes, …',
+            onPasteLatex,
+          )}
         </div>
       )}
     </div>

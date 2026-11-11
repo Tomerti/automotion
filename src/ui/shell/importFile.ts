@@ -43,7 +43,7 @@ export async function importFile(file: File): Promise<void> {
  * the dialog, or `null` once they are added (and toasted).
  */
 export function importLatexFromDialog(text: string): string | null {
-  if (text.trim() === '') return 'Paste a tikzpicture first';
+  if (text.trim() === '') return 'Paste the LaTeX code first';
   const result = parseLatex(text, 'Pasted');
   // The parser's messages speak of a file; here the text was pasted.
   if (!result.ok) return result.error.replace('the LaTeX file', 'the pasted text');

@@ -28,7 +28,7 @@ Nothing in progress: pick the next task from the list below.
 
 ### Discoverability (2026-11-11)
 
-- [x] The empty canvas also says Ctrl+V pastes a TikZ picture and that .json / .tex files can be
+- [x] The empty canvas also says Ctrl+V pastes an automaton’s LaTeX (TikZ) code and that .json / .tex files can be
       dropped; dropping a .tex file imports it (only .json did)
 - [x] Import is a menu: Import file… or Paste LaTeX… (a dialog to paste TikZ into, which also
       teaches Ctrl+V on the canvas); errors stay in the dialog

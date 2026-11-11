@@ -370,14 +370,14 @@ describe('HistoryBar actions', () => {
     expect(toastStore.getState().toasts[0]?.message).toBe('Added 1 automaton from LaTeX');
   });
 
-  it('Paste LaTeX… keeps the dialog open with the error when the text is no TikZ picture', async () => {
+  it('Paste LaTeX… keeps the dialog open with the error when the text is no TikZ code', async () => {
     const user = userEvent.setup();
     render(<HistoryBar />);
     await user.click(screen.getByRole('button', { name: 'Import' }));
     await user.click(screen.getByRole('menuitem', { name: 'Paste LaTeX…' }));
     const dialog = screen.getByRole('dialog', { name: 'Paste LaTeX' });
     await user.click(within(dialog).getByRole('button', { name: 'Add automata' }));
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Paste a tikzpicture first');
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Paste the LaTeX code first');
     await user.type(within(dialog).getByRole('textbox'), 'hello');
     expect(within(dialog).queryByRole('alert')).toBeNull();
     await user.keyboard('{Control>}{Enter}{/Control}');

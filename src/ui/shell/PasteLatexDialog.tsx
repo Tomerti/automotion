@@ -70,8 +70,10 @@ export function PasteLatexDialog({ onClose }: { onClose: () => void }): React.JS
           }}
         >
           <label className="av-paste-latex-label" htmlFor={`${id}-text`}>
-            Paste a TikZ picture: each <code>tikzpicture</code> becomes an automaton, with its
-            states, arrows, start and accepting states.
+            Paste the LaTeX (TikZ) code of an automaton: each{' '}
+            <code>{String.raw`\begin{tikzpicture}`}</code> …{' '}
+            <code>{String.raw`\end{tikzpicture}`}</code> block becomes one, with its states, arrows,
+            start and accepting states.
           </label>
           <textarea
             ref={textRef}
@@ -101,8 +103,8 @@ export function PasteLatexDialog({ onClose }: { onClose: () => void }): React.JS
           )}
           <div className="av-paste-latex-foot">
             <p className="av-paste-latex-tip">
-              Tip: copy a <code>tikzpicture</code> anywhere, then press <kbd>Ctrl</kbd>+<kbd>V</kbd>{' '}
-              on the canvas to skip this box.
+              Tip: copy the code anywhere (Overleaf, lecture notes), then press <kbd>Ctrl</kbd>+
+              <kbd>V</kbd> on the canvas to skip this box.
             </p>
             <button type="submit" className="av-primary" data-focus-stop>
               Add automata
