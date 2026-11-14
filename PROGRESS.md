@@ -31,6 +31,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] MIT license (LICENSE, mentioned in the README), version 1.0.0, and Open Graph / Twitter link-preview tags in `index.html`
 - [x] 1200 × 630 link-preview image `public/og.png`, rendered from `docs/brand/og/og.html` by `docs/brand/og/render.mjs`
 - [x] Review hardening: the file schema rejects accepting ids that aren't states, `svgToPng` rejects a sizeless SVG, and the multi-start e2e no longer branches on `isEnabled()`
+- [x] Share-link encoding (`persistence/shareLink.ts`): `encodeShare` / `decodeShare` / `shareUrl` / `readShareHash` / `sameAutomaton` put one automaton in a `#a=` URL payload (deflate-raw, base64url)
 
 ### Discoverability (2026-11-11)
 
