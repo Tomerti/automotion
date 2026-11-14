@@ -8,6 +8,7 @@ import { withEmbeddedFont } from '../canvas/embedFont';
 import { canCopyImage, copyPng, exportableSvg, svgToPng } from '../canvas/exportDiagram';
 import { latexDocument, latexSnippet } from '../canvas/exportLatex';
 import { fitActive, tidyActive } from '../canvas/useCanvasEditing';
+import { copyLink } from './copyLink';
 import { downloadBlob, downloadText, slug } from './download';
 import { isTypingTarget } from './help';
 import {
@@ -203,6 +204,10 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
           {item('Export PNG', 'download', () => void exportDiagram(automaton, 'png'))}
           <div role="separator" className="av-menu-sep" />
           {item('Copy LaTeX', 'copy', () => copyLatex(automaton))}
+          {item('Copy link', 'copy', () => {
+            if (automaton) void copyLink(automaton);
+            else toast('Nothing to copy', 'error');
+          })}
           {item('Export LaTeX', 'download', () => exportLatex(automaton))}
         </div>
       )}

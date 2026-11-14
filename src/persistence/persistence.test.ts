@@ -61,6 +61,14 @@ describe('fileFormat', () => {
     expect(r.automata[0]?.states).toEqual(a.states);
   });
 
+  it('rejects an accepting state that is not a state', () => {
+    const a = { ...sample(), accepting: ['ghost'] };
+    expect(parseFile(wrap(a), new Set())).toEqual({
+      ok: false,
+      error: 'Accepting state ghost is not a state',
+    });
+  });
+
   it('keeps the first of in-file duplicates when no existing collision', () => {
     const a = sample();
     const r = parseFile(serialize([a, { ...a, name: 'Twin' }]), new Set());
@@ -324,6 +332,23 @@ describe('storage', () => {
     const s = memoryStorage();
     saveToStorage(s, []);
     expect(loadFromStorage(s)).toEqual({ automata: [] });
+  });
+
+  it('drops dangling accepting and start ids from saved data instead of failing the load', () => {
+    const a = sample();
+    const b = { ...sample(), id: 'b', name: 'B', accepting: ['q1', 'gone'] };
+    const c = { ...sample(), id: 'c', name: 'C', kind: 'NFA', starts: ['q0', 'gone'] };
+    const s = memoryStorage({
+      [STORAGE_KEY]: JSON.stringify({ format: 'automotion', version: 2, automata: [a, b, c] }),
+    });
+    const r = loadFromStorage(s);
+    expect(r.warning).toBeUndefined();
+    expect(r.automata.map((x) => x.name)).toEqual(['Sample', 'B', 'C']);
+    expect(r.automata[1]?.accepting).toEqual(['q1']);
+    expect(r.automata[2]?.starts).toEqual(['q0']);
+    expect(s.getItem(BACKUP_KEY)).toBeNull();
+    // Imports and share links stay strict.
+    expect(parseFile(wrap(b), new Set()).ok).toBe(false);
   });
 
   it('survives corrupted storage and keeps a backup', () => {

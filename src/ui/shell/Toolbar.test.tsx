@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { moveState } from '../../core/edit';
 import { runWord } from '../../core/run';
 import { fixture, nthFromEnd } from '../../core/testing/fixtures';
+import { decodeShare, readShareHash, sameAutomaton } from '../../persistence/shareLink';
 import { appStore, resetAppStore } from '../../store/store';
 import { Toolbar } from './Toolbar';
 import { toastStore } from './toastStore';
@@ -199,6 +200,33 @@ describe('Toolbar', () => {
       expect(texts[0]).toContain('\\begin{tikzpicture}');
       await waitFor(() =>
         expect(toastStore.getState().toasts).toMatchObject([{ message: 'LaTeX copied' }]),
+      );
+    });
+
+    it('Copy link puts a link to the automaton on the clipboard', async () => {
+      const user = userEvent.setup();
+      const texts: string[] = [];
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: async (t: string) => {
+            texts.push(t);
+          },
+        },
+        configurable: true,
+      });
+      renderWithDiagram();
+      await user.click(btn('Copy or export'));
+      await user.click(screen.getByRole('menuitem', { name: 'Copy link' }));
+      await waitFor(() => expect(texts).toHaveLength(1));
+      const base = location.origin + location.pathname;
+      expect(texts[0]!.startsWith(base + '#a=')).toBe(true);
+      const payload = readShareHash(texts[0]!.slice(base.length));
+      expect(payload).not.toBeNull();
+      const result = await decodeShare(payload!, new Set());
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(sameAutomaton(result.automata[0]!, nfa())).toBe(true);
+      await waitFor(() =>
+        expect(toastStore.getState().toasts).toMatchObject([{ message: 'Link copied' }]),
       );
     });
 

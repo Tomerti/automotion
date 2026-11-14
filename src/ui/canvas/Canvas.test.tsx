@@ -10,7 +10,7 @@ import { appStore, resetAppStore } from '../../store/store';
 import { toastStore } from '../shell/toastStore';
 import { Canvas } from './Canvas';
 import { fitActive, tidyActive } from './useCanvasEditing';
-import { fitToView } from './viewport';
+import { fitToView, fitToViewInset } from './viewport';
 
 // The real layout by default; Tidy tests make it fail or hold it at the await.
 vi.mock('../../layout/layout', async (importOriginal) => {
@@ -90,6 +90,18 @@ describe('fit on first show', () => {
     expect(vp).toBeDefined();
     expect(vp).not.toEqual({ x: 0, y: 0, zoom: 1 });
     expect(vp).toEqual(fitToView(active().states, { width: 800, height: 500 }));
+  });
+  it('keeps clear of the tutorial card, like Fit', () => {
+    const a = two();
+    resetAppStore({ automata: [a], activeId: a.id });
+    render(
+      <div style={{ '--av-tutorial-pad': '120px' } as React.CSSProperties}>
+        <Canvas />
+      </div>,
+    );
+    expect(st().viewports.m).toEqual(
+      fitToViewInset(active().states, { width: 800, height: 500 }, 0, 120),
+    );
   });
   it('leaves an existing viewport alone', () => {
     load(two());

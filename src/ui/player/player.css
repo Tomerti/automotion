@@ -180,6 +180,22 @@ select.av-player-speed:hover {
   flex: 1;
   min-height: 0;
 }
+.av-trace-diagram[data-interactive='true'] {
+  cursor: grab;
+  touch-action: none;
+}
+.av-trace-diagram[data-interactive='true']:active {
+  cursor: grabbing;
+}
+.av-trace-fit {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  cursor: pointer;
+  background: var(--av-surface-raised);
+  border: 1px solid var(--av-hairline, rgba(128, 128, 128, 0.3));
+}
 
 .av-subset-view {
   display: flex;

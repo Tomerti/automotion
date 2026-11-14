@@ -6,6 +6,7 @@ import { serialize } from '../../persistence/fileFormat';
 import { appStore, useAppStore } from '../../store/store';
 import { latexDocument, latexDocumentAll } from '../canvas/exportLatex';
 import { Thumbnail } from '../canvas/Thumbnail';
+import { copyLink } from './copyLink';
 import { downloadText, slug } from './download';
 import { IMPORT_ACCEPT, importFile } from './importFile';
 import { PasteLatexDialog } from './PasteLatexDialog';
@@ -262,6 +263,7 @@ function EntryMenu(props: {
         >
           {item('Rename', onRename, { disabled: !canRename })}
           {item('Duplicate', () => appStore.getState().duplicateAutomaton(automaton.id))}
+          {item('Copy link', () => void copyLink(automaton))}
           {item('Export JSON', () => exportOne(automaton))}
           {item('Export LaTeX', () => exportLatex(automaton))}
           <div role="separator" className="av-menu-sep" />

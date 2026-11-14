@@ -77,6 +77,10 @@ export function svgToPng(svgText: string, scale = PNG_SCALE): Promise<Blob> {
     const box = /viewBox="[^"]*? [^"]*? ([\d.]+) ([\d.]+)"/.exec(svgText);
     const w = Math.ceil(Number(box?.[1] ?? 0) * scale);
     const h = Math.ceil(Number(box?.[2] ?? 0) * scale);
+    if (!(w > 0 && h > 0)) {
+      reject(new Error('Nothing to draw'));
+      return;
+    }
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');

@@ -38,6 +38,12 @@ export const automatonSchema = z
         return;
       }
     }
+    for (const s of a.accepting) {
+      if (!ids.has(s)) {
+        ctx.addIssue({ code: 'custom', message: `Accepting state ${s} is not a state` });
+        return;
+      }
+    }
     if (a.kind === 'DFA' && a.starts.length > 1) {
       ctx.addIssue({ code: 'custom', message: 'A DFA has exactly one start state' });
       return;

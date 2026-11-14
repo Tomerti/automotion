@@ -1,6 +1,11 @@
 import type { Viewport } from '../../store/types';
 import { STATE_RADIUS, type Point } from '../../core/geometry';
 
+/** Zoom factor of one wheel notch. */
+export const ZOOM_STEP = 1.1;
+/** Pixels a pointer moves before a press counts as a drag. */
+export const DRAG_THRESHOLD = 3;
+
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 
@@ -50,14 +55,17 @@ export function fitToView(
 
 /**
  * `fitToView` keeping `inset` px clear on the left and on the right (the history bar covers the
- * left edge), so the fit stays centred on the whole width.
+ * left edge), so the fit stays centred on the whole width, and `top` px clear at the top (the
+ * tutorial card).
  */
 export function fitToViewInset(
   points: Point[],
   size: { width: number; height: number },
   inset: number,
+  top = 0,
 ): Viewport {
   const width = Math.max(size.width - 2 * inset, 1);
-  const vp = fitToView(points, { width, height: size.height });
-  return { ...vp, x: vp.x + (size.width - width) / 2 };
+  const height = Math.max(size.height - top, 1);
+  const vp = fitToView(points, { width, height });
+  return { ...vp, x: vp.x + (size.width - width) / 2, y: vp.y + size.height - height };
 }

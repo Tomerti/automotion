@@ -1045,3 +1045,12 @@ kbd {
     gap: 6px;
   }
 }
+
+@media (max-width: 480px) {
+  /* The phone's player is taller than the toast's spot above the dock: show toasts under the
+     top bar instead of over the player's caption. */
+  .av-toasts {
+    top: 88px;
+    bottom: auto;
+  }
+}

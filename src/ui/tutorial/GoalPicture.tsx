@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import type { Automaton, State } from '../../core/model';
 import { Arrowhead } from '../canvas/EdgeView';
+import { LabelSpans } from '../canvas/StateNode';
 import type { Point } from '../../core/geometry';
 import { startArrowGeometry, STATE_RADIUS, transitionGeometry } from '../../core/geometry';
 import { labelBaselineOffset } from '../../core/label';
@@ -91,7 +92,7 @@ export const GoalPicture = memo(function GoalPicture(props: {
             x={s.x}
             y={s.y + GOAL_LABEL_SIZE * labelBaselineOffset(s.label)}
           >
-            {s.label}
+            <LabelSpans label={s.label} fontSize={GOAL_LABEL_SIZE} />
           </text>
         </g>
       ))}

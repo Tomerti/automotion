@@ -10,6 +10,8 @@ https://tomerti.github.io/automotion/.
 
 - Stack: TypeScript (strict, `noUncheckedIndexedAccess`), React 19, Vite, custom SVG renderer, elkjs,
   Zustand + immer, zod, Vitest + fast-check + Testing Library, Playwright.
+- MIT licensed (`LICENSE`); the link-preview image is `public/og.png`, rendered from `docs/brand/og/og.html` by
+  `node docs/brand/og/render.mjs`; `index.html` carries the Open Graph / Twitter tags.
 - Design spec (binding when behavior is unclear): `docs/superpowers/specs/2026-10-28-automotion-design.md`.
 - Track tasks in `PROGRESS.md`: tick items off when they're done and add follow-up tasks as they come up.
 
@@ -83,13 +85,18 @@ Layers, with dependencies pointing downward only:
   or React 19 loops. `traceActions.ts` opens traces (`startRun`, `startSubset`, `startMinimize`).
 - `src/persistence/`: localStorage autosave (key `automotion:v1`, 500 ms debounce, flush on `pagehide`),
   and the versioned JSON file format
-  (`{ format: "automotion", version, automata }`, version 2; `migrate()` turns v1's single `start`
-  into `starts`). Every load goes through `migrate()` and the zod schema; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
+  (`{ format: "automotion", version, automata }`, version 2 (the schema rejects start/accepting ids that are not states); `migrate()` turns v1's single `start`
+  into `starts`). Every load goes through `migrate()` and the zod schema; the autosave load alone first drops dangling
+  start/accepting ids (`parseFile(…, { repair: true })`: older builds could save them), while imports and share links stay
+  strict; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
   built-in examples; e2e specs import `e2e/fixtures/automata.json`. The first release seeded three:
   the first load in a browser (flag `automotion:old-examples-checked`) removes the ones never
   changed (`oldExamples.ts`) and saves the result. The project was called Automaton Vis until
   2026-10-29: files tagged `"automaton-vis"` still import (`LEGACY_FORMAT`), and `migrateLegacyKeys()`
   (first thing in `main.tsx`) moves old `automaton-vis:*` localStorage keys to `automotion:*`.
+  `shareLink.ts`: one automaton in the URL hash (`#a=`, `shareUrl(a, base)`): `encodeShare` drops the id and
+  rounds x/y, deflate-raw through the browser's `CompressionStream` (no dependency) and base64url; `decodeShare` validates
+  with the schema and gives a fresh id; `readShareHash`; `sameAutomaton` compares by normalized content, not key order.
   LaTeX: `latexImport.ts` (`parseLatex`) reads every `tikzpicture` of a `.tex` file as an automaton,
   leniently (positioning, `edge`/`to`/`--`, loops, bends, label sides from `swap`/`'`/`auto=right`
   or `node[below]`, `initial` or a drawn start arrow) and
@@ -108,7 +115,12 @@ Layers, with dependencies pointing downward only:
     drag crosses 3 px, so double-clicks keep their real target. Pure math is in `core/geometry.ts` / `viewport.ts`;
     `snap.ts` snaps a dragged state (alignment guides and equal-gap markers, both kept out of exports).
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
-    `traceExtraActions.tsx` adds the "Save as new automaton" button.
+    `traceExtraActions.tsx` adds the "Save as new automaton" button. The views are movable:
+    `useFittedViewport` fits the diagram and, unless `interactive: false` (`RunTraceView`'s `ambient`: the welcome
+    demo stays inert), the wheel zooms around the pointer (non-passive listener, every step compounds), dragging pans
+    and `FitButton.tsx` (`trace-fit`) appears once moved. The user's view is fitted again when the states' extent or the
+    pane's width changes; a height-only change (the dock's explanation wrapping, the minimize legend, the tutorial
+    card) keeps it, shifted by half the difference. `ZOOM_STEP` and `DRAG_THRESHOLD` are shared with the canvas through `canvas/viewport.ts`.
   - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip (while its popover is open, `canvas/issueMarks.ts` rings
     the states the issues are about; the canvas paints only non-incomplete errors red all the time),
     theme menu (System / Light / Dark: `theme.ts` resolves it to `<html data-theme>`; the welcome's
@@ -119,7 +131,12 @@ Layers, with dependencies pointing downward only:
     named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in
     `historyPrefs.ts`), the DFA/NFA switch floating at the top of the canvas (`KindPill.tsx`, hidden
     while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,
-    import/export plumbing (Import is a menu: a file, or `PasteLatexDialog.tsx`). Thumbnails are their own
+    import/export plumbing (Import is a menu: a file, or `PasteLatexDialog.tsx`; "Copy link" in the export menu and each
+    history entry's ⋯ menu is `copyLink.ts`; `useSharedLink.ts` opens a `#a=` share link on load and on `hashchange`:
+    opens the saved copy (`sameAutomaton`) or adds the automaton (replacing a lone blank automaton, a fresh visitor's
+    "Untitled"), fits it, toasts and clears the hash, and the welcome stays away on such a visit; `touch.ts`
+    `isTouchOnly()`: coarse main pointer and no fine one, a plain media query check (not reactive), makes the welcome the
+    phone variant; on phones (≤ 480 px, `App.css`) toasts sit under the top bar). Thumbnails are their own
     small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
   - `tutorial/`: the interactive tutorial. `steps.ts` is a pure step table (each step's `done`,
@@ -135,10 +152,11 @@ Layers, with dependencies pointing downward only:
     subscribes to `appStore` while a tutorial runs. `TutorialCard` floats at the top centre under the
     DFA/NFA switch: the part's goal (a green "Part 1 complete!" panel at the hand-over), a
     progress bar and the one step to do now. It sets
-    `--av-tutorial-pad` on the canvas area so trace views start below it; its X asks, then
+    `--av-tutorial-pad` on the canvas area so trace views start below it and `fitActive` (the canvas's
+    Fit and first fit) keeps clear of it; its X asks, then
     `quitTutorial()` removes the tutorial automaton (Finish keeps it). `TutorialPointer` frames
     the target with orange corner brackets (portal, follows it each frame; not a ring, which would
-    read as accepting), and `WelcomeCard` is the first-visit dialog (key `automotion:seen-help`, set when it is answered,
+    read as accepting), and `WelcomeCard` is the first-visit dialog (on a touch-only device the demo, theme switch and one **Got it** button, no "Press ?" note) (key `automotion:seen-help`, set when it is answered,
     not when it opens, so a reload before answering shows it again);
     the Controls popup no longer opens by itself. Its `WelcomeDemo` plays random words on the
     "ends in 01" NFA forever (`demoRun.ts`) through `RunTraceView` with `ambient` (silent, 1×, no
@@ -147,7 +165,7 @@ Layers, with dependencies pointing downward only:
     (a random joke from `cheers.ts`, confetti, a fanfare from `player/sound.ts`); ticked steps
     stay silent. `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish; its `--av-run`, like the run's highlighter, is the same orange in both themes (dark mode only darkens the tints).
   - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
-    the canvas uses `<tspan>`s). Canvas and goal-picture state labels sit on the alphabetic baseline
+    the canvas uses `<tspan>`s; `StateNode.tsx` `LabelSpans`, also used by `GoalPicture`). Canvas and goal-picture state labels sit on the alphabetic baseline
     at `labelBaselineOffset` (`core/label.ts`), which centres the body of the main letters (tallest
     top down to the baseline) from per-glyph Geist 500 ink metrics; descenders (`y`'s tail) and
     subscripts hang below, so every label's letters sit at the same height.

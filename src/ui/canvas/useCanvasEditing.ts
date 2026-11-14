@@ -39,13 +39,11 @@ import {
   type Point,
 } from '../../core/geometry';
 import { snapPosition, type Snap } from './snap';
-import { fitToViewInset, screenToWorld, zoomAt } from './viewport';
+import { DRAG_THRESHOLD, ZOOM_STEP, fitToViewInset, screenToWorld, zoomAt } from './viewport';
 
 export const DEFAULT_VIEWPORT: Viewport = { x: 0, y: 0, zoom: 1 };
 
 /** Screen pixels a press must travel before it becomes a drag. */
-const DRAG_THRESHOLD = 3;
-const ZOOM_STEP = 1.1;
 /** World distance from an edge label's anchor that still counts as hitting it. */
 const LABEL_HIT_RADIUS = 12;
 /** A dragged edge whose bend is within this many screen px of straight snaps straight. */
@@ -177,13 +175,24 @@ export function historyInset(el: Element | null): number {
   return parseFloat(getComputedStyle(el).getPropertyValue('--av-history-inset')) || 0;
 }
 
-/** Fit the active automaton's states into the canvas (no-op while the canvas has no size). */
+/** How far down a fit keeps clear: the tutorial card while there is one (`--av-tutorial-pad`). */
+export function tutorialInset(el: Element | null): number {
+  if (!el) return 0;
+  return parseFloat(getComputedStyle(el).getPropertyValue('--av-tutorial-pad')) || 0;
+}
+
+/**
+ * Fit the active automaton's states into the canvas (no-op while the canvas has no size), below
+ * the tutorial card while there is one (`--av-tutorial-pad`).
+ */
 export function fitActive(): void {
   const a = activeAutomaton();
   const size = canvasSize();
   if (!a || size.width === 0 || size.height === 0) return;
-  const inset = historyInset(document.querySelector('[data-testid="canvas"]'));
-  appStore.getState().setViewport(a.id, fitToViewInset(a.states, size, inset));
+  const el = document.querySelector('[data-testid="canvas"]');
+  appStore
+    .getState()
+    .setViewport(a.id, fitToViewInset(a.states, size, historyInset(el), tutorialInset(el)));
 }
 
 /**

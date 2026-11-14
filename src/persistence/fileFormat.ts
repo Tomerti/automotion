@@ -13,7 +13,38 @@ function isOurFormat(format: unknown): boolean {
   return format === FORMAT || format === LEGACY_FORMAT;
 }
 
-export function parseFile(text: string, existingIds: Set<string>): ParseResult {
+/**
+ * Drop start and accepting ids that name no state. Older builds could save one (the schema
+ * didn't check), so the autosave load repairs them instead of losing the whole list.
+ */
+function repairDangling(json: unknown): unknown {
+  if (typeof json !== 'object' || json === null) return json;
+  const automata = (json as { automata?: unknown }).automata;
+  if (!Array.isArray(automata)) return json;
+  const repaired = automata.map((a: unknown) => {
+    if (typeof a !== 'object' || a === null) return a;
+    const { states, starts, accepting } = a as {
+      states?: unknown;
+      starts?: unknown;
+      accepting?: unknown;
+    };
+    if (!Array.isArray(states)) return a;
+    const ids = new Set(states.map((s: unknown) => (s as { id?: unknown } | null)?.id));
+    const keep = (list: unknown) => (Array.isArray(list) ? list.filter((id) => ids.has(id)) : list);
+    return { ...a, starts: keep(starts), accepting: keep(accepting) };
+  });
+  return { ...json, automata: repaired };
+}
+
+/**
+ * Read a saved file. Imports and share links are strict; `repair` (the autosave load) first drops
+ * dangling start and accepting ids.
+ */
+export function parseFile(
+  text: string,
+  existingIds: Set<string>,
+  { repair = false }: { repair?: boolean } = {},
+): ParseResult {
   let json: unknown;
   try {
     json = JSON.parse(text);
@@ -30,6 +61,7 @@ export function parseFile(text: string, existingIds: Set<string>): ParseResult {
   let migrated: unknown;
   try {
     migrated = migrate(json);
+    if (repair) migrated = repairDangling(migrated);
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Could not read the file' };
   }

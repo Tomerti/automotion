@@ -9,12 +9,13 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
-- [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; consider a more compact layout or pan/zoom in trace views (the transition table is gone in v2)
+- [ ] Minimize walkthrough: a merged state's long label (`{{q_0,q_2},{q_0,q_1,q_2}}`) spills out of its circle over the arrows; shorten or wrap merged labels there
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
       incomplete DFA): consider muting it, or saying in the card that it is expected
-- [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
+- [ ] Share links: cap the inflated size in `decodeShare` (a zip-bomb link could exhaust memory)
+- [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is read once, not reactive
 
 - [ ] Copy and paste follow-ups: Ctrl+X (cut), Ctrl+A (select all), and Shift + click as an alternative to Ctrl + click (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
 
@@ -25,6 +26,19 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### Launch prep (2026-11-14)
+
+- [x] MIT license (LICENSE, mentioned in the README), version 1.0.0, and Open Graph / Twitter link-preview tags in `index.html`
+- [x] 1200 × 630 link-preview image `public/og.png`, rendered from `docs/brand/og/og.html` by `docs/brand/og/render.mjs`
+- [x] Review hardening: the file schema rejects accepting ids that aren't states, `svgToPng` rejects a sizeless SVG, and the multi-start e2e no longer branches on `isEnabled()`
+- [x] Share-link encoding (`persistence/shareLink.ts`): `encodeShare` / `decodeShare` / `shareUrl` / `readShareHash` / `sameAutomaton` put one automaton in a `#a=` URL payload (deflate-raw, base64url)
+- [x] "Copy link" in the toolbar's export menu and each history entry's ⋯ menu copies a share link (`ui/shell/copyLink.ts`)
+- [x] Opening a share link (`#a=`, `ui/shell/useSharedLink.ts`) on load and on `hashchange`: opens the saved copy or adds the automaton, fits it, toasts, clears the hash; no welcome dialog on such a visit
+- [x] Pan and zoom in the walkthrough views (`useFittedViewport` returns `moved` / `fit` / `onPointerDown` and owns a non-passive wheel listener): the wheel zooms around the pointer, dragging pans, a Fit button (`player/FitButton.tsx`, `trace-fit`) shows once moved, the fitted view returns when the fitted target changes; the welcome demo (`ambient`) stays inert
+- [x] Tutorial part 3 (convert an NFA, then minimize the DFA) was built and then dropped: the tutorial stays at two parts. Kept from it: the goal picture draws subscripts (`LabelSpans`), the canvas's fit keeps clear of the tutorial card, and Save and minimize's `save-and-minimize` test id
+- [x] Phone welcome: on a touch-only device (`ui/shell/touch.ts` `isTouchOnly`) the welcome keeps the demo and theme switch, says AutoMotion is made for a mouse and keyboard, and has one **Got it** button; an iPhone 13 e2e (`e2e/phone.spec.ts`) covers the welcome, opening a share link and running a word; toasts sit under the top bar on phones (≤ 480 px) instead of over the player
+- [x] Final-review fixes: the autosave load drops dangling start/accepting ids instead of losing the whole list (`toggleAccepting` ignores non-states), walkthrough zoom survives height-only pane changes, the first-show fit keeps clear of the tutorial card, a link visitor's lone blank "Untitled" makes way for the shared automaton, no "Press ?" note on phones
 
 ### Discoverability (2026-11-11)
 

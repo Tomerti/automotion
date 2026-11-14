@@ -1,6 +1,6 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { resetAppStore } from '../../store/store';
 import App from '../shell/App';
 import { SEEN_HELP_KEY } from '../shell/help';
@@ -129,4 +129,48 @@ it('gives focus back to what had it when it closes', async () => {
   await user.click(within(welcome()!).getByRole('button', { name: 'Not now' }));
   expect(outside).toHaveFocus();
   outside.remove();
+});
+
+/** A matchMedia whose only true queries are the pointer ones asked for. */
+function stubPointers(coarse: boolean, fine: boolean): void {
+  vi.stubGlobal('matchMedia', (q: string) => ({
+    matches: q.includes('any-pointer') ? fine : q.includes('pointer: coarse') ? coarse : false,
+    media: q,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+}
+
+it('on a touch-only device offers Got it instead of the tutorial', async () => {
+  stubPointers(true, false);
+  try {
+    const user = userEvent.setup();
+    render(<App />);
+    const d = welcome()!;
+    expect(
+      within(d).getByText(/made for a computer with a mouse and keyboard/),
+    ).toBeInTheDocument();
+    expect(within(d).queryByRole('button', { name: 'Start tutorial' })).toBeNull();
+    expect(within(d).queryByRole('button', { name: 'Not now' })).toBeNull();
+    expect(within(d).getByTestId('welcome-demo')).toBeInTheDocument();
+    // A phone has no keyboard to press ? on.
+    expect(within(d).queryByText(/Press \? at any time/)).toBeNull();
+    await user.click(within(d).getByRole('button', { name: 'Got it' }));
+    expect(welcome()).toBeNull();
+    expect(localStorage.getItem(SEEN_HELP_KEY)).not.toBeNull();
+    expect(screen.queryByTestId('tutorial-card')).toBeNull();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+it('with a fine pointer too (a laptop with a touch screen) keeps the tutorial offer', () => {
+  stubPointers(true, true);
+  try {
+    render(<App />);
+    expect(within(welcome()!).getByRole('button', { name: 'Start tutorial' })).toBeInTheDocument();
+    expect(within(welcome()!).queryByRole('button', { name: 'Got it' })).toBeNull();
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

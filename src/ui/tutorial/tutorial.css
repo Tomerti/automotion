@@ -469,6 +469,14 @@
   text-transform: uppercase;
   color: var(--av-ink-muted);
 }
+/* The phone's one-line note reads as a sentence, not as a small-caps label. */
+.av-welcome-text.av-welcome-touch {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
 .av-welcome-plan {
   margin: 0 0 18px;
   padding: 0;
