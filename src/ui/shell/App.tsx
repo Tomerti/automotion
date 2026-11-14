@@ -19,6 +19,7 @@ import { useHistoryOpen } from './historyPrefs';
 import { importFile, isImportable } from './importFile';
 import { KindPill } from './KindPill';
 import { toast } from './toastStore';
+import { arrivedByLink, useSharedLink } from './useSharedLink';
 import { Toasts } from './Toasts';
 import { TopBar } from './TopBar';
 import '../player/player.css';
@@ -62,12 +63,13 @@ function useDockHeight(): [React.RefObject<HTMLDivElement | null>, number] {
 export default function App(): React.JSX.Element {
   useAutosave({ onFail: (m) => toast(m, 'error') });
   usePasteLatex();
+  useSharedLink();
   const trace = useAppStore((s) => s.trace);
   const stepIndex = useAppStore((s) => s.stepIndex);
   const setStep = useAppStore((s) => s.setStep);
   const closeTrace = useAppStore((s) => s.closeTrace);
   const [helpOpen, setHelpOpen] = useControlsHelp();
-  const [welcomeOpen, closeWelcome] = useWelcome();
+  const [welcomeOpen, closeWelcome] = useWelcome(arrivedByLink());
   const [historyOpen, toggleHistory] = useHistoryOpen();
   const celebrating = useTutorial((s) => s.celebrating);
   const step = trace?.steps[stepIndex];

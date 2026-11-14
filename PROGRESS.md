@@ -33,6 +33,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Review hardening: the file schema rejects accepting ids that aren't states, `svgToPng` rejects a sizeless SVG, and the multi-start e2e no longer branches on `isEnabled()`
 - [x] Share-link encoding (`persistence/shareLink.ts`): `encodeShare` / `decodeShare` / `shareUrl` / `readShareHash` / `sameAutomaton` put one automaton in a `#a=` URL payload (deflate-raw, base64url)
 - [x] "Copy link" in the toolbar's export menu and each history entry's ⋯ menu copies a share link (`ui/shell/copyLink.ts`)
+- [x] Opening a share link (`#a=`, `ui/shell/useSharedLink.ts`) on load and on `hashchange`: opens the saved copy or adds the automaton, fits it, toasts, clears the hash; no welcome dialog on such a visit
 
 ### Discoverability (2026-11-11)
 

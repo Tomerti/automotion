@@ -31,10 +31,11 @@ export function isTypingTarget(t: EventTarget | null): boolean {
 /**
  * Open state of the welcome dialog: open on every visit until it is answered (closed, or the
  * tutorial started). Marked seen on close, not on open: a reload before answering (Vite's own
- * reload after optimizing dependencies, a refresh) would otherwise lose it for good.
+ * reload after optimizing dependencies, a refresh) would otherwise lose it for good. `suppress`
+ * (arrived by a share link) starts it closed without marking it seen.
  */
-export function useWelcome(): [boolean, () => void] {
-  const [open, setOpen] = useState(() => !hasSeenHelp());
+export function useWelcome(suppress = false): [boolean, () => void] {
+  const [open, setOpen] = useState(() => !suppress && !hasSeenHelp());
   const close = useCallback((): void => {
     markHelpSeen();
     setOpen(false);
