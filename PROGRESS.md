@@ -8,7 +8,6 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
-- [ ] Tag `v1.0.0` on master (launch prep's merge, e51ab17) and publish a GitHub release for it, with notes from PR #50
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
 - [ ] Minimize walkthrough: a merged state's long label (`{{q_0,q_2},{q_0,q_1,q_2}}`) spills out of its circle over the arrows; shorten or wrap merged labels there
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
@@ -27,6 +26,10 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### v1.0.0 (2026-11-14)
+
+- [x] Tagged `v1.0.0` on master at the README refresh's merge (PR #52; the app is as launch prep's merge, e51ab17, left it) and published the GitHub release, with notes from PR #50 and #52
 
 ### README refresh (2026-11-14)
 
