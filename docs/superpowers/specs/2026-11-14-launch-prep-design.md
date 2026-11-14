@@ -73,7 +73,7 @@ given on load) and `x`, `y` rounded to integers. Compression is the browser's
 - **Opening**: `src/ui/shell/useSharedLink.ts`, used once in `App`. On mount (after the store
   has loaded saved work) and on `hashchange`, if `readShareHash(location.hash)` gives a payload:
   decode; on success, if a saved automaton is `sameAutomaton`, select it, otherwise add it (the
-  store's add: front of history, opened, trace closed); fit it; toast "Opened «name»". On
+  store's add: front of history, opened, trace closed); fit it; toast `Opened “name”`. On
   failure: error toast "This link's automaton couldn't be read". Either way the hash is removed
   with `history.replaceState` (keeping path and query), so a reload doesn't add it again.
 - A visit that opens a shared link doesn't show the welcome dialog, and doesn't mark it seen,
@@ -117,7 +117,9 @@ link again in that context opens the existing one; a broken link shows the error
   trace rather than requiring the tutorial automaton to be active: the "elsewhere" hint is not
   shown for those steps while a subset/minimize trace that belongs to the tutorial is open.
   `tutorialStore` records the id of the DFA saved during part 3 to recognise its minimize trace.
-  Closing a walkthrough early falls back to the right step, as other steps do.
+  Part 3's steps latch once reached (like run steps), so Save and minimize closing the
+  conversion doesn't send the card back; a walkthrough closed before its end leaves the card on
+  its "to the end" step with a "First, press Convert to DFA again." (or Minimize) line.
 - `Step.part` becomes `1 | 2 | 3 | 4` (4 is the closing card), `PART_TITLES[3]` = "Convert and
   minimize", `COUNTED_STEPS` grows by 4, the header reads "Part 3 of 3 · Step n of 4".
 - The welcome's plan gets a third row ("Convert an NFA to a DFA and shrink it"), replacing
