@@ -103,7 +103,7 @@ export function WelcomeCard({
             </div>
           </>
         )}
-        <p className="av-welcome-note">Press ? at any time for all the controls.</p>
+        {!touchOnly && <p className="av-welcome-note">Press ? at any time for all the controls.</p>}
       </div>
     </div>
   );

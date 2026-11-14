@@ -153,7 +153,8 @@ it('on a touch-only device offers Got it instead of the tutorial', async () => {
     expect(within(d).queryByRole('button', { name: 'Start tutorial' })).toBeNull();
     expect(within(d).queryByRole('button', { name: 'Not now' })).toBeNull();
     expect(within(d).getByTestId('welcome-demo')).toBeInTheDocument();
-    expect(within(d).getByText(/Press \? at any time/)).toBeInTheDocument();
+    // A phone has no keyboard to press ? on.
+    expect(within(d).queryByText(/Press \? at any time/)).toBeNull();
     await user.click(within(d).getByRole('button', { name: 'Got it' }));
     expect(welcome()).toBeNull();
     expect(localStorage.getItem(SEEN_HELP_KEY)).not.toBeNull();
