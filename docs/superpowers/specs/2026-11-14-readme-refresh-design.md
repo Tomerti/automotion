@@ -9,8 +9,9 @@ it, and (last) how to develop it.
 ## Goals
 
 - Current logo and screenshots: the dark logo files still used the old dark orange `#ff922b`;
-  the app draws the loop `#f76707` (and "Motion" in `#d9480f`) in both themes. The screenshots
-  were from 2026-10-29 (blue selection, old sidebar, no tutorial or theme menu).
+  the app draws the loop `#f76707` in both themes. "Motion" in the wordmark takes the same orange
+  (user decision after review; it was `#d9480f`). The screenshots were from 2026-10-29 (blue
+  selection, old sidebar, no tutorial or theme menu).
 - A tidy, organized page: short sections, each led by a screenshot and 3–5 crisp bullets.
 - Lead with people using the tool (students, TAs); developer material last.
 

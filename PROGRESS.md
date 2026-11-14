@@ -32,7 +32,7 @@ Nothing in progress: pick the next task from the list below.
 
 - [x] README rewritten for the public repo: tagline, get started in three steps, a section per feature with a screenshot, a controls table, good to know, development
 - [x] Screenshots retaken (run, convert, minimize, dark editing, tutorial) by `docs/screenshots/take.mjs` from `scenes.json`; `public/og.png` re-rendered from the new `run.png`
-- [x] The dark logo files and the favicon's dark mode use the app's oranges (`#f76707` loop, `#d9480f` "Motion") instead of the old `#ff922b`; `docs/brand/render.mjs` re-renders the lockup PNGs
+- [x] One logo orange, `#f76707` (the app's run highlighter), in both themes: the dark mark, lockup and favicon lose the old `#ff922b`, and "Motion" matches the loop in both lockups (it was `#d9480f`); `docs/brand/render.mjs` re-renders the lockup PNGs
 
 ### Launch prep (2026-11-14)
 
