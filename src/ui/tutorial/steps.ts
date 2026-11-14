@@ -539,6 +539,12 @@ const SPECS: StepSpec[] = [
     instruction: () => 'Press Convert to DFA at the top.',
     why: () => 'It builds a DFA that accepts the same words.',
     latch: (ctx) => converting(ctx),
+    // Part 2's DFA is back (an undo right after the NFA loaded): Convert is off for a DFA, and
+    // the NFA isn't loaded again over the user's undo.
+    first: (ctx) =>
+      ctx.trace === null && ctx.automaton?.kind === 'DFA'
+        ? 'First, press [Ctrl] + [Y] to bring the NFA back.'
+        : null,
     target: () => 'button[aria-label="Convert to DFA"]',
   },
   {

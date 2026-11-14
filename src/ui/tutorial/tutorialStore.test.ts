@@ -17,6 +17,7 @@ import {
   finishTutorial,
   quitTutorial,
   startTutorial,
+  tutorialContext,
   tutorialStore,
 } from './tutorialStore';
 import { PART3_NFA, STEPS } from './steps';
@@ -279,6 +280,23 @@ describe('part 3', () => {
     // One undo step brings part 2's automaton back, and the NFA isn't loaded over it again.
     app().undo();
     expect(tutorialAutomaton()).toMatchObject({ kind: 'DFA', name: 'Tutorial' });
+    expect(tutorialAutomaton().states.map((s) => s.label)).toEqual(['any']);
+  });
+
+  it('after an undo of the NFA, asks for a redo, which brings it back', () => {
+    toHandOver();
+    app().closeTrace();
+    app().undo();
+    const ctx = tutorialContext(app(), tut().automatonId, tut().derivedId);
+    expect(STEPS[tut().current]!.hint(ctx)).toEqual({
+      kind: 'first',
+      text: 'First, press [Ctrl] + [Y] to bring the NFA back.',
+    });
+    app().redo();
+    expect(tutorialAutomaton().kind).toBe('NFA');
+    expect(STEPS[tut().current]!.hint(tutorialContext(app(), tut().automatonId, null))).toBeNull();
+    // Only one checkpoint: one undo goes back to part 2's automaton.
+    app().undo();
     expect(tutorialAutomaton().states.map((s) => s.label)).toEqual(['any']);
   });
 

@@ -681,6 +681,18 @@ describe('part 3: convert and minimize', () => {
     expect(step('done').hint(onDerived())).toBeNull();
   });
 
+  it('asks for the NFA back when part 2’s DFA is there instead (an undo)', () => {
+    expect(step('convert').hint(ctx(any()))).toEqual({
+      kind: 'first',
+      text: 'First, press [Ctrl] + [Y] to bring the NFA back.',
+    });
+    // Not at the hand-over, while part 2's last run is still open.
+    expect(step('convert').hint(ctx(any(), ran(any(), '10')))).toEqual({
+      kind: 'part-done',
+      part: 2,
+    });
+  });
+
   it('never asks to switch back to DFA, nor to press Esc first', () => {
     expect(step('convert').hint(ctx(nfa()))).toBeNull();
     expect(step('convert').hint(ctx(nfa(), ran(nfa(), '01')))).toBeNull();
