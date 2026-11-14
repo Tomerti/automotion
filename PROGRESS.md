@@ -28,6 +28,12 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### README refresh (2026-11-14)
+
+- [x] README rewritten for the public repo: tagline, get started in three steps, a section per feature with a screenshot, a controls table, good to know, development
+- [x] Screenshots retaken (run, convert, minimize, dark editing, tutorial) by `docs/screenshots/take.mjs` from `scenes.json`; `public/og.png` re-rendered from the new `run.png`
+- [x] The dark logo files and the favicon's dark mode use the app's oranges (`#f76707` loop, `#d9480f` "Motion") instead of the old `#ff922b`; `docs/brand/render.mjs` re-renders the lockup PNGs
+
 ### Launch prep (2026-11-14)
 
 - [x] MIT license (LICENSE, mentioned in the README), version 1.0.0, and Open Graph / Twitter link-preview tags in `index.html`
