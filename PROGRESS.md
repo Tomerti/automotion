@@ -34,6 +34,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Share-link encoding (`persistence/shareLink.ts`): `encodeShare` / `decodeShare` / `shareUrl` / `readShareHash` / `sameAutomaton` put one automaton in a `#a=` URL payload (deflate-raw, base64url)
 - [x] "Copy link" in the toolbar's export menu and each history entry's ⋯ menu copies a share link (`ui/shell/copyLink.ts`)
 - [x] Opening a share link (`#a=`, `ui/shell/useSharedLink.ts`) on load and on `hashchange`: opens the saved copy or adds the automaton, fits it, toasts, clears the hash; no welcome dialog on such a visit
+- [x] Tutorial part 3 in the step table (`ui/tutorial/steps.ts`): convert the "contains 01" NFA (`PART3_NFA`), play it to the end, Save and minimize, play that to the end; the steps latch on the open walkthrough (`latch`, `isPart3Trace`), the closing card is part 4 (store, card and e2e wiring still to do)
 
 ### Discoverability (2026-11-11)
 

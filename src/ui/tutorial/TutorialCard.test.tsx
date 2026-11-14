@@ -106,8 +106,8 @@ it('shows one step at a time, with a few words of why, and fills a progress bar'
   act(() => startTutorial());
   const bar = within(card()).getByRole('progressbar', { name: 'Tutorial progress' });
   expect(bar).toHaveAttribute('aria-valuenow', '0');
-  expect(bar).toHaveAttribute('aria-valuemax', '15');
-  expect(bar.children).toHaveLength(15);
+  expect(bar).toHaveAttribute('aria-valuemax', '19');
+  expect(bar.children).toHaveLength(19);
   expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
   addAt(100);
   expect(card()).toHaveAttribute('data-step', '2');
@@ -293,7 +293,7 @@ it('the closing card has Finish, which ends it', async () => {
   render(<App />);
   act(() => startTutorial());
   at('done');
-  expect(card()).toHaveAttribute('data-step', '16');
+  expect(card()).toHaveAttribute('data-step', '20');
   expect(within(card()).getByText('Tutorial · Done')).toBeInTheDocument();
   await user.click(within(card()).getByRole('button', { name: 'Finish' }));
   expect(screen.queryByTestId('tutorial-card')).toBeNull();

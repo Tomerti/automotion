@@ -48,6 +48,8 @@ export function tutorialContext(app: AppState, automatonId: string | null): Tuto
     trace: app.trace,
     stepIndex: app.stepIndex,
     selected: app.selection.states,
+    derivedId: null,
+    derivedActive: false,
   };
 }
 
@@ -92,7 +94,7 @@ function untouched(app: AppState, a: Automaton): boolean {
  */
 export function startTutorial(): void {
   // A finished one stays, as with Finish.
-  if (STEPS[tutorialStore.getState().current]?.part === 3) endTutorial();
+  if (STEPS[tutorialStore.getState().current]?.part === 4) endTutorial();
   else quitTutorial();
   const app = appStore.getState();
   app.closeTrace();

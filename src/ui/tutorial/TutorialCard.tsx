@@ -3,7 +3,7 @@ import { appStore, useAppStore } from '../../store/store';
 import { LabelText } from '../LabelText';
 import { CloseIcon } from '../shell/icons';
 import { GoalPicture } from './GoalPicture';
-import { COUNTED_STEPS, PART1_DONE, PART_GOALS, PART_TITLES, STEPS } from './steps';
+import { COUNTED_STEPS, PART_DONE, PART_GOALS, PART_TITLES, STEPS } from './steps';
 import { TutorialPointer } from './TutorialPointer';
 import { finishTutorial, quitTutorial, tutorialContext, useTutorial } from './tutorialStore';
 import './tutorial.css';
@@ -63,7 +63,7 @@ function Markup({ part }: { part: string }): React.JSX.Element {
  * What the part builds, at the top of the card: a picture of the finished automaton, the goal in
  * a few words, and words it accepts (✓) and rejects (✗).
  */
-function GoalRow({ part }: { part: 1 | 2 }): React.JSX.Element {
+function GoalRow({ part }: { part: 1 | 2 | 3 }): React.JSX.Element {
   const goal = PART_GOALS[part];
   return (
     <div className="av-tutorial-goal" data-testid="tutorial-goal" data-part={part}>
@@ -104,7 +104,7 @@ function PartDone(): React.JSX.Element {
         </span>
         Part 1 complete!
       </p>
-      <p className="av-tutorial-part-done-text">{PART1_DONE}</p>
+      <p className="av-tutorial-part-done-text">{PART_DONE[1]}</p>
       <p className="av-tutorial-next">
         Next: <b>Part 2 · {PART_TITLES[2]}</b>
       </p>
@@ -190,7 +190,7 @@ export function TutorialCard(): React.JSX.Element | null {
   if (!step) return null;
   const ctx = tutorialContext(appStore.getState(), automatonId);
   const hint = step.hint(ctx);
-  const last = step.part === 3;
+  const last = step.part === 4;
   // Finishing behind the question makes it moot: nothing to lose any more.
   const quitting = quitFor !== null && quitFor === automatonId && !last;
 
@@ -256,7 +256,7 @@ export function TutorialCard(): React.JSX.Element | null {
             <PartDone />
           ) : (
             // Keyed by part, so part 2's goal comes in with its own entrance.
-            shownPart !== 3 && <GoalRow key={shownPart} part={shownPart} />
+            shownPart !== 4 && <GoalRow key={shownPart} part={shownPart} />
           )}
           {!last && <ProgressBar done={current} />}
           {/* One live region that stays mounted, so screen readers announce each new step and
