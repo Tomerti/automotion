@@ -61,11 +61,12 @@ Press **?** at any time for every control.
 
 - **DFAs and NFAs**, with ε-transitions and several start states. Switch between them with the
   DFA / NFA switch; adding an ε-transition makes a DFA an NFA.
-- **Real notation:** `q_1` and `q_{12}` show as subscripts, `\eps` types ε and `\emptyset`
-  types ∅.
+- **Real notation:** `q_1` and `q_{12}` show as subscripts. `\eps` types ε in symbols and
+  words, and `\emptyset` types ∅ in a state name.
 - **Mistakes are pointed out.** The issues chip lists what is wrong (no start state, two
-  arrows on one symbol in a DFA, a missing transition, unreachable states) and rings those
-  states on the canvas. A disabled button always says why.
+  arrows on one symbol in a DFA, a missing transition, unreachable states); open it to see
+  those states ringed on the canvas. Run, Convert to DFA and Minimize say why when you can't
+  use them.
 - **Neat diagrams.** States snap into line and to equal gaps as you drag them. Bend arrows,
   turn self-loops and start arrows, and move an arrow's symbols to its other side. **Tidy**
   lays the whole automaton out the way you would draw it by hand.
