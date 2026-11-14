@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { CloseIcon } from '../shell/icons';
 import { ThemeSwitch } from '../shell/ThemeSwitch';
+import { isTouchOnly } from '../shell/touch';
 import { useModalDialog } from '../shell/useModalDialog';
 import { WelcomeDemo } from './WelcomeDemo';
 import './tutorial.css';
@@ -28,6 +29,7 @@ export function WelcomeCard({
 }): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalDialog(dialogRef, onClose);
+  const touchOnly = isTouchOnly();
 
   return (
     <div
@@ -64,27 +66,43 @@ export function WelcomeCard({
           <span className="av-welcome-text">Theme</span>
           <ThemeSwitch />
         </div>
-        <p className="av-welcome-text">A short tutorial:</p>
-        <ol className="av-welcome-plan">
-          {PLAN.map((p, i) => (
-            <li key={p.what} className="av-welcome-row">
-              <span className="av-welcome-num" aria-hidden="true">
-                {i + 1}
-              </span>
-              <span>
-                <b>{p.what}</b> {p.how}
-              </span>
-            </li>
-          ))}
-        </ol>
-        <div className="av-welcome-actions">
-          <button type="button" data-focus-stop onClick={onClose}>
-            Not now
-          </button>
-          <button type="button" className="av-go" data-focus-stop onClick={onStart}>
-            Start tutorial
-          </button>
-        </div>
+        {touchOnly ? (
+          <>
+            <p className="av-welcome-text av-welcome-touch">
+              AutoMotion is made for a computer with a mouse and keyboard. On a phone you can open
+              shared automata and run words on them.
+            </p>
+            <div className="av-welcome-actions">
+              <button type="button" className="av-go" data-focus-stop onClick={onClose}>
+                Got it
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="av-welcome-text">A short tutorial:</p>
+            <ol className="av-welcome-plan">
+              {PLAN.map((p, i) => (
+                <li key={p.what} className="av-welcome-row">
+                  <span className="av-welcome-num" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <span>
+                    <b>{p.what}</b> {p.how}
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <div className="av-welcome-actions">
+              <button type="button" data-focus-stop onClick={onClose}>
+                Not now
+              </button>
+              <button type="button" className="av-go" data-focus-stop onClick={onStart}>
+                Start tutorial
+              </button>
+            </div>
+          </>
+        )}
         <p className="av-welcome-note">Press ? at any time for all the controls.</p>
       </div>
     </div>
