@@ -13,7 +13,7 @@ Nothing in progress: pick the next task from the list below.
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
       incomplete DFA): consider muting it, or saying in the card that it is expected
-- [ ] Share links: cap the inflated size in `decodeShare` (a zip-bomb link could exhaust memory); a fresh visitor opening a link keeps a blank "Untitled" beside the shared automaton (replace a pristine blank instead)
+- [ ] Share links: cap the inflated size in `decodeShare` (a zip-bomb link could exhaust memory)
 - [ ] Tutorial part 3: undoing the NFA load and then editing leaves no redo, so only restarting recovers; the redo hint also shows after a kind-pill flip to DFA
 - [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is read once, not reactive
 

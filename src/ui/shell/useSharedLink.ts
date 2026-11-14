@@ -10,7 +10,10 @@ export function arrivedByLink(): boolean {
   return ARRIVED_BY_LINK;
 }
 
-/** Open the automaton in a `#a=` share link (a saved copy if there is one, else add it). */
+/**
+ * Open the automaton in a `#a=` share link (a saved copy if there is one, else add it). A fresh
+ * visitor's lone blank automaton (nothing to lose) makes way for the shared one.
+ */
 export async function openSharedLink(hash: string): Promise<void> {
   const payload = readShareHash(hash);
   if (payload === null) return;
@@ -30,7 +33,10 @@ export async function openSharedLink(hash: string): Promise<void> {
     // setActive keeps an open trace when the automaton is already active.
     if (appStore.getState().trace) appStore.getState().closeTrace();
   } else {
+    const only = state.automata.length === 1 ? state.automata[0] : undefined;
+    const blank = only && only.states.length === 0 && only.transitions.length === 0;
     state.addAutomaton(incoming);
+    if (only && blank) appStore.getState().deleteAutomaton(only.id);
   }
   const id = saved?.id ?? incoming.id;
   // Once the canvas has its size.

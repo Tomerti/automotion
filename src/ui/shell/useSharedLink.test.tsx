@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Automaton } from '../../core/model';
+import { emptyAutomaton, type Automaton } from '../../core/model';
 import { encodeShare } from '../../persistence/shareLink';
 import { appStore, resetAppStore } from '../../store/store';
 import { endsAb } from '../../store/testing/fixtures';
@@ -28,6 +28,31 @@ describe('openSharedLink', () => {
       ['Opened “From a friend”', 'info'],
     ]);
     expect(replaceState).toHaveBeenCalledWith(null, '', location.pathname + location.search);
+  });
+
+  it("replaces a fresh visitor's lone blank automaton, and nothing else", async () => {
+    const blank = emptyAutomaton('Untitled', 'DFA');
+    appStore.getState().addAutomaton(blank);
+    await openSharedLink('#a=' + (await encodeShare(shared)));
+    expect(appStore.getState().automata.map((a) => a.name)).toEqual(['From a friend']);
+    expect(appStore.getState().activeId).toBe(appStore.getState().automata[0]?.id);
+
+    // A lone automaton with something in it stays.
+    resetAppStore();
+    appStore.getState().addAutomaton({ ...blank, states: [{ id: 'q', label: 'q', x: 0, y: 0 }] });
+    await openSharedLink('#a=' + (await encodeShare(shared)));
+    expect(appStore.getState().automata.map((a) => a.name)).toEqual(['From a friend', 'Untitled']);
+
+    // So does a blank one next to others.
+    resetAppStore();
+    appStore.getState().addAutomaton({ ...endsAb, id: 'other', name: 'Other' });
+    appStore.getState().addAutomaton(blank);
+    await openSharedLink('#a=' + (await encodeShare(shared)));
+    expect(appStore.getState().automata.map((a) => a.name)).toEqual([
+      'From a friend',
+      'Untitled',
+      'Other',
+    ]);
   });
 
   it('opens the saved copy instead of adding a duplicate', async () => {

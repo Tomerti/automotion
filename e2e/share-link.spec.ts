@@ -31,7 +31,9 @@ test('a share link opens its automaton in a fresh browser, once', async ({ page,
   await expect(fresh.getByTestId('state-q_3')).toBeVisible();
   await expect(fresh.getByRole('dialog', { name: 'Welcome' })).toHaveCount(0);
   await expect(item(fresh, 'Ends in ab (NFA)')).toHaveCount(1);
+  // The first visit's blank "Untitled" made way for it.
   const count = await historyCount(fresh);
+  expect(count).toBe(1);
   expect(fresh.url()).not.toContain('#');
 
   // Reloading doesn't add it again, and the same link opens the saved copy.
