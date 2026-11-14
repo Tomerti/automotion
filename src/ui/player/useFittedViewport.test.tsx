@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { useLayoutEffect } from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { State } from '../../core/model';
 import { fitToView, zoomAt, ZOOM_STEP } from '../canvas/viewport';
 import type { Viewport } from '../../store/types';
@@ -80,6 +80,38 @@ describe('useFittedViewport', () => {
     rerender(<Probe states={B} />);
     expect(vp()).toEqual(fitToView(pts(B), FALLBACK));
     expect(api.moved).toBe(false);
+  });
+
+  it('re-fits when the size changes', () => {
+    // jsdom lays nothing out: stub ResizeObserver and give the element a size to measure.
+    const observers: (() => void)[] = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(cb: () => void) {
+          observers.push(cb);
+        }
+        observe(): void {}
+        disconnect(): void {}
+      },
+    );
+    try {
+      const { getByTestId } = render(<Probe states={A} />);
+      const el = getByTestId('p');
+      const resize = (width: number, height: number): void => {
+        Object.defineProperty(el, 'clientWidth', { value: width, configurable: true });
+        Object.defineProperty(el, 'clientHeight', { value: height, configurable: true });
+        act(() => observers.forEach((cb) => cb()));
+      };
+      resize(800, 500);
+      wheel(el);
+      expect(api.moved).toBe(true);
+      resize(400, 300);
+      expect(vp()).toEqual(fitToView(pts(A), { width: 400, height: 300 }));
+      expect(api.moved).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('keeps the view across rerenders with the same fit', () => {
