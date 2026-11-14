@@ -378,9 +378,17 @@
   }
 }
 
+/* Framing a button: it hugs the button and breathes less (it may sit by the window's edge or
+   next to another button). */
+.av-tutorial-pointer[data-tight] .av-tutorial-corner {
+  --reach: 2px;
+  width: 9px;
+  height: 9px;
+}
+
 @keyframes av-tutorial-breathe {
   50% {
-    transform: translate(calc(var(--dx) * 3px), calc(var(--dy) * 3px));
+    transform: translate(calc(var(--dx) * var(--reach, 3px)), calc(var(--dy) * var(--reach, 3px)));
   }
 }
 

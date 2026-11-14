@@ -602,6 +602,9 @@ function toStep(spec: StepSpec, i: number): Step {
   const done = (ctx: TutorialContext): boolean =>
     spec.done ? spec.done(ctx) : (spec.edges ?? []).every((e) => edgeIs(ctx, e));
   const hint = (ctx: TutorialContext): Hint | null => {
+    // The closing card: nothing left to do, so whatever is open (say, the minimized DFA just saved)
+    // is fine.
+    if (spec.part === 4) return null;
     // From the minimization on, part 3 works on the saved DFA.
     const onDerived = spec.part >= 3 && ctx.derivedActive;
     if (!ctx.isActive && !isPart3Trace(ctx) && !onDerived) return { kind: 'elsewhere' };

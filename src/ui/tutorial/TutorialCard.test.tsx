@@ -1,6 +1,6 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { addState, renameState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
@@ -415,6 +415,21 @@ it('lifts the pointer over the top bar when it frames a toolbar button', () => {
   expect(screen.getByTestId('tutorial-pointer')).not.toHaveAttribute('data-over-bar');
   at('convert');
   expect(screen.getByTestId('tutorial-pointer')).toHaveAttribute('data-over-bar');
+});
+
+it('frames a button tightly, so the frame stays on screen and off its neighbours', () => {
+  render(<App />);
+  act(() => startTutorial());
+  addAt(100);
+  expect(screen.getByTestId('tutorial-pointer')).not.toHaveAttribute('data-tight');
+  const button = screen.getByRole('button', { name: 'Convert to DFA' });
+  vi.spyOn(button, 'getBoundingClientRect').mockReturnValue(
+    DOMRect.fromRect({ x: 100, y: 10, width: 120, height: 28 }),
+  );
+  at('convert');
+  const pointer = screen.getByTestId('tutorial-pointer');
+  expect(pointer).toHaveAttribute('data-tight');
+  expect(pointer.style).toMatchObject({ left: '97px', top: '7px', width: '126px', height: '34px' });
 });
 
 it('points at the state itself, not its start arrow', () => {

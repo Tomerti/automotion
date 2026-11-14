@@ -681,6 +681,10 @@ describe('part 3: convert and minimize', () => {
     expect(step('done').hint(onDerived())).toBeNull();
   });
 
+  it('never sends the user back from the closing card (e.g. the minimized DFA saved and open)', () => {
+    expect(step('done').hint(ctx(nfa(), { isActive: false }))).toBeNull();
+  });
+
   it('asks for the NFA back when part 2’s DFA is there instead (an undo)', () => {
     expect(step('convert').hint(ctx(any()))).toEqual({
       kind: 'first',

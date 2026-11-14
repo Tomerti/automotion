@@ -3,6 +3,11 @@ import { createPortal } from 'react-dom';
 
 /** How far the corners stand off the element they frame (px). */
 const OUTSET = 8;
+/**
+ * The same for a button (a toolbar button, the player's buttons): they sit near the window's top
+ * edge or right next to other buttons, so the frame hugs them and breathes less (`data-tight`).
+ */
+const TIGHT_OUTSET = 3;
 const CORNERS = ['tl', 'tr', 'bl', 'br'] as const;
 
 /**
@@ -27,12 +32,15 @@ export function TutorialPointer({
       if (el) {
         // A toolbar button: over the top bar, or the bar hides the frame.
         el.toggleAttribute('data-over-bar', target?.closest('.av-topbar') != null);
+        const tight = target instanceof HTMLButtonElement;
+        el.toggleAttribute('data-tight', tight);
+        const out = tight ? TIGHT_OUTSET : OUTSET;
         if (box && box.width + box.height > 0) {
           el.style.display = '';
-          el.style.left = `${box.left - OUTSET}px`;
-          el.style.top = `${box.top - OUTSET}px`;
-          el.style.width = `${box.width + 2 * OUTSET}px`;
-          el.style.height = `${box.height + 2 * OUTSET}px`;
+          el.style.left = `${box.left - out}px`;
+          el.style.top = `${box.top - out}px`;
+          el.style.width = `${box.width + 2 * out}px`;
+          el.style.height = `${box.height + 2 * out}px`;
         } else {
           el.style.display = 'none';
         }
