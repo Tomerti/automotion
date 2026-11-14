@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { emptyAutomaton } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
 import { serialize } from '../../persistence/fileFormat';
+import { decodeShare, readShareHash, sameAutomaton } from '../../persistence/shareLink';
 import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
 import { HistoryBar } from './HistoryBar';
@@ -120,6 +121,7 @@ describe('HistoryBar actions', () => {
     expect(entries.map((e) => e.textContent)).toEqual([
       'Rename',
       'Duplicate',
+      'Copy link',
       'Export JSON',
       'Export LaTeX',
       'Delete',
@@ -189,6 +191,33 @@ describe('HistoryBar actions', () => {
     expect(st().trace).toBeNull();
     expect(items()[0]).toHaveTextContent('Parity copyDFA · 2 states');
     expect(items()[0]).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('an entry menu copies its link', async () => {
+    const user = userEvent.setup();
+    const texts: string[] = [];
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: async (t: string) => {
+          texts.push(t);
+        },
+      },
+      configurable: true,
+    });
+    render(<HistoryBar />);
+    await openAction(user, 'Blank', 'Copy link');
+    await waitFor(() => expect(texts).toHaveLength(1));
+    const base = location.origin + location.pathname;
+    expect(texts[0]!.startsWith(base + '#a=')).toBe(true);
+    const payload = readShareHash(texts[0]!.slice(base.length));
+    expect(payload).not.toBeNull();
+    const result = await decodeShare(payload!, new Set());
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(sameAutomaton(result.automata[0]!, blank)).toBe(true);
+    expect(st().activeId).toBe(parity.id);
+    await waitFor(() =>
+      expect(toastStore.getState().toasts).toMatchObject([{ message: 'Link copied' }]),
+    );
   });
 
   it('Delete asks, removes that automaton and always keeps one', async () => {

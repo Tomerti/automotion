@@ -32,6 +32,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] 1200 × 630 link-preview image `public/og.png`, rendered from `docs/brand/og/og.html` by `docs/brand/og/render.mjs`
 - [x] Review hardening: the file schema rejects accepting ids that aren't states, `svgToPng` rejects a sizeless SVG, and the multi-start e2e no longer branches on `isEnabled()`
 - [x] Share-link encoding (`persistence/shareLink.ts`): `encodeShare` / `decodeShare` / `shareUrl` / `readShareHash` / `sameAutomaton` put one automaton in a `#a=` URL payload (deflate-raw, base64url)
+- [x] "Copy link" in the toolbar's export menu and each history entry's ⋯ menu copies a share link (`ui/shell/copyLink.ts`)
 
 ### Discoverability (2026-11-11)
 
