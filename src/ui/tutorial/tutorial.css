@@ -93,8 +93,8 @@
   width: 250px;
   height: 122px;
 }
-/* A later part's goal comes in with an orange flash, so the new part is hard to miss. */
-.av-tutorial-goal:not([data-part='1']) {
+/* Part 2's goal comes in with an orange flash, so the new part is hard to miss. */
+.av-tutorial-goal[data-part='2'] {
   animation: av-tutorial-new-part 900ms ease-out;
 }
 @keyframes av-tutorial-new-part {
@@ -104,7 +104,7 @@
   }
 }
 
-/* The hand-over between the parts: a part done, in green, and what the next one is. */
+/* The hand-over between the parts: part 1 done, in green, and what part 2 is. */
 .av-tutorial-part-done {
   display: grid;
   gap: 4px;
@@ -323,10 +323,6 @@
   pointer-events: none;
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--av-run) 45%, transparent));
 }
-/* Framing a toolbar button: over the top bar (20) too. */
-.av-tutorial-pointer[data-over-bar] {
-  z-index: 21;
-}
 .av-tutorial-corner {
   position: absolute;
   width: 11px;
@@ -378,17 +374,9 @@
   }
 }
 
-/* Framing a button: it hugs the button and breathes less (it may sit by the window's edge or
-   next to another button). */
-.av-tutorial-pointer[data-tight] .av-tutorial-corner {
-  --reach: 2px;
-  width: 9px;
-  height: 9px;
-}
-
 @keyframes av-tutorial-breathe {
   50% {
-    transform: translate(calc(var(--dx) * var(--reach, 3px)), calc(var(--dy) * var(--reach, 3px)));
+    transform: translate(calc(var(--dx) * 3px), calc(var(--dy) * 3px));
   }
 }
 

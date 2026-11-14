@@ -11,7 +11,6 @@ const PLAN: { what: string; how: string }[] = [
   { what: 'Build', how: 'a DFA that accepts the words with an even number of zeros' },
   { what: 'Run', how: 'words on it and watch it read them, one symbol at a time' },
   { what: 'Change', how: 'it to accept every word' },
-  { what: 'Convert', how: 'an NFA to a DFA and shrink it' },
 ];
 
 /**

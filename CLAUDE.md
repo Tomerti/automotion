@@ -145,19 +145,15 @@ Layers, with dependencies pointing downward only:
     each part builds (a few words, example words, the finished automaton), shown at the top of
     the card with `GoalPicture.tsx` (its own SVG, no `Diagram` test ids). Each step is one short
     `instruction` plus an optional few-word `why` (lengths capped by a test); the states are named
-    `even` / `odd`, and `any` at the end of part 2; part 3's NFA has `q_0`…`q_2`. Its texts mark keys as
+    `even` / `odd`, and `any` at the end. Its texts mark keys as
     `[Shift]` (rendered as `<kbd>`), states as `«even»` (a small state), and words/symbols to
     type in backticks (`<code>`, in the dotted-zero `--av-font-symbol`, since Geist's 0 reads as
     O); prose says "zeros", not "`0`s". `tutorialStore.ts`
-    subscribes to `appStore` while a tutorial runs. Part 3 (convert and minimize) loads `PART3_NFA` into the tutorial
-    automaton once part 2's last run closes (`nfaLoaded`, one undo step, fitted below the card by `fitActive`, which keeps
-    `--av-tutorial-pad` clear); its steps `latch` on the open walkthrough (`latch`, `isPart3Trace`) instead of
-    checking the automaton, `derivedId` remembers the saved converted DFA so its minimization counts, and hints ask for
-    a redo (Ctrl+Y) when the NFA load was undone or to press Convert / Minimize again. The closing card is part 4.
-    `TutorialCard` floats at the top centre under the
-    DFA/NFA switch: the part's goal (a green "Part N complete!" panel at the hand-over, `PART_DONE`), a
-    progress bar ("of 3") and the one step to do now. It sets
-    `--av-tutorial-pad` on the canvas area so trace views start below it; its X asks, then
+    subscribes to `appStore` while a tutorial runs. `TutorialCard` floats at the top centre under the
+    DFA/NFA switch: the part's goal (a green "Part 1 complete!" panel at the hand-over), a
+    progress bar and the one step to do now. It sets
+    `--av-tutorial-pad` on the canvas area so trace views start below it and `fitActive` (the canvas's
+    Fit and first fit) keeps clear of it; its X asks, then
     `quitTutorial()` removes the tutorial automaton (Finish keeps it). `TutorialPointer` frames
     the target with orange corner brackets (portal, follows it each frame; not a ring, which would
     read as accepting), and `WelcomeCard` is the first-visit dialog (on a touch-only device the demo, theme switch and one **Got it** button, no "Press ?" note) (key `automotion:seen-help`, set when it is answered,

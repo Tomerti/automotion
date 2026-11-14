@@ -9,18 +9,16 @@ import {
 } from '../../core/edit';
 import { emptyAutomaton } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
-import { subsetConstruction } from '../../core/subset';
 import { appStore, resetAppStore } from '../../store/store';
-import { startMinimize, startRun } from '../../store/traceActions';
+import { startRun } from '../../store/traceActions';
 import {
   endTutorial,
   finishTutorial,
   quitTutorial,
   startTutorial,
-  tutorialContext,
   tutorialStore,
 } from './tutorialStore';
-import { PART3_NFA, STEPS } from './steps';
+import { STEPS } from './steps';
 
 const app = () => appStore.getState();
 const tut = () => tutorialStore.getState();
@@ -218,135 +216,5 @@ describe('following the app', () => {
     app().edit((a) => addState(a, { x: 0, y: 0 }));
     expect(tut()).toMatchObject({ active: false, progress: 0 });
     expect(app().automata.some((a) => a.id === id)).toBe(true);
-  });
-});
-
-describe('part 3', () => {
-  const idx = (id: string) => STEPS.findIndex((s) => s.id === id);
-  /** The finished part 2: one state, any, looping on 0 and 1. */
-  const any = () =>
-    fixture({
-      kind: 'DFA',
-      alphabet: '01',
-      states: ['any'],
-      start: 'any',
-      accepting: ['any'],
-      edges: [['any', '0,1', 'any']],
-    });
-
-  /** Reach part 2's last run at its verdict: the hand-over to part 3, with the run still open. */
-  function toHandOver(): string {
-    startTutorial();
-    const id = tut().automatonId!;
-    app().edit(() => ({ ...any(), id, name: 'Tutorial' }));
-    tutorialStore.setState({
-      progress: idx('run-10-again'),
-      current: idx('run-10-again'),
-      latched: new Set(['run-1010', 'run-10']),
-    });
-    startRun('10');
-    app().setStep(app().trace!.steps.length - 1);
-    return id;
-  }
-
-  const tutorialAutomaton = () => app().automata.find((a) => a.id === tut().automatonId)!;
-
-  /** Close the hand-over run (loading the NFA) and open the tutorial's conversion. */
-  function converting() {
-    app().closeTrace();
-    const trace = subsetConstruction(tutorialAutomaton());
-    app().openTrace(trace);
-    return trace;
-  }
-
-  it('loads the NFA when part 3 starts', () => {
-    const id = toHandOver();
-    expect(tut().current).toBe(idx('convert'));
-    // Not while the run that ended part 2 is still open.
-    expect(tut().nfaLoaded).toBe(false);
-    expect(tutorialAutomaton().kind).toBe('DFA');
-    app().closeTrace();
-    expect(tutorialAutomaton()).toMatchObject({
-      id,
-      name: 'Tutorial',
-      kind: PART3_NFA.kind,
-      states: PART3_NFA.states,
-      transitions: PART3_NFA.transitions,
-      starts: PART3_NFA.starts,
-      accepting: PART3_NFA.accepting,
-    });
-    expect(tut().nfaLoaded).toBe(true);
-    expect(tut().current).toBe(idx('convert'));
-    // One undo step brings part 2's automaton back, and the NFA isn't loaded over it again.
-    app().undo();
-    expect(tutorialAutomaton()).toMatchObject({ kind: 'DFA', name: 'Tutorial' });
-    expect(tutorialAutomaton().states.map((s) => s.label)).toEqual(['any']);
-  });
-
-  it('after an undo of the NFA, asks for a redo, which brings it back', () => {
-    toHandOver();
-    app().closeTrace();
-    app().undo();
-    const ctx = tutorialContext(app(), tut().automatonId, tut().derivedId);
-    expect(STEPS[tut().current]!.hint(ctx)).toEqual({
-      kind: 'first',
-      text: 'First, press [Ctrl] + [Y] to bring the NFA back.',
-    });
-    app().redo();
-    expect(tutorialAutomaton().kind).toBe('NFA');
-    expect(STEPS[tut().current]!.hint(tutorialContext(app(), tut().automatonId, null))).toBeNull();
-    // Only one checkpoint: one undo goes back to part 2's automaton.
-    app().undo();
-    expect(tutorialAutomaton().states.map((s) => s.label)).toEqual(['any']);
-  });
-
-  it('does not load the NFA while another automaton is open', () => {
-    resetAppStore({ automata: [loop()] });
-    toHandOver();
-    app().setActive('mine');
-    expect(tut().nfaLoaded).toBe(false);
-    expect(tutorialAutomaton().kind).toBe('DFA');
-    app().setActive(tut().automatonId!);
-    expect(tut().nfaLoaded).toBe(true);
-    expect(tutorialAutomaton().kind).toBe('NFA');
-  });
-
-  it('remembers the converted DFA, and follows Save and minimize onto it', () => {
-    toHandOver();
-    const trace = converting();
-    expect(tut().derivedId).toBe(trace.result.id);
-    expect(tut().current).toBe(idx('convert-end'));
-    app().setStep(trace.steps.length - 1);
-    expect(tut().current).toBe(idx('save-minimize'));
-    // Save and minimize: the saved DFA keeps the result's id.
-    app().addAutomaton(trace.result);
-    startMinimize();
-    expect(app().trace?.source.id).toBe(trace.result.id);
-    expect(tut().current).toBe(idx('minimize-end'));
-    app().setStep(app().trace!.steps.length - 1);
-    expect(tut().current).toBe(idx('done'));
-  });
-
-  it('forgets the converted DFA once it is deleted', () => {
-    toHandOver();
-    const trace = converting();
-    app().addAutomaton(trace.result);
-    expect(tut().derivedId).toBe(trace.result.id);
-    app().deleteAutomaton(trace.result.id);
-    expect(tut().derivedId).toBeNull();
-  });
-
-  it('finish closes the walkthrough', () => {
-    toHandOver();
-    const trace = converting();
-    app().setStep(trace.steps.length - 1);
-    app().addAutomaton(trace.result);
-    startMinimize();
-    app().setStep(app().trace!.steps.length - 1);
-    expect(STEPS[tut().current]!.part).toBe(4);
-    expect(app().trace?.kind).toBe('minimize');
-    finishTutorial();
-    expect(app().trace).toBeNull();
-    expect(app().automata.some((a) => a.id === trace.result.id)).toBe(true);
   });
 });

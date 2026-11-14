@@ -11,10 +11,6 @@ export interface TutorialContext {
   stepIndex: number;
   /** The selected states. */
   selected: readonly StateId[];
-  /** The DFA saved from the tutorial's conversion (part 3), once there is one. */
-  derivedId: string | null;
-  /** That saved DFA is the one open: part 3 minimizes it, so it isn't "elsewhere". */
-  derivedActive: boolean;
 }
 
 export type StepId =
@@ -33,10 +29,6 @@ export type StepId =
   | 'loop-01'
   | 'rename-q0'
   | 'run-10-again'
-  | 'convert'
-  | 'convert-end'
-  | 'save-minimize'
-  | 'minimize-end'
   | 'done';
 
 /**
@@ -55,8 +47,8 @@ export type Hint =
 
 export interface Step {
   id: StepId;
-  /** 4 is the closing card. */
-  part: 1 | 2 | 3 | 4;
+  /** 3 is the closing card. */
+  part: 1 | 2 | 3;
   /**
    * What to do, in one short sentence. Words and symbols in backticks, keys in brackets
    * (`[Shift]`, `[0]`), state labels in guillemets as typed (`«q_0»`), drawn as a small state
@@ -65,33 +57,24 @@ export interface Step {
   instruction(ctx: TutorialContext): string;
   /** Why, in a few words, under the instruction (same markup), if it needs saying. */
   why(ctx: TutorialContext): string | null;
-  /** Structural check. Run and `latch` steps are done once latched instead (see `advance`). */
+  /** Structural check. Run steps are done once latched (see `runSucceeded`). */
   done(ctx: TutorialContext): boolean;
   hint(ctx: TutorialContext): Hint | null;
   /** CSS selector of what to point at, if anything. */
   target(ctx: TutorialContext): string | null;
   run?: { word: string; accepted: boolean };
-  /**
-   * A step done by something that comes and goes (a walkthrough opening, reaching its end): it
-   * latches once this holds, like a run step at its verdict, and stays done after.
-   */
-  latch?: (ctx: TutorialContext) => boolean;
 }
 
-export const COUNTED_STEPS = 19;
+export const COUNTED_STEPS = 15;
 
 /** Each part's name, for the card's header and the hand-over between the parts. */
-export const PART_TITLES: Record<1 | 2 | 3, string> = {
+export const PART_TITLES: Record<1 | 2, string> = {
   1: 'Even number of zeros',
   2: 'Accept every word',
-  3: 'Convert and minimize',
 };
 
-/** What a finished part does, said when it ends. */
-export const PART_DONE: Record<1 | 2, string> = {
-  1: 'Your DFA accepts exactly the words with an even number of zeros.',
-  2: 'Your DFA accepts every word.',
-};
+/** What the finished part 1 does, said when it ends. */
+export const PART1_DONE = 'Your DFA accepts exactly the words with an even number of zeros.';
 
 /**
  * What a part builds, shown at the top of the card for the whole part so the steps have a point:
@@ -131,31 +114,7 @@ function picture(
   };
 }
 
-/**
- * Part 3's NFA, for the words that contain `01`: part 3 converts it to a DFA (4 states) and
- * minimizes that (3 states). State ids equal their labels.
- */
-export const PART3_NFA: Automaton = {
-  id: 'tutorial-nfa',
-  name: 'Contains 01',
-  kind: 'NFA',
-  alphabet: ['0', '1'],
-  states: [
-    { id: 'q_0', label: 'q_0', x: 0, y: 0 },
-    { id: 'q_1', label: 'q_1', x: 150, y: 0 },
-    { id: 'q_2', label: 'q_2', x: 300, y: 0 },
-  ],
-  starts: ['q_0'],
-  accepting: ['q_2'],
-  transitions: [
-    { id: 'q_0->q_0', from: 'q_0', to: 'q_0', symbols: ['0', '1'], loopAngle: -Math.PI / 2 },
-    { id: 'q_0->q_1', from: 'q_0', to: 'q_1', symbols: ['0'] },
-    { id: 'q_1->q_2', from: 'q_1', to: 'q_2', symbols: ['1'] },
-    { id: 'q_2->q_2', from: 'q_2', to: 'q_2', symbols: ['0', '1'], loopAngle: -Math.PI / 2 },
-  ],
-};
-
-export const PART_GOALS: Record<1 | 2 | 3, Goal> = {
+export const PART_GOALS: Record<1 | 2, Goal> = {
   1: {
     text: 'Accept the words with an even number of zeros',
     examples: [
@@ -189,53 +148,7 @@ export const PART_GOALS: Record<1 | 2 | 3, Goal> = {
     automaton: picture([{ id: NAMES.any, x: 0 }], [[NAMES.any, ['0', '1'], NAMES.any]]),
     description: 'The goal: one state, any (start, accepting), looping on 0 and 1.',
   },
-  3: {
-    text: 'Turn an NFA into a DFA, then make it as small as possible',
-    examples: [
-      { word: '1011', accepted: true },
-      { word: '0010', accepted: true },
-      { word: '110', accepted: false },
-      { word: '0', accepted: false },
-    ],
-    // Closer together than on the canvas, so three states read at the picture's size.
-    automaton: {
-      ...PART3_NFA,
-      states: PART3_NFA.states.map((s) => ({ ...s, x: (s.x * 2) / 3 })),
-    },
-    description:
-      'The goal: an NFA with three states, q_0 (start), q_1 and q_2 (accepting), for the words that contain 01.',
-  },
 };
-
-/**
- * The walkthrough on screen is part 3's: the conversion of the tutorial automaton, or the
- * minimization of the DFA saved from it (open while that DFA, not the tutorial one, is active).
- */
-export function isPart3Trace(ctx: TutorialContext): boolean {
-  const t = ctx.trace;
-  if (t?.kind === 'subset') return ctx.automaton !== undefined && t.source.id === ctx.automaton.id;
-  if (t?.kind === 'minimize') return ctx.derivedId !== null && t.source.id === ctx.derivedId;
-  return false;
-}
-
-/** The tutorial's conversion is open (at its last step with `atEnd`). */
-function converting(ctx: TutorialContext, atEnd = false): boolean {
-  const t = ctx.trace;
-  return (
-    t?.kind === 'subset' && isPart3Trace(ctx) && (!atEnd || ctx.stepIndex === t.steps.length - 1)
-  );
-}
-
-/** The saved DFA's minimization is open (at its last step with `atEnd`). */
-function minimizing(ctx: TutorialContext, atEnd = false): boolean {
-  const t = ctx.trace;
-  return (
-    t?.kind === 'minimize' && isPart3Trace(ctx) && (!atEnd || ctx.stepIndex === t.steps.length - 1)
-  );
-}
-
-/** The player at the bottom, which plays and steps through a walkthrough. */
-const DOCK = '[data-testid="dock"]';
 
 /** q0 is the start state (or the first state before there is one); q1 is the first other state. */
 export function roles(a: Automaton): { q0?: State; q1?: State } {
@@ -337,7 +250,7 @@ function nfaHint(ctx: TutorialContext): string | null {
 
 interface StepSpec {
   id: StepId;
-  part: 1 | 2 | 3 | 4;
+  part: 1 | 2 | 3;
   /** `ctx` for a step that follows the user halfway through it. */
   instruction(l: { q0: string; q1: string }, ctx: TutorialContext): string;
   why?(l: { q0: string; q1: string }, ctx: TutorialContext): string;
@@ -350,7 +263,6 @@ interface StepSpec {
   edges?: WantedEdge[];
   target?(ctx: TutorialContext): string | null;
   run?: { word: string; accepted: boolean };
-  latch?: (ctx: TutorialContext) => boolean;
 }
 
 /** A state given a name of the user's own (not a `q`-number). */
@@ -534,99 +446,37 @@ const SPECS: StepSpec[] = [
     target: () => RUN_PILL,
   },
   {
-    id: 'convert',
-    part: 3,
-    instruction: () => 'Press Convert to DFA at the top.',
-    why: () => 'It builds a DFA that accepts the same words.',
-    latch: (ctx) => converting(ctx),
-    // Part 2's DFA is back (an undo right after the NFA loaded): Convert is off for a DFA, and
-    // the NFA isn't loaded again over the user's undo.
-    first: (ctx) =>
-      ctx.trace === null && ctx.automaton?.kind === 'DFA'
-        ? 'First, press [Ctrl] + [Y] to bring the NFA back.'
-        : null,
-    target: () => 'button[aria-label="Convert to DFA"]',
-  },
-  {
-    id: 'convert-end',
-    part: 3,
-    instruction: () => 'Press Play, or step with [→], to the end.',
-    why: () => 'Each DFA state is a set of NFA states.',
-    latch: (ctx) => converting(ctx, true),
-    first: (ctx) => (converting(ctx) ? null : 'First, press Convert to DFA again.'),
-    target: () => DOCK,
-  },
-  {
-    id: 'save-minimize',
-    part: 3,
-    instruction: () => 'Press Save and minimize.',
-    why: () => 'Two of its states do the same job.',
-    latch: (ctx) => minimizing(ctx),
-    first: (ctx) => {
-      if (isPart3Trace(ctx)) return null;
-      // Saved without minimizing (or the minimization closed at once): Minimize does it.
-      if (ctx.derivedActive) return 'First, press Minimize.';
-      // The button is at the end of the conversion, which was closed before it was pressed.
-      return ctx.isActive ? 'First, press Convert to DFA again.' : null;
-    },
-    target: () => '[data-testid="save-and-minimize"]',
-  },
-  {
-    id: 'minimize-end',
-    part: 3,
-    instruction: () => 'Play the minimization to the end.',
-    why: () => 'It merges states that accept the same words.',
-    latch: (ctx) => minimizing(ctx, true),
-    first: (ctx) => {
-      if (minimizing(ctx)) return null;
-      if (ctx.derivedActive) return 'First, press Minimize again.';
-      // The NFA can't be minimized: the saved DFA can (once there is one).
-      return ctx.isActive && ctx.derivedId !== null
-        ? 'First, open the DFA you saved and press Minimize.'
-        : null;
-    },
-    target: () => DOCK,
-  },
-  {
     id: 'done',
-    part: 4,
+    part: 3,
     instruction: () =>
-      'You built DFAs, ran them, and converted and minimized an NFA. Press [?] any time for the controls.',
+      'You built a DFA and changed what it accepts. Press [?] any time for all the controls.',
     done: () => false,
   },
 ];
 
 function toStep(spec: StepSpec, i: number): Step {
-  // Edits made with a walkthrough or run open: Esc first. Part 3 works in walkthroughs.
-  const structural = spec.run === undefined && spec.latch === undefined && spec.part !== 4;
+  const structural = spec.run === undefined && spec.part !== 3;
   const done = (ctx: TutorialContext): boolean =>
     spec.done ? spec.done(ctx) : (spec.edges ?? []).every((e) => edgeIs(ctx, e));
   const hint = (ctx: TutorialContext): Hint | null => {
-    // The closing card: nothing left to do, so whatever is open (say, the minimized DFA just saved)
-    // is fine.
-    if (spec.part === 4) return null;
-    // From the minimization on, part 3 works on the saved DFA.
-    const onDerived = spec.part >= 3 && ctx.derivedActive;
-    if (!ctx.isActive && !isPart3Trace(ctx) && !onDerived) return { kind: 'elsewhere' };
-    const t = ctx.trace;
-    if (t) {
+    if (!ctx.isActive) return { kind: 'elsewhere' };
+    if (structural && ctx.trace) {
       const prev = SPECS[i - 1];
-      const endedPart = prev?.part === 1 || prev?.part === 2 ? prev.part : null;
+      const t = ctx.trace;
       const endsPart =
-        endedPart !== null &&
         prev?.run !== undefined &&
-        endedPart !== spec.part &&
+        prev.part !== spec.part &&
         t.kind === 'run' &&
         t.source.id === ctx.automaton?.id &&
         t.word === prev.run.word &&
         t.accepted === prev.run.accepted;
-      if (endsPart) return { kind: 'part-done', part: endedPart };
-      if (structural) return { kind: 'first', text: 'First, press [Esc] to get back to editing.' };
+      return endsPart && prev.part !== 3
+        ? { kind: 'part-done', part: prev.part }
+        : { kind: 'first', text: 'First, press [Esc] to get back to editing.' };
     }
     const text =
       (spec.part === 1 ? part1Hint(ctx) : null) ??
-      // Part 3's automaton is an NFA on purpose.
-      (spec.part === 1 || spec.part === 2 ? nfaHint(ctx) : null) ??
+      (spec.part !== 3 ? nfaHint(ctx) : null) ??
       (spec.edges ? wrongSymbols(ctx, spec.edges) : null) ??
       // Any arrow of part 1 can be drawn early, so all four are checked on every part-1 step.
       (spec.part === 1 ? wrongSymbols(ctx, PART1_EDGES) : null) ??
@@ -646,7 +496,6 @@ function toStep(spec: StepSpec, i: number): Step {
     hint,
     target: (ctx) => spec.target?.(ctx) ?? null,
     ...(spec.run ? { run: spec.run } : {}),
-    ...(spec.latch ? { latch: spec.latch } : {}),
   };
 }
 
@@ -694,9 +543,8 @@ function partStart(i: number): number {
 }
 
 /**
- * Move through every step that is done, latching runs that reached their verdict and part 3's
- * walkthrough steps. Never moves while another automaton is open (part 3's walkthroughs aside),
- * and never falls back past the start of `progress`'s part.
+ * Move through every step that is done, latching runs that reached their verdict. Never moves
+ * while another automaton is open, and never falls back past the start of `progress`'s part.
  */
 export function advance(
   progress: number,
@@ -705,14 +553,12 @@ export function advance(
   /** The step on the card now: kept as it is while another automaton is open. */
   current: number = progress,
 ): Progress {
-  if ((!ctx.isActive && !isPart3Trace(ctx)) || !ctx.automaton) {
-    return { progress, current, latched };
-  }
+  if (!ctx.isActive || !ctx.automaton) return { progress, current, latched };
   let held = latched;
   for (;;) {
     const isDone = (i: number): boolean => {
       const s = STEPS[i]!;
-      return s.run || s.latch ? held.has(s.id) : s.done(ctx);
+      return s.run ? held.has(s.id) : s.done(ctx);
     };
     let undone: number | undefined;
     for (let i = partStart(progress); i <= progress; i++) {
@@ -723,7 +569,7 @@ export function advance(
     }
     if (undone !== undefined) {
       const s = STEPS[undone]!;
-      if (runSucceeded(s, ctx) || s.latch?.(ctx)) {
+      if (s.run && runSucceeded(s, ctx)) {
         held = new Set([...held, s.id]);
         continue;
       }
