@@ -8,7 +8,6 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
-- [ ] Tag `v1.0.0` on master (launch prep's merge, e51ab17) and publish a GitHub release for it, with notes from PR #50
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
 - [ ] Minimize walkthrough: a merged state's long label (`{{q_0,q_2},{q_0,q_1,q_2}}`) spills out of its circle over the arrows; shorten or wrap merged labels there
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
@@ -27,6 +26,17 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### v1.0.0 (2026-11-14)
+
+- [x] Tagged `v1.0.0` on master at the README refresh's merge (PR #52; the app is as launch prep's merge, e51ab17, left it) and published the GitHub release, with notes from PR #50 and #52
+
+### README refresh (2026-11-14)
+
+- [x] README rewritten for the public repo, and kept short: tagline, the run as the hero image, get started in three steps, five feature sections of at most four bullets (convert and minimize together, their screenshots side by side), good to know, development. Every control is left to the in-app guide (**?**)
+- [x] The README's hero is an animated GIF of a run (`docs/screenshots/run.gif`, 50 fps, ~730 KB, history bar closed so the run sits centred), recorded and encoded by `docs/screenshots/take-gif.mjs` with no dependencies beyond Playwright; "Try it without drawing" share links open an NFA and a DFA in the app
+- [x] Screenshots retaken by `docs/screenshots/take.mjs` from `scenes.json`: the whole app for the run, and the tutorial, convert and minimize framed without the history bar or top bar; `public/og.png` re-rendered from the new `run.png`
+- [x] One logo orange, `#f76707` (the app's run highlighter), in both themes: the dark mark, lockup and favicon lose the old `#ff922b`, and "Motion" matches the loop in both lockups (it was `#d9480f`); `docs/brand/render.mjs` re-renders the lockup PNGs
 
 ### Launch prep (2026-11-14)
 

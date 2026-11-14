@@ -1,83 +1,144 @@
 <p align="center">
-  <a href="https://tomerti.github.io/automotion/">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.png">
-      <img src="docs/brand/lockup.png" alt="AutoMotion" width="308">
-    </picture>
-  </a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.png">
+    <img src="docs/brand/lockup.png" alt="AutoMotion" width="320">
+  </picture>
+</p>
+
+<h3 align="center">Watch automata come to life.</h3>
+
+<p align="center">
+  Draw a DFA or an NFA, type a word, and watch it run, one symbol at a time.<br>
+  Convert NFAs to DFAs and minimize them, with every step explained.
 </p>
 
 <p align="center">
-  Build finite automata (DFAs and NFAs), draw them, and watch them run, step by step.<br>
-  <a href="https://tomerti.github.io/automotion/"><b>Open the app →</b></a>
+  <a href="https://tomerti.github.io/automotion/"><b>Open AutoMotion</b></a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#get-started">Get started</a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#what-you-can-do">Features</a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#development">Development</a>
 </p>
 
-![The "Ends in ab" NFA after running the word aab: the run ends in {q₀, q₁, q₃} and is accepted](docs/screenshots/run.png)
+<p align="center">
+  <a href="https://github.com/Tomerti/automotion/actions/workflows/ci.yml"><img src="https://github.com/Tomerti/automotion/actions/workflows/ci.yml/badge.svg?branch=master" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+</p>
 
-## Features
+![An NFA for "ends in ab" running the word aab: tokens move along the arrows, a dead branch is crossed out, and the run ends accepted in {q₀, q₁, q₃}](docs/screenshots/run.gif)
 
-### Learn
+AutoMotion is a free, in-browser playground for finite automata, made for students learning
+automata theory and for the people who teach it. There is nothing to install and no account:
+open the page and start drawing. It follows your system's light or dark theme.
 
-- A first visit offers a short interactive tutorial: build a DFA for an even number of 0s, run it, then change it to accept every word. A card under the DFA/NFA switch shows what you are building (a picture of the finished automaton and example words), one short step at a time with a progress bar; it checks your automaton as you go and points at what to use. Restart it from the Controls popup (**?**).
+## Get started
 
-### Build
+1. **Open [AutoMotion](https://tomerti.github.io/automotion/).** On your first visit it offers a
+   short tutorial: build a DFA for "an even number of zeros", run a few words on it, then change
+   it to accept every word.
+2. **Draw.** Double-click the canvas to add a state. Hold **Shift** and drag from one state to
+   another to add a transition, then type its symbols. Select a state and press **S** to make it
+   the start state, **A** to make it accepting.
+3. **Run a word.** Type it into **Test a word** and press **Enter**.
 
-- Double-click the canvas to add a state; Shift + drag from one state to another to add a transition (drop it on the same state for a self-loop).
-- Double-click a state to rename it, or an arrow to edit its symbols. Labels like `q_1` and `q_{12}` show as subscripts, `\eps` types ε and, in a state name, `\emptyset` types ∅.
-- Select a state and press **S** to toggle start, **A** to toggle accepting. An NFA can have several start states.
-- Switch an automaton between DFA and NFA. Adding an ε-transition to a DFA makes it an NFA. DFAs may be partial: a missing transition rejects.
-- The issues chip in the top bar explains what is wrong (no start state, two transitions on one symbol in a DFA, unreachable states, …), and actions that need a valid automaton say why they are disabled.
-- Undo and redo (Ctrl+Z, Ctrl+Y) for each automaton.
+**Try it without drawing:** open [an NFA for "ends in ab"][try-nfa] and run `aab`, or
+[a DFA for "ends in abb"][try-dfa] and press **Minimize**.
 
-### Arrange
+Press **?** in the app to see every control.
 
-- Drag states to move them; they snap into line with their neighbours, and along a row or column to where the gaps come out equal (past either end, or halfway between two states), with a marker on each equal gap. Hold Alt to place freely.
-- Ctrl + drag on the empty canvas selects the states in a box, and Ctrl + click adds a state to the selection or takes it out. Dragging a selected state moves the whole selection.
-- **Ctrl+C** copies the selected states and **Ctrl+V** pastes them at the pointer, with the arrows between them and their arrows to the rest of the automaton: build a chain once, then repeat it. Pasted names get a prime (q₁ → q₁′). Pasting works in another automaton too.
-- Drag an arrow to bend it, or a self-loop to turn it around its state (in 45° steps; hold Alt to turn freely).
-- Drag an arrow's symbols across it to put them on the other side (above or below it, inside or outside a curve), or right-click the arrow and choose **Label on other side**.
-- **Tidy** lays the whole automaton out the way you would draw it by hand: chains in a row with arrows back curving around them, cycles and denser automata spread so arrows cross as little as possible and never run through a state, start state on the left. **Fit** brings it into view. Pan by dragging the canvas, zoom by scrolling.
+[try-nfa]: https://tomerti.github.io/automotion/#a=bZBBTsMwEEWvEv0VSI4UO2TjXRd02QtUVTVpXbBI7DYeKqqKY3ENzoTsKCWGypvx-P3x_3PFwQ89MTTonX3v2XoHgbMZQqy0EuMDMUGvr3DUG2g8u30orCuoLR5Wy8UjBN6s20NjtVxAgLrjK7WGodcgCLTYCAQmNiGNsRE9VRDoqDVdvGzj7QNaVpXABVo21aeYSJmRciRVc4dUGalG8unezDoj65FsZjNHywNHy9HsRoB2O3Nk615Sq44tHsgFG_eWRStTusPg-ykp-6kKl771XZgt59dVVaaw_4UyF35_zVWyTMEnlbyp1N_vZiJVph1MInUT1bko-ovnBw
+[try-dfa]: https://tomerti.github.io/automotion/#a=jZLRasMgFIZfpfxXG5iRJs3GvEvVvkQpQ1vbhSWaRTdWyt592ITNsLQUb0S_c36_gyfsbddIDwr54W1jfWUNCD5158KOZqS_kF6Crk8wstGgEGbnZpWZSaVmd3xV3oPgrTI7UPBVCQJZt69SaQ-6hgSBwobAeem1O_epAhrAWipdg-L9JQXBF-g8TQmOoPMi_SYDuByB8x7Miv8gG4HZ0PGpOIN5-gfyEZj34GIiWozARQ8WUXTv1fnghTJoyu1Wt74yh3AiwonvpHFVmG1snwStfWebYRTeDqru2Chbu352m9-nlAmbKGDjAhUVLOOE5eUEgtratjSHWoMm2UNePGZREz7RhF9OZXEqu8GLxV7sBi8eJ_AbEngiJgrE5QQRJ4hrk1M6_PrkOfoxsY64ohPWDw
+
+## What you can do
+
+### Learn by doing
+
+![The tutorial partway through part 1: a card shows the goal automaton and the next step, and orange brackets point at the state to drag from](docs/screenshots/tutorial.png)
+
+- **See the goal first.** Each part of the tutorial shows the finished automaton and example
+  words, then walks you there one short step at a time.
+- **Guided as you go.** It checks your automaton live and points at what to use next.
+- **Take it again** whenever you like from the controls guide (**?**).
+
+### Build and arrange
+
+- **DFAs and NFAs.** NFAs can have ε-transitions and several start states. Labels like `q_1`
+  show as subscripts; type `\eps` for ε.
+- **Mistakes are pointed out.** The issues chip lists what is wrong, from a missing start state
+  to unreachable states, and Run, Convert to DFA and Minimize say why when they are blocked.
+- **Neat diagrams.** States snap into line as you drag, arrows bend, and **Tidy** lays out the
+  whole automaton the way you would draw it by hand.
+- **Copy and paste** states with their arrows, within an automaton or into another one.
 
 ### Run a word
 
-- Type a word into **Test a word** and press Enter. The run plays at once on a tape with a read head, lighting up the active states and the transition just taken.
-- Play, pause, step back and forth, scrub to any step and change the speed. NFA runs show each ε-closure as its own step and mark dead branches.
-- The run ends in an **Accepted** or **Rejected** banner that says why. `ε` or an empty box tests the empty word.
+- **Watch it read.** The run plays on a tape with a read head, lighting up the active states and
+  the arrow just taken (the animation at the top).
+- **Go at your own pace.** Pause, step back and forth, or scrub. NFA runs show each ε-closure as
+  its own step and mark the branches that die.
+- **A clear verdict.** The run ends in **Accepted** or **Rejected**, and says why.
 
-### Convert and minimize
+### Convert and minimize, step by step
 
-![Subset construction partway through: the NFA on top, the DFA being built below](docs/screenshots/convert.png)
+<p>
+  <img src="docs/screenshots/convert.png" width="49%" alt="The subset construction at step 6 of 8: the NFA on top, the DFA being built below, with the current move highlighted in both">
+  <img src="docs/screenshots/minimize.png" width="49%" alt="Minimization at step 3 of 4: states tinted by the block they belong to, a legend of the blocks, and the explanation of the split">
+</p>
 
-- **Convert to DFA** walks through the subset construction, with the NFA and the DFA being built side by side, one move and ε-closure per step. An NFA with several start states first gets a single new start state with ε-transitions to the old ones.
-- **Minimize** walks through partition refinement (Moore's algorithm) for a DFA, and says so when it is already minimal.
-- Save either result as a new automaton. At the end of a conversion, **Save and minimize** saves the DFA and goes straight on to minimizing it.
-- The walkthrough views pan and zoom like the canvas: scroll to zoom around the pointer, drag to pan, and **Fit** brings the whole picture back. Bigger results stay readable.
-- A disabled button says why, and what to do instead ("Minimization needs a DFA: use Convert to DFA first").
+- **Convert to DFA** walks through the subset construction, with the NFA above and the growing
+  DFA below: one move and ε-closure per step.
+- **Minimize** walks through partition refinement, tinting each state by its block and saying
+  which states differ and on which symbol.
+- **Every step is explained** in words. Save the result as a new automaton, or go from a
+  conversion straight to minimizing it.
 
-### Keep your work
+### Save, share and export
 
-![Editing a DFA in the dark theme, with the history sidebar open](docs/screenshots/edit-dark.png)
+- **History.** Everything autosaves. The sidebar lists your automata, newest edit first. Import
+  and export them as JSON, one at a time or all at once.
+- **Share links.** Put an automaton in a link with **Copy link**. Whoever opens it gets their own
+  copy, carried inside the link itself.
+- **Pictures.** Copy the diagram as an image (**Ctrl+C** with nothing selected), or download it as
+  SVG or PNG.
+- **LaTeX, both ways.** Export TikZ (the `automata` library), laid out as on the canvas. Import a
+  `.tex` file, or copy a `tikzpicture` from Overleaf and press **Ctrl+V**.
 
-- Everything autosaves in your browser. The history sidebar lists every automaton with a thumbnail, most recently edited first; rename, duplicate, export or delete one from its ⋯ menu. Click one and press **Ctrl+C**, then **Ctrl+V** to add a copy of it.
-- **Copy link** (export menu, or a history entry's ⋯ menu) puts the automaton in a link; whoever opens it gets a copy to edit and run, with nothing to install or sign in to.
-- Import and export automata as JSON files, one or all at once, and export a diagram as SVG or PNG.
-- Export an automaton as LaTeX (a TikZ picture with the `automata` library, laid out as on the canvas) to compile on its own, or copy the picture straight into your document. Export all writes every automaton into one `.tex` document, a page each. Import reads `.tex` files back, including hand-written TikZ automata: each `tikzpicture` becomes an automaton. Or copy an automaton’s LaTeX code (its `\begin{tikzpicture}` … `\end{tikzpicture}` block) from anywhere (Overleaf, lecture notes) and press **Ctrl+V** in the app, or paste it into **Import → Paste LaTeX…**. Dropping a `.json` or `.tex` file on the app imports it too.
-- Copy the diagram as a picture (**Ctrl+C** with no state selected, or Copy image in the export menu) and paste it straight into a document or chat. Copied or downloaded, the picture is always the whole automaton at the same size, however far the canvas is zoomed or panned.
-- On a phone you can open links and run words, but building automata needs a mouse and keyboard.
-- Light and dark themes: it follows your system by default, or pick Light or Dark from the theme menu. Press **?** for the controls guide at any time.
+## Good to know
+
+- **Your work stays in your browser.** There is no server and no account. Clearing your
+  browser's site data deletes your automata, so use **Export all** to keep a copy.
+- **Phones** can open share links and run words; building automata needs a mouse and keyboard.
 
 ## Development
 
-```
+AutoMotion is a static site: TypeScript, React, Vite, Zustand and elkjs, with a custom SVG
+renderer.
+
+```sh
 npm install
-npm run dev      # dev server at http://localhost:5173/automotion/
-npm test         # unit and component tests (Vitest)
-npm run e2e      # end-to-end tests (Playwright, Chromium; builds and serves the app)
-npm run build    # type-check and production build into dist/
+npm run dev        # dev server at http://localhost:5173/automotion/
+npm test           # unit and component tests (Vitest)
+npm run e2e        # end-to-end tests (Playwright; first run: npx playwright install chromium)
+npm run build      # type-check and build into dist/
 ```
 
-The first `npm run e2e` needs a browser: `npx playwright install chromium`.
+| Folder             | What's in it                                                               |
+| ------------------ | -------------------------------------------------------------------------- |
+| `src/core/`        | The automata logic, pure TypeScript: runs, subset construction, minimizing |
+| `src/layout/`      | Tidy, the automatic layout                                                 |
+| `src/store/`       | App state, undo and redo                                                   |
+| `src/persistence/` | Autosave, files, share links and LaTeX import                              |
+| `src/ui/`          | The React interface                                                        |
 
-MIT licensed, see LICENSE.
+- **CI** runs type-checking, lint, unit and end-to-end tests on every push and pull request,
+  compiles the exported LaTeX with pdflatex, and deploys `master` to GitHub Pages when all pass.
+- **Logo and screenshots** are in `docs/brand` and `docs/screenshots`;
+  [docs/brand](docs/brand) explains how to regenerate both.
+- **What's next** is tracked in [PROGRESS.md](PROGRESS.md). Found a bug or have an idea?
+  [Open an issue](https://github.com/Tomerti/automotion/issues).
 
-Built with TypeScript, React, Vite, Zustand and elkjs, with a custom SVG renderer. CI runs typecheck, lint, unit and end-to-end tests on every push and pull request, and deploys `master` to GitHub Pages once they pass. See [PROGRESS.md](PROGRESS.md) for what is planned next, and [docs/brand](docs/brand) for the logo files.
+## License
+
+[MIT](LICENSE)

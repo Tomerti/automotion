@@ -7,5 +7,5 @@
     <path d="M4 37H9" stroke="#1c2333" stroke-width="4.5"/>
     <path d="M15.5 37L9 42L9 32z" fill="#1c2333" stroke="#1c2333" stroke-width="2"/>
   </g>
-  <text x="92" y="52" font-family="Geist, 'Segoe UI', system-ui, sans-serif" font-size="35" letter-spacing="-0.6" fill="#1c2333"><tspan font-weight="700">Auto</tspan><tspan font-weight="500" fill="#d9480f">Motion</tspan></text>
+  <text x="92" y="52" font-family="Geist, 'Segoe UI', system-ui, sans-serif" font-size="35" letter-spacing="-0.6" fill="#1c2333"><tspan font-weight="700">Auto</tspan><tspan font-weight="500" fill="#f76707">Motion</tspan></text>
 </svg>
