@@ -23,8 +23,14 @@ test('two start states on an NFA: a run from the second, then the q_s step of Co
   await page.getByRole('button', { name: 'Convert to DFA' }).click();
   // The conversion plays at once: stop it and go back to its first step.
   await page.getByRole('button', { name: 'Pause' }).click();
+  // Paused wherever playback got to (maybe step 1, where First is disabled): jump to the end,
+  // where First is always enabled, then back.
+  const last = page.getByRole('button', { name: 'Last' });
+  await expect(last).toBeEnabled();
+  await last.click();
   const first = page.getByRole('button', { name: 'First' });
-  if (await first.isEnabled()) await first.click();
+  await expect(first).toBeEnabled();
+  await first.click();
   await expect(page.getByTestId('step-counter')).toHaveText(/^Step 1 \//);
   await expect(page.getByTestId('trace-player')).toContainText(
     'Several start states: add a new start state',

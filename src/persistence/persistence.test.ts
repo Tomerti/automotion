@@ -61,6 +61,14 @@ describe('fileFormat', () => {
     expect(r.automata[0]?.states).toEqual(a.states);
   });
 
+  it('rejects an accepting state that is not a state', () => {
+    const a = { ...sample(), accepting: ['ghost'] };
+    expect(parseFile(wrap(a), new Set())).toEqual({
+      ok: false,
+      error: 'Accepting state ghost is not a state',
+    });
+  });
+
   it('keeps the first of in-file duplicates when no existing collision', () => {
     const a = sample();
     const r = parseFile(serialize([a, { ...a, name: 'Twin' }]), new Set());

@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { fixture } from '../../core/testing/fixtures';
 import { Diagram } from './Diagram';
-import { diagramToSvgString } from './exportDiagram';
+import { diagramToSvgString, svgToPng } from './exportDiagram';
 
 const abDfa = fixture({
   kind: 'DFA',
@@ -107,5 +107,21 @@ describe('diagramToSvgString', () => {
     diagramToSvgString(svg, abDfa);
     expect(svg.querySelector('g')?.getAttribute('transform')).toBe('translate(50 70) scale(2)');
     expect(svg.querySelector('.av-state-hit')).not.toBeNull();
+  });
+});
+
+describe('svgToPng', () => {
+  it('rejects an SVG without a size', async () => {
+    await expect(svgToPng('<svg xmlns="http://www.w3.org/2000/svg"></svg>')).rejects.toThrow(
+      'Nothing to draw',
+    );
+  });
+
+  it('gives an empty automaton a sized (blank) picture', () => {
+    const empty = { ...abDfa, states: [], transitions: [], starts: [], accepting: [] };
+    const text = diagramToSvgString(renderSvg(), empty);
+    const box = /viewBox="\S+ \S+ (\S+) (\S+)"/.exec(text);
+    expect(Number(box?.[1])).toBeGreaterThan(0);
+    expect(Number(box?.[2])).toBeGreaterThan(0);
   });
 });
