@@ -10,7 +10,7 @@
       "states": [
         { "id": "A", "label": "q_0", "x": 100, "y": 150 },
         { "id": "B", "label": "q_1", "x": 250, "y": 150 },
-        { "id": "C", "label": "q_2", "x": 100, "y": 300 },
+        { "id": "C", "label": "q_2", "x": 175, "y": 300 },
         { "id": "D", "label": "q_3", "x": 400, "y": 150 },
         { "id": "E", "label": "q_4", "x": 550, "y": 150 }
       ],
@@ -19,13 +19,13 @@
       "transitions": [
         { "id": "A-B", "from": "A", "to": "B", "symbols": ["a"] },
         { "id": "A-C", "from": "A", "to": "C", "symbols": ["b"] },
-        { "id": "B-B", "from": "B", "to": "B", "symbols": ["a"] },
+        { "id": "B-B", "from": "B", "to": "B", "symbols": ["a"], "loopAngle": -2.3562 },
         { "id": "B-D", "from": "B", "to": "D", "symbols": ["b"] },
         { "id": "C-B", "from": "C", "to": "B", "symbols": ["a"] },
         { "id": "C-C", "from": "C", "to": "C", "symbols": ["b"] },
         { "id": "D-B", "from": "D", "to": "B", "symbols": ["a"] },
         { "id": "D-E", "from": "D", "to": "E", "symbols": ["b"] },
-        { "id": "E-B", "from": "E", "to": "B", "symbols": ["a"] },
+        { "id": "E-B", "from": "E", "to": "B", "symbols": ["a"], "bend": -90 },
         { "id": "E-C", "from": "E", "to": "C", "symbols": ["b"] }
       ]
     },

@@ -104,7 +104,7 @@ try {
   {
     const page = await open();
     await importScenes(page);
-    await openAutomaton(page, 'Ends in abb (DFA)', { tidy: true });
+    await openAutomaton(page, 'Ends in abb (DFA)');
     await page.getByRole('button', { name: 'Minimize' }).click();
     await page.getByTestId('block-legend').waitFor();
     await stepTo(page, 2);
