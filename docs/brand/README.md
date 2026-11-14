@@ -12,3 +12,4 @@ that still loops. It is drawn on a 64 × 64 grid.
 - `public/favicon.svg` is `mark.svg` with a `prefers-color-scheme: dark` switch to the dark colors.
 - The top bar draws the same mark without its tile (`src/ui/shell/TopBar.tsx`), colored by theme
   tokens.
+- `public/og.png`: the 1200 × 630 link-preview image (`og:image`). Its source is `og/og.html` (the lockup and `docs/screenshots/run.png`); regenerate it with `node docs/brand/og/render.mjs` (needs Playwright Chromium and network for the Geist font).

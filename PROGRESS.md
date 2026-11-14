@@ -29,6 +29,7 @@ Nothing in progress: pick the next task from the list below.
 ### Launch prep (2026-11-14)
 
 - [x] MIT license (LICENSE, mentioned in the README), version 1.0.0, and Open Graph / Twitter link-preview tags in `index.html`
+- [x] 1200 × 630 link-preview image `public/og.png`, rendered from `docs/brand/og/og.html` by `docs/brand/og/render.mjs`
 
 ### Discoverability (2026-11-11)
 

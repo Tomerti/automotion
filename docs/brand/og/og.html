@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>AutoMotion link preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * { box-sizing: border-box; margin: 0; }
+      html, body { width: 1200px; height: 630px; overflow: hidden; }
+      body {
+        position: relative;
+        background: #f3f5f0;
+        background-image: radial-gradient(#cfd6ca 1.4px, transparent 1.6px);
+        background-size: 24px 24px;
+        font-family: 'Geist', system-ui, sans-serif;
+        color: #1c2333;
+      }
+      .left { position: absolute; left: 64px; top: 0; width: 470px; height: 630px;
+        display: flex; flex-direction: column; justify-content: center; gap: 28px; }
+      .lockup { width: 400px; display: block; margin-left: -10px; }
+      h1 { font-weight: 600; font-size: 54px; line-height: 1.08; letter-spacing: -0.02em; }
+      p { font-weight: 400; font-size: 26px; line-height: 1.38; color: #4a5266; }
+      .shot { position: absolute; left: 570px; top: 75px; width: 640px; height: 480px;
+        border-radius: 22px 0 0 22px; overflow: hidden; background: #fff;
+        box-shadow: 0 24px 60px rgba(28, 35, 51, 0.22), 0 0 0 1px rgba(28, 35, 51, 0.1); }
+      .shot img { position: absolute; width: 865px; left: -203px; top: -34px; display: block; }
+    </style>
+  </head>
+  <body>
+    <div class="left">
+      <img class="lockup" src="../lockup.svg" alt="AutoMotion" />
+      <h1>Watch automata come to life</h1>
+      <p>Build DFAs and NFAs, run words, convert and minimize, step by step.</p>
+    </div>
+    <div class="shot"><img src="../../screenshots/run.png" alt="" /></div>
+  </body>
+</html>
