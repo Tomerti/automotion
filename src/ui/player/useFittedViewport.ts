@@ -75,6 +75,9 @@ export function useFittedViewport(
   const [user, setUser] = useState<{ vp: Viewport; key: string } | null>(null);
   const moved = user !== null && user.key === key;
   const viewport = user !== null && moved ? user.vp : fitted;
+  // A view of another fitted target is dropped for good, not just hidden: it must not come back
+  // when the target returns to an earlier key.
+  if (user !== null && !moved) setUser(null);
 
   // The latest values for the native listeners, which are registered once.
   const latest = useRef({ viewport, key });
@@ -94,7 +97,10 @@ export function useFittedViewport(
       const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
       const point = { x: e.clientX - r.left, y: e.clientY - r.top };
       const { viewport: vp, key: k } = latest.current;
-      setUser({ vp: zoomAt(vp, point, factor), key: k });
+      const next = zoomAt(vp, point, factor);
+      // Before the re-render, so a second event in the same frame builds on this one.
+      latest.current = { viewport: next, key: k };
+      setUser({ vp: next, key: k });
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);

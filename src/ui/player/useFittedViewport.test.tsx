@@ -114,6 +114,30 @@ describe('useFittedViewport', () => {
     }
   });
 
+  it('two wheel events in one frame both count', () => {
+    const { getByTestId } = render(<Probe states={A} />);
+    const fitted = fitToView(pts(A), FALLBACK);
+    const el = getByTestId('p');
+    const at = { clientX: 100, clientY: 50 };
+    act(() => {
+      for (let i = 0; i < 2; i++) {
+        el.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, cancelable: true, ...at }));
+      }
+    });
+    const once = zoomAt(fitted, { x: 100, y: 50 }, ZOOM_STEP);
+    expect(vp()).toEqual(zoomAt(once, { x: 100, y: 50 }, ZOOM_STEP));
+  });
+
+  it('does not bring a view back when the fitted target returns', () => {
+    const { getByTestId, rerender } = render(<Probe states={A} />);
+    wheel(getByTestId('p'));
+    expect(api.moved).toBe(true);
+    rerender(<Probe states={B} />);
+    rerender(<Probe states={A} />);
+    expect(vp()).toEqual(fitToView(pts(A), FALLBACK));
+    expect(api.moved).toBe(false);
+  });
+
   it('keeps the view across rerenders with the same fit', () => {
     const { getByTestId, rerender } = render(<Probe states={A} />);
     wheel(getByTestId('p'));
