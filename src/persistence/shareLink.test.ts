@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { addState, setEdgeSymbols, setStart, toggleAccepting } from '../core/edit';
+import { emptyAutomaton } from '../core/model';
 import { fixture } from '../core/testing/fixtures';
 import type { Automaton } from '../core/model';
 import { decodeShare, encodeShare, readShareHash, sameAutomaton, shareUrl } from './shareLink';
@@ -128,5 +130,36 @@ describe('share link', () => {
     const a = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0'], start: 'q0' });
     expect(sameAutomaton(a, { ...a, id: 'other' })).toBe(true);
     expect(sameAutomaton(a, { ...a, states: [{ ...a.states[0]!, label: 'z' }] })).toBe(false);
+  });
+
+  it('sameAutomaton ignores key order and sub-pixel positions', () => {
+    const a = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0'], start: 'q0' });
+    a.states[0]!.x = 10.4;
+    const s = a.states[0]!;
+    const b: Automaton = {
+      transitions: [],
+      accepting: [],
+      starts: ['q0'],
+      states: [{ y: 0, x: 10, label: 'q0', id: 'q0', startAngle: undefined }],
+      alphabet: ['a'],
+      kind: 'DFA',
+      name: 'fixture',
+      id: 'zzz',
+    };
+    expect(s.x).toBe(10.4);
+    expect(sameAutomaton(a, b)).toBe(true);
+  });
+
+  it('round-trips an automaton built with the edit functions', async () => {
+    let a = emptyAutomaton('Built', 'DFA');
+    a = addState(a, { x: 10.5, y: 20.25 }, 'u1');
+    a = addState(a, { x: 130.7, y: 20 }, 'u2');
+    a = setStart(a, 'u1');
+    a = toggleAccepting(a, 'u2');
+    a = setEdgeSymbols(a, 'u1', 'u2', ['a']);
+    const r = await decodeShare(await encodeShare(a), new Set());
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(sameAutomaton(a, r.automata[0]!)).toBe(true);
   });
 });

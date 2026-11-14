@@ -69,13 +69,28 @@ export async function decodeShare(payload: string, existingIds: Set<string>): Pr
   }
 }
 
-function withoutId(a: Automaton): string {
-  const rest: Partial<Automaton> = { ...a };
-  delete rest.id;
-  return JSON.stringify(rest);
+/** Sorted keys, no `undefined` fields: the same content gives the same text. */
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (typeof value === 'object' && value !== null) {
+    const out: Record<string, unknown> = {};
+    for (const key of Object.keys(value).sort()) {
+      const v = (value as Record<string, unknown>)[key];
+      if (v !== undefined) out[key] = canonical(v);
+    }
+    return out;
+  }
+  return value;
 }
 
-/** Deep equality ignoring the automaton's id. */
+function normalized(a: Automaton): string {
+  const rest: Partial<Automaton> = { ...a };
+  delete rest.id;
+  rest.states = a.states.map((s) => ({ ...s, x: Math.round(s.x), y: Math.round(s.y) }));
+  return JSON.stringify(canonical(rest));
+}
+
+/** Same content as `b`, ignoring ids, key order and sub-pixel positions (as a share rounds them). */
 export function sameAutomaton(a: Automaton, b: Automaton): boolean {
-  return withoutId(a) === withoutId(b);
+  return normalized(a) === normalized(b);
 }
