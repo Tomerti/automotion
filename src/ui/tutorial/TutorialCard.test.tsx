@@ -429,7 +429,8 @@ it('frames a button tightly, so the frame stays on screen and off its neighbours
   at('convert');
   const pointer = screen.getByTestId('tutorial-pointer');
   expect(pointer).toHaveAttribute('data-tight');
-  expect(pointer.style).toMatchObject({ left: '97px', top: '7px', width: '126px', height: '34px' });
+  // Nudged 2 px right: the icon's thin left end reads as extra space.
+  expect(pointer.style).toMatchObject({ left: '99px', top: '7px', width: '126px', height: '34px' });
 });
 
 it('points at the state itself, not its start arrow', () => {

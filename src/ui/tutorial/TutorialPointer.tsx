@@ -8,6 +8,11 @@ const OUTSET = 8;
  * edge or right next to other buttons, so the frame hugs them and breathes less (`data-tight`).
  */
 const TIGHT_OUTSET = 3;
+/**
+ * A button that starts with an icon (Convert to DFA): the icon's thin left end reads as extra
+ * space, so the frame, though centred on the button, looks shifted left. Move it right this much.
+ */
+const ICON_NUDGE = 2;
 const CORNERS = ['tl', 'tr', 'bl', 'br'] as const;
 
 /**
@@ -35,9 +40,10 @@ export function TutorialPointer({
         const tight = target instanceof HTMLButtonElement;
         el.toggleAttribute('data-tight', tight);
         const out = tight ? TIGHT_OUTSET : OUTSET;
+        const nudge = tight && target.firstElementChild instanceof SVGElement ? ICON_NUDGE : 0;
         if (box && box.width + box.height > 0) {
           el.style.display = '';
-          el.style.left = `${box.left - out}px`;
+          el.style.left = `${box.left - out + nudge}px`;
           el.style.top = `${box.top - out}px`;
           el.style.width = `${box.width + 2 * out}px`;
           el.style.height = `${box.height + 2 * out}px`;
