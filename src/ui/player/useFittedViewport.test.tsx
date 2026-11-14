@@ -27,6 +27,26 @@ function Probe({ states, interactive }: { states: State[]; interactive?: boolean
   return <div data-testid="p" ref={ref} onPointerDown={onPointerDown} />;
 }
 const vp = (): Viewport => api.viewport;
+
+/** jsdom lays nothing out: stub ResizeObserver and give the element a size to measure. */
+function stubResize(): (el: HTMLElement, width: number, height: number) => void {
+  const observers: (() => void)[] = [];
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      constructor(cb: () => void) {
+        observers.push(cb);
+      }
+      observe(): void {}
+      disconnect(): void {}
+    },
+  );
+  return (el, width, height) => {
+    Object.defineProperty(el, 'clientWidth', { value: width, configurable: true });
+    Object.defineProperty(el, 'clientHeight', { value: height, configurable: true });
+    act(() => observers.forEach((cb) => cb()));
+  };
+}
 const wheel = (el: HTMLElement, init: WheelEventInit = {}): WheelEvent => {
   const ev = new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true, ...init });
   act(() => {
@@ -82,32 +102,43 @@ describe('useFittedViewport', () => {
     expect(api.moved).toBe(false);
   });
 
-  it('re-fits when the size changes', () => {
-    // jsdom lays nothing out: stub ResizeObserver and give the element a size to measure.
-    const observers: (() => void)[] = [];
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        constructor(cb: () => void) {
-          observers.push(cb);
-        }
-        observe(): void {}
-        disconnect(): void {}
-      },
-    );
+  it('re-fits when the width changes', () => {
+    const resize = stubResize();
     try {
       const { getByTestId } = render(<Probe states={A} />);
       const el = getByTestId('p');
-      const resize = (width: number, height: number): void => {
-        Object.defineProperty(el, 'clientWidth', { value: width, configurable: true });
-        Object.defineProperty(el, 'clientHeight', { value: height, configurable: true });
-        act(() => observers.forEach((cb) => cb()));
-      };
-      resize(800, 500);
+      resize(el, 800, 500);
       wheel(el);
       expect(api.moved).toBe(true);
-      resize(400, 300);
+      resize(el, 400, 300);
       expect(vp()).toEqual(fitToView(pts(A), { width: 400, height: 300 }));
+      expect(api.moved).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('keeps the view, re-centred, when only the height changes (the dock or a legend grows)', () => {
+    const resize = stubResize();
+    try {
+      const { getByTestId } = render(<Probe states={A} />);
+      const el = getByTestId('p');
+      resize(el, 800, 500);
+      wheel(el, { clientX: 100, clientY: 50 });
+      const zoomed = vp();
+      resize(el, 800, 480);
+      expect(vp()).toEqual({ ...zoomed, y: zoomed.y - 10 });
+      expect(api.moved).toBe(true);
+      // Further zooming builds on the shifted view.
+      wheel(el, { clientX: 100, clientY: 50 });
+      expect(vp()).toEqual(zoomAt({ ...zoomed, y: zoomed.y - 10 }, { x: 100, y: 50 }, ZOOM_STEP));
+      resize(el, 800, 500);
+      expect(vp().y).toBeCloseTo(
+        zoomAt({ ...zoomed, y: zoomed.y - 10 }, { x: 100, y: 50 }, ZOOM_STEP).y + 10,
+      );
+      expect(api.moved).toBe(true);
+      resize(el, 700, 500);
+      expect(vp()).toEqual(fitToView(pts(A), { width: 700, height: 500 }));
       expect(api.moved).toBe(false);
     } finally {
       vi.unstubAllGlobals();

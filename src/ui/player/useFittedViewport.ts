@@ -57,9 +57,22 @@ export interface FittedViewport {
 }
 
 /**
+ * What the user's view is tied to: the states' extent and the pane's width. The height is left
+ * out: it follows the dock, the tutorial card and the minimize legend, which change while stepping.
+ */
+function viewKey(states: readonly State[], width: number): string {
+  if (states.length === 0) return JSON.stringify([width]);
+  const xs = states.map((s) => s.x);
+  const ys = states.map((s) => s.y);
+  const box = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys), width];
+  return JSON.stringify([states.length === 1, ...box.map((n) => Math.round(n * 100))]);
+}
+
+/**
  * Viewport fitting `states` to the size of the element behind the returned ref. Unless
- * `interactive` is false, the wheel zooms around the pointer and dragging pans; the user's view
- * is kept until the fitted target changes (other states, another size), then it is fitted again.
+ * `interactive` is false, the wheel zooms around the pointer and dragging pans. The user's view
+ * is kept until the states' extent or the pane's width changes, then it is fitted again; a
+ * height-only change keeps it, shifted by half the difference so the content stays centred.
  */
 export function useFittedViewport(
   states: readonly State[],
@@ -71,18 +84,21 @@ export function useFittedViewport(
     states.map((s) => ({ x: s.x, y: s.y })),
     size,
   );
-  const key = JSON.stringify([fitted.x, fitted.y, fitted.zoom].map((n) => Math.round(n * 100)));
-  const [user, setUser] = useState<{ vp: Viewport; key: string } | null>(null);
+  const key = viewKey(states, size.width);
+  const height = size.height;
+  // `height`: the pane's height when the view was set.
+  const [user, setUser] = useState<{ vp: Viewport; key: string; height: number } | null>(null);
   const moved = user !== null && user.key === key;
-  const viewport = user !== null && moved ? user.vp : fitted;
+  const viewport =
+    user !== null && moved ? { ...user.vp, y: user.vp.y + (height - user.height) / 2 } : fitted;
   // A view of another fitted target is dropped for good, not just hidden: it must not come back
   // when the target returns to an earlier key.
   if (user !== null && !moved) setUser(null);
 
   // The latest values for the native listeners, which are registered once.
-  const latest = useRef({ viewport, key });
+  const latest = useRef({ viewport, key, height });
   useLayoutEffect(() => {
-    latest.current = { viewport, key };
+    latest.current = { viewport, key, height };
   });
 
   const fit = useCallback((): void => setUser(null), []);
@@ -96,11 +112,11 @@ export function useFittedViewport(
       const r = el.getBoundingClientRect();
       const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
       const point = { x: e.clientX - r.left, y: e.clientY - r.top };
-      const { viewport: vp, key: k } = latest.current;
+      const { viewport: vp, key: k, height: h } = latest.current;
       const next = zoomAt(vp, point, factor);
       // Before the re-render, so a second event in the same frame builds on this one.
-      latest.current = { viewport: next, key: k };
-      setUser({ vp: next, key: k });
+      latest.current = { viewport: next, key: k, height: h };
+      setUser({ vp: next, key: k, height: h });
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
@@ -124,7 +140,7 @@ export function useFittedViewport(
           el?.setPointerCapture?.(pointerId);
         }
         const vp = { ...base.viewport, x: base.viewport.x + dx, y: base.viewport.y + dy };
-        setUser({ vp, key: base.key });
+        setUser({ vp, key: base.key, height: base.height });
       };
       const up = (ev: PointerEvent): void => {
         if (ev.pointerId !== pointerId) return;
