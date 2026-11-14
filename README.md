@@ -27,7 +27,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
-![An NFA for "ends in ab" after running the word aab: the run ends in {q₀, q₁, q₃} and is accepted](docs/screenshots/run.png)
+![An NFA for "ends in ab" running the word aab: tokens move along the arrows, a dead branch is crossed out, and the run ends accepted in {q₀, q₁, q₃}](docs/screenshots/run.gif)
 
 AutoMotion is a free, in-browser playground for finite automata, made for students learning
 automata theory and for the people who teach it. There is nothing to install and no account:
@@ -43,7 +43,13 @@ open the page and start drawing. It follows your system's light or dark theme.
    the start state, **A** to make it accepting.
 3. **Run a word.** Type it into **Test a word** and press **Enter**.
 
+**Try it without drawing:** open [an NFA for "ends in ab"][try-nfa] and run `aab`, or
+[a DFA for "ends in abb"][try-dfa] and press **Minimize**.
+
 Press **?** in the app to see every control.
+
+[try-nfa]: https://tomerti.github.io/automotion/#a=bZBBTsMwEEWvEv0VSI4UO2TjXRd02QtUVTVpXbBI7DYeKqqKY3ENzoTsKCWGypvx-P3x_3PFwQ89MTTonX3v2XoHgbMZQqy0EuMDMUGvr3DUG2g8u30orCuoLR5Wy8UjBN6s20NjtVxAgLrjK7WGodcgCLTYCAQmNiGNsRE9VRDoqDVdvGzj7QNaVpXABVo21aeYSJmRciRVc4dUGalG8unezDoj65FsZjNHywNHy9HsRoB2O3Nk615Sq44tHsgFG_eWRStTusPg-ykp-6kKl771XZgt59dVVaaw_4UyF35_zVWyTMEnlbyp1N_vZiJVph1MInUT1bko-ovnBw
+[try-dfa]: https://tomerti.github.io/automotion/#a=jZLRasMgFIZfpfxXG5iRJs3GvEvVvkQpQ1vbhSWaRTdWyt592ITNsLQUb0S_c36_gyfsbddIDwr54W1jfWUNCD5158KOZqS_kF6Crk8wstGgEGbnZpWZSaVmd3xV3oPgrTI7UPBVCQJZt69SaQ-6hgSBwobAeem1O_epAhrAWipdg-L9JQXBF-g8TQmOoPMi_SYDuByB8x7Miv8gG4HZ0PGpOIN5-gfyEZj34GIiWozARQ8WUXTv1fnghTJoyu1Wt74yh3AiwonvpHFVmG1snwStfWebYRTeDqru2Chbu352m9-nlAmbKGDjAhUVLOOE5eUEgtratjSHWoMm2UNePGZREz7RhF9OZXEqu8GLxV7sBi8eJ_AbEngiJgrE5QQRJ4hrk1M6_PrkOfoxsY64ohPWDw
 
 ## What you can do
 
@@ -69,7 +75,7 @@ Press **?** in the app to see every control.
 ### Run a word
 
 - **Watch it read.** The run plays on a tape with a read head, lighting up the active states and
-  the arrow just taken (the screenshot at the top).
+  the arrow just taken (the animation at the top).
 - **Go at your own pace.** Pause, step back and forth, or scrub. NFA runs show each ε-closure as
   its own step and mark the branches that die.
 - **A clear verdict.** The run ends in **Accepted** or **Rejected**, and says why.

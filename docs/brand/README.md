@@ -27,6 +27,7 @@ The orange is `#f76707`, the app's run highlighter, in both themes: the loop and
 All of these need Playwright Chromium (`npx playwright install chromium`) and network for Geist.
 
 1. `node docs/brand/render.mjs`: the lockup PNGs, after changing a lockup SVG.
-2. `node docs/screenshots/take.mjs`: the README screenshots, `run.png` included (see the script
+2. `node docs/screenshots/take.mjs`: the README screenshots, `run.png` included, and
+   `node docs/screenshots/take-gif.mjs`: the README's animated hero, `run.gif` (see either script
    for the preview server it needs).
 3. `node docs/brand/og/render.mjs`: the link-preview image, after either of the above.
