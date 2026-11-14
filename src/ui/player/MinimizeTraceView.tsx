@@ -2,6 +2,7 @@ import { formatSet } from '../../core/format';
 import type { MinimizeTrace } from '../../core/trace';
 import { Diagram } from '../canvas/Diagram';
 import { LabelText } from '../LabelText';
+import { FitButton } from './FitButton';
 import { useFittedViewport } from './useFittedViewport';
 
 const TINT_COUNT = 8;
@@ -15,7 +16,7 @@ export function MinimizeTraceView({ trace, stepIndex }: MinimizeTraceViewProps):
   const step = trace.steps[stepIndex];
   const done = step?.phase === 'done';
   const shown = !step || done ? trace.result : step.automaton;
-  const { ref, viewport } = useFittedViewport(shown.states);
+  const { ref, viewport, moved, fit, onPointerDown } = useFittedViewport(shown.states);
 
   if (!step) return <div className="av-trace-view" />;
 
@@ -33,7 +34,12 @@ export function MinimizeTraceView({ trace, stepIndex }: MinimizeTraceViewProps):
 
   return (
     <div className="av-trace-view">
-      <div className="av-trace-diagram" ref={ref}>
+      <div
+        className="av-trace-diagram"
+        data-interactive="true"
+        ref={ref}
+        onPointerDown={onPointerDown}
+      >
         <Diagram
           automaton={shown}
           viewport={viewport}
@@ -43,6 +49,7 @@ export function MinimizeTraceView({ trace, stepIndex }: MinimizeTraceViewProps):
             active: step.phase === 'split' ? step.focus.states : undefined,
           }}
         />
+        {moved && <FitButton onClick={fit} />}
       </div>
       <ul className="av-block-legend" data-testid="block-legend">
         {step.blocks.map((block, i) => (

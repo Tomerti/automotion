@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Sym } from '../../core/model';
 import type { SubsetTrace } from '../../core/trace';
 import { Diagram } from '../canvas/Diagram';
+import { FitButton } from './FitButton';
 import { chooseSplitLayout } from './splitLayout';
 import { useElementSize, useFittedViewport } from './useFittedViewport';
 
@@ -23,8 +24,12 @@ function symbolsBuiltSoFar(trace: SubsetTrace, stepIndex: number): Record<string
 
 export function SubsetTraceView({ trace, stepIndex }: SubsetTraceViewProps): React.JSX.Element {
   const step = trace.steps[stepIndex];
-  const { ref: nfaRef, viewport: nfaViewport } = useFittedViewport(trace.source.states);
-  const { ref: dfaRef, viewport: dfaViewport } = useFittedViewport(trace.result.states);
+  const nfa = useFittedViewport(trace.source.states);
+  const dfa = useFittedViewport(trace.result.states);
+  const { ref: nfaRef, viewport: nfaViewport, onPointerDown: nfaDown } = nfa;
+  const { ref: dfaRef, viewport: dfaViewport, onPointerDown: dfaDown } = dfa;
+  const { moved: nfaMoved, fit: nfaFit } = nfa;
+  const { moved: dfaMoved, fit: dfaFit } = dfa;
   const { ref, size } = useElementSize();
   const layout = chooseSplitLayout(trace.source.states, trace.result.states, size);
   const edgeSymbols = useMemo(() => symbolsBuiltSoFar(trace, stepIndex), [trace, stepIndex]);
@@ -33,17 +38,28 @@ export function SubsetTraceView({ trace, stepIndex }: SubsetTraceViewProps): Rea
     <div className="av-subset-view" data-testid="subset-view" data-layout={layout} ref={ref}>
       <section className="av-subset-pane" data-testid="subset-nfa">
         <h3>NFA</h3>
-        <div className="av-trace-diagram" ref={nfaRef}>
+        <div
+          className="av-trace-diagram"
+          data-interactive="true"
+          ref={nfaRef}
+          onPointerDown={nfaDown}
+        >
           <Diagram
             automaton={trace.source}
             viewport={nfaViewport}
             highlight={{ active: step?.focus.states, taken: step?.focus.transitions }}
           />
+          {nfaMoved && <FitButton onClick={nfaFit} />}
         </div>
       </section>
       <section className="av-subset-pane" data-testid="subset-dfa">
         <h3>DFA</h3>
-        <div className="av-trace-diagram" ref={dfaRef}>
+        <div
+          className="av-trace-diagram"
+          data-interactive="true"
+          ref={dfaRef}
+          onPointerDown={dfaDown}
+        >
           <Diagram
             automaton={trace.result}
             viewport={dfaViewport}
@@ -55,6 +71,7 @@ export function SubsetTraceView({ trace, stepIndex }: SubsetTraceViewProps): Rea
               taken: step?.dfaFocus.transitions,
             }}
           />
+          {dfaMoved && <FitButton onClick={dfaFit} />}
         </div>
       </section>
     </div>

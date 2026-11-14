@@ -93,6 +93,23 @@ describe('SubsetTraceView', () => {
     expect(taken.length).toBeGreaterThan(0);
   });
 
+  it('shows Fit in a pane only once its view was moved, and Fit resets it', async () => {
+    const user = userEvent.setup();
+    await open();
+    expect(screen.queryByTestId('trace-fit')).toBeNull();
+    const pane = within(screen.getByTestId('subset-nfa'));
+    const area = pane.getByTestId('diagram').closest('.av-trace-diagram')!;
+    act(() => {
+      area.dispatchEvent(
+        new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true }),
+      );
+    });
+    expect(pane.getByTestId('trace-fit')).toBeInTheDocument();
+    expect(within(screen.getByTestId('subset-dfa')).queryByTestId('trace-fit')).toBeNull();
+    await user.click(pane.getByTestId('trace-fit'));
+    expect(screen.queryByTestId('trace-fit')).toBeNull();
+  });
+
   it('Save as new automaton adds "N → DFA" and closes the trace', async () => {
     const user = userEvent.setup();
     await open();

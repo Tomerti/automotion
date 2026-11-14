@@ -14,6 +14,7 @@ import {
   verdictReason,
   type StepMotion,
 } from './runView';
+import { FitButton } from './FitButton';
 import { useFittedViewport } from './useFittedViewport';
 
 export interface RunTraceViewProps {
@@ -287,7 +288,9 @@ export function RunTraceView({
   ambient = false,
 }: RunTraceViewProps): React.JSX.Element {
   const step = trace.steps[stepIndex];
-  const { ref, viewport } = useFittedViewport(trace.source.states);
+  const { ref, viewport, moved, fit, onPointerDown } = useFittedViewport(trace.source.states, {
+    interactive: !ambient,
+  });
   const playerSpeed = usePlaybackSpeed();
   const speed = ambient ? 1 : playerSpeed;
   const motion = useMemo(
@@ -325,7 +328,12 @@ export function RunTraceView({
   return (
     <div className="av-trace-view av-run-view" data-moving={moving ? 'true' : undefined}>
       <TapeView trace={trace} step={step} />
-      <div className="av-trace-diagram" ref={ref}>
+      <div
+        className="av-trace-diagram"
+        data-interactive={ambient ? undefined : 'true'}
+        ref={ref}
+        onPointerDown={onPointerDown}
+      >
         <Diagram
           automaton={trace.source}
           viewport={viewport}
@@ -346,6 +354,7 @@ export function RunTraceView({
             }
           />
         </Diagram>
+        {moved && !ambient && <FitButton onClick={fit} />}
         {isLast && !ambient && <VerdictBanner trace={trace} />}
       </div>
     </div>

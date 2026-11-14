@@ -35,6 +35,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] "Copy link" in the toolbar's export menu and each history entry's ⋯ menu copies a share link (`ui/shell/copyLink.ts`)
 - [x] Opening a share link (`#a=`, `ui/shell/useSharedLink.ts`) on load and on `hashchange`: opens the saved copy or adds the automaton, fits it, toasts, clears the hash; no welcome dialog on such a visit
 - [x] Tutorial part 3 in the step table (`ui/tutorial/steps.ts`): convert the "contains 01" NFA (`PART3_NFA`), play it to the end, Save and minimize, play that to the end; the steps latch on the open walkthrough (`latch`, `isPart3Trace`), the closing card is part 4 (store, card and e2e wiring still to do)
+- [x] Pan and zoom in the walkthrough views (`useFittedViewport` returns `moved` / `fit` / `onPointerDown` and owns a non-passive wheel listener): the wheel zooms around the pointer, dragging pans, a Fit button (`player/FitButton.tsx`, `trace-fit`) shows once moved, the fitted view returns when the fitted target changes; the welcome demo (`ambient`) stays inert
 - [x] Tutorial part 3 wired up: closing part 2's last run loads the NFA into the tutorial automaton (one undo step) and fits it below the card; the store remembers the converted DFA (`derivedId`) so its minimization counts; generic "Part N complete!" hand-over, "of 3" headers, the goal picture draws subscripts, the pointer shows over the top bar, the welcome plan and README mention part 3, and the tutorial e2e runs to the end
 
 ### Discoverability (2026-11-11)

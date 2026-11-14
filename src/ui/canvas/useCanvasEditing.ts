@@ -39,13 +39,11 @@ import {
   type Point,
 } from '../../core/geometry';
 import { snapPosition, type Snap } from './snap';
-import { fitToViewInset, screenToWorld, zoomAt } from './viewport';
+import { DRAG_THRESHOLD, ZOOM_STEP, fitToViewInset, screenToWorld, zoomAt } from './viewport';
 
 export const DEFAULT_VIEWPORT: Viewport = { x: 0, y: 0, zoom: 1 };
 
 /** Screen pixels a press must travel before it becomes a drag. */
-const DRAG_THRESHOLD = 3;
-const ZOOM_STEP = 1.1;
 /** World distance from an edge label's anchor that still counts as hitting it. */
 const LABEL_HIT_RADIUS = 12;
 /** A dragged edge whose bend is within this many screen px of straight snaps straight. */

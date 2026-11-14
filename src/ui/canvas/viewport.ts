@@ -1,6 +1,11 @@
 import type { Viewport } from '../../store/types';
 import { STATE_RADIUS, type Point } from '../../core/geometry';
 
+/** Zoom factor of one wheel notch. */
+export const ZOOM_STEP = 1.1;
+/** Pixels a pointer moves before a press counts as a drag. */
+export const DRAG_THRESHOLD = 3;
+
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 
