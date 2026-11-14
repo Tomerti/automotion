@@ -75,4 +75,6 @@ npm run build    # type-check and production build into dist/
 
 The first `npm run e2e` needs a browser: `npx playwright install chromium`.
 
+MIT licensed, see LICENSE.
+
 Built with TypeScript, React, Vite, Zustand and elkjs, with a custom SVG renderer. CI runs typecheck, lint, unit and end-to-end tests on every push and pull request, and deploys `master` to GitHub Pages once they pass. See [PROGRESS.md](PROGRESS.md) for what is planned next, and [docs/brand](docs/brand) for the logo files.

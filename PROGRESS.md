@@ -26,6 +26,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Launch prep (2026-11-14)
+
+- [x] MIT license (LICENSE, mentioned in the README), version 1.0.0, and Open Graph / Twitter link-preview tags in `index.html`
+
 ### Discoverability (2026-11-11)
 
 - [x] The empty canvas also says Ctrl+V pastes an automaton’s LaTeX (TikZ) code and that .json / .tex files can be
