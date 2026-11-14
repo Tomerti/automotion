@@ -63,7 +63,8 @@
 - Import and export automata as JSON files, one or all at once, and export a diagram as SVG or PNG.
 - Export an automaton as LaTeX (a TikZ picture with the `automata` library, laid out as on the canvas) to compile on its own, or copy the picture straight into your document. Export all writes every automaton into one `.tex` document, a page each. Import reads `.tex` files back, including hand-written TikZ automata: each `tikzpicture` becomes an automaton. Or copy an automaton’s LaTeX code (its `\begin{tikzpicture}` … `\end{tikzpicture}` block) from anywhere (Overleaf, lecture notes) and press **Ctrl+V** in the app, or paste it into **Import → Paste LaTeX…**. Dropping a `.json` or `.tex` file on the app imports it too.
 - Copy the diagram as a picture (**Ctrl+C** with no state selected, or Copy image in the export menu) and paste it straight into a document or chat. Copied or downloaded, the picture is always the whole automaton at the same size, however far the canvas is zoomed or panned.
-- On a phone you can open links and run words, but building automata needs a mouse and keyboard. Light and dark themes: it follows your system by default, or pick Light or Dark from the theme menu. Press **?** for the controls guide at any time.
+- On a phone you can open links and run words, but building automata needs a mouse and keyboard.
+- Light and dark themes: it follows your system by default, or pick Light or Dark from the theme menu. Press **?** for the controls guide at any time.
 
 ## Development
 

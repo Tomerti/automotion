@@ -86,7 +86,9 @@ Layers, with dependencies pointing downward only:
 - `src/persistence/`: localStorage autosave (key `automotion:v1`, 500 ms debounce, flush on `pagehide`),
   and the versioned JSON file format
   (`{ format: "automotion", version, automata }`, version 2 (the schema rejects start/accepting ids that are not states); `migrate()` turns v1's single `start`
-  into `starts`). Every load goes through `migrate()` and the zod schema; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
+  into `starts`). Every load goes through `migrate()` and the zod schema; the autosave load alone first drops dangling
+  start/accepting ids (`parseFile(…, { repair: true })`: older builds could save them), while imports and share links stay
+  strict; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
   built-in examples; e2e specs import `e2e/fixtures/automata.json`. The first release seeded three:
   the first load in a browser (flag `automotion:old-examples-checked`) removes the ones never
   changed (`oldExamples.ts`) and saves the result. The project was called Automaton Vis until
@@ -114,10 +116,11 @@ Layers, with dependencies pointing downward only:
     `snap.ts` snaps a dragged state (alignment guides and equal-gap markers, both kept out of exports).
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button. The views are movable:
-    `useFittedViewport` fits the diagram and, unless `ambient` (the welcome demo stays inert), the wheel
-    zooms around the pointer (non-passive listener, every step compounds), dragging pans and
-    `FitButton.tsx` (`trace-fit`) appears once moved; the fitted view returns when the fitted target
-    changes. `ZOOM_STEP` and `DRAG_THRESHOLD` are shared with the canvas through `canvas/viewport.ts`.
+    `useFittedViewport` fits the diagram and, unless `interactive: false` (`RunTraceView`'s `ambient`: the welcome
+    demo stays inert), the wheel zooms around the pointer (non-passive listener, every step compounds), dragging pans
+    and `FitButton.tsx` (`trace-fit`) appears once moved. The user's view is fitted again when the states' extent or the
+    pane's width changes; a height-only change (the dock's explanation wrapping, the minimize legend, the tutorial
+    card) keeps it, shifted by half the difference. `ZOOM_STEP` and `DRAG_THRESHOLD` are shared with the canvas through `canvas/viewport.ts`.
   - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip (while its popover is open, `canvas/issueMarks.ts` rings
     the states the issues are about; the canvas paints only non-incomplete errors red all the time),
     theme menu (System / Light / Dark: `theme.ts` resolves it to `<html data-theme>`; the welcome's
@@ -130,9 +133,10 @@ Layers, with dependencies pointing downward only:
     while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,
     import/export plumbing (Import is a menu: a file, or `PasteLatexDialog.tsx`; "Copy link" in the export menu and each
     history entry's ⋯ menu is `copyLink.ts`; `useSharedLink.ts` opens a `#a=` share link on load and on `hashchange`:
-    opens the saved copy (`sameAutomaton`) or adds the automaton, fits it, toasts and clears the hash, and the welcome stays
-    away on such a visit; `touch.ts` `isTouchOnly()`: coarse main pointer and no fine one, read once, makes the welcome the
-    phone variant, and toasts sit under the top bar at ≤ 480 px). Thumbnails are their own
+    opens the saved copy (`sameAutomaton`) or adds the automaton (replacing a lone blank automaton, a fresh visitor's
+    "Untitled"), fits it, toasts and clears the hash, and the welcome stays away on such a visit; `touch.ts`
+    `isTouchOnly()`: coarse main pointer and no fine one, a plain media query check (not reactive), makes the welcome the
+    phone variant; on phones (≤ 480 px, `App.css`) toasts sit under the top bar). Thumbnails are their own
     small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
   - `tutorial/`: the interactive tutorial. `steps.ts` is a pure step table (each step's `done`,
@@ -141,7 +145,7 @@ Layers, with dependencies pointing downward only:
     each part builds (a few words, example words, the finished automaton), shown at the top of
     the card with `GoalPicture.tsx` (its own SVG, no `Diagram` test ids). Each step is one short
     `instruction` plus an optional few-word `why` (lengths capped by a test); the states are named
-    `even` / `odd`, and `any` at the end. Its texts mark keys as
+    `even` / `odd`, and `any` at the end of part 2; part 3's NFA has `q_0`…`q_2`. Its texts mark keys as
     `[Shift]` (rendered as `<kbd>`), states as `«even»` (a small state), and words/symbols to
     type in backticks (`<code>`, in the dotted-zero `--av-font-symbol`, since Geist's 0 reads as
     O); prose says "zeros", not "`0`s". `tutorialStore.ts`
@@ -150,13 +154,13 @@ Layers, with dependencies pointing downward only:
     `--av-tutorial-pad` clear); its steps `latch` on the open walkthrough (`latch`, `isPart3Trace`) instead of
     checking the automaton, `derivedId` remembers the saved converted DFA so its minimization counts, and hints ask for
     a redo (Ctrl+Y) when the NFA load was undone or to press Convert / Minimize again. The closing card is part 4.
-    `tutorialStore.ts` `TutorialCard` floats at the top centre under the
+    `TutorialCard` floats at the top centre under the
     DFA/NFA switch: the part's goal (a green "Part N complete!" panel at the hand-over, `PART_DONE`), a
     progress bar ("of 3") and the one step to do now. It sets
     `--av-tutorial-pad` on the canvas area so trace views start below it; its X asks, then
     `quitTutorial()` removes the tutorial automaton (Finish keeps it). `TutorialPointer` frames
     the target with orange corner brackets (portal, follows it each frame; not a ring, which would
-    read as accepting), and `WelcomeCard` is the first-visit dialog (on a touch-only device the demo, theme switch and one **Got it** button) (key `automotion:seen-help`, set when it is answered,
+    read as accepting), and `WelcomeCard` is the first-visit dialog (on a touch-only device the demo, theme switch and one **Got it** button, no "Press ?" note) (key `automotion:seen-help`, set when it is answered,
     not when it opens, so a reload before answering shows it again);
     the Controls popup no longer opens by itself. Its `WelcomeDemo` plays random words on the
     "ends in 01" NFA forever (`demoRun.ts`) through `RunTraceView` with `ambient` (silent, 1×, no
