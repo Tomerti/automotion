@@ -8,6 +8,7 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
+- [ ] Tag `v1.0.0` on master (launch prep's merge, e51ab17) and publish a GitHub release for it, with notes from PR #50
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
 - [ ] Minimize walkthrough: a merged state's long label (`{{q_0,q_2},{q_0,q_1,q_2}}`) spills out of its circle over the arrows; shorten or wrap merged labels there
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
@@ -15,7 +16,7 @@ Nothing in progress: pick the next task from the list below.
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
       incomplete DFA): consider muting it, or saying in the card that it is expected
 - [ ] Share links: cap the inflated size in `decodeShare` (a zip-bomb link could exhaust memory)
-- [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is read once, not reactive
+- [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is not reactive (a keyboard attached later doesn't change the welcome)
 
 - [ ] Copy and paste follow-ups: Ctrl+X (cut), Ctrl+A (select all), and Shift + click as an alternative to Ctrl + click (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
 
@@ -39,6 +40,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Tutorial part 3 (convert an NFA, then minimize the DFA) was built and then dropped: the tutorial stays at two parts. Kept from it: the goal picture draws subscripts (`LabelSpans`), the canvas's fit keeps clear of the tutorial card, and Save and minimize's `save-and-minimize` test id
 - [x] Phone welcome: on a touch-only device (`ui/shell/touch.ts` `isTouchOnly`) the welcome keeps the demo and theme switch, says AutoMotion is made for a mouse and keyboard, and has one **Got it** button; an iPhone 13 e2e (`e2e/phone.spec.ts`) covers the welcome, opening a share link and running a word; toasts sit under the top bar on phones (≤ 480 px) instead of over the player
 - [x] Final-review fixes: the autosave load drops dangling start/accepting ids instead of losing the whole list (`toggleAccepting` ignores non-states), walkthrough zoom survives height-only pane changes, the first-show fit keeps clear of the tutorial card, a link visitor's lone blank "Untitled" makes way for the shared automaton, no "Press ?" note on phones
+- [x] The GitHub repo is public, with the topics automata, dfa, nfa, finite-automata, education, tikz, react and typescript
 
 ### Discoverability (2026-11-11)
 
