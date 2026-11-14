@@ -44,6 +44,17 @@ const evenZeros = () =>
     ],
   });
 
+/** The finished part 2: one state, any, looping on 0 and 1. */
+const everyWord = () =>
+  fixture({
+    kind: 'DFA',
+    alphabet: '01',
+    states: ['any'],
+    start: 'any',
+    accepting: ['any'],
+    edges: [['any', '0,1', 'any']],
+  });
+
 const idx = (id: string) => STEPS.findIndex((s) => s.id === id);
 /** Show the card at step `id`, as if reached. */
 const at = (id: string) =>
@@ -65,7 +76,7 @@ it('shows the first step with its counter', () => {
   act(() => startTutorial());
   expect(card()).toHaveAttribute('data-step', '1');
   expect(card()).toHaveAccessibleName('Tutorial');
-  expect(within(card()).getByText('Part 1 of 2 · Step 1 of 11')).toBeInTheDocument();
+  expect(within(card()).getByText('Part 1 of 3 · Step 1 of 11')).toBeInTheDocument();
   expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
     'Double-click the canvas to add a state.',
   );
@@ -96,7 +107,7 @@ it('shows the goal: a picture, a few words, and words it accepts and rejects', (
   expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent(
     'Part 2 goal: Accept every word',
   );
-  expect(within(card()).getByText('Part 2 of 2 · Step 1 of 4')).toBeInTheDocument();
+  expect(within(card()).getByText('Part 2 of 3 · Step 1 of 4')).toBeInTheDocument();
   at('done');
   expect(within(card()).queryByTestId('tutorial-goal')).toBeNull();
 });
@@ -192,7 +203,7 @@ it('says a part is done while the run that ended it is open, until Esc closes it
   act(() => app().setStep(app().trace!.steps.length - 1));
   expect(card()).toHaveAttribute('data-step', String(idx('delete-q1') + 1));
   // Part 1 is done, said in green, with what part 2 is; the goal makes way for it.
-  expect(within(card()).getByText('Part 1 of 2 · Complete')).toBeInTheDocument();
+  expect(within(card()).getByText('Part 1 of 3 · Complete')).toBeInTheDocument();
   const done = within(card()).getByTestId('tutorial-part-done');
   expect(done).toHaveTextContent('Part 1 complete!');
   expect(done).toHaveTextContent('Next: Part 2 · Accept every word');
@@ -208,6 +219,56 @@ it('says a part is done while the run that ended it is open, until Esc closes it
   expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
     'Click odd and press Delete.',
   );
+});
+
+it('shows Part 2 complete! and names part 3', () => {
+  render(<App />);
+  act(() => startTutorial());
+  const id = tutorialStore.getState().automatonId!;
+  act(() => app().edit(() => ({ ...everyWord(), id, name: 'Tutorial' })));
+  act(() =>
+    tutorialStore.setState({
+      progress: idx('run-10-again'),
+      current: idx('run-10-again'),
+      latched: new Set(['run-1010', 'run-10']),
+    }),
+  );
+  act(() => startRun('10'));
+  act(() => app().setStep(app().trace!.steps.length - 1));
+  expect(card()).toHaveAttribute('data-step', String(idx('convert') + 1));
+  expect(within(card()).getByText('Part 2 of 3 · Complete')).toBeInTheDocument();
+  const done = within(card()).getByTestId('tutorial-part-done');
+  expect(done).toHaveTextContent('Part 2 complete!');
+  expect(done).toHaveTextContent('Your DFA accepts every word.');
+  expect(done).toHaveTextContent('Next: Part 3 · Convert and minimize');
+  expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent(
+    'Press Esc to start part 3.',
+  );
+  // Esc: part 3's goal, and its NFA on the canvas.
+  act(() => app().closeTrace());
+  expect(within(card()).getByTestId('tutorial-goal')).toHaveAttribute('data-part', '3');
+  expect(within(card()).getByTestId('tutorial-goal')).toHaveTextContent(
+    'Part 3 goal: Turn an NFA into a DFA, then make it as small as possible',
+  );
+  expect(screen.getByTestId('state-q_2')).toBeInTheDocument();
+});
+
+it('numbers part 3 steps', () => {
+  render(<App />);
+  act(() => startTutorial());
+  at('convert');
+  expect(within(card()).getByText('Part 3 of 3 · Step 1 of 4')).toBeInTheDocument();
+  const picture = within(card()).getByRole('img', { name: /^The goal: an NFA with three states/ });
+  expect(picture).toBe(within(card()).getByTestId('tutorial-goal-picture'));
+  // Three states, q_2 accepting, two loops; labels with their subscripts.
+  expect(picture.querySelectorAll('.av-goal-state')).toHaveLength(3);
+  expect(picture.querySelectorAll('.av-goal-accept')).toHaveLength(1);
+  expect(picture.querySelectorAll('.av-goal-symbols')).toHaveLength(4);
+  const labels = [...picture.querySelectorAll('.av-goal-label')];
+  expect(labels.map((l) => l.textContent)).toEqual(['q0', 'q1', 'q2']);
+  expect(labels[0]!.querySelector('.av-state-label-sub')).toHaveTextContent('0');
+  at('minimize-end');
+  expect(within(card()).getByText('Part 3 of 3 · Step 4 of 4')).toBeInTheDocument();
 });
 
 it('tells the canvas area how far down it reaches, so a run starts below it', () => {
@@ -347,6 +408,15 @@ it('keeps keys for the canvas: S still makes the selected state the start state'
   expect(card()).toHaveAttribute('data-step', '5');
 });
 
+it('lifts the pointer over the top bar when it frames a toolbar button', () => {
+  render(<App />);
+  act(() => startTutorial());
+  addAt(100);
+  expect(screen.getByTestId('tutorial-pointer')).not.toHaveAttribute('data-over-bar');
+  at('convert');
+  expect(screen.getByTestId('tutorial-pointer')).toHaveAttribute('data-over-bar');
+});
+
 it('points at the state itself, not its start arrow', () => {
   render(<App />);
   act(() => startTutorial());
@@ -354,7 +424,7 @@ it('points at the state itself, not its start arrow', () => {
   const state = app().automata.find((a) => a.id === app().activeId)!.states[0]!;
   act(() => app().edit((a) => ({ ...a, starts: [state.id] })));
   expect(screen.getByTestId('start-arrow')).toBeInTheDocument();
-  const ctx = tutorialContext(app(), tutorialStore.getState().automatonId);
+  const ctx = tutorialContext(app(), tutorialStore.getState().automatonId, null);
   const target = document.querySelector(STEPS[idx('start')]!.target(ctx)!);
   expect(screen.getByTestId('state-q_0')).toContainElement(target as HTMLElement);
 });

@@ -93,8 +93,8 @@
   width: 250px;
   height: 122px;
 }
-/* Part 2's goal comes in with an orange flash, so the new part is hard to miss. */
-.av-tutorial-goal[data-part='2'] {
+/* A later part's goal comes in with an orange flash, so the new part is hard to miss. */
+.av-tutorial-goal:not([data-part='1']) {
   animation: av-tutorial-new-part 900ms ease-out;
 }
 @keyframes av-tutorial-new-part {
@@ -104,7 +104,7 @@
   }
 }
 
-/* The hand-over between the parts: part 1 done, in green, and what part 2 is. */
+/* The hand-over between the parts: a part done, in green, and what the next one is. */
 .av-tutorial-part-done {
   display: grid;
   gap: 4px;
@@ -322,6 +322,10 @@
   z-index: 13;
   pointer-events: none;
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--av-run) 45%, transparent));
+}
+/* Framing a toolbar button: over the top bar (20) too. */
+.av-tutorial-pointer[data-over-bar] {
+  z-index: 21;
 }
 .av-tutorial-corner {
   position: absolute;

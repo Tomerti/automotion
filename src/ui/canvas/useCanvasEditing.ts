@@ -177,13 +177,17 @@ export function historyInset(el: Element | null): number {
   return parseFloat(getComputedStyle(el).getPropertyValue('--av-history-inset')) || 0;
 }
 
-/** Fit the active automaton's states into the canvas (no-op while the canvas has no size). */
+/**
+ * Fit the active automaton's states into the canvas (no-op while the canvas has no size), below
+ * the tutorial card while there is one (`--av-tutorial-pad`).
+ */
 export function fitActive(): void {
   const a = activeAutomaton();
   const size = canvasSize();
   if (!a || size.width === 0 || size.height === 0) return;
-  const inset = historyInset(document.querySelector('[data-testid="canvas"]'));
-  appStore.getState().setViewport(a.id, fitToViewInset(a.states, size, inset));
+  const el = document.querySelector('[data-testid="canvas"]');
+  const top = el ? parseFloat(getComputedStyle(el).getPropertyValue('--av-tutorial-pad')) || 0 : 0;
+  appStore.getState().setViewport(a.id, fitToViewInset(a.states, size, historyInset(el), top));
 }
 
 /**

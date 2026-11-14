@@ -8,7 +8,7 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
-- [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
+- [ ] Minimize walkthrough: a merged state's long label (`{{q_0,q_2},{q_0,q_1,q_2}}`, tutorial part 3's last step) spills out of its circle over the arrows; shorten or wrap merged labels there
 - [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; consider a more compact layout or pan/zoom in trace views (the transition table is gone in v2)
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
@@ -35,6 +35,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] "Copy link" in the toolbar's export menu and each history entry's ⋯ menu copies a share link (`ui/shell/copyLink.ts`)
 - [x] Opening a share link (`#a=`, `ui/shell/useSharedLink.ts`) on load and on `hashchange`: opens the saved copy or adds the automaton, fits it, toasts, clears the hash; no welcome dialog on such a visit
 - [x] Tutorial part 3 in the step table (`ui/tutorial/steps.ts`): convert the "contains 01" NFA (`PART3_NFA`), play it to the end, Save and minimize, play that to the end; the steps latch on the open walkthrough (`latch`, `isPart3Trace`), the closing card is part 4 (store, card and e2e wiring still to do)
+- [x] Tutorial part 3 wired up: closing part 2's last run loads the NFA into the tutorial automaton (one undo step) and fits it below the card; the store remembers the converted DFA (`derivedId`) so its minimization counts; generic "Part N complete!" hand-over, "of 3" headers, the goal picture draws subscripts, the pointer shows over the top bar, the welcome plan and README mention part 3, and the tutorial e2e runs to the end
 
 ### Discoverability (2026-11-11)
 

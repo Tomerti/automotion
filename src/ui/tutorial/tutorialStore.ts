@@ -8,7 +8,7 @@ import { appStore, freeName } from '../../store/store';
 import type { AppState } from '../../store/store';
 import { fitActive } from '../canvas/useCanvasEditing';
 import { playFanfareSound } from '../player/sound';
-import { advance, STEPS } from './steps';
+import { advance, PART3_NFA, STEPS } from './steps';
 import type { StepId, TutorialContext } from './steps';
 
 export interface TutorialState {
@@ -18,8 +18,16 @@ export interface TutorialState {
   progress: number;
   /** The step on the card. */
   current: number;
-  /** Run steps that reached their verdict. */
+  /** Run steps that reached their verdict, and part 3's walkthrough steps once reached. */
   latched: ReadonlySet<StepId>;
+  /**
+   * The DFA from the tutorial's conversion (part 3): the id Save and minimize saves it under, so
+   * its minimization counts as the tutorial's. Cleared once that DFA is gone (deleted, or never
+   * saved before the conversion closed).
+   */
+  derivedId: string | null;
+  /** Part 3 has replaced the tutorial automaton with its NFA (once: undo is the user's). */
+  nfaLoaded: boolean;
   /** Finished just now: the congratulations popup is open. */
   celebrating: boolean;
 }
@@ -32,6 +40,8 @@ const OFF: TutorialState = {
   progress: 0,
   current: 0,
   latched: NOTHING,
+  derivedId: null,
+  nfaLoaded: false,
   celebrating: false,
 };
 
@@ -41,16 +51,32 @@ export const tutorialStore: StoreApi<TutorialState> = createStore<TutorialState>
 export const useTutorial = <T>(selector: (s: TutorialState) => T): T =>
   useStore(tutorialStore, selector);
 
-export function tutorialContext(app: AppState, automatonId: string | null): TutorialContext {
+export function tutorialContext(
+  app: AppState,
+  automatonId: string | null,
+  derivedId: string | null,
+): TutorialContext {
   return {
     automaton: app.automata.find((a) => a.id === automatonId),
     isActive: automatonId !== null && app.activeId === automatonId,
     trace: app.trace,
     stepIndex: app.stepIndex,
     selected: app.selection.states,
-    derivedId: null,
-    derivedActive: false,
+    derivedId,
+    derivedActive: derivedId !== null && app.activeId === derivedId,
   };
+}
+
+/**
+ * The DFA part 3 works on after the conversion: the result of the tutorial's conversion while it
+ * is open (Save and minimize saves it under that id), kept while that DFA exists.
+ */
+function derivedOf(app: AppState, automatonId: string | null, known: string | null): string | null {
+  const t = app.trace;
+  if (t?.kind === 'subset' && automatonId !== null && t.source.id === automatonId) {
+    return t.result.id;
+  }
+  return known !== null && app.automata.some((a) => a.id === known) ? known : null;
 }
 
 let unsubscribe: (() => void) | null = null;
@@ -58,18 +84,35 @@ let unsubscribe: (() => void) | null = null;
 function follow(app: AppState): void {
   const t = tutorialStore.getState();
   if (!t.active) return;
-  const ctx = tutorialContext(app, t.automatonId);
+  // Recorded in the same call that first sees the conversion, so the steps that follow already
+  // know the saved DFA's minimization is the tutorial's.
+  const derivedId = derivedOf(app, t.automatonId, t.derivedId);
+  const ctx = tutorialContext(app, t.automatonId, derivedId);
   if (!ctx.automaton) {
     endTutorial();
     return;
   }
   const next = advance(t.progress, t.latched, ctx, t.current);
-  if (next.progress !== t.progress || next.current !== t.current || next.latched !== t.latched) {
+  if (
+    next.progress !== t.progress ||
+    next.current !== t.current ||
+    next.latched !== t.latched ||
+    derivedId !== t.derivedId
+  ) {
     tutorialStore.setState({
       progress: next.progress,
       current: next.current,
       latched: next.latched,
+      derivedId,
     });
+  }
+  // Part 3 starts once part 2's last run is closed: its NFA replaces the tutorial automaton.
+  if (STEPS[next.current]?.id === 'convert' && !t.nfaLoaded && app.trace === null && ctx.isActive) {
+    // Before the edit, which calls back in here.
+    tutorialStore.setState({ nfaLoaded: true });
+    // One undo step: the part-2 automaton is a Ctrl + Z away.
+    appStore.getState().edit((a) => ({ ...PART3_NFA, id: a.id, name: a.name }));
+    requestAnimationFrame(fitActive);
   }
 }
 
@@ -126,20 +169,22 @@ export function quitTutorial(): void {
 }
 
 /**
- * Finish from the closing card: the tutorial automaton stays, the run that ended the tutorial
- * closes, back to editing, the view fits what is left (one state, wherever q0 was drawn), and
+ * Finish from the closing card: the tutorial automaton (and the DFA saved from it) stay, the
+ * walkthrough that ended the tutorial closes, back to editing, the view fits what is open, and
  * the congratulations popup opens.
  */
 export function finishTutorial(): void {
-  const id = tutorialStore.getState().automatonId;
+  const { automatonId, derivedId } = tutorialStore.getState();
+  const ours = (id: string | null | undefined): boolean =>
+    id != null && (id === automatonId || id === derivedId);
   endTutorial();
   const app = appStore.getState();
-  if (app.trace && app.trace.source.id === id) app.closeTrace();
+  if (app.trace && ours(app.trace.source.id)) app.closeTrace();
   tutorialStore.setState({ celebrating: true });
   playFanfareSound();
   // Once the editing canvas is back on screen, so the fit has its size.
   requestAnimationFrame(() => {
-    if (appStore.getState().activeId === id) fitActive();
+    if (ours(appStore.getState().activeId)) fitActive();
   });
 }
 

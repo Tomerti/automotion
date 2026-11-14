@@ -22,8 +22,11 @@ export function TutorialPointer({
     let frame = 0;
     const place = (): void => {
       const el = ref.current;
-      const box = document.querySelector(selector)?.getBoundingClientRect();
+      const target = document.querySelector(selector);
+      const box = target?.getBoundingClientRect();
       if (el) {
+        // A toolbar button: over the top bar, or the bar hides the frame.
+        el.toggleAttribute('data-over-bar', target?.closest('.av-topbar') != null);
         if (box && box.width + box.height > 0) {
           el.style.display = '';
           el.style.left = `${box.left - OUTSET}px`;

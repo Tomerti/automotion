@@ -21,17 +21,16 @@ export interface StateNodeProps {
 const ISSUE_GAP = 7;
 
 /**
- * Label text as tspans: subscript runs smaller and lowered, the run after one raised back.
- * Shifts are in px of the label size, so lowering and raising cancel out exactly. The baseline
- * is placed so the ink, not the font's em box, is centred on the state.
+ * A state label's runs as tspans, for a `<text>` of `fontSize`: subscript runs smaller and
+ * lowered, the run after one raised back. Shifts are in px of the label size, so lowering and
+ * raising cancel out exactly.
  */
-function LabelText(props: { label: string; fontSize: number }): React.JSX.Element {
+export function LabelSpans(props: { label: string; fontSize: number }): React.JSX.Element {
   const { label, fontSize } = props;
   const shift = fontSize * SUB_SHIFT;
   const segments = parseLabel(label);
-  const y = Math.round(fontSize * labelBaselineOffset(label) * 100) / 100;
   return (
-    <text className="av-state-label" y={y} style={{ fontSize }}>
+    <>
       {segments.map((seg, i) => {
         const lowered = segments[i - 1]?.sub ?? false;
         const dy = seg.sub === lowered ? undefined : seg.sub ? shift : -shift;
@@ -46,6 +45,20 @@ function LabelText(props: { label: string; fontSize: number }): React.JSX.Elemen
           </tspan>
         );
       })}
+    </>
+  );
+}
+
+/**
+ * Label text with its subscripts. The baseline is placed so the ink, not the font's em box, is
+ * centred on the state.
+ */
+function LabelText(props: { label: string; fontSize: number }): React.JSX.Element {
+  const { label, fontSize } = props;
+  const y = Math.round(fontSize * labelBaselineOffset(label) * 100) / 100;
+  return (
+    <text className="av-state-label" y={y} style={{ fontSize }}>
+      <LabelSpans label={label} fontSize={fontSize} />
     </text>
   );
 }

@@ -38,7 +38,7 @@ async function run(page: Page, word: string, accepted: boolean): Promise<void> {
   await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', String(accepted));
 }
 
-test('the first visit offers the tutorial, which walks through building and changing a DFA', async ({
+test('the first visit offers the tutorial, which walks through building, changing and converting automata', async ({
   page,
 }) => {
   // A fresh browser context: a first visit.
@@ -50,7 +50,7 @@ test('the first visit offers the tutorial, which walks through building and chan
   const card = page.getByTestId('tutorial-card');
   const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
   await at(1);
-  await expect(card).toContainText('Part 1 of 2 · Step 1 of 11');
+  await expect(card).toContainText('Part 1 of 3 · Step 1 of 11');
   // What part 1 builds is on show from the start: a picture, the goal and example words.
   const goal = card.getByTestId('tutorial-goal');
   await expect(goal).toContainText('Part 1 goal: Accept the words with an even number of zeros');
@@ -101,7 +101,7 @@ test('the first visit offers the tutorial, which walks through building and chan
   // Part 2: accept every word.
   await page.keyboard.press('Escape');
   await expect(goal).toContainText('Part 2 goal: Accept every word');
-  await expect(card).toContainText('Part 2 of 2 · Step 1 of 4');
+  await expect(card).toContainText('Part 2 of 3 · Step 1 of 4');
   await clickState(page, 'odd');
   await page.keyboard.press('Delete');
   await at(13);
@@ -114,6 +114,36 @@ test('the first visit offers the tutorial, which walks through building and chan
   await at(15);
   await run(page, '10', true);
   await at(16);
+  await expect(card.getByTestId('tutorial-part-done')).toContainText('Part 2 complete!');
+  await expect(card).toContainText('Next: Part 3 · Convert and minimize');
+
+  // Part 3: a ready-made NFA replaces the automaton; convert it, then minimize the DFA.
+  await page.keyboard.press('Escape');
+  await expect(goal).toHaveAttribute('data-part', '3');
+  await expect(card).toContainText('Part 3 of 3 · Step 1 of 4');
+  await expect(page.getByTestId('state-q_2')).toBeVisible();
+  await expect(page.getByTestId('state-any')).toHaveCount(0);
+  // The view fits the NFA.
+  const canvas = (await page.getByTestId('canvas').boundingBox())!;
+  for (const label of ['q_0', 'q_1', 'q_2']) {
+    const c = await stateCenter(page, label);
+    expect(c.x).toBeGreaterThan(canvas.x);
+    expect(c.x).toBeLessThan(canvas.x + canvas.width);
+    expect(c.y).toBeGreaterThan(canvas.y);
+    expect(c.y).toBeLessThan(canvas.y + canvas.height);
+  }
+  await page.getByRole('button', { name: 'Convert to DFA' }).click();
+  await expect(page.getByTestId('subset-view')).toBeVisible();
+  await at(17);
+  await page.getByRole('button', { name: 'Last' }).click();
+  await at(18);
+  await page.getByTestId('save-and-minimize').click();
+  await expect(page.getByTestId('block-legend')).toBeVisible();
+  // On the saved DFA now, which is part 3's, not "elsewhere".
+  await at(19);
+  await expect(card).not.toContainText('You’re on');
+  await page.getByRole('button', { name: 'Last' }).click();
+  await at(20);
   await expect(card).toContainText('Tutorial · Done');
   await card.getByRole('button', { name: 'Finish' }).click();
   await expect(card).toHaveCount(0);
@@ -122,17 +152,13 @@ test('the first visit offers the tutorial, which walks through building and chan
   await popup.getByRole('button', { name: 'Back to building' }).click();
   await expect(popup).toHaveCount(0);
 
-  // Finish also closes the last run, back to editing; the automaton stays: one state, now
-  // named "any", looping on 0 and 1…
-  await expect(page.getByTestId('verdict')).toHaveCount(0);
+  // Finish also closes the minimization, back to editing the saved DFA; both automata stay.
+  await expect(page.getByTestId('block-legend')).toHaveCount(0);
   await expect(page.getByLabel('Word')).toBeVisible();
-  await expect(page.getByTestId('edge-any-any').getByTestId('edge-label')).toHaveText('0,1');
-  await expect(page.getByRole('navigation', { name: 'History' })).toContainText('Tutorial');
-  // …centred: the view fits it, wherever q0 was drawn.
-  const canvas = (await page.getByTestId('canvas').boundingBox())!;
-  const centre = await stateCenter(page, 'any');
-  expect(Math.abs(centre.x - (canvas.x + canvas.width / 2))).toBeLessThan(30);
-  expect(Math.abs(centre.y - (canvas.y + canvas.height / 2))).toBeLessThan(30);
+  const history = page.getByRole('navigation', { name: 'History' });
+  await expect(history).toContainText('Tutorial → DFA');
+  await expect(history).toContainText('Tutorial');
+  await expect(page.getByTestId('canvas').locator('.av-state-body')).toHaveCount(4);
 });
 
 test('quitting the tutorial midway asks first, then removes it from the history', async ({

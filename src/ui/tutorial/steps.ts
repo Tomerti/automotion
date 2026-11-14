@@ -197,7 +197,11 @@ export const PART_GOALS: Record<1 | 2 | 3, Goal> = {
       { word: '110', accepted: false },
       { word: '0', accepted: false },
     ],
-    automaton: PART3_NFA,
+    // Closer together than on the canvas, so three states read at the picture's size.
+    automaton: {
+      ...PART3_NFA,
+      states: PART3_NFA.states.map((s) => ({ ...s, x: (s.x * 2) / 3 })),
+    },
     description:
       'The goal: an NFA with three states, q_0 (start), q_1 and q_2 (accepting), for the words that contain 01.',
   },
@@ -552,9 +556,13 @@ const SPECS: StepSpec[] = [
     instruction: () => 'Press Save and minimize.',
     why: () => 'Two of its states do the same job.',
     latch: (ctx) => minimizing(ctx),
-    // The button is at the end of the conversion, which was closed before it was pressed.
-    first: (ctx) =>
-      ctx.isActive && !isPart3Trace(ctx) ? 'First, press Convert to DFA again.' : null,
+    first: (ctx) => {
+      if (isPart3Trace(ctx)) return null;
+      // Saved without minimizing (or the minimization closed at once): Minimize does it.
+      if (ctx.derivedActive) return 'First, press Minimize.';
+      // The button is at the end of the conversion, which was closed before it was pressed.
+      return ctx.isActive ? 'First, press Convert to DFA again.' : null;
+    },
     target: () => '[data-testid="save-and-minimize"]',
   },
   {
@@ -566,8 +574,10 @@ const SPECS: StepSpec[] = [
     first: (ctx) => {
       if (minimizing(ctx)) return null;
       if (ctx.derivedActive) return 'First, press Minimize again.';
-      // The NFA can't be minimized: the saved DFA can.
-      return ctx.isActive ? 'First, open the DFA you saved and press Minimize.' : null;
+      // The NFA can't be minimized: the saved DFA can (once there is one).
+      return ctx.isActive && ctx.derivedId !== null
+        ? 'First, open the DFA you saved and press Minimize.'
+        : null;
     },
     target: () => DOCK,
   },

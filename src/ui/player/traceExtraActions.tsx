@@ -57,6 +57,7 @@ function SaveAndMinimizeButton({ trace }: { trace: SubsetTrace }): React.JSX.Ele
   return (
     <button
       type="button"
+      data-testid="save-and-minimize"
       title="Save the DFA as a new automaton, then minimize it step by step"
       onClick={() => {
         appStore.getState().addAutomaton(trace.result);

@@ -130,4 +130,11 @@ describe('fitToViewInset', () => {
   it('is fitToView without an inset', () => {
     expect(fitToViewInset(pts, size, 0)).toEqual(fitToView(pts, size));
   });
+
+  it('keeps a top inset clear, centred in the height below it', () => {
+    const vp = fitToViewInset(pts, size, 0, 300);
+    expect(vp.y - STATE_RADIUS * vp.zoom).toBeGreaterThanOrEqual(300);
+    expect(vp.y).toBeCloseTo(450);
+    expect(vp.x + 500 * vp.zoom).toBeCloseTo(600);
+  });
 });

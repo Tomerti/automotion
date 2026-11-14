@@ -140,9 +140,13 @@ describe('the goals', () => {
     expect(step('loop-01').done(ctx(two))).toBe(true);
     expect(step('rename-q0').done(ctx(two))).toBe(true);
     const three = PART_GOALS[3].automaton;
-    expect(three).toBe(PART3_NFA);
+    // Part 3's NFA, drawn closer together so it reads at the picture's size.
+    const { states, ...rest } = PART3_NFA;
+    expect(three).toMatchObject(rest);
     expect(three.kind).toBe('NFA');
     expect(three.states.map((s) => s.label)).toEqual(['q_0', 'q_1', 'q_2']);
+    const xs = three.states.map((s) => s.x);
+    expect(xs[2]! - xs[0]!).toBeLessThan(states[2]!.x - states[0]!.x);
   });
 
   it('give example words that the goal really accepts or rejects', () => {
@@ -639,6 +643,37 @@ describe('part 3: convert and minimize', () => {
     expect(step('minimize-end').hint(ctx(nfa(), { derivedId: derived.id }))).toEqual({
       kind: 'first',
       text: 'First, open the DFA you saved and press Minimize.',
+    });
+  });
+
+  it('asks for Minimize on the saved DFA when its minimization is closed before it opened', () => {
+    expect(step('save-minimize').hint(onDerived())).toEqual({
+      kind: 'first',
+      text: 'First, press Minimize.',
+    });
+    expect(step('save-minimize').hint(onDerived(showing(minimized, 0)))).toBeNull();
+  });
+
+  it('only sends back to the saved DFA once there is one', () => {
+    expect(step('minimize-end').hint(ctx(nfa()))).toBeNull();
+  });
+
+  it('a walkthrough of another automaton is elsewhere and moves nothing', () => {
+    const other = subsetConstruction({ ...PART3_NFA, id: 'other' });
+    const c = ctx(nfa(), { isActive: false, ...showing(other, 0) });
+    expect(step('convert').hint(c)).toEqual({ kind: 'elsewhere' });
+    expect(advance(idx('convert'), none, c)).toMatchObject({
+      progress: idx('convert'),
+      current: idx('convert'),
+    });
+    const latched: ReadonlySet<StepId> = new Set(['convert', 'convert-end']);
+    const otherMin = minimize({ ...derived, id: 'other' });
+    const d = ctx(nfa(), { isActive: false, derivedId: derived.id, ...showing(otherMin, 0) });
+    expect(step('save-minimize').hint(d)).toEqual({ kind: 'elsewhere' });
+    expect(advance(idx('save-minimize'), latched, d)).toMatchObject({
+      progress: idx('save-minimize'),
+      current: idx('save-minimize'),
+      latched,
     });
   });
 
