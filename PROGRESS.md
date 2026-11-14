@@ -30,8 +30,8 @@ Nothing in progress: pick the next task from the list below.
 
 ### README refresh (2026-11-14)
 
-- [x] README rewritten for the public repo: tagline, get started in three steps, a section per feature with a screenshot, a controls table, good to know, development
-- [x] Screenshots retaken (run, convert, minimize, dark editing, tutorial) by `docs/screenshots/take.mjs` from `scenes.json`; `public/og.png` re-rendered from the new `run.png`
+- [x] README rewritten for the public repo, and kept short: tagline, the run as the hero image, get started in three steps, five feature sections of at most four bullets (convert and minimize together, their screenshots side by side), good to know, development. Every control is left to the in-app guide (**?**)
+- [x] Screenshots retaken by `docs/screenshots/take.mjs` from `scenes.json`: the whole app for the run, and the tutorial, convert and minimize framed without the history bar or top bar; `public/og.png` re-rendered from the new `run.png`
 - [x] One logo orange, `#f76707` (the app's run highlighter), in both themes: the dark mark, lockup and favicon lose the old `#ff922b`, and "Motion" matches the loop in both lockups (it was `#d9480f`); `docs/brand/render.mjs` re-renders the lockup PNGs
 
 ### Launch prep (2026-11-14)

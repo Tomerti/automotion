@@ -1,7 +1,11 @@
-// Retakes the README screenshots (1280 × 760 at 2×) from a production build.
+// Retakes the README screenshots (at 2×) from a production build.
 // First: npm run build && npx vite preview --port 4173
 // Then:  node docs/screenshots/take.mjs [baseUrl]
 // Then:  node docs/brand/og/render.mjs (the link-preview image shows run.png)
+//
+// run.png is the whole app (the README's hero). The others close the history bar and leave out
+// the top bar, so the feature fills the picture; convert.png and minimize.png are narrow, since
+// the README shows them side by side.
 import { chromium } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 
@@ -9,15 +13,15 @@ const BASE = process.argv[2] ?? 'http://localhost:4173/automotion/';
 const SCENES = fileURLToPath(new URL('./scenes.json', import.meta.url));
 const out = (name) => fileURLToPath(new URL(`./${name}.png`, import.meta.url));
 
+const WIDE = { width: 1280, height: 760 };
+const MEDIUM = { width: 1100, height: 720 };
+const NARROW = { width: 820, height: 780 };
+
 const browser = await chromium.launch();
 
 /** A fresh browser with the app open; a return visitor unless `firstVisit`. */
-async function open({ dark = false, firstVisit = false } = {}) {
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 760 },
-    deviceScaleFactor: 2,
-    colorScheme: dark ? 'dark' : 'light',
-  });
+async function open({ viewport = WIDE, firstVisit = false } = {}) {
+  const context = await browser.newContext({ viewport, deviceScaleFactor: 2 });
   const page = await context.newPage();
   if (!firstVisit) {
     await page.addInitScript(() => localStorage.setItem('automotion:seen-help', '1'));
@@ -34,7 +38,11 @@ async function importScenes(page) {
   await entry(page, 'Untitled').click();
   await page.keyboard.press('Delete');
   await entry(page, 'Untitled').waitFor({ state: 'detached' });
-  await page.locator('.av-toast').first().waitFor({ state: 'detached', timeout: 15_000 }).catch(() => {});
+  await page
+    .locator('.av-toast')
+    .first()
+    .waitFor({ state: 'detached', timeout: 15_000 })
+    .catch(() => {});
 }
 
 function entry(page, name) {
@@ -44,13 +52,14 @@ function entry(page, name) {
     .filter({ hasText: name });
 }
 
-async function openAutomaton(page, name, { tidy = false } = {}) {
+async function openAutomaton(page, name) {
   await entry(page, name).click();
-  if (tidy) {
-    await page.getByRole('button', { name: 'Tidy' }).click();
-    await page.waitForTimeout(800);
-  }
   await page.getByRole('button', { name: 'Fit' }).click();
+}
+
+async function hideHistory(page) {
+  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await page.getByRole('navigation', { name: 'History' }).waitFor({ state: 'hidden' });
 }
 
 async function center(page, label) {
@@ -58,10 +67,16 @@ async function center(page, label) {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-async function shot(page, name) {
+/** Screenshot the page, or only what is under the top bar when `noTopBar`. */
+async function shot(page, name, { noTopBar = false } = {}) {
   await page.mouse.move(0, 400);
   await page.waitForTimeout(700);
-  await page.screenshot({ path: out(name) });
+  const view = page.viewportSize();
+  const top = noTopBar ? (await page.locator('.av-topbar').boundingBox()).height : 0;
+  await page.screenshot({
+    path: out(name),
+    clip: { x: 0, y: top, width: view.width, height: view.height - top },
+  });
   console.log(`wrote ${name}.png`);
 }
 
@@ -77,7 +92,7 @@ async function stepTo(page, step) {
 }
 
 try {
-  // Run a word: the NFA accepts aab.
+  // Run a word: the NFA accepts aab. The whole app, history bar open.
   {
     const page = await open();
     await importScenes(page);
@@ -91,48 +106,39 @@ try {
 
   // Convert to DFA, partway through the subset construction.
   {
-    const page = await open();
+    const page = await open({ viewport: NARROW });
     await importScenes(page);
     await openAutomaton(page, 'Ends in ab (NFA)');
+    await hideHistory(page);
     await page.getByRole('button', { name: 'Convert to DFA' }).click();
     await stepTo(page, 5);
-    await shot(page, 'convert');
+    await shot(page, 'convert', { noTopBar: true });
     await page.context().close();
   }
 
   // Minimize, partway through partition refinement.
   {
-    const page = await open();
+    const page = await open({ viewport: NARROW });
     await importScenes(page);
     await openAutomaton(page, 'Ends in abb (DFA)');
+    await hideHistory(page);
     await page.getByRole('button', { name: 'Minimize' }).click();
     await page.getByTestId('block-legend').waitFor();
     await stepTo(page, 2);
-    await shot(page, 'minimize');
-    await page.context().close();
-  }
-
-  // Editing in the dark theme, a state selected.
-  {
-    const page = await open({ dark: true });
-    await importScenes(page);
-    await openAutomaton(page, 'Binary multiples of 3', { tidy: true });
-    const c = await center(page, 'r_1');
-    await page.mouse.click(c.x, c.y);
-    await shot(page, 'edit-dark');
+    await shot(page, 'minimize', { noTopBar: true });
     await page.context().close();
   }
 
   // The tutorial, partway through part 1.
   {
-    const page = await open({ firstVisit: true });
+    const page = await open({ viewport: MEDIUM, firstVisit: true });
     await page.getByRole('dialog', { name: 'Welcome' }).waitFor();
     await page.getByRole('button', { name: 'Start tutorial' }).click();
+    await hideHistory(page);
     const card = page.getByTestId('tutorial-card');
     const at = (n) => card.and(page.locator(`[data-step="${n}"]`)).waitFor();
     const svg = await page.getByTestId('diagram').boundingBox();
-    const bar = await page.getByRole('navigation', { name: 'History' }).boundingBox();
-    const left = Math.max(svg.x, bar ? bar.x + bar.width : 0);
+    const cx = svg.x + svg.width / 2;
     const rename = async (from, to) => {
       const p = await center(page, from);
       await page.mouse.dblclick(p.x, p.y);
@@ -151,7 +157,7 @@ try {
       await page.getByTestId('symbol-input').fill(symbols);
       await page.keyboard.press('Enter');
     };
-    await page.mouse.dblclick(left + 300, svg.y + 450);
+    await page.mouse.dblclick(cx - 170, svg.y + 470);
     await at(2);
     await rename('q_0', 'even');
     await at(3);
@@ -160,12 +166,12 @@ try {
     await page.keyboard.press('s');
     await page.keyboard.press('a');
     await at(5);
-    await page.mouse.dblclick(left + 600, svg.y + 450);
+    await page.mouse.dblclick(cx + 170, svg.y + 470);
     await rename('q_0', 'odd');
     await at(6);
     await edge('even', 'odd', '0');
     await at(7);
-    await shot(page, 'tutorial');
+    await shot(page, 'tutorial', { noTopBar: true });
     await page.context().close();
   }
 } finally {
