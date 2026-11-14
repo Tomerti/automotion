@@ -9,12 +9,13 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Minimize walkthrough: a merged state's long label (`{{q_0,q_2},{q_0,q_1,q_2}}`, tutorial part 3's last step) spills out of its circle over the arrows; shorten or wrap merged labels there
-- [ ] Subset walkthrough: larger results (8+ DFA states) are too small to read; consider a more compact layout or pan/zoom in trace views (the transition table is gone in v2)
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
       incomplete DFA): consider muting it, or saying in the card that it is expected
-- [ ] Hardening from review: import schema should check that start/accepting refer to existing states; PNG export guard for a 0×0 size; e2e loops should wait instead of polling `isEnabled()`
+- [ ] Share links: cap the inflated size in `decodeShare` (a zip-bomb link could exhaust memory); a fresh visitor opening a link keeps a blank "Untitled" beside the shared automaton (replace a pristine blank instead)
+- [ ] Tutorial part 3: undoing the NFA load and then editing leaves no redo, so only restarting recovers; the redo hint also shows after a kind-pill flip to DFA
+- [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is read once, not reactive
 
 - [ ] Copy and paste follow-ups: Ctrl+X (cut), Ctrl+A (select all), and Shift + click as an alternative to Ctrl + click (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
 
@@ -34,7 +35,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Share-link encoding (`persistence/shareLink.ts`): `encodeShare` / `decodeShare` / `shareUrl` / `readShareHash` / `sameAutomaton` put one automaton in a `#a=` URL payload (deflate-raw, base64url)
 - [x] "Copy link" in the toolbar's export menu and each history entry's ⋯ menu copies a share link (`ui/shell/copyLink.ts`)
 - [x] Opening a share link (`#a=`, `ui/shell/useSharedLink.ts`) on load and on `hashchange`: opens the saved copy or adds the automaton, fits it, toasts, clears the hash; no welcome dialog on such a visit
-- [x] Tutorial part 3 in the step table (`ui/tutorial/steps.ts`): convert the "contains 01" NFA (`PART3_NFA`), play it to the end, Save and minimize, play that to the end; the steps latch on the open walkthrough (`latch`, `isPart3Trace`), the closing card is part 4 (store, card and e2e wiring still to do)
+- [x] Tutorial part 3 in the step table (`ui/tutorial/steps.ts`): convert the "contains 01" NFA (`PART3_NFA`), play it to the end, Save and minimize, play that to the end; the steps latch on the open walkthrough (`latch`, `isPart3Trace`), the closing card is part 4
 - [x] Pan and zoom in the walkthrough views (`useFittedViewport` returns `moved` / `fit` / `onPointerDown` and owns a non-passive wheel listener): the wheel zooms around the pointer, dragging pans, a Fit button (`player/FitButton.tsx`, `trace-fit`) shows once moved, the fitted view returns when the fitted target changes; the welcome demo (`ambient`) stays inert
 - [x] Tutorial part 3 wired up: closing part 2's last run loads the NFA into the tutorial automaton (one undo step) and fits it below the card; the store remembers the converted DFA (`derivedId`) so its minimization counts; generic "Part N complete!" hand-over, "of 3" headers, the goal picture draws subscripts, the pointer shows over the top bar, the welcome plan and README mention part 3, and the tutorial e2e runs to the end
 - [x] Phone welcome: on a touch-only device (`ui/shell/touch.ts` `isTouchOnly`) the welcome keeps the demo and theme switch, says AutoMotion is made for a mouse and keyboard, and has one **Got it** button; an iPhone 13 e2e (`e2e/phone.spec.ts`) covers the welcome, opening a share link and running a word; toasts sit under the top bar on phones (≤ 480 px) instead of over the player

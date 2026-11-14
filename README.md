@@ -51,6 +51,7 @@
 - **Convert to DFA** walks through the subset construction, with the NFA and the DFA being built side by side, one move and ε-closure per step. An NFA with several start states first gets a single new start state with ε-transitions to the old ones.
 - **Minimize** walks through partition refinement (Moore's algorithm) for a DFA, and says so when it is already minimal.
 - Save either result as a new automaton. At the end of a conversion, **Save and minimize** saves the DFA and goes straight on to minimizing it.
+- The walkthrough views pan and zoom like the canvas: scroll to zoom around the pointer, drag to pan, and **Fit** brings the whole picture back. Bigger results stay readable.
 - A disabled button says why, and what to do instead ("Minimization needs a DFA: use Convert to DFA first").
 
 ### Keep your work
@@ -58,10 +59,11 @@
 ![Editing a DFA in the dark theme, with the history sidebar open](docs/screenshots/edit-dark.png)
 
 - Everything autosaves in your browser. The history sidebar lists every automaton with a thumbnail, most recently edited first; rename, duplicate, export or delete one from its ⋯ menu. Click one and press **Ctrl+C**, then **Ctrl+V** to add a copy of it.
+- **Copy link** (export menu, or a history entry's ⋯ menu) puts the automaton in a link; whoever opens it gets a copy to edit and run, with nothing to install or sign in to.
 - Import and export automata as JSON files, one or all at once, and export a diagram as SVG or PNG.
 - Export an automaton as LaTeX (a TikZ picture with the `automata` library, laid out as on the canvas) to compile on its own, or copy the picture straight into your document. Export all writes every automaton into one `.tex` document, a page each. Import reads `.tex` files back, including hand-written TikZ automata: each `tikzpicture` becomes an automaton. Or copy an automaton’s LaTeX code (its `\begin{tikzpicture}` … `\end{tikzpicture}` block) from anywhere (Overleaf, lecture notes) and press **Ctrl+V** in the app, or paste it into **Import → Paste LaTeX…**. Dropping a `.json` or `.tex` file on the app imports it too.
 - Copy the diagram as a picture (**Ctrl+C** with no state selected, or Copy image in the export menu) and paste it straight into a document or chat. Copied or downloaded, the picture is always the whole automaton at the same size, however far the canvas is zoomed or panned.
-- Light and dark themes: it follows your system by default, or pick Light or Dark from the theme menu. Press **?** for the controls guide at any time.
+- On a phone you can open links and run words, but building automata needs a mouse and keyboard. Light and dark themes: it follows your system by default, or pick Light or Dark from the theme menu. Press **?** for the controls guide at any time.
 
 ## Development
 
