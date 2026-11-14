@@ -9,7 +9,12 @@ import { Arrowhead } from './EdgeView';
 import { InlineInput } from './InlineInput';
 import { useIssueMarks } from './issueMarks';
 import type { Gap } from './snap';
-import { DEFAULT_VIEWPORT, historyInset, useCanvasEditing } from './useCanvasEditing';
+import {
+  DEFAULT_VIEWPORT,
+  historyInset,
+  tutorialInset,
+  useCanvasEditing,
+} from './useCanvasEditing';
 import { fitToViewInset } from './viewport';
 import './Canvas.css';
 
@@ -92,7 +97,7 @@ function EditableCanvas(props: {
       .getState()
       .setViewport(
         automaton.id,
-        fitToViewInset(automaton.states, { width, height }, historyInset(el)),
+        fitToViewInset(automaton.states, { width, height }, historyInset(el), tutorialInset(el)),
       );
     // Intentionally once per mount (the canvas is keyed by automaton id).
     // eslint-disable-next-line react-hooks/exhaustive-deps
