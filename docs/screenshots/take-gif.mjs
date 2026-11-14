@@ -13,7 +13,9 @@ import { inflateSync } from 'node:zlib';
 const BASE = process.argv[2] ?? 'http://localhost:4173/automotion/';
 const SCENES = fileURLToPath(new URL('./scenes.json', import.meta.url));
 const OUT = fileURLToPath(new URL('./run.gif', import.meta.url));
-const VIEWPORT = { width: 1280, height: 760 };
+// The history bar stays closed: the app centres the diagram, tape and player on the window,
+// so with the bar open over the left edge they would look off-centre.
+const VIEWPORT = { width: 1100, height: 660 };
 const HOLD_MS = 2500; // how long the verdict stays up before the loop starts again
 
 // --- PNG decoding (8-bit RGB / RGBA, non-interlaced: what Chromium writes) -------------------
@@ -241,10 +243,34 @@ try {
   const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1 });
   const page = await context.newPage();
   await page.addInitScript(() => localStorage.setItem('automotion:seen-help', '1'));
+  // A clock the recording can slow down: performance.now, Date.now, animation-frame timestamps
+  // and timers all run at window.__setClockRate(rate) of real time.
+  await page.addInitScript(() => {
+    const realNow = performance.now.bind(performance);
+    const realDate = Date.now;
+    let rate = 1;
+    let realBase = realNow();
+    let virtBase = realBase;
+    const now = () => virtBase + (realNow() - realBase) * rate;
+    const dateOffset = realDate() - realNow();
+    window.__setClockRate = (r) => {
+      virtBase = now();
+      realBase = realNow();
+      rate = r;
+    };
+    performance.now = now;
+    Date.now = () => Math.round(dateOffset + now());
+    const raf = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (cb) => raf(() => cb(now()));
+    const st = window.setTimeout.bind(window);
+    const si = window.setInterval.bind(window);
+    window.setTimeout = (fn, ms = 0, ...args) => st(fn, ms / rate, ...args);
+    window.setInterval = (fn, ms = 0, ...args) => si(fn, ms / rate, ...args);
+  });
   await page.goto(BASE);
   await page.evaluate(() => document.fonts.ready);
 
-  // The same automata and view as run.png.
+  // The automaton run.png shows, with the history bar closed.
   const history = page.getByRole('navigation', { name: 'History' });
   const entry = (name) => history.getByTestId('history-item').filter({ hasText: name });
   await page.getByLabel('Import file').setInputFiles(SCENES);
@@ -258,29 +284,58 @@ try {
     .waitFor({ state: 'detached', timeout: 15_000 })
     .catch(() => {});
   await entry('Ends in ab (NFA)').click();
+  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await history.waitFor({ state: 'hidden' });
   await page.getByRole('button', { name: 'Fit' }).click();
   await page.getByLabel('Word').fill('aab');
   await page.mouse.move(0, 400);
   await page.waitForTimeout(600);
+  const typed = await page.screenshot(); // the opening frame: the word typed in
 
-  // Screenshot as fast as possible while the run plays, keeping each frame's real duration.
+  // A screenshot takes tens of milliseconds, too slow for a smooth GIF at full speed. So the
+  // page's clock and its CSS animations (through DevTools) run at a quarter of real time while
+  // recording, and the frame delays are scaled back to true speed in the GIF.
+  const SLOW = 0.25;
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Animation.enable');
+  await cdp.send('Animation.setPlaybackRate', { playbackRate: SLOW });
+  await page.evaluate((r) => window.__setClockRate(r), SLOW);
+
+  // Screenshot as fast as possible while the run plays, keeping each frame's real time.
   const shots = [];
   const grab = async () => shots.push({ at: Date.now(), png: await page.screenshot() });
   await grab();
   await page.getByLabel('Word').press('Enter');
   const verdict = page.getByTestId('verdict');
   while (!(await verdict.isVisible())) await grab();
-  const until = Date.now() + 1200; // let the verdict banner settle in
+  const until = Date.now() + 1200 / SLOW; // let the verdict banner settle in
   while (Date.now() < until) await grab();
 
-  const frames = shots.map((s, i) => ({
-    ...decodePng(s.png),
-    delayMs: i + 1 < shots.length ? shots[i + 1].at - s.at : HOLD_MS,
-  }));
-  frames[0].delayMs = 900; // the word typed in, before Enter
+  // Resample onto a 20 ms grid at true speed: 50 fps, the most a GIF can do (delays are in
+  // hundredths of a second, and browsers stretch anything under 2 to 10). Each tick shows the
+  // nearest recorded frame; a frame picked for several ticks in a row is shown once, longer.
+  const TICK_MS = 20;
+  const times = shots.map((s) => (s.at - shots[0].at) * SLOW);
+  const kept = [];
+  let j = 0;
+  for (let t = 0; t <= times[times.length - 1]; t += TICK_MS) {
+    while (j + 1 < times.length && Math.abs(times[j + 1] - t) <= Math.abs(times[j] - t)) j++;
+    const last = kept[kept.length - 1];
+    if (last && last.index === j) last.ticks++;
+    else kept.push({ index: j, ticks: 1 });
+  }
+  const frames = [{ ...decodePng(typed), delayMs: 900 }];
+  kept.forEach((k, i) => {
+    const delayMs = i + 1 < kept.length ? k.ticks * TICK_MS : HOLD_MS;
+    frames.push({ ...decodePng(shots[k.index].png), delayMs });
+  });
   const gif = encodeGif(frames, buildPalette(frames));
   writeFileSync(OUT, gif);
-  console.log(`wrote run.gif: ${frames.length} frames, ${(gif.length / 1024).toFixed(0)} KB`);
+  const playMs = frames.slice(1, -1).reduce((t, f) => t + f.delayMs, 0);
+  console.log(
+    `wrote run.gif: ${frames.length} frames, ${(gif.length / 1024).toFixed(0)} KB, ` +
+      `${((frames.length - 2) / (playMs / 1000)).toFixed(1)} fps while playing`,
+  );
 } finally {
   await browser.close();
 }
