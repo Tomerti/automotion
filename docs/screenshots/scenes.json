@@ -1,0 +1,92 @@
+{
+  "format": "automotion",
+  "version": 2,
+  "automata": [
+    {
+      "id": "ends-in-abb",
+      "name": "Ends in abb (DFA)",
+      "kind": "DFA",
+      "alphabet": ["a", "b"],
+      "states": [
+        { "id": "A", "label": "q_0", "x": 100, "y": 150 },
+        { "id": "B", "label": "q_1", "x": 250, "y": 150 },
+        { "id": "C", "label": "q_2", "x": 100, "y": 300 },
+        { "id": "D", "label": "q_3", "x": 400, "y": 150 },
+        { "id": "E", "label": "q_4", "x": 550, "y": 150 }
+      ],
+      "starts": ["A"],
+      "accepting": ["E"],
+      "transitions": [
+        { "id": "A-B", "from": "A", "to": "B", "symbols": ["a"] },
+        { "id": "A-C", "from": "A", "to": "C", "symbols": ["b"] },
+        { "id": "B-B", "from": "B", "to": "B", "symbols": ["a"] },
+        { "id": "B-D", "from": "B", "to": "D", "symbols": ["b"] },
+        { "id": "C-B", "from": "C", "to": "B", "symbols": ["a"] },
+        { "id": "C-C", "from": "C", "to": "C", "symbols": ["b"] },
+        { "id": "D-B", "from": "D", "to": "B", "symbols": ["a"] },
+        { "id": "D-E", "from": "D", "to": "E", "symbols": ["b"] },
+        { "id": "E-B", "from": "E", "to": "B", "symbols": ["a"] },
+        { "id": "E-C", "from": "E", "to": "C", "symbols": ["b"] }
+      ]
+    },
+    {
+      "id": "div-by-3",
+      "name": "Binary multiples of 3",
+      "kind": "DFA",
+      "alphabet": ["0", "1"],
+      "states": [
+        { "id": "r0", "label": "r_0", "x": 100, "y": 150 },
+        { "id": "r1", "label": "r_1", "x": 250, "y": 150 },
+        { "id": "r2", "label": "r_2", "x": 400, "y": 150 }
+      ],
+      "starts": ["r0"],
+      "accepting": ["r0"],
+      "transitions": [
+        { "id": "r0-r0", "from": "r0", "to": "r0", "symbols": ["0"] },
+        { "id": "r0-r1", "from": "r0", "to": "r1", "symbols": ["1"] },
+        { "id": "r1-r0", "from": "r1", "to": "r0", "symbols": ["1"] },
+        { "id": "r1-r2", "from": "r1", "to": "r2", "symbols": ["0"] },
+        { "id": "r2-r1", "from": "r2", "to": "r1", "symbols": ["0"] },
+        { "id": "r2-r2", "from": "r2", "to": "r2", "symbols": ["1"] }
+      ]
+    },
+    {
+      "id": "even-zeros",
+      "name": "Even number of 0s",
+      "kind": "DFA",
+      "alphabet": ["0", "1"],
+      "states": [
+        { "id": "even", "label": "even", "x": 150, "y": 150 },
+        { "id": "odd", "label": "odd", "x": 300, "y": 150 }
+      ],
+      "starts": ["even"],
+      "accepting": ["even"],
+      "transitions": [
+        { "id": "even-odd", "from": "even", "to": "odd", "symbols": ["0"] },
+        { "id": "odd-even", "from": "odd", "to": "even", "symbols": ["0"] },
+        { "id": "even-even", "from": "even", "to": "even", "symbols": ["1"] },
+        { "id": "odd-odd", "from": "odd", "to": "odd", "symbols": ["1"] }
+      ]
+    },
+    {
+      "id": "ends-in-ab",
+      "name": "Ends in ab (NFA)",
+      "kind": "NFA",
+      "alphabet": ["a", "b"],
+      "states": [
+        { "id": "q0", "label": "q_0", "x": 100, "y": 150 },
+        { "id": "q1", "label": "q_1", "x": 250, "y": 150 },
+        { "id": "q2", "label": "q_2", "x": 400, "y": 150 },
+        { "id": "q3", "label": "q_3", "x": 550, "y": 150 }
+      ],
+      "starts": ["q0"],
+      "accepting": ["q3"],
+      "transitions": [
+        { "id": "q0-q0", "from": "q0", "to": "q0", "symbols": ["a", "b"] },
+        { "id": "q0-q1", "from": "q0", "to": "q1", "symbols": ["ε"] },
+        { "id": "q1-q2", "from": "q1", "to": "q2", "symbols": ["a"] },
+        { "id": "q2-q3", "from": "q2", "to": "q3", "symbols": ["b"] }
+      ]
+    }
+  ]
+}
