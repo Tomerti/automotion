@@ -65,6 +65,7 @@ export function toggleStart(a: Automaton, id: StateId): Automaton {
 }
 
 export function toggleAccepting(a: Automaton, id: StateId): Automaton {
+  if (!isState(a, id)) return a;
   return {
     ...a,
     accepting: a.accepting.includes(id)

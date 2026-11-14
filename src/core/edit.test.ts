@@ -89,6 +89,11 @@ describe('states', () => {
     expect(toggleAccepting(a, 'q1').accepting).toEqual([]);
     expect(toggleAccepting(a, 'q0').accepting).toEqual(['q1', 'q0']);
   });
+
+  it('toggleAccepting ignores an id that is not a state', () => {
+    const a = dfa();
+    expect(toggleAccepting(a, 'nope')).toBe(a);
+  });
 });
 
 describe('edges', () => {

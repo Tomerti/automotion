@@ -80,7 +80,7 @@ export function loadFromStorage(storage: Storage | null): {
   }
   const cleanup = claimOldExampleCleanup(storage);
   if (raw === null) return { automata: blank() };
-  const parsed = parseFile(raw, new Set());
+  const parsed = parseFile(raw, new Set(), { repair: true });
   if (parsed.ok) {
     return { automata: cleanup ? dropOldExamples(storage, parsed.automata) : parsed.automata };
   }
