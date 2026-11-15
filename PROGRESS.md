@@ -15,7 +15,6 @@ Nothing in progress: pick the next task from the list below.
       incomplete DFA): consider muting it, or saying in the card that it is expected
 - [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is not reactive (a keyboard attached later doesn't change the welcome)
 
-- [ ] Shift + click as an alternative to Ctrl + click for multi-selection (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
 - [ ] Cut and paste loses the arrows into the cut states from states left behind (the clipboard keeps only arrows out, as for copy): consider keeping them for a paste back into the same automaton
 
 - [ ] Tidy: run the layout in a Web Worker so a 64-state layout (~1 s) doesn't block the page; `To minimize`-style DFAs (6 states, many cross arrows) still come out busier than a hand layout
@@ -31,6 +30,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Ctrl+X (⌘X) cuts the selected states: copies them, then deletes them and the selected arrows in one undo step (`store.cutSelection`); Cut / Cut N states in the right-click menus too. The first paste without a place (the pointer off the canvas) puts them back where they were; with the pointer over the canvas it lands there, as after a copy. Only arrows selected, typing, selected text or an open trace leave Ctrl+X to the browser
 - [x] Ctrl+A (⌘A) selects every state and arrow of the open automaton and gives the canvas the keyboard, so Delete, Ctrl+X, S or A act on it next. In the history bar (focus there, or the pointer over it) it still picks every automaton: that listener runs in the capture phase, ahead of the canvas's. Both work on non-Latin layouts
 - [x] The Controls guide's Keys tab lists Ctrl+X, and Ctrl+A on "canvas or history bar"
+- [x] Shift + drag from a state still draws an arrow inside a multi-selection (after Ctrl+A too): Shift picks drawing before moving the selection (e2e checks it). Shift + click won't become a multi-select alternative, since Shift is the arrow gesture; Mac users multi-select with ⌘-click
 
 ### Shortcuts on any layout, share-link cap (2026-11-15)
 

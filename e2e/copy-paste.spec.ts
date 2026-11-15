@@ -121,6 +121,13 @@ test('Ctrl+A selects everything, Ctrl+X cuts it and Ctrl+V puts it back in place
   expect(Math.abs(back.x - q0.x)).toBeLessThan(2);
   expect(Math.abs(back.y - q0.y)).toBeLessThan(2);
 
+  // Shift + drag inside a selection of everything still draws an arrow, moving nothing.
+  await page.keyboard.press('Control+a');
+  await arrow(page, 'q_1', 'q_0', 'b');
+  const after = await stateCenter(page, 'q_0');
+  expect(Math.abs(after.x - q0.x)).toBeLessThan(2);
+  expect(Math.abs(after.y - q0.y)).toBeLessThan(2);
+
   // Ctrl+A gives the canvas the keyboard, so Delete clears it.
   await page.getByRole('button', { name: 'Fit' }).focus();
   await page.keyboard.press('Control+a');
