@@ -14,7 +14,10 @@ The orange is `#f76707`, the app's run highlighter, in both themes: the loop and
 - `lockup.svg` / `lockup-dark.svg`: the mark and the wordmark ("Auto" in ink, "Motion" in orange),
   set in Geist. The text is live `<text>`, so it renders in Geist only where Geist is loaded.
 - `lockup.png` / `lockup-dark.png`: the lockups rendered at 3× in Geist, on a transparent
-  background. The repo README uses these, since GitHub shows SVGs without web fonts.
+  background. The repo README uses these, since GitHub shows SVGs without web fonts. It picks one
+  with the `#gh-light-mode-only` / `#gh-dark-mode-only` URL fragments, which follow the theme chosen
+  on GitHub; a `<picture>` with `prefers-color-scheme` follows the OS theme instead, so a dark OS
+  showed the dark lockup on GitHub's light theme.
 - `public/favicon.svg`: `mark.svg` with a `prefers-color-scheme: dark` switch to the dark tile and
   ink.
 - `public/og.png`: the 1200 × 630 link-preview image (`og:image`), made from `og/og.html` (the
