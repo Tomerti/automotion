@@ -9,6 +9,12 @@ export interface InlineInputProps {
   at: Point;
   /** On-screen font size (px), so the text matches the label it replaces. */
   fontSize: number;
+  /**
+   * Where the drawn label puts its alphabetic baseline for a text, in ems below `at`: the input's
+   * text is set on that baseline, so it doesn't jump when the input opens or closes. Without it
+   * the input is centred on `at`, which matches a label drawn with `dominant-baseline: central`.
+   */
+  baseline?(text: string): number;
   /** Live rewrite of the text as it is typed (e.g. `\eps` → ε). */
   normalize?(text: string): string;
   /** Enter pressed. Returns an error to show (the input stays open) or null when done. */
@@ -24,9 +30,14 @@ export interface InlineInputProps {
  * text. Enter or blur commits, Escape cancels.
  */
 export function InlineInput(props: InlineInputProps): React.JSX.Element {
-  const { testId, label, initial, at, fontSize, normalize, onSubmit, onCancel, onBlur } = props;
+  const { testId, label, initial, at, fontSize, baseline, normalize, onSubmit, onCancel, onBlur } =
+    props;
   const [value, setValue] = useState(initial);
   const [error, setError] = useState<string | null>(null);
+  /** How far (px) the box moves down from centred on `at`, to put its text on `baseline`. */
+  const [shift, setShift] = useState(0);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const baselineRef = useRef<HTMLSpanElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   /** Caret to restore after a normalization shortened the text before it. */
   const caret = useRef<number | null>(null);
@@ -38,6 +49,17 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
     const input = inputRef.current;
     input?.setSelectionRange(input.value.length, input.value.length);
   }, []);
+
+  // The box centres its line, which puts the text's baseline wherever the font's ascent and
+  // descent say; the drawn label puts it to centre its letters (`labelBaselineOffset`). Measure
+  // where the baseline sits now (the transform moves both rects alike) and move it there.
+  useLayoutEffect(() => {
+    const box = boxRef.current?.getBoundingClientRect();
+    const mark = baselineRef.current?.getBoundingClientRect();
+    if (!baseline || !box || !mark) return;
+    const centred = mark.top - box.top - box.height / 2;
+    setShift(fontSize * baseline(value) - centred);
+  }, [baseline, value, fontSize]);
 
   useLayoutEffect(() => {
     if (caret.current === null) return;
@@ -75,13 +97,20 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
 
   return (
     <div
+      ref={boxRef}
       className="av-inline"
       data-invalid={error !== null}
-      style={{ left: at.x, top: at.y, fontSize }}
+      style={{
+        left: at.x,
+        top: at.y,
+        fontSize,
+        ...(baseline && { transform: `translate(-50%, calc(-50% + ${shift}px))` }),
+      }}
     >
-      {/* The hidden copy of the text sizes the input to its content. */}
+      {/* The hidden copy of the text sizes the input to its content; its mark is on the baseline. */}
       <span className="av-inline-sizer" aria-hidden="true">
         {value === '' ? ' ' : value}
+        <span ref={baselineRef} className="av-inline-baseline" />
       </span>
       <input
         ref={inputRef}
