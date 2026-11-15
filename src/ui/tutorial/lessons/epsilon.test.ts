@@ -43,11 +43,11 @@ describe('the ε-moves lesson', () => {
     expect(ba.steps.at(-1)!.phase).toBe('stuck');
   });
 
-  it('holds its goal examples, with no picture, and stays within six counted steps', () => {
+  it('states its goal in words, with no examples or picture, and stays within six counted steps', () => {
     const goal = EPSILON_LESSON.parts[0]!.goal;
-    expect(goal.text).toBe('Follow an NFA with an ε-arrow');
+    expect(goal.text).toBe('This NFA accepts some a’s, then some b’s. Watch the ε-arrow.');
+    expect(goal.examples).toEqual([]);
     expect(goal.automaton).toBeUndefined();
-    for (const e of goal.examples) expect(runWord(start, e.word).accepted, e.word).toBe(e.accepted);
     expect(countedSteps(EPSILON_LESSON)).toBe(6);
     expect(EPSILON_LESSON.pausedRuns).toEqual(['b']);
     expect(EPSILON_LESSON.title).toBe('ε-moves');

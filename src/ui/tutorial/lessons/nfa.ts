@@ -82,11 +82,8 @@ export const NFA_LESSON: Lesson & { id: 'nfa' } = {
     {
       title: 'Follow an NFA',
       goal: {
-        text: 'Follow an NFA for words ending in `01`',
-        examples: [
-          { word: '001', accepted: true },
-          { word: '010', accepted: false },
-        ],
+        text: 'This NFA accepts words ending in `01`. Watch it guess.',
+        examples: [],
       },
       steps: STEPS,
     },

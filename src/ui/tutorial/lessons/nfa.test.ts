@@ -40,11 +40,11 @@ describe('the NFAs lesson', () => {
     expect(t.accepted).toBe(true);
   });
 
-  it('holds its goal examples, with no picture, and stays within six counted steps', () => {
+  it('states its goal in words, with no examples or picture, and stays within six counted steps', () => {
     const goal = NFA_LESSON.parts[0]!.goal;
-    expect(goal.text).toBe('Follow an NFA for words ending in `01`');
+    expect(goal.text).toBe('This NFA accepts words ending in `01`. Watch it guess.');
+    expect(goal.examples).toEqual([]);
     expect(goal.automaton).toBeUndefined();
-    for (const e of goal.examples) expect(runWord(start, e.word).accepted, e.word).toBe(e.accepted);
     expect(countedSteps(NFA_LESSON)).toBe(6);
     expect(NFA_LESSON.pausedRuns).toEqual(['001']);
   });

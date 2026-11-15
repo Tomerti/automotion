@@ -85,11 +85,8 @@ export const EPSILON_LESSON: Lesson & { id: 'epsilon' } = {
     {
       title: 'Follow an ε-arrow',
       goal: {
-        text: 'Follow an NFA with an ε-arrow',
-        examples: [
-          { word: 'b', accepted: true },
-          { word: 'ba', accepted: false },
-        ],
+        text: 'This NFA accepts some a’s, then some b’s. Watch the ε-arrow.',
+        examples: [],
       },
       steps: STEPS,
     },

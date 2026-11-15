@@ -137,7 +137,8 @@ paused at index k**: its why line says what happened on reaching k (what the use
 its instruction says what the next press does, and it latches when the index passes k.
 
 **NFAs** (replaces the a\*b\* lesson). Opens an NFA for *words ending in `01`*: q₀ start, loop on
-0,1; q₀ –0→ q₁; q₁ –1→ q₂; q₂ accepting. No ε. Goal: "Words ending in `01`", `001` ✓ `010` ✗.
+0,1; q₀ –0→ q₁; q₁ –1→ q₂; q₂ accepting. No ε. Goal: "This NFA accepts words ending in `01`. Watch it guess.", no examples (changed after
+user feedback: three chips in a row read as a jumble, and `010` is never run).
 The run of `001` is start {q₀}, read 0 → {q₀,q₁}, read 0 → {q₀,q₁} (q₁'s branch dies, q₀ guesses
 again), read 1 → {q₀,q₂}, verdict accept: indices 0–4 (no ε, so no closure steps).
 
@@ -155,7 +156,7 @@ Closing (up at the verdict): "One guess reached an accepting state, and one is e
 accepts if any guess does."
 
 **ε-moves** (new, `'epsilon'`, ~1 min). Opens the current a\*b\* NFA (q₀ start, loop on a; q₀ –ε→ q₁;
-q₁ accepting, loop on b). Goal: "Some a's, then some b's", `b` ✓ `ba` ✗. The run of `b` is start
+q₁ accepting, loop on b). Goal: "This NFA accepts some a’s, then some b’s. Watch the ε-arrow.", no examples. The run of `b` is start
 {q₀}, ε-closure → {q₀,q₁}, read b → {q₁}, verdict accept: indices 0–3.
 
 1. Idea: "An ε-arrow moves without reading a letter. The NFA takes it for free, so whenever it can
