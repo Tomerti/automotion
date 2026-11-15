@@ -3,7 +3,14 @@ import { addState, setEdgeSymbols, setStart, toggleAccepting } from '../core/edi
 import { emptyAutomaton } from '../core/model';
 import { fixture } from '../core/testing/fixtures';
 import type { Automaton } from '../core/model';
-import { decodeShare, encodeShare, readShareHash, sameAutomaton, shareUrl } from './shareLink';
+import {
+  decodeShare,
+  encodeShare,
+  MAX_SHARE_BYTES,
+  readShareHash,
+  sameAutomaton,
+  shareUrl,
+} from './shareLink';
 
 async function deflate(text: string): Promise<string> {
   const stream = new Response(text).body!.pipeThrough(new CompressionStream('deflate-raw'));
@@ -110,6 +117,19 @@ describe('share link', () => {
       expect(r.ok).toBe(false);
       if (!r.ok) expect(r.error).not.toBe('');
     }
+  });
+
+  it('refuses a payload that inflates past MAX_SHARE_BYTES (a zip bomb), but opens one just under', async () => {
+    const a = fixture({ kind: 'DFA', alphabet: 'a', states: ['q0'], start: 'q0' });
+    const rest: Partial<Automaton> = { ...a };
+    delete rest.id;
+    const json = wrap(rest);
+    // Whitespace is valid JSON and deflates to almost nothing.
+    const padded = (size: number) => json.slice(0, -1) + ' '.repeat(size - json.length) + '}';
+    const under = await decodeShare(await deflate(padded(MAX_SHARE_BYTES)), new Set());
+    expect(under.ok).toBe(true);
+    const over = await decodeShare(await deflate(padded(MAX_SHARE_BYTES + 1)), new Set());
+    expect(over).toEqual({ ok: false, error: 'This link is too large to open' });
   });
 
   it('reads the hash', () => {

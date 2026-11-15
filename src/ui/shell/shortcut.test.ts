@@ -19,6 +19,12 @@ describe('shortcutLetter', () => {
     expect(shortcutLetter({ key: 'Delete', code: 'Delete' })).toBe('');
     expect(shortcutLetter({ key: '1', code: 'Digit1' })).toBe('');
   });
+
+  it('keeps punctuation that sits on a letter key (Dvorak’s ; and .) apart from shortcuts', () => {
+    expect(shortcutLetter({ key: ';', code: 'KeyZ' })).toBe('');
+    expect(shortcutLetter({ key: '.', code: 'KeyV' })).toBe('');
+    expect(shortcutLetter({ key: ',', code: 'KeyM' })).toBe('');
+  });
 });
 
 describe('isCtrlLetter', () => {

@@ -167,6 +167,16 @@ describe('Canvas editing', () => {
     expect(active().starts).toEqual([]);
   });
 
+  it('S and A work on a Hebrew layout (the keys type ד and ש)', () => {
+    load(two());
+    render(<Canvas />);
+    click(stateEl('q1'), 100, 0);
+    fireEvent.keyDown(canvas(), { key: 'ד', code: 'KeyS' });
+    expect(active().starts).toEqual(['q1']);
+    fireEvent.keyDown(canvas(), { key: 'ש', code: 'KeyA' });
+    expect(active().accepting).toEqual(['q1']);
+  });
+
   it('S and A ignore a selected state that undo removed', () => {
     load(fixture({ kind: 'DFA', alphabet: 'a', states: [], name: 'm' }));
     render(<Canvas />);
@@ -703,6 +713,21 @@ describe('Canvas editing', () => {
     expect(active().states).toHaveLength(1);
     fireEvent.doubleClick(stateEl('q_0'), { clientX: 10, clientY: 10 });
     fireEvent.keyDown(screen.getByTestId('rename-input'), { key: 'z', ctrlKey: true });
+    expect(active().states).toHaveLength(1);
+  });
+
+  it('undo and redo work on a Hebrew layout, but not with Alt (AltGr is Ctrl+Alt)', () => {
+    load(fixture({ kind: 'DFA', alphabet: 'a', states: [], name: 'm' }));
+    render(<Canvas />);
+    fireEvent.doubleClick(diagram(), { clientX: 10, clientY: 10 });
+    fireEvent.keyDown(window, { key: 'ז', code: 'KeyZ', ctrlKey: true, altKey: true });
+    expect(active().states).toHaveLength(1);
+    fireEvent.keyDown(window, { key: 'ז', code: 'KeyZ', ctrlKey: true });
+    expect(active().states).toHaveLength(0);
+    fireEvent.keyDown(window, { key: 'ט', code: 'KeyY', ctrlKey: true });
+    expect(active().states).toHaveLength(1);
+    fireEvent.keyDown(window, { key: 'ז', code: 'KeyZ', ctrlKey: true });
+    fireEvent.keyDown(window, { key: 'Z', code: 'KeyZ', ctrlKey: true, shiftKey: true });
     expect(active().states).toHaveLength(1);
   });
 
@@ -1286,6 +1311,15 @@ describe('selecting several states, copy and paste', () => {
     fireEvent.pointerLeave(canvas());
     key('v');
     expect(byLabel("q1''")).toMatchObject({ x: 140, y: 40 });
+  });
+
+  it('copy and paste work on a Hebrew layout (Ctrl+ב, Ctrl+ה)', () => {
+    load(three());
+    render(<Canvas />);
+    click(stateEl('q0'), 0, 0);
+    fireEvent.keyDown(window, { key: 'ב', code: 'KeyC', ctrlKey: true });
+    fireEvent.keyDown(window, { key: 'ה', code: 'KeyV', ctrlKey: true });
+    expect(byLabel("q0'")).toBeDefined();
   });
 
   it('⌘ works like Ctrl', () => {

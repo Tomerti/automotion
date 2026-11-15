@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { moveState } from '../../core/edit';
@@ -255,6 +255,13 @@ describe('Toolbar', () => {
       expect(written).toHaveLength(1);
       await user.click(screen.getByLabelText('Some field'));
       await user.keyboard('{Control>}c{/Control}');
+      expect(written).toHaveLength(1);
+    });
+
+    it('Ctrl+C copies the image on a Hebrew layout (the key types ב)', () => {
+      stubClipboard();
+      renderWithDiagram();
+      fireEvent.keyDown(window, { key: 'ב', code: 'KeyC', ctrlKey: true });
       expect(written).toHaveLength(1);
     });
 

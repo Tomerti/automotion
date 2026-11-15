@@ -5,11 +5,47 @@ import { CURRENT_VERSION } from './migrate';
 import { FORMAT } from './schema';
 
 const DAMAGED = 'This link is damaged or incomplete';
+const TOO_LARGE = 'This link is too large to open';
 const PREFIX = '#a=';
+
+/**
+ * The most JSON a share link may inflate to. A 64-state automaton with every arrow is well under
+ * 1 MB; the cap keeps a crafted link (a few KB deflating to gigabytes) from exhausting memory.
+ */
+export const MAX_SHARE_BYTES = 2 * 1024 * 1024;
+
+class TooLarge extends Error {}
 
 async function pipe(bytes: Uint8Array, transform: GenericTransformStream): Promise<Uint8Array> {
   const stream = new Response(bytes as BodyInit).body!.pipeThrough(transform);
   return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+/** Inflates deflate-raw `bytes`, stopping as soon as the output passes `max` bytes. */
+async function inflateAtMost(bytes: Uint8Array, max: number): Promise<Uint8Array> {
+  const stream = new Response(bytes as BodyInit).body!.pipeThrough(
+    new DecompressionStream('deflate-raw'),
+  );
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > max) {
+      await reader.cancel();
+      throw new TooLarge();
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let at = 0;
+  for (const c of chunks) {
+    out.set(c, at);
+    at += c.length;
+  }
+  return out;
 }
 
 function toBase64Url(bytes: Uint8Array): string {
@@ -53,7 +89,7 @@ export function readShareHash(hash: string): string | null {
 /** Never rejects: a bad payload comes back as `{ ok: false }`. */
 export async function decodeShare(payload: string, existingIds: Set<string>): Promise<ParseResult> {
   try {
-    const bytes = await pipe(fromBase64Url(payload), new DecompressionStream('deflate-raw'));
+    const bytes = await inflateAtMost(fromBase64Url(payload), MAX_SHARE_BYTES);
     const json: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
     const list = (json as { automata?: unknown } | null)?.automata;
     if (Array.isArray(list)) {
@@ -64,8 +100,8 @@ export async function decodeShare(payload: string, existingIds: Set<string>): Pr
       }
     }
     return parseFile(JSON.stringify(json), existingIds);
-  } catch {
-    return { ok: false, error: DAMAGED };
+  } catch (e) {
+    return { ok: false, error: e instanceof TooLarge ? TOO_LARGE : DAMAGED };
   }
 }
 

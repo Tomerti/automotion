@@ -96,8 +96,8 @@ Layers, with dependencies pointing downward only:
   2026-10-29: files tagged `"automaton-vis"` still import (`LEGACY_FORMAT`), and `migrateLegacyKeys()`
   (first thing in `main.tsx`) moves old `automaton-vis:*` localStorage keys to `automotion:*`.
   `shareLink.ts`: one automaton in the URL hash (`#a=`, `shareUrl(a, base)`): `encodeShare` drops the id and
-  rounds x/y, deflate-raw through the browser's `CompressionStream` (no dependency) and base64url; `decodeShare` validates
-  with the schema and gives a fresh id; `readShareHash`; `sameAutomaton` compares by normalized content, not key order.
+  rounds x/y, deflate-raw through the browser's `CompressionStream` (no dependency) and base64url; `decodeShare` stops inflating past
+  `MAX_SHARE_BYTES` (2 MB: a crafted link could inflate to gigabytes), validates with the schema and gives a fresh id; `readShareHash`; `sameAutomaton` compares by normalized content, not key order.
   LaTeX: `latexImport.ts` (`parseLatex`) reads every `tikzpicture` of a `.tex` file as an automaton,
   leniently (positioning, `edge`/`to`/`--`, loops, bends, label sides from `swap`/`'`/`auto=right`
   or `node[below]`, `initial` or a drawn start arrow) and
@@ -135,7 +135,9 @@ Layers, with dependencies pointing downward only:
     dialog: `askConfirm()` in `confirmStore.ts`, rendered by `ConfirmDialog.tsx` in `App`; never `window.confirm`), or every
     entry Ctrl+clicked into the history bar's own multi-selection (`data-selected`, local state, seeded with the
     open automaton; Ctrl+A picks all while the focus is in the bar or the pointer is over it, a window listener;
-    its Ctrl+A / Ctrl+C go through `shortcut.ts` `isCtrlLetter`, which reads the physical key on non-Latin layouts), Create (a blank DFA
+    every letter shortcut in the app (this Ctrl+A / Ctrl+C, the canvas's S / A, Ctrl+Z / Y / C / V, Toolbar's Ctrl+C)
+    goes through `shortcut.ts` (`isCtrlLetter`, `shortcutLetter`), which reads the physical key when the layout types a
+    non-Latin letter (Hebrew's Ctrl+A is `ש`) but never for punctuation (Dvorak's `;` on the Z key)), Create (a blank DFA
     named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in
     `historyPrefs.ts`), the DFA/NFA switch floating at the top of the canvas (`KindPill.tsx`, hidden
     while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,

@@ -23,6 +23,7 @@ import {
   TidyIcon,
   UndoIcon,
 } from './icons';
+import { isCtrlLetter } from './shortcut';
 import { toast } from './toastStore';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
 
@@ -128,9 +129,7 @@ function useCopyShortcut(automaton: Automaton | undefined, disabled: boolean): v
   useEffect(() => {
     if (disabled) return;
     const onKey = (e: KeyboardEvent): void => {
-      if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'c')
-        return;
-      if (e.defaultPrevented || isTypingTarget(e.target)) return;
+      if (!isCtrlLetter(e, 'c') || e.defaultPrevented || isTypingTarget(e.target)) return;
       if (window.getSelection()?.isCollapsed === false) return;
       if (selectedStates(appStore.getState()).length > 0) return;
       e.preventDefault();
