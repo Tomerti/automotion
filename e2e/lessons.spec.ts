@@ -101,3 +101,41 @@ test('the Convert lesson steps through the subset construction, saves the DFA an
   await guide.getByRole('tab', { name: 'Lessons' }).click();
   await expect(guide.getByTestId('lesson-convert')).toContainText('✓');
 });
+
+test('the Minimize lesson splits a block, merges the states, saves the DFA and finishes', async ({
+  page,
+}) => {
+  await openApp(page, { clear: true });
+  await page.keyboard.press('?');
+  const guide = page.getByRole('dialog', { name: 'Controls' });
+  await guide.getByRole('tab', { name: 'Lessons' }).click();
+  await guide.getByTestId('lesson-minimize').click();
+  const card = page.getByTestId('tutorial-card');
+  await expect(card).toBeVisible();
+  await expect(card.getByTestId('tutorial-goal-picture')).toHaveCount(2);
+  const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
+  await at(1);
+
+  await page.getByRole('button', { name: 'Minimize' }).click();
+  await at(2);
+
+  // Opened paused: step with the arrow until the block splits.
+  for (let i = 0; i < 12; i++) {
+    if ((await card.getAttribute('data-step')) !== '2') break;
+    await page.keyboard.press('ArrowRight');
+  }
+  await at(3);
+
+  await page.getByRole('button', { name: 'Last' }).click();
+  await at(4);
+
+  await page.getByRole('button', { name: 'Save as new automaton' }).click();
+  await at(5);
+
+  await card.getByRole('button', { name: 'Finish' }).click();
+  const popup = page.getByRole('dialog', { name: 'Lesson complete' });
+  await popup.getByRole('button', { name: 'Back to building' }).click();
+  await page.keyboard.press('?');
+  await guide.getByRole('tab', { name: 'Lessons' }).click();
+  await expect(guide.getByTestId('lesson-minimize')).toContainText('✓');
+});
