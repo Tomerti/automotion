@@ -14,6 +14,10 @@
   line-height: 1.2;
   color: var(--av-text);
 }
+/* Editing an arrow's symbols: set like the edge label it replaces. */
+.av-inline-symbols {
+  font-family: var(--av-font-symbol);
+}
 /* The sizer and the input share one grid cell: the input is as wide as its text. */
 .av-inline-sizer,
 .av-inline input {

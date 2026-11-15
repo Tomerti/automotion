@@ -1,5 +1,6 @@
 import {
   CURVE_OFFSET,
+  EDGE_LABEL_CHAR_WIDTH,
   STATE_RADIUS,
   START_ANGLE,
   autoBend,
@@ -21,8 +22,7 @@ import { readingOrders } from './order';
 /** Distance between neighboring states the layouts aim for (centers, world px). */
 export const SPACING = 140;
 
-// Edge labels: 15 px Geist (diagramStyles.ts), about 0.55 em a character.
-const LABEL_CHAR_WIDTH = 8.5;
+// Edge labels: 15 px IBM Plex Mono (diagramStyles.ts), EDGE_LABEL_CHAR_WIDTH a character.
 const LABEL_HEIGHT = 18;
 
 const W_CROSSING = 10;
@@ -157,7 +157,7 @@ function drawOne(a: Automaton, t: Transition, byId: Map<StateId, State>): Drawn 
     label: {
       x: g.label.x,
       y: g.label.y,
-      w: Math.max(1, text.length) * LABEL_CHAR_WIDTH + 4,
+      w: Math.max(1, Array.from(text).length) * EDGE_LABEL_CHAR_WIDTH + 4,
       h: LABEL_HEIGHT,
     },
   };

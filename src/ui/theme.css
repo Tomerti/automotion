@@ -5,9 +5,10 @@
  * up in distinct pens: orange for the run (active states, taken edges, the tape's read cell,
  * the Run button) and for your own selection while editing, red for errors and rejections,
  * green for acceptance, and
- * marker tints for the blocks of a minimization. Everything is set in Geist, the tape too: a
- * monospace's slashed 0 reads as ∅. The tutorial's words and symbols to type are the exception:
- * Geist's 0 reads as O there, so they use IBM Plex Mono's dotted 0. The loud element is the run's input tape with
+ * marker tints for the blocks of a minimization. Names and prose are set in Geist; input symbols
+ * (the run's tape, the word typed in "Test a word…", edge labels and the tutorial's words and
+ * symbols to type) in IBM Plex Mono, `--av-font-symbol`: Geist's 0 reads as O and a slashed 0 as
+ * ∅, its dotted 0 as neither. The loud element is the run's input tape with
  * its read head; the one orchestrated motion is the verdict stamp. The theme follows the system
  * unless the theme menu forces light or dark; src/ui/shell/theme.ts resolves the choice to
  * `<html data-theme="light|dark">` before the first render and again when the system switches. Diagram exports always use the light (paper) tokens via
@@ -20,8 +21,8 @@
 
   --av-font-ui: 'Geist', 'Segoe UI', system-ui, sans-serif;
   --av-font-math: var(--av-font-ui);
-  /* A dotted 0: neither O nor ∅. */
-  --av-font-symbol: 'IBM Plex Mono', ui-monospace, monospace;
+  /* A dotted 0: neither O nor ∅. Plex Mono has no Greek, so ε falls back to Geist. */
+  --av-font-symbol: 'IBM Plex Mono', 'Geist', 'Segoe UI', system-ui, sans-serif;
 
   /* Surfaces and ink */
   --av-paper: #f3f5f0;

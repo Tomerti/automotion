@@ -10,7 +10,6 @@ Nothing in progress: pick the next task from the list below.
 
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
-- [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
       incomplete DFA): consider muting it, or saying in the card that it is expected
 - [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is not reactive (a keyboard attached later doesn't change the welcome)
@@ -24,6 +23,13 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### Dotted zero for input symbols (2026-11-15)
+
+- [x] The run tape, the word typed in "Test a word…" (its placeholder stays in Geist), edge labels and the symbol input are set in IBM Plex Mono (`--av-font-symbol`), like the tutorial's words to type: Geist's 0 read as O there (`100100` looked like `1OO1OO`), a slashed 0 would read as ∅. Its stack falls back to Geist, which draws ε (Plex Mono has no Greek). State names and prose stay in Geist (e2e `symbol-font.spec.ts`)
+- [x] Editing an arrow's symbols opens them as drawn, `0,1`, not `0, 1`: in the monospace a space after the comma is a whole character wide, so the input opened twice as spread out as the label
+- [x] Exported and copied pictures embed IBM Plex Mono 500 for the edge labels' characters next to Geist (`embedFont.ts`), so an export doesn't fall back to a system monospace (Consolas' slashed 0)
+- [x] Edge labels clear their arrow however wide they are: a label's centre sits a clearance beyond the curve plus its own half-extent (9 px a character), so `0,1` beside a vertical arrow or a sideways self-loop no longer reaches back over the line; one symbol sits 14 px out every way, as before. The layout's label boxes use the same exact width (was 8.5 px, Geist's average)
 
 ### Cut and select all (2026-11-15)
 

@@ -64,6 +64,10 @@ Layers, with dependencies pointing downward only:
     `subsetConstruction` throws past `MAX_DFA_STATES` (64).
   - `geometry.ts`: how the diagram is drawn, as pure math (state radius, edge curves with their
     automatic bends, self-loops and their automatic direction, start arrows, label spots).
+    An edge label's centre sits a clearance beyond its curve plus its own half-extent that way
+    (`EDGE_LABEL_CHAR_WIDTH` a character: the font is a monospace), so a wide label beside a
+    vertical arrow or a sideways loop clears it; one symbol sits 14 px out every way.
+    `transitionGeometry` measures the transition's symbols; the layout's label boxes use the same width.
     `transitionPolyline` samples an arrow's drawn curve; the layout scores layouts with it.
   - `testing/fixtures.ts` (`fixture()`: ids equal labels) and `testing/arbitraries.ts` (fast-check
     generators) back the property tests.
@@ -191,11 +195,17 @@ Layers, with dependencies pointing downward only:
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain
     fallbacks: SVG/PNG export resolves `var()` against a hidden `.av-theme-light` probe, so exports always
     use the light palette.
+  - Fonts: names and prose are Geist (`--av-font-ui` / `--av-font-math`); input symbols (the run tape, the
+    word typed in "Test a word…" but not its placeholder, edge labels and the symbol input, the tutorial's
+    words to type) are IBM Plex Mono (`--av-font-symbol`), whose dotted 0 reads neither as O (Geist's) nor
+    as ∅ (a slashed one). Plex Mono has no Greek, so the stack falls back to Geist for ε.
   - Exported pictures (SVG, PNG, Copy image / Ctrl+C) come from one standalone SVG
     (`canvas/exportDiagram.ts`): the whole automaton, ignoring zoom and pan, PNGs at a fixed
-    `PNG_SCALE`. `canvas/embedFont.ts` embeds Geist 500, cut down to the characters drawn, fetched from
-    Google Fonts at export time. If the diagram's label font or weight changes, change it there too,
-    and re-measure the ink table in `core/label.ts`.
+    `PNG_SCALE`. `canvas/embedFont.ts` embeds Geist 500 for every label and IBM Plex Mono 500 for the
+    edge labels (`.av-edge-label`), each cut down to the characters drawn, fetched from Google Fonts at
+    export time (Geist gets the edge labels' characters too, for ε). If a diagram font or weight changes,
+    change it there too (and `EDGE_LABEL_CHAR_WIDTH` for edge labels), and re-measure the ink table in
+    `core/label.ts` for state labels.
 
 Tests are colocated as `*.test.ts(x)`; Playwright specs live in `e2e/`. Interactive elements have stable
 `data-testid`s and accessible names that the e2e specs rely on, so keep them when restyling.
