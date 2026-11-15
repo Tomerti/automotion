@@ -495,6 +495,52 @@ describe('a lesson other than Basics', () => {
     expect(within(card()).queryByTestId('tutorial-explain')).toBeNull();
   });
 
+  it('marks itself as tracing while a lesson run is open, so it keeps one height', () => {
+    render(<App />);
+    act(() => startLesson(NFA_LESSON));
+    const own = app().automata.find((x) => x.id === tutorialStore.getState().automatonId)!;
+    act(() => pressNext());
+    expect(card()).not.toHaveAttribute('data-tracing');
+    act(() => app().openTrace(runWord(own, '001')));
+    expect(card()).toHaveAttribute('data-tracing');
+    act(() => app().closeTrace());
+    expect(card()).not.toHaveAttribute('data-tracing');
+  });
+
+  it('never marks Basics as tracing', () => {
+    render(<App />);
+    act(() => startLesson('basics'));
+    const own = app().automata.find((x) => x.id === tutorialStore.getState().automatonId)!;
+    const one = { ...own, states: [{ id: 's', label: 's', x: 0, y: 0 }], starts: ['s'] };
+    act(() => app().openTrace(runWord(one, '')));
+    expect(app().trace).not.toBeNull();
+    expect(card()).not.toHaveAttribute('data-tracing');
+  });
+
+  it('lets the trace below it only move down while one run stays open', () => {
+    let height = 200;
+    const spy = vi
+      .spyOn(HTMLElement.prototype, 'offsetHeight', 'get')
+      .mockImplementation(() => height);
+    try {
+      render(<App />);
+      const area = document.querySelector<HTMLElement>('.av-canvas-area')!;
+      const pad = () => area.style.getPropertyValue('--av-tutorial-pad');
+      act(() => startLesson(NFA_LESSON));
+      const own = app().automata.find((x) => x.id === tutorialStore.getState().automatonId)!;
+      act(() => pressNext());
+      act(() => app().openTrace(runWord(own, '001')));
+      expect(pad()).toBe('204px');
+      height = 150;
+      act(() => app().setStep(1));
+      expect(pad()).toBe('204px');
+      act(() => app().closeTrace());
+      expect(pad()).toBe('154px');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('keeps Next out of the live region', () => {
     render(<App />);
     act(() => startLesson(IDEA_LESSON));

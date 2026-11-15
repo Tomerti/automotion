@@ -179,13 +179,23 @@ letter."
 picture. Walkthrough stops: index 1 ({q₀,q₁} appears, the first new state) and index 4 ({q₀,q₂},
 the first accepting one); then the end (index 9).
 
-1. Idea: "A DFA can't guess. So each DFA state stands for a set of NFA states: every state the NFA
-   could be in at that point." [Next]
+Changed after user feedback (the idea lacked the "every NFA has a DFA" fact; the card and the
+player line were two places to read; the card's height change made the diagram jump): the card
+explains and points at the line below the walkthrough, which drops "ε-closure" when the NFA has no
+ε-arrows (`core/subset.ts`); the card keeps one height while a lesson's trace is open
+(`data-tracing`, a 190 px minimum) and the trace's top padding only grows while one trace is open.
+
+1. Idea: "Every NFA has a DFA that accepts exactly the same words. A DFA can't guess, so each of its
+   states is a set: all the NFA states you could be in after the same input." [Next]
 2. Press Convert to DFA at the top. (frame on the button; latch: paused at index 1)
-3. "After a `0` the NFA could be in «q_0» or «q_1», so the DFA gets the state «{q_0,q_1}»." / Press
-   Play. (latch: index 4)
-4. "«{q_0,q_2}» holds «q_2», which accepts, so this DFA state accepts too." / Press Play to finish.
-   (latch: last step)
+3. Press Play. (latch: index 4) Its explanation follows the walkthrough: before index 1, "The DFA
+   starts in «{q_0}»: before reading anything, the NFA can only be in «q_0»."; at index 1, "Below, it
+   follows `0` from «{q_0}»: «q_0» can stay or move to «q_1», so the new DFA state is
+   «{q_0,q_1}»."; between the stops, "Below, it follows each symbol from each set: a set it already
+   has is reused, a new one becomes a state."
+4. Press Play to finish. (latch: last step) At index 4: "Below, `1` from «{q_0,q_1}» leads to
+   «{q_0,q_2}». It holds «q_2», which accepts, so this DFA state accepts too."; after it, the
+   between-stops text.
 5. "Every set the NFA can reach is now a state: four in all." / Press Save as new automaton to keep
    the DFA. (frame on the Save button; latch: saved)
 

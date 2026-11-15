@@ -151,12 +151,24 @@ test('the Convert lesson stops at {q_0,q_1} and at the accepting pair, saves the
   const counter = page.getByTestId('step-counter');
   await expect(counter).toHaveText('Step 2 / 10', PLAYING);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
-  await expect(card).toContainText('After a 0');
+  await expect(card).toContainText('Below, it follows 0');
+
+  // The diagram stays put as the card's text changes from stop to stop.
+  const nfaState = page.locator('[data-state-id="q_0"] .av-state-body').first();
+  const top = async () => (await nfaState.boundingBox())!.y;
+  const atPair = await top();
+  await page.keyboard.press('ArrowLeft');
+  await expect(counter).toHaveText('Step 1 / 10');
+  await expect(card).toContainText('The DFA starts in');
+  expect(await top()).toBeCloseTo(atPair, 0);
+  await page.keyboard.press('ArrowRight');
+  await expect(counter).toHaveText('Step 2 / 10');
 
   await page.getByRole('button', { name: 'Play' }).click();
   await expect(counter).toHaveText('Step 5 / 10', PLAYING);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
   await expect(card).toContainText('accepts too');
+  expect(await top()).toBeCloseTo(atPair, 0);
 
   await page.getByRole('button', { name: 'Play' }).click();
   await expect(counter).toHaveText('Step 10 / 10', PLAYING);
@@ -182,7 +194,7 @@ test('the Convert lesson stops the same way when Convert is pressed before Next'
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
 
   await card.getByTestId('tutorial-next').click();
-  await expect(card).toContainText('After a 0');
+  await expect(card).toContainText('Below, it follows 0');
 });
 
 test('the Minimize lesson opens paused, splits, merges, saves the DFA and finishes', async ({

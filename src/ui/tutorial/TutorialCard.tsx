@@ -158,14 +158,29 @@ function ProgressBar({ lesson, done }: { lesson: Lesson; done: number }): React.
 
 /**
  * Tells the canvas area how far down the card reaches (`--av-tutorial-pad`), so trace views
- * start below it: the run's tape and verdict sit where the card is otherwise.
+ * start below it: the run's tape and verdict sit where the card is otherwise. While `hold` (the
+ * open trace) stays the same, the pad only grows, so a shorter card never pulls the diagram up.
  */
-function useCardPad(ref: React.RefObject<HTMLElement | null>, shown: boolean): void {
+function useCardPad(
+  ref: React.RefObject<HTMLElement | null>,
+  shown: boolean,
+  hold: object | null,
+): void {
+  const held = useRef<{ key: object | null; pad: number }>({ key: null, pad: 0 });
+  const holdRef = useRef(hold);
+  // Before the measuring effect below, which runs after it on every commit.
+  useLayoutEffect(() => {
+    holdRef.current = hold;
+  });
   const measure = useCallback((): void => {
     const el = ref.current;
     const area = el?.parentElement;
     if (!el || !area) return;
-    area.style.setProperty('--av-tutorial-pad', `${el.offsetTop + el.offsetHeight + 4}px`);
+    const key = holdRef.current;
+    let pad = el.offsetTop + el.offsetHeight + 4;
+    if (key !== null && held.current.key === key) pad = Math.max(pad, held.current.pad);
+    held.current = { key, pad };
+    area.style.setProperty('--av-tutorial-pad', `${pad}px`);
   }, [ref]);
   // After every commit, before the paint, so a run opening under the card starts below it.
   useLayoutEffect(measure);
@@ -203,14 +218,17 @@ export function TutorialCard(): React.JSX.Element | null {
   const closeRef = useRef<HTMLButtonElement>(null);
   // Subscribed so the card follows every edit, run step and switch.
   useAppStore((s) => s.automata);
-  useAppStore((s) => s.trace);
+  const trace = useAppStore((s) => s.trace);
   useAppStore((s) => s.stepIndex);
   useAppStore((s) => s.selection);
   const blockedEdits = useAppStore((s) => s.blockedEdits);
   const openName = useAppStore((s) => s.automata.find((a) => a.id === s.activeId)?.name);
   const tutorialName = useAppStore((s) => s.automata.find((a) => a.id === automatonId)?.name);
   const steps = lesson ? lessonSteps(lesson) : [];
-  useCardPad(cardRef, active && steps[current] !== undefined);
+  // A lesson with a run or walkthrough open: the card keeps one height (tutorial.css) and the
+  // trace below it doesn't move as the text changes. Basics is left as it was.
+  const tracing = lesson?.noun === 'lesson' && trace !== null;
+  useCardPad(cardRef, active && steps[current] !== undefined, tracing ? trace : null);
 
   if (!active || !lesson) return null;
   const step = steps[current];
@@ -251,6 +269,7 @@ export function TutorialCard(): React.JSX.Element | null {
       aria-label={capitalized(noun)}
       data-testid="tutorial-card"
       data-step={current + 1}
+      data-tracing={tracing || undefined}
     >
       <header className="av-tutorial-head">
         <span className="av-tutorial-count">

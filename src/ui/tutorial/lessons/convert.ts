@@ -56,12 +56,16 @@ const atEnd = (ctx: TutorialContext): boolean => {
   return t !== null && ctx.stepIndex === t.steps.length - 1;
 };
 
+/** The card between the stops, while the line below goes through the other sets and symbols. */
+const BETWEEN =
+  'Below, it follows each symbol from each set: a set it already has is reused, a new one becomes a state.';
+
 const STEPS: StepSpec[] = [
   {
     id: 'convert/idea',
     idea: true,
     instruction: () =>
-      'A DFA can’t guess. So each DFA state stands for a set of NFA states: every state the NFA could be in at that point.',
+      'Every NFA has a DFA that accepts exactly the same words. A DFA can’t guess, so each of its states is a set: all the NFA states you could be in after the same input.',
   },
   {
     id: 'convert/open',
@@ -74,11 +78,16 @@ const STEPS: StepSpec[] = [
   {
     id: 'convert/pair',
     instruction: () => 'Press Play.',
-    // Only once the pair is on screen: stepped back before it, the card just says to press Play.
-    explain: (l, ctx) =>
-      shown(PAIR)(ctx)
-        ? `After a \`0\` the NFA could be in ${l.q0} or ${l.q1}, so the DFA gets the state «${PAIR}».`
-        : null,
+    // What the line below the walkthrough shows: the start, the pair's moment, or the steps between.
+    explain: (l, ctx) => {
+      const pair = stateAt(ctx, PAIR);
+      if (pair === null) return null;
+      if (ctx.stepIndex < pair)
+        return `The DFA starts in «{q_0}»: before reading anything, the NFA can only be in ${l.q0}.`;
+      if (ctx.stepIndex === pair)
+        return `Below, it follows \`0\` from «{q_0}»: ${l.q0} can stay or move to ${l.q1}, so the new DFA state is «${PAIR}».`;
+      return BETWEEN;
+    },
     // Before the pair's moment (stepped back, or reopened there): stop on it first.
     pauseAt: (ctx) => {
       const pair = stateAt(ctx, PAIR);
@@ -91,7 +100,13 @@ const STEPS: StepSpec[] = [
   {
     id: 'convert/accepting',
     instruction: () => 'Press Play to finish.',
-    explain: () => `«${ACCEPTING_PAIR}» holds «q_2», which accepts, so this DFA state accepts too.`,
+    explain: (_, ctx) => {
+      const at = stateAt(ctx, ACCEPTING_PAIR);
+      if (at === null) return null;
+      return ctx.stepIndex === at
+        ? `Below, \`1\` from «${PAIR}» leads to «${ACCEPTING_PAIR}». It holds «q_2», which accepts, so this DFA state accepts too.`
+        : BETWEEN;
+    },
     // Playback runs on to the end, but stops at this moment while it is still ahead.
     pauseAt: (ctx) => {
       const at = stateAt(ctx, ACCEPTING_PAIR);

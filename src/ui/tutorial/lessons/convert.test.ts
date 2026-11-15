@@ -31,6 +31,9 @@ function ctx(t: SubsetTrace | null, stepIndex = 0, more: Partial<TutorialContext
 
 const SAVED = { owned: [CONTAINS_01.id, 'saved-dfa'] };
 const idea = new Set(['convert/idea']);
+const START = 'The DFA starts in «{q_0}»: before reading anything, the NFA can only be in «q_0».';
+const BETWEEN =
+  'Below, it follows each symbol from each set: a set it already has is reused, a new one becomes a state.';
 
 describe('the Convert NFA → DFA lesson', () => {
   it('opens on an NFA whose DFA has four states, with the stops at indices 1 and 4', () => {
@@ -61,7 +64,7 @@ describe('the Convert NFA → DFA lesson', () => {
   it('opens with the idea step, which only Next moves past', () => {
     expect(steps[0]!.idea).toBe(true);
     expect(steps[0]!.instruction(ctx(null))).toBe(
-      'A DFA can’t guess. So each DFA state stands for a set of NFA states: every state the NFA could be in at that point.',
+      'Every NFA has a DFA that accepts exactly the same words. A DFA can’t guess, so each of its states is a set: all the NFA states you could be in after the same input.',
     );
     expect(advance(L, 0, new Set(), ctx(trace, 0)).current).toBe(0);
     expect(advance(L, 0, idea, ctx(null)).current).toBe(1);
@@ -116,10 +119,10 @@ describe('the Convert NFA → DFA lesson', () => {
     expect(steps[toAccepting.current]!.id).toBe('convert/accepting');
     const toPair = advance(L, 4, upToSave, ctx(trace, pairAt), 4);
     expect(steps[toPair.current]!.id).toBe('convert/pair');
-    // Before the pair's moment it explains nothing yet: Play stops on the pair.
+    // Before the pair's moment it explains the start state: Play stops on the pair.
     expect(steps[toPair.current]!.hint(ctx(trace, 0))).toBeNull();
-    expect(steps[toPair.current]!.explain(ctx(trace, 0))).toBeNull();
-    expect(steps[toPair.current]!.explain(ctx(trace, pairAt))).toContain('After a');
+    expect(steps[toPair.current]!.explain(ctx(trace, 0))).toBe(START);
+    expect(steps[toPair.current]!.explain(ctx(trace, pairAt))).toContain('Below, it follows `0`');
     expect(advance(L, 4, upToSave, ctx(null), 4).current).toBe(4);
   });
 
@@ -131,13 +134,19 @@ describe('the Convert NFA → DFA lesson', () => {
   it('explains each moment, with the instruction a plain press', () => {
     expect(steps[1]!.explain(ctx(null))).toBeNull();
     expect(steps[2]!.instruction(ctx(null))).toBe('Press Play.');
+    expect(steps[2]!.explain(ctx(trace, 0))).toBe(START);
     expect(steps[2]!.explain(ctx(trace, pairAt))).toBe(
-      'After a `0` the NFA could be in «q_0» or «q_1», so the DFA gets the state «{q_0,q_1}».',
+      'Below, it follows `0` from «{q_0}»: «q_0» can stay or move to «q_1», so the new DFA state is «{q_0,q_1}».',
     );
+    expect(steps[2]!.explain(ctx(trace, pairAt + 1))).toBe(BETWEEN);
     expect(steps[3]!.instruction(ctx(null))).toBe('Press Play to finish.');
-    expect(steps[3]!.explain(ctx(null))).toBe(
-      '«{q_0,q_2}» holds «q_2», which accepts, so this DFA state accepts too.',
+    expect(steps[3]!.explain(ctx(trace, acceptingAt))).toBe(
+      'Below, `1` from «{q_0,q_1}» leads to «{q_0,q_2}». It holds «q_2», which accepts, so this DFA state accepts too.',
     );
+    expect(steps[3]!.explain(ctx(trace, acceptingAt + 1))).toBe(BETWEEN);
+    // With no walkthrough open the card asks to reopen it instead.
+    expect(steps[2]!.explain(ctx(null))).toBeNull();
+    expect(steps[3]!.explain(ctx(null))).toBeNull();
     expect(steps[4]!.instruction(ctx(null))).toBe('Press Save as new automaton to keep the DFA.');
     expect(steps[4]!.explain(ctx(null))).toBe(
       'Every set the NFA can reach is now a state: four in all.',
