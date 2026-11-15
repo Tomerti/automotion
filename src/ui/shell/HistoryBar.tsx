@@ -280,7 +280,8 @@ function EntryMenu(props: {
         >
           {item('Rename', onRename, { disabled: !canRename })}
           {item('Duplicate', () => appStore.getState().duplicateAutomaton(automaton.id))}
-          {item('Copy link', () => void copyLink(automaton))}
+          <div role="separator" className="av-menu-sep" />
+          {item('Share link', () => void copyLink(automaton))}
           {item('Export JSON', () => exportOne(automaton))}
           {item('Export LaTeX', () => exportLatex(automaton))}
           <div role="separator" className="av-menu-sep" />

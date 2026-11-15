@@ -18,6 +18,7 @@ import {
   toggleAccepting,
   toggleStart,
 } from '../../core/edit';
+import { labelBaselineOffset } from '../../core/label';
 import type { Automaton, State, StateId, Transition } from '../../core/model';
 import { appStore, useAppStore } from '../../store/store';
 import type { Selection, Viewport } from '../../store/types';
@@ -104,6 +105,8 @@ interface InlineEdit {
   at: Point;
   /** World font size of the label it replaces. */
   fontSize: number;
+  /** Where the label it replaces puts its baseline (see `InlineInputProps.baseline`). */
+  baseline?(text: string): number;
   /** State or transition whose drawn label the input covers. */
   covers?: string;
   /** The arrow of a new transition, kept on screen while its symbols are typed. */
@@ -466,6 +469,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       initial: state.label,
       at: { x: state.x, y: state.y },
       fontSize: labelFontSize(state.label),
+      baseline: labelBaselineOffset,
       covers: id,
       normalize: normalizeStateLabel,
       submit: (text) => commitRename(id, text),
@@ -948,6 +952,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
           initial: inline.initial,
           at: toScreen(inline.at),
           fontSize: inline.fontSize * viewport.zoom,
+          baseline: inline.baseline,
           normalize: inline.normalize,
           onSubmit: (text) => {
             const error = inline.submit(text);

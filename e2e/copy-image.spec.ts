@@ -27,7 +27,7 @@ async function decode(page: Page, source: { base64: string } | 'clipboard'): Pro
 }
 
 async function exportMenu(page: Page, entry: string): Promise<void> {
-  await page.getByRole('button', { name: 'Copy or export' }).click();
+  await page.getByRole('button', { name: 'Share, copy or export' }).click();
   await page.getByRole('menuitem', { name: entry }).click();
 }
 

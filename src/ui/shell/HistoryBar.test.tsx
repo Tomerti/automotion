@@ -140,10 +140,12 @@ describe('HistoryBar actions', () => {
     await user.click(more);
     const menu = screen.getByRole('menu', { name: 'Actions for Blank' });
     const entries = within(menu).getAllByRole('menuitem');
+    // Separators: after Duplicate (sharing and exports follow) and before Delete.
+    expect(menu.querySelectorAll('[role="separator"]')).toHaveLength(2);
     expect(entries.map((e) => e.textContent)).toEqual([
       'Rename',
       'Duplicate',
-      'Copy link',
+      'Share link',
       'Export JSON',
       'Export LaTeX',
       'Delete',
@@ -227,7 +229,7 @@ describe('HistoryBar actions', () => {
       configurable: true,
     });
     render(<HistoryBar />);
-    await openAction(user, 'Blank', 'Copy link');
+    await openAction(user, 'Blank', 'Share link');
     await waitFor(() => expect(texts).toHaveLength(1));
     const base = location.origin + location.pathname;
     expect(texts[0]!.startsWith(base + '#a=')).toBe(true);

@@ -1,8 +1,6 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.png">
-    <img src="docs/brand/lockup.png" alt="AutoMotion" width="320">
-  </picture>
+  <img src="docs/brand/lockup.png#gh-light-mode-only" alt="AutoMotion" width="320">
+  <img src="docs/brand/lockup-dark.png#gh-dark-mode-only" alt="AutoMotion" width="320">
 </p>
 
 <h3 align="center">Watch automata come to life.</h3>
@@ -98,7 +96,7 @@ Press **?** in the app to see every control.
 
 - **History.** Everything autosaves. The sidebar lists your automata, newest edit first. Import
   and export them as JSON, one at a time or all at once.
-- **Share links.** Put an automaton in a link with **Copy link**. Whoever opens it gets their own
+- **Share links.** Put an automaton in a link with **Share link**. Whoever opens it gets their own
   copy, carried inside the link itself.
 - **Pictures.** Copy the diagram as an image (**Ctrl+C** with nothing selected), or download it as
   SVG or PNG.
