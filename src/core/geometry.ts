@@ -14,7 +14,16 @@ const LABEL_FONT_SIZE = 15; // keep in sync with .av-state-label in diagramStyle
 const LABEL_MIN_FONT_SIZE = 10;
 const LABEL_CHAR_WIDTH = 0.6; // average glyph width as a fraction of the font size
 const LABEL_FILL = 0.85; // share of the circle's diameter a label may span
-const LABEL_GAP = 14;
+/**
+ * Edge labels: 15 px IBM Plex Mono (diagramStyles.ts), a monospace, so 0.6 em a character. A
+ * label's centre sits LABEL_CLEARANCE beyond its curve plus the label's own half-extent that way
+ * (an ellipse around the text), so a wide label beside a vertical edge or a sideways self-loop
+ * moves out instead of reaching back over the line. One symbol sits 14 px out every way, as it
+ * always has.
+ */
+export const EDGE_LABEL_CHAR_WIDTH = 9;
+const EDGE_LABEL_HALF_HEIGHT = EDGE_LABEL_CHAR_WIDTH / 2;
+const LABEL_CLEARANCE = 9.5;
 const START_ARROW_LENGTH = 32;
 /** Where a start arrow comes from when its state has no `startAngle`: the left. */
 export const START_ANGLE = Math.PI;
@@ -27,6 +36,11 @@ export type PathGeometry = { d: string; label: Point; end: Point; endAngle: numb
 
 const fmt = (n: number): string => String(Math.round(n * 100) / 100);
 const pt = (p: Point): string => `${fmt(p.x)} ${fmt(p.y)}`;
+/** How far beyond its curve, along the unit vector `dir`, the centre of a label `text` goes. */
+function labelOffset(text: string, dir: Point): number {
+  const halfWidth = (Math.max(Array.from(text).length, 1) * EDGE_LABEL_CHAR_WIDTH) / 2;
+  return LABEL_CLEARANCE + Math.hypot(dir.x * halfWidth, dir.y * EDGE_LABEL_HALF_HEIGHT);
+}
 const polar = (c: Point, r: number, a: number): Point => ({
   x: c.x + r * Math.cos(a),
   y: c.y + r * Math.sin(a),
@@ -83,13 +97,14 @@ export function labelSideAt(from: Point, to: Point, bend: number, p: Point): Lab
 /**
  * Edge from one state circle to another. `bend` is the apex's signed offset from the chord
  * (0 = straight), positive to the left of from→to (screen view). The label goes on `labelSide`
- * (see `labelSideOf`).
+ * (see `labelSideOf`), far enough out for its text, `labelText` (one symbol when empty).
  */
 export function edgeGeometry(
   from: Point,
   to: Point,
   bend: number,
   labelSide?: LabelSide,
+  labelText = '',
 ): PathGeometry {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -98,12 +113,13 @@ export function edgeGeometry(
   const normal = { x: dy / len, y: -dx / len };
   const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
   const side = labelSideOf(bend, labelSide) === 'left' ? 1 : -1;
+  const gap = side * labelOffset(labelText, normal);
   const { start, ctrl, end } = edgeCurve(from, to, bend);
 
   if (bend === 0) {
     return {
       d: `M ${pt(start)} L ${pt(end)}`,
-      label: { x: mid.x + side * normal.x * LABEL_GAP, y: mid.y + side * normal.y * LABEL_GAP },
+      label: { x: mid.x + normal.x * gap, y: mid.y + normal.y * gap },
       end,
       endAngle: Math.atan2(dy / len, dx / len),
     };
@@ -115,7 +131,7 @@ export function edgeGeometry(
   };
   return {
     d: `M ${pt(start)} Q ${pt(ctrl)} ${pt(end)}`,
-    label: { x: apex.x + side * normal.x * LABEL_GAP, y: apex.y + side * normal.y * LABEL_GAP },
+    label: { x: apex.x + normal.x * gap, y: apex.y + normal.y * gap },
     end,
     endAngle: Math.atan2(end.y - ctrl.y, end.x - ctrl.x),
   };
@@ -155,18 +171,22 @@ export function edgeCurve(
   return { start: toward(from, ctrl), ctrl, end: toward(to, ctrl) };
 }
 
-/** Loop leaving and re-entering the circle around `angle` (radians, screen coordinates). */
-export function selfLoopGeometry(center: Point, angle: number): PathGeometry {
+/**
+ * Loop leaving and re-entering the circle around `angle` (radians, screen coordinates), its label
+ * `labelText` (one symbol when empty) beyond the loop's apex.
+ */
+export function selfLoopGeometry(center: Point, angle: number, labelText = ''): PathGeometry {
   const { start, c1, c2, end } = selfLoopCurve(center, angle);
   const apex = {
     x: (start.x + 3 * c1.x + 3 * c2.x + end.x) / 8,
     y: (start.y + 3 * c1.y + 3 * c2.y + end.y) / 8,
   };
+  const gap = labelOffset(labelText, { x: Math.cos(angle), y: Math.sin(angle) });
   return {
     d: `M ${pt(start)} C ${pt(c1)} ${pt(c2)} ${pt(end)}`,
     label: {
-      x: apex.x + Math.cos(angle) * LABEL_GAP,
-      y: apex.y + Math.sin(angle) * LABEL_GAP,
+      x: apex.x + Math.cos(angle) * gap,
+      y: apex.y + Math.sin(angle) * gap,
     },
     end,
     endAngle: Math.atan2(end.y - c2.y, end.x - c2.x),
@@ -223,10 +243,11 @@ export function drawnBend(a: Automaton, from: StateId, to: StateId): number {
  */
 export function transitionGeometry(a: Automaton, from: State, to: State): PathGeometry {
   const own = a.transitions.find((t) => t.from === from.id && t.to === to.id);
+  const text = own?.symbols.join(',') ?? '';
   if (from.id !== to.id) {
-    return edgeGeometry(from, to, drawnBend(a, from.id, to.id), own?.labelSide);
+    return edgeGeometry(from, to, drawnBend(a, from.id, to.id), own?.labelSide, text);
   }
-  return selfLoopGeometry(from, own?.loopAngle ?? autoLoopAngle(a, from));
+  return selfLoopGeometry(from, own?.loopAngle ?? autoLoopAngle(a, from), text);
 }
 
 /**
