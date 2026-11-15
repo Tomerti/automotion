@@ -16,6 +16,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Theme switch without a blink (2026-11-15)
+
+- [x] Switching between light and dark recolours everything in the same frame. Buttons (120 ms), tape cells and diagram states and arrows (200 ms) fade their colours for hover and runs, and a theme switch reused that fade: on going dark, white buttons, tape cells and states stayed on the already dark page for ~4 frames, a white blink (the reverse, dark on light, going light). `applyTheme` now flips `data-theme` under `.av-theme-switching` (`transition: none` on everything), forces a style flush and drops the class. e2e reads the colours two frames after the switch and checks they are already the settled ones
+
 ### Compact Tidy (2026-11-15)
 
 - [x] Tidy no longer spreads a dense automaton along a diagonal: `3rd from end → DFA` comes out as a 4 × 2 grid (was 4 × 4 with half the cells empty), nothing crossing or running through a state. The grid search judged layouts with automatic bends, so a compact grid, whose arrows must curve around a state in between, looked far worse than it reads (132.9 against 43.9 once bent) and the search ran from it; a compactness term in that search couldn't help

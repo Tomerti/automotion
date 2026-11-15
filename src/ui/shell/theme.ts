@@ -46,13 +46,25 @@ export function readTheme(): ThemePref {
 /** The last choice applied, so a system change knows whether to follow it. */
 let current: ThemePref = 'system';
 
+/** On `<html>` for the instant the theme flips: theme.css turns every transition off under it. */
+export const THEME_SWITCHING_CLASS = 'av-theme-switching';
+
 /**
  * Apply `pref` to `<html data-theme>`, always as the resolved `light` or `dark` (see
  * src/ui/theme.css), so styles never have to know about the system choice.
+ *
+ * Everything recolours at once: buttons, tape cells and states fade their colours (for hover and
+ * runs), and reusing that fade here left white buttons on a page already gone dark for a moment.
  */
 export function applyTheme(pref: ThemePref): void {
   current = pref;
-  document.documentElement.setAttribute('data-theme', resolveTheme(pref));
+  const root = document.documentElement;
+  root.classList.add(THEME_SWITCHING_CLASS);
+  root.setAttribute('data-theme', resolveTheme(pref));
+  // Compute the new colours while transitions are off; dropping the class then changes nothing
+  // that could fade.
+  void document.body.offsetHeight;
+  root.classList.remove(THEME_SWITCHING_CLASS);
 }
 
 const saved = new Set<(pref: ThemePref) => void>();
