@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { emptyAutomaton } from '../../core/model';
@@ -7,6 +7,8 @@ import { serialize } from '../../persistence/fileFormat';
 import { decodeShare, readShareHash, sameAutomaton } from '../../persistence/shareLink';
 import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
+import { ConfirmDialog } from './ConfirmDialog';
+import { confirmStore } from './confirmStore';
 import { HistoryBar } from './HistoryBar';
 import { toastStore } from './toastStore';
 
@@ -38,9 +40,29 @@ async function openAction(
   await user.click(screen.getByRole('menuitem', { name: action }));
 }
 
+/** The bar with the app's confirm dialog (rendered by `App` in the real app). */
+function renderWithDialog(extra?: React.ReactNode): void {
+  render(
+    <>
+      <HistoryBar />
+      <ConfirmDialog />
+      {extra}
+    </>,
+  );
+}
+
+/** Click `label` in the open confirm dialog. */
+async function answer(
+  user: ReturnType<typeof userEvent.setup>,
+  label: 'Delete' | 'Cancel',
+): Promise<void> {
+  await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: label }));
+}
+
 beforeEach(() => {
   resetAppStore({ automata: [parity, blank], activeId: parity.id });
   toastStore.setState({ toasts: [] });
+  confirmStore.setState({ request: null });
 });
 afterEach(() => {
   cleanup();
@@ -222,46 +244,188 @@ describe('HistoryBar actions', () => {
     );
   });
 
-  it('Delete asks, removes that automaton and always keeps one', async () => {
+  it('Delete asks in the app’s dialog, removes that automaton and always keeps one', async () => {
     const user = userEvent.setup();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    render(<HistoryBar />);
+    const confirm = vi.spyOn(window, 'confirm');
+    renderWithDialog();
     await openAction(user, 'Blank', 'Delete');
-    expect(confirm).toHaveBeenCalledWith('Delete "Blank"?');
+    const ask = screen.getByRole('alertdialog', { name: 'Delete "Blank"?' });
+    expect(ask).toHaveTextContent('This can’t be undone.');
+    expect(within(ask).queryByRole('list')).toBeNull();
+    await answer(user, 'Cancel');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(names()).toEqual(['Parity', 'Blank']);
 
-    confirm.mockReturnValue(true);
     await openAction(user, 'Blank', 'Delete');
+    await answer(user, 'Delete');
     expect(names()).toEqual(['Parity']);
     // Deleting another automaton keeps the open one.
     expect(st().activeId).toBe(parity.id);
 
     await openAction(user, 'Parity', 'Delete');
+    await answer(user, 'Delete');
     expect(st().automata).toHaveLength(1);
     expect(st().automata[0]).toMatchObject({ name: 'Untitled', kind: 'DFA', states: [] });
     expect(st().activeId).toBe(st().automata[0]?.id);
+    expect(confirm).not.toHaveBeenCalled();
   });
 
-  it('the Delete key on a clicked entry asks and deletes it; keys in a rename field don’t', async () => {
+  it('the Delete key on a clicked entry asks; Escape cancels, Enter deletes; keys in a rename field don’t', async () => {
     const user = userEvent.setup();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    render(<HistoryBar />);
+    renderWithDialog();
     await user.click(items()[1]!);
     expect(items()[1]).toHaveFocus();
     await user.keyboard('{Delete}');
-    expect(confirm).toHaveBeenCalledWith('Delete "Blank"?');
+    const ask = screen.getByRole('alertdialog', { name: 'Delete "Blank"?' });
+    // The dialog has the focus, not a button (no focus ring); Enter there confirms.
+    expect(ask).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(names()).toEqual(['Parity', 'Blank']);
+    // Focus is back on the entry, so the key works again.
+    expect(items()[1]).toHaveFocus();
 
-    confirm.mockReturnValue(true);
     await user.keyboard('{Backspace}');
+    await user.keyboard('{Enter}');
     expect(names()).toEqual(['Parity']);
     expect(st().activeId).toBe(parity.id);
 
-    confirm.mockClear();
     await user.dblClick(items()[0]!);
     await user.keyboard('{Backspace}{Delete}');
-    expect(confirm).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(names()).toEqual(['Parity']);
+  });
+
+  it('Ctrl+click picks several entries, with the open one, and Delete deletes them all after asking', async () => {
+    const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
+    resetAppStore({ automata: [parity, blank, third], activeId: parity.id });
+    const user = userEvent.setup();
+    renderWithDialog();
+    await user.keyboard('{Control>}');
+    await user.click(items()[2]!);
+    await user.keyboard('{/Control}');
+    // Ctrl+click doesn't open the entry; the open one joins the selection.
+    expect(st().activeId).toBe(parity.id);
+    expect(items()[2]).toHaveFocus();
+    expect(items().map((el) => el.dataset.selected)).toEqual(['true', undefined, 'true']);
+
+    await user.keyboard('{Delete}');
+    const ask = screen.getByRole('alertdialog', { name: 'Delete 2 automata?' });
+    expect(
+      within(ask)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Parity', 'Third']);
+    // Cancel keeps the selection.
+    await answer(user, 'Cancel');
+    expect(names()).toEqual(['Parity', 'Blank', 'Third']);
+    expect(items().filter((el) => el.dataset.selected)).toHaveLength(2);
+
+    await user.keyboard('{Backspace}');
+    await answer(user, 'Delete');
+    expect(names()).toEqual(['Blank']);
+    expect(st().activeId).toBe(blank.id);
+    expect(items()[0]!.dataset.selected).toBeUndefined();
+  });
+
+  it('Ctrl+A on an entry picks every automaton, and Delete deletes them all', async () => {
+    const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
+    resetAppStore({ automata: [parity, blank, third], activeId: parity.id });
+    const user = userEvent.setup();
+    renderWithDialog();
+    await user.click(items()[1]!);
+    await user.keyboard('{Control>}a{/Control}');
+    expect(items().map((el) => el.dataset.selected)).toEqual(['true', 'true', 'true']);
+    expect(st().activeId).toBe(blank.id);
+
+    // Ctrl+click still takes one out.
+    await user.keyboard('{Control>}');
+    await user.click(items()[0]!);
+    await user.keyboard('{/Control}');
+    expect(items().map((el) => el.dataset.selected)).toEqual([undefined, 'true', 'true']);
+
+    await user.keyboard('{Control>}a{/Control}{Delete}');
+    expect(screen.getByRole('alertdialog', { name: 'Delete 3 automata?' })).toBeInTheDocument();
+    await answer(user, 'Delete');
+    expect(st().automata).toHaveLength(1);
+    expect(st().automata[0]).toMatchObject({ name: 'Untitled', kind: 'DFA', states: [] });
+
+    // In the rename field, Ctrl+A selects its text, not the entries.
+    await user.dblClick(items()[0]!);
+    await user.keyboard('{Control>}a{/Control}');
+    expect(screen.getByRole('textbox', { name: 'Automaton name' })).toBeInTheDocument();
+    expect(items()[0]!.dataset.selected).toBeUndefined();
+  });
+
+  it('Ctrl+A works over the bar’s empty space too, and on a Hebrew layout; not elsewhere', async () => {
+    const user = userEvent.setup();
+    renderWithDialog(<button type="button">Outside</button>);
+    const picked = (): (string | undefined)[] => items().map((el) => el.dataset.selected);
+    const nav = screen.getByRole('navigation', { name: 'History' });
+
+    // Focus elsewhere and the pointer away from the bar: not the bar's shortcut.
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    await user.keyboard('{Control>}a{/Control}');
+    expect(picked()).toEqual([undefined, undefined]);
+
+    // Clicking the bar's empty space focuses nothing; the pointer over it is enough.
+    await user.click(screen.getByRole('list'));
+    expect(document.activeElement).toBe(document.body);
+    await user.keyboard('{Control>}a{/Control}');
+    expect(picked()).toEqual(['true', 'true']);
+    // The open entry takes the focus, so Delete deletes them.
+    expect(items()[0]).toHaveFocus();
+    await user.keyboard('{Delete}');
+    expect(screen.getByRole('alertdialog', { name: 'Delete 2 automata?' })).toBeInTheDocument();
+    await answer(user, 'Cancel');
+
+    // A Hebrew layout reports Ctrl+A as ש on the A key.
+    await user.keyboard('{Escape}');
+    expect(picked()).toEqual([undefined, undefined]);
+    fireEvent.keyDown(nav, { key: 'ש', code: 'KeyA', ctrlKey: true });
+    expect(picked()).toEqual(['true', 'true']);
+  });
+
+  it('Ctrl+click on a picked entry takes it out; a plain click, Escape or a click outside clears', async () => {
+    const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
+    resetAppStore({ automata: [parity, blank, third], activeId: parity.id });
+    const user = userEvent.setup();
+    renderWithDialog(<button type="button">Outside</button>);
+    const picked = (): (string | undefined)[] => items().map((el) => el.dataset.selected);
+    const ctrlClick = async (el: HTMLElement): Promise<void> => {
+      await user.keyboard('{Control>}');
+      await user.click(el);
+      await user.keyboard('{/Control}');
+    };
+
+    await ctrlClick(items()[1]!);
+    await ctrlClick(items()[2]!);
+    await ctrlClick(items()[0]!);
+    expect(picked()).toEqual([undefined, 'true', 'true']);
+    // Ctrl+double-click doesn't rename.
+    await user.keyboard('{Control>}');
+    await user.dblClick(items()[1]!);
+    await user.keyboard('{/Control}');
+    expect(screen.queryByRole('textbox', { name: 'Automaton name' })).toBeNull();
+    expect(picked()).toEqual([undefined, 'true', 'true']);
+
+    await user.keyboard('{Escape}');
+    expect(picked()).toEqual([undefined, undefined, undefined]);
+
+    await ctrlClick(items()[1]!);
+    expect(picked()).toEqual(['true', 'true', undefined]);
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    expect(picked()).toEqual([undefined, undefined, undefined]);
+
+    await ctrlClick(items()[1]!);
+    await user.click(items()[2]!);
+    expect(picked()).toEqual([undefined, undefined, undefined]);
+    expect(st().activeId).toBe(third.id);
+    // With nothing picked, Delete takes only the focused entry.
+    await user.keyboard('{Delete}');
+    expect(screen.getByRole('alertdialog', { name: 'Delete "Third"?' })).toBeInTheDocument();
+    await answer(user, 'Delete');
+    expect(names()).toEqual(['Parity', 'Blank']);
   });
 
   it('Export JSON downloads that automaton; Export all downloads every one', async () => {

@@ -11,6 +11,7 @@ import { TutorialCard } from '../tutorial/TutorialCard';
 import { FinishedCard } from '../tutorial/FinishedCard';
 import { closeCelebration, startTutorial, useTutorial } from '../tutorial/tutorialStore';
 import { WelcomeCard } from '../tutorial/WelcomeCard';
+import { ConfirmDialog } from './ConfirmDialog';
 import { ControlsDialog } from './ControlsDialog';
 import { useControlsHelp, useWelcome } from './help';
 import { usePasteLatex } from './pasteLatex';
@@ -124,6 +125,7 @@ export default function App(): React.JSX.Element {
         </main>
       </div>
       <Toasts />
+      <ConfirmDialog />
       {helpOpen && (
         <ControlsDialog
           onClose={() => setHelpOpen(false)}

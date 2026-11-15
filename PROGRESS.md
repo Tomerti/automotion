@@ -16,6 +16,8 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Share links: cap the inflated size in `decodeShare` (a zip-bomb link could exhaust memory)
 - [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is not reactive (a keyboard attached later doesn't change the welcome)
 
+- [ ] Other shortcuts (Ctrl+Z / Y / C / V on the canvas and toolbar) still read `e.key`, so they don't fire on a Hebrew or other non-Latin layout: switch them to `shell/shortcut.ts` `isCtrlLetter`, as the history bar's Ctrl+A / Ctrl+C do
+
 - [ ] Copy and paste follow-ups: Ctrl+X (cut), Ctrl+A (select all), and Shift + click as an alternative to Ctrl + click (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
 
 - [ ] Tidy: run the layout in a Web Worker so a 64-state layout (~1 s) doesn't block the page; `To minimize`-style DFAs (6 states, many cross arrows) still come out busier than a hand layout
@@ -25,6 +27,13 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### Delete several automata (2026-11-15)
+
+- [x] Ctrl+click (⌘-click) in the history bar picks several entries without opening them, starting from the open automaton as in a file explorer (Ctrl+click a picked one to take it out); picked entries are tinted orange. Delete or Backspace then deletes them all after one confirm (`Delete 3 automata?`, listing their names). A plain click, Escape or a click outside the list drops the selection; Ctrl+double-click doesn't rename. The Controls guide's Delete row says so
+- [x] Ctrl+A (⌘A) on a focused history entry picks every automaton, so Delete clears the whole history (a blank "Untitled" takes its place); in the rename field it still selects the text. Listed in the Controls guide's Keys tab
+- [x] Deleting asks in the app's own dialog instead of the browser's `window.confirm` ("tomerti.github.io says"): `askConfirm()` (`ui/shell/confirmStore.ts`) and `ConfirmDialog.tsx`, mounted once in `App`. Its heading asks (`Delete "Parity"?`, `Delete 3 automata?` with the names listed, cut short past six), "This can’t be undone.", Cancel and a red **Delete** (`.av-danger`); Enter confirms, Escape or the backdrop cancels and focus goes back to the entry. Cancel keeps a Ctrl+click selection. The dialog itself takes the focus, not the Delete button: a button focused right after the Delete key showed the blue keyboard focus ring
+- [x] Ctrl+A works over the history bar's empty space too (a window listener: focus in the bar, or the pointer over it; clicking the empty space focuses nothing, so it only worked after clicking an entry), then focuses the open entry so Delete deletes them. The bar's Ctrl+A and Ctrl+C read the physical key when the layout's letter isn't Latin (`shortcut.ts` `isCtrlLetter`: a Hebrew layout reports Ctrl+A as `ש`)
 
 ### Share menu (2026-11-15)
 

@@ -68,9 +68,11 @@ test('rename and delete an automaton from its ⋯ menu in the history bar', asyn
   await expect(entries.first()).toContainText('Mine');
   await expect(page.locator('.av-switcher-name')).toHaveText('Mine');
 
-  page.once('dialog', (d) => void d.accept());
   await bar.getByRole('button', { name: 'More actions for Untitled 2' }).click();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
+  const ask = page.getByRole('alertdialog', { name: 'Delete "Untitled 2"?' });
+  await ask.getByRole('button', { name: 'Delete' }).click();
+  await expect(ask).toHaveCount(0);
   await expect(entries).toHaveCount(1);
   await expect(entries.first()).toContainText('Mine');
 });
@@ -128,11 +130,75 @@ test('the Delete key deletes a clicked history entry after asking', async ({ pag
   await expect(entries).toHaveCount(2);
 
   await entries.nth(1).click();
-  page.once('dialog', (d) => {
-    expect(d.message()).toBe('Delete "Untitled"?');
-    void d.accept();
-  });
   await page.keyboard.press('Delete');
+  const ask = page.getByRole('alertdialog', { name: 'Delete "Untitled"?' });
+  await expect(ask).toBeVisible();
+  // Escape cancels and gives the entry its focus back.
+  await page.keyboard.press('Escape');
+  await expect(ask).toHaveCount(0);
+  await expect(entries).toHaveCount(2);
+  await expect(entries.nth(1)).toBeFocused();
+  // Delete, then Enter. The dialog has the focus, not the Delete button, so no focus ring.
+  await page.keyboard.press('Delete');
+  await expect(ask).toBeFocused();
+  await expect(ask.getByRole('button', { name: 'Delete' })).not.toBeFocused();
+  await page.keyboard.press('Enter');
   await expect(entries).toHaveCount(1);
   await expect(entries.first()).toContainText('Untitled 2');
+});
+
+test('Ctrl+click picks several history entries and Delete deletes them together', async ({
+  page,
+}) => {
+  await openApp(page, { clear: true });
+  const bar = page.getByRole('navigation', { name: 'History' });
+  const entries = bar.getByTestId('history-item');
+  await bar.getByRole('button', { name: 'Create' }).click();
+  await bar.getByRole('button', { name: 'Create' }).click();
+  await expect(entries).toHaveCount(3);
+
+  // The open automaton ("Untitled 3", on top) starts the selection.
+  await entries.nth(2).click({ modifiers: ['ControlOrMeta'] });
+  await expect(entries.nth(0)).toHaveAttribute('data-selected', 'true');
+  await expect(entries.nth(1)).not.toHaveAttribute('data-selected');
+  await expect(entries.nth(2)).toHaveAttribute('data-selected', 'true');
+  await expect(page.locator('.av-switcher-name')).toHaveText('Untitled 3');
+
+  await page.keyboard.press('Delete');
+  const ask = page.getByRole('alertdialog', { name: 'Delete 2 automata?' });
+  await expect(ask.getByRole('listitem')).toHaveText(['Untitled 3', 'Untitled']);
+  await ask.getByRole('button', { name: 'Delete' }).click();
+  await expect(entries).toHaveCount(1);
+  await expect(entries.first()).toContainText('Untitled 2');
+  await expect(entries.first()).not.toHaveAttribute('data-selected');
+  await expect(entries.first()).toHaveAttribute('aria-current', 'page');
+});
+
+test('Ctrl+A on a history entry picks every automaton and Delete deletes them all', async ({
+  page,
+}) => {
+  await openApp(page, { clear: true });
+  const bar = page.getByRole('navigation', { name: 'History' });
+  const entries = bar.getByTestId('history-item');
+  await bar.getByRole('button', { name: 'Create' }).click();
+  await bar.getByRole('button', { name: 'Create' }).click();
+  await expect(entries).toHaveCount(3);
+
+  // Click the bar's empty space below the entries (it focuses nothing), then Ctrl+A.
+  const list = bar.getByRole('list');
+  const box = await list.boundingBox();
+  await list.click({ position: { x: 20, y: (box?.height ?? 400) - 6 } });
+  await page.keyboard.press('ControlOrMeta+a');
+  for (let i = 0; i < 3; i++) await expect(entries.nth(i)).toHaveAttribute('data-selected', 'true');
+  // The open entry took the focus, so Delete is for the history bar.
+  await expect(entries.nth(0)).toBeFocused();
+
+  await page.keyboard.press('Delete');
+  const ask = page.getByRole('alertdialog', { name: 'Delete 3 automata?' });
+  await expect(ask.getByRole('listitem')).toHaveText(['Untitled 3', 'Untitled 2', 'Untitled']);
+  await ask.getByRole('button', { name: 'Delete' }).click();
+  // The canvas is never left empty: a fresh blank automaton takes their place.
+  await expect(entries).toHaveCount(1);
+  await expect(entries.first()).toContainText('Untitled');
+  await expect(entries.first()).toContainText('DFA · 0 states');
 });
