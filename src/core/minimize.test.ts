@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { accepts, completeWithDeadState, removeUnreachable } from './analysis';
-import { canMinimize, minimize } from './minimize';
+import { canMinimize, doneStepAutomaton, minimize } from './minimize';
 import type { MinimizeStep } from './trace';
 import { fixture } from './testing/fixtures';
 import { arbDfa, arbWord } from './testing/arbitraries';
@@ -243,4 +243,52 @@ describe('minimize', () => {
 
   it('property: minimizing a minimized DFA is always already minimal', () =>
     fc.assert(fc.property(arbDfa(), (d) => minimize(minimize(d).result).alreadyMinimal)));
+});
+
+describe('doneStepAutomaton', () => {
+  // Labels like the subset construction gives: merging two of them nests sets in a set.
+  const nested = fixture({
+    kind: 'DFA',
+    alphabet: 'a',
+    states: ['{q_0}', '{q_0,q_2}', '{q_0,q_1,q_2}'],
+    start: '{q_0}',
+    accepting: ['{q_0,q_2}', '{q_0,q_1,q_2}'],
+    edges: [
+      ['{q_0}', 'a', '{q_0,q_2}'],
+      ['{q_0,q_2}', 'a', '{q_0,q_1,q_2}'],
+      ['{q_0,q_1,q_2}', 'a', '{q_0,q_2}'],
+    ],
+  });
+
+  it('names a merged state by its block letter and keeps the others', () => {
+    const trace = minimize(nested);
+    expect(trace.result.states.map((s) => s.label)).toContain('{{q_0,q_2},{q_0,q_1,q_2}}');
+    const shown = doneStepAutomaton(trace);
+    // Result state i is block i, lettered as in the legend.
+    expect(shown.states.map((s) => s.label)).toEqual(['A', '{q_0}']);
+    expect(shown.states.map((s) => s.id)).toEqual(trace.result.states.map((s) => s.id));
+    expect(shown.transitions).toBe(trace.result.transitions);
+  });
+
+  it('letters every state when a kept label would read as a block letter', () => {
+    const lettered = fixture({
+      kind: 'DFA',
+      alphabet: 'a',
+      states: ['A', 'B', 'C'],
+      start: 'A',
+      accepting: ['B', 'C'],
+      edges: [
+        ['A', 'a', 'B'],
+        ['B', 'a', 'C'],
+        ['C', 'a', 'B'],
+      ],
+    });
+    // Blocks: A = {B, C} (merged), B = {A}. Keeping "A" would clash with block A.
+    expect(doneStepAutomaton(minimize(lettered)).states.map((s) => s.label)).toEqual(['A', 'B']);
+  });
+
+  it('leaves a result with nothing merged as it is', () => {
+    const trace = minimize(minimize(redundant).result);
+    expect(doneStepAutomaton(trace)).toBe(trace.result);
+  });
 });

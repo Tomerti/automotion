@@ -9,7 +9,7 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
-- [ ] Minimize walkthrough: a merged state's long label (`{{q_0,q_2},{q_0,q_1,q_2}}`) spills out of its circle over the arrows; shorten or wrap merged labels there
+- [ ] A saved minimized automaton (Save as new automaton) keeps its merged states' full labels (`{{q_0,q_2},{q_0,q_1,q_2}}`), which spill out of the circle on the canvas; consider naming them by block letter there too, or a shorter label
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
@@ -26,6 +26,10 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### Minimize labels (2026-11-15)
+
+- [x] The minimize walkthrough's done step names each merged state by its block letter (A, B, …, as in the legend and the explanations; `doneStepAutomaton` in `core/minimize.ts`) instead of its joined member labels, which spilled out of the circle over the arrows after a subset construction (`{{q_0,q_2},{q_0,q_1,q_2}}`); the legend says what each letter merged. States that weren't merged keep their name, unless one reads as a block letter, then every state takes its letter
 
 ### v1.0.0 (2026-11-14)
 

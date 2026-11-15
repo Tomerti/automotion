@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { formatSet } from '../../core/format';
+import { blockName, doneStepAutomaton } from '../../core/minimize';
 import type { MinimizeTrace } from '../../core/trace';
 import { Diagram } from '../canvas/Diagram';
 import { LabelText } from '../LabelText';
@@ -15,7 +17,8 @@ export interface MinimizeTraceViewProps {
 export function MinimizeTraceView({ trace, stepIndex }: MinimizeTraceViewProps): React.JSX.Element {
   const step = trace.steps[stepIndex];
   const done = step?.phase === 'done';
-  const shown = !step || done ? trace.result : step.automaton;
+  const result = useMemo(() => doneStepAutomaton(trace), [trace]);
+  const shown = !step || done ? result : step.automaton;
   const { ref, viewport, moved, fit, onPointerDown } = useFittedViewport(shown.states);
 
   if (!step) return <div className="av-trace-view" />;
@@ -55,9 +58,7 @@ export function MinimizeTraceView({ trace, stepIndex }: MinimizeTraceViewProps):
         {step.blocks.map((block, i) => (
           <li key={i} className="av-block-legend-item">
             <span className="av-block-swatch" data-tint={i % TINT_COUNT} aria-hidden="true" />
-            <LabelText
-              text={`${String.fromCharCode(65 + i)}: ${formatSet(step.automaton, block)}`}
-            />
+            <LabelText text={`${blockName(i)}: ${formatSet(step.automaton, block)}`} />
           </li>
         ))}
       </ul>

@@ -58,10 +58,23 @@ describe('MinimizeTraceView', () => {
     render(<MinimizeTraceView trace={trace} stepIndex={i} />);
     const legend = within(screen.getByTestId('block-legend')).getAllByRole('listitem');
     trace.result.states.forEach((s, bi) => {
-      expect(screen.getByTestId(`state-${s.label}`)).toHaveAttribute('data-tint', String(bi % 8));
+      const node = document.querySelector(`.av-state[data-state-id="${s.id}"]`);
+      expect(node).toHaveAttribute('data-tint', String(bi % 8));
       const swatch = legend[bi]?.querySelector('[data-tint]');
       expect(swatch).toHaveAttribute('data-tint', String(bi % 8));
     });
+  });
+
+  it('done step names a merged state by its block letter, so its label fits the circle', () => {
+    const trace = minimize(redundant);
+    render(<MinimizeTraceView trace={trace} stepIndex={trace.steps.length - 1} />);
+    // q1 and q2 merge into block A ({q1,q2} in the saved result); q0 alone keeps its name.
+    expect(trace.result.states.map((s) => s.label)).toEqual(['{q1,q2}', 'q0']);
+    expect(screen.getByTestId('state-A')).toHaveAttribute('data-tint', '0');
+    expect(screen.getByTestId('state-q0')).toHaveAttribute('data-tint', '1');
+    expect(screen.queryByTestId('state-{q1,q2}')).toBeNull();
+    const legend = within(screen.getByTestId('block-legend')).getAllByRole('listitem');
+    expect(legend[0]).toHaveTextContent(/^A: {q1, q2}$/);
   });
 
   it('fades removed states on the trim step', () => {

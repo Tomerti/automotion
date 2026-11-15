@@ -14,7 +14,29 @@ export function canMinimize(a: Automaton): string | null {
   return null;
 }
 
-const blockName = (i: number): string => String.fromCharCode(65 + i);
+/** Block i's name in the walkthrough: A, B, C, … */
+export const blockName = (i: number): string => String.fromCharCode(65 + i);
+
+/**
+ * The result as the walkthrough's done step draws it. A merged state (a block of two or more)
+ * is named by its block letter, as in the legend, instead of its label of joined member labels,
+ * which can't fit in a circle (`{{q_0,q_2},{q_0,q_1,q_2}}` after a subset construction); the
+ * others keep their own label. If a kept label reads as one of those letters, every state takes
+ * its letter. The result itself, saved as a new automaton, keeps the full labels.
+ */
+export function doneStepAutomaton(trace: MinimizeTrace): Automaton {
+  const { result } = trace;
+  const blocks = trace.steps.at(-1)?.blocks ?? [];
+  // Result state i is block i (`buildResult`).
+  const merged = result.states.map((_, i) => (blocks[i]?.length ?? 1) > 1);
+  if (!merged.includes(true)) return result;
+  const letters = new Set(result.states.flatMap((_, i) => (merged[i] ? [blockName(i)] : [])));
+  const clash = result.states.some((s, i) => !merged[i] && letters.has(s.label));
+  return {
+    ...result,
+    states: result.states.map((s, i) => (merged[i] || clash ? { ...s, label: blockName(i) } : s)),
+  };
+}
 
 function joinParts(parts: string[]): string {
   if (parts.length <= 2) return parts.join(' and ');
