@@ -85,7 +85,7 @@ function GoalRow({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.
             data-testid="tutorial-goal-arrow"
             aria-hidden="true"
           >
-            →
+            ↓
           </span>
           <GoalPicture automaton={goal.after.automaton} description={goal.after.description} />
         </div>

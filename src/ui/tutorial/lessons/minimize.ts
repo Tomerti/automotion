@@ -15,7 +15,6 @@ const CONTAINS_01_DFA: Automaton = {
     id: label,
     label,
     ...(AFTER_SPOTS[label] as { x: number; y: number }),
-    startAngle: Math.PI / 2,
   })),
   starts: ['{q_0}'],
   accepting: ['{q_0,q_2}', '{q_0,q_1,q_2}'],
@@ -42,7 +41,6 @@ const MINIMIZED: Automaton = (() => {
   const result = minimize(CONTAINS_01_DFA).result;
   return {
     ...result,
-    states: result.states.map((s) => ({ ...s, startAngle: Math.PI / 2 })),
     transitions: result.transitions.map((t) =>
       t.from === t.to ? { ...t, loopAngle: -Math.PI / 2 } : t,
     ),

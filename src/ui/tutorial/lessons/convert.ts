@@ -28,9 +28,9 @@ export const CONTAINS_01: Automaton = {
 /** Where the picture of the DFA puts its states (by label): one flat row, wide like its box. */
 export const AFTER_SPOTS: Record<string, { x: number; y: number }> = {
   '{q_0}': { x: 0, y: 0 },
-  '{q_0,q_1}': { x: 84, y: 0 },
-  '{q_0,q_2}': { x: 168, y: 0 },
-  '{q_0,q_1,q_2}': { x: 272, y: 0 },
+  '{q_0,q_1}': { x: 94, y: 0 },
+  '{q_0,q_2}': { x: 188, y: 0 },
+  '{q_0,q_1,q_2}': { x: 290, y: 0 },
 };
 
 /**
@@ -41,7 +41,7 @@ const CONTAINS_01_DFA: Automaton = (() => {
   const dfa = subsetConstruction(CONTAINS_01).result;
   return {
     ...dfa,
-    states: dfa.states.map((s) => ({ ...s, ...AFTER_SPOTS[s.label], startAngle: Math.PI / 2 })),
+    states: dfa.states.map((s) => ({ ...s, ...AFTER_SPOTS[s.label] })),
     transitions: dfa.transitions.map((t) =>
       t.from === t.to ? { ...t, loopAngle: -Math.PI / 2 } : t,
     ),
