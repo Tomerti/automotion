@@ -115,9 +115,9 @@ Layers, with dependencies pointing downward only:
     drag crosses 3 px, so double-clicks keep their real target. Pure math is in `core/geometry.ts` / `viewport.ts`;
     `snap.ts` snaps a dragged state (alignment guides and equal-gap markers, both kept out of exports).
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
-    `traceExtraActions.tsx` adds the "Save as new automaton" button. `MinimizeTraceView`'s done step
-    draws `doneStepAutomaton` (`core/minimize.ts`): merged states named by block letter, as in the
-    legend, while the saved result keeps the full labels. The views are movable:
+    `traceExtraActions.tsx` adds the "Save as new automaton" button. A minimized result names each
+    merged state by its block (`blockName`: A … Z, AA, …, as in `MinimizeTraceView`'s legend; see
+    `resultLabels` in `core/minimize.ts`), not by its members' labels joined. The views are movable:
     `useFittedViewport` fits the diagram and, unless `interactive: false` (`RunTraceView`'s `ambient`: the welcome
     demo stays inert), the wheel zooms around the pointer (non-passive listener, every step compounds), dragging pans
     and `FitButton.tsx` (`trace-fit`) appears once moved. The user's view is fitted again when the states' extent or the

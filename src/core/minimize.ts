@@ -14,28 +14,28 @@ export function canMinimize(a: Automaton): string | null {
   return null;
 }
 
-/** Block i's name in the walkthrough: A, B, C, … */
-export const blockName = (i: number): string => String.fromCharCode(65 + i);
+/** Block i's name: A … Z, then AA, AB, … like spreadsheet columns. */
+export function blockName(i: number): string {
+  let name = '';
+  for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) {
+    name = String.fromCharCode(65 + ((n - 1) % 26)) + name;
+  }
+  return name;
+}
 
 /**
- * The result as the walkthrough's done step draws it. A merged state (a block of two or more)
- * is named by its block letter, as in the legend, instead of its label of joined member labels,
- * which can't fit in a circle (`{{q_0,q_2},{q_0,q_1,q_2}}` after a subset construction); the
- * others keep their own label. If a kept label reads as one of those letters, every state takes
- * its letter. The result itself, saved as a new automaton, keeps the full labels.
+ * Labels of the result's states, block i's at i. A merged state (a block of two or more) is
+ * named by its block's name, as in the walkthrough's legend: its members' labels joined would
+ * not fit in a circle (`{{q_0,q_2},{q_0,q_1,q_2}}` after a subset construction). The others keep
+ * their own label, unless one reads as a block name, then every state takes its block's name.
  */
-export function doneStepAutomaton(trace: MinimizeTrace): Automaton {
-  const { result } = trace;
-  const blocks = trace.steps.at(-1)?.blocks ?? [];
-  // Result state i is block i (`buildResult`).
-  const merged = result.states.map((_, i) => (blocks[i]?.length ?? 1) > 1);
-  if (!merged.includes(true)) return result;
-  const letters = new Set(result.states.flatMap((_, i) => (merged[i] ? [blockName(i)] : [])));
-  const clash = result.states.some((s, i) => !merged[i] && letters.has(s.label));
-  return {
-    ...result,
-    states: result.states.map((s, i) => (merged[i] || clash ? { ...s, label: blockName(i) } : s)),
-  };
+export function resultLabels(memberLabels: string[][]): string[] {
+  const merged = memberLabels.map((labels) => labels.length > 1);
+  const names = new Set(memberLabels.flatMap((_, i) => (merged[i] ? [blockName(i)] : [])));
+  const clash = memberLabels.some((labels, i) => !merged[i] && names.has(labels[0] as string));
+  return memberLabels.map((labels, i) =>
+    merged[i] || clash ? blockName(i) : (labels[0] as string),
+  );
 }
 
 function joinParts(parts: string[]): string {
@@ -163,14 +163,12 @@ export function minimize(dfa: Automaton): MinimizeTrace {
 function buildResult(dfa: Automaton, work: Automaton, blocks: StateId[][]): Automaton {
   const ids = blocks.map(() => newId());
   const indexOf = (q: StateId): number => blocks.findIndex((b) => b.includes(q));
-  const states = blocks.map((block, i) => {
-    const members = work.states.filter((s) => block.includes(s.id));
+  const memberStates = blocks.map((block) => work.states.filter((s) => block.includes(s.id)));
+  const labels = resultLabels(memberStates.map((members) => members.map((m) => m.label)));
+  const states = memberStates.map((members, i) => {
     return {
       id: ids[i] as string,
-      label:
-        members.length === 1
-          ? (members[0]?.label as string)
-          : `{${members.map((m) => m.label).join(',')}}`,
+      label: labels[i] as string,
       x: members.reduce((sum, m) => sum + m.x, 0) / members.length,
       y: members.reduce((sum, m) => sum + m.y, 0) / members.length,
     };

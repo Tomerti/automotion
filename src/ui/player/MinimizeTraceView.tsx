@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
 import { formatSet } from '../../core/format';
-import { blockName, doneStepAutomaton } from '../../core/minimize';
+import { blockName } from '../../core/minimize';
 import type { MinimizeTrace } from '../../core/trace';
 import { Diagram } from '../canvas/Diagram';
 import { LabelText } from '../LabelText';
@@ -17,8 +16,7 @@ export interface MinimizeTraceViewProps {
 export function MinimizeTraceView({ trace, stepIndex }: MinimizeTraceViewProps): React.JSX.Element {
   const step = trace.steps[stepIndex];
   const done = step?.phase === 'done';
-  const result = useMemo(() => doneStepAutomaton(trace), [trace]);
-  const shown = !step || done ? result : step.automaton;
+  const shown = !step || done ? trace.result : step.automaton;
   const { ref, viewport, moved, fit, onPointerDown } = useFittedViewport(shown.states);
 
   if (!step) return <div className="av-trace-view" />;

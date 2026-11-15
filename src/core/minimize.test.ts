@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { accepts, completeWithDeadState, removeUnreachable } from './analysis';
-import { canMinimize, doneStepAutomaton, minimize } from './minimize';
+import { blockName, canMinimize, minimize } from './minimize';
 import type { MinimizeStep } from './trace';
 import { fixture } from './testing/fixtures';
 import { arbDfa, arbWord } from './testing/arbitraries';
@@ -87,11 +87,12 @@ describe('minimize', () => {
   it('merges equivalent states', () => {
     const { result } = minimize(redundant);
     expect(result.states).toHaveLength(2);
-    expect(result.states.map((s) => s.label).sort()).toEqual(['q0', '{q1,q2}']);
+    // q1 and q2 merge into block A, named A; q0 (block B) keeps its name.
+    expect(result.states.map((s) => s.label)).toEqual(['A', 'q0']);
     expect(result.name).toBe('red (min)');
     expect(result.kind).toBe('DFA');
     expect(result.alphabet).toEqual(['a']);
-    const merged = result.states.find((s) => s.label === '{q1,q2}');
+    const merged = result.states.find((s) => s.label === 'A');
     expect(result.accepting).toEqual([merged?.id]);
     expect(result.transitions).toHaveLength(2);
   });
@@ -178,7 +179,7 @@ describe('minimize', () => {
 
   it('places merged states at the centroid', () => {
     const { result } = minimize(redundant);
-    const merged = result.states.find((s) => s.label === '{q1,q2}');
+    const merged = result.states.find((s) => s.label === 'A');
     expect(merged?.x).toBe(150);
     expect(merged?.y).toBe(0);
     expect(result.starts).toEqual([result.states.find((s) => s.label === 'q0')?.id]);
@@ -245,7 +246,48 @@ describe('minimize', () => {
     fc.assert(fc.property(arbDfa(), (d) => minimize(minimize(d).result).alreadyMinimal)));
 });
 
-describe('doneStepAutomaton', () => {
+describe('blockName', () => {
+  it('runs A … Z, then AA … AZ, BA …, like spreadsheet columns', () => {
+    expect([0, 1, 25, 26, 27, 51, 52, 701, 702].map(blockName)).toEqual([
+      'A',
+      'B',
+      'Z',
+      'AA',
+      'AB',
+      'AZ',
+      'BA',
+      'ZZ',
+      'AAA',
+    ]);
+  });
+
+  it('property: names are distinct and made of capital letters only', () => {
+    const names = Array.from({ length: 800 }, (_, i) => blockName(i));
+    expect(new Set(names).size).toBe(names.length);
+    for (const n of names) expect(n).toMatch(/^[A-Z]+$/);
+  });
+
+  it('names blocks past Z in the legend explanations', () => {
+    // 28 states in a chain, only the last accepting: every state ends up in its own block.
+    const n = 28;
+    const states = Array.from({ length: n }, (_, i) => `s${i}`);
+    const chain = fixture({
+      kind: 'DFA',
+      alphabet: 'a',
+      states,
+      start: 's0',
+      accepting: [`s${n - 1}`],
+      edges: states.map((s, i) => [s, 'a', states[Math.min(i + 1, n - 1)] as string]),
+    });
+    const text = minimize(chain)
+      .steps.map((s) => s.explanation)
+      .join('\n');
+    expect(text).toMatch(/block AA/);
+    expect(text).not.toMatch(/block \[/);
+  });
+});
+
+describe('result labels', () => {
   // Labels like the subset construction gives: merging two of them nests sets in a set.
   const nested = fixture({
     kind: 'DFA',
@@ -260,14 +302,9 @@ describe('doneStepAutomaton', () => {
     ],
   });
 
-  it('names a merged state by its block letter and keeps the others', () => {
-    const trace = minimize(nested);
-    expect(trace.result.states.map((s) => s.label)).toContain('{{q_0,q_2},{q_0,q_1,q_2}}');
-    const shown = doneStepAutomaton(trace);
-    // Result state i is block i, lettered as in the legend.
-    expect(shown.states.map((s) => s.label)).toEqual(['A', '{q_0}']);
-    expect(shown.states.map((s) => s.id)).toEqual(trace.result.states.map((s) => s.id));
-    expect(shown.transitions).toBe(trace.result.transitions);
+  it('names a merged state by its block name and keeps the others', () => {
+    // Result state i is block i, named as in the legend, not {{q_0,q_2},{q_0,q_1,q_2}}.
+    expect(minimize(nested).result.states.map((s) => s.label)).toEqual(['A', '{q_0}']);
   });
 
   it('letters every state when a kept label would read as a block letter', () => {
@@ -284,11 +321,19 @@ describe('doneStepAutomaton', () => {
       ],
     });
     // Blocks: A = {B, C} (merged), B = {A}. Keeping "A" would clash with block A.
-    expect(doneStepAutomaton(minimize(lettered)).states.map((s) => s.label)).toEqual(['A', 'B']);
+    expect(minimize(lettered).result.states.map((s) => s.label)).toEqual(['A', 'B']);
   });
 
-  it('leaves a result with nothing merged as it is', () => {
-    const trace = minimize(minimize(redundant).result);
-    expect(doneStepAutomaton(trace)).toBe(trace.result);
+  it('keeps every label when nothing merges', () => {
+    const once = minimize(redundant).result;
+    expect(minimize(once).result.states.map((s) => s.label)).toEqual(['A', 'q0']);
   });
+
+  it('property: result labels are distinct', () =>
+    fc.assert(
+      fc.property(arbDfa(), (d) => {
+        const labels = minimize(d).result.states.map((s) => s.label);
+        return new Set(labels).size === labels.length;
+      }),
+    ));
 });

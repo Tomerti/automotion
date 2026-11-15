@@ -68,8 +68,7 @@ describe('MinimizeTraceView', () => {
   it('done step names a merged state by its block letter, so its label fits the circle', () => {
     const trace = minimize(redundant);
     render(<MinimizeTraceView trace={trace} stepIndex={trace.steps.length - 1} />);
-    // q1 and q2 merge into block A ({q1,q2} in the saved result); q0 alone keeps its name.
-    expect(trace.result.states.map((s) => s.label)).toEqual(['{q1,q2}', 'q0']);
+    // q1 and q2 merge into block A; q0 alone keeps its name.
     expect(screen.getByTestId('state-A')).toHaveAttribute('data-tint', '0');
     expect(screen.getByTestId('state-q0')).toHaveAttribute('data-tint', '1');
     expect(screen.queryByTestId('state-{q1,q2}')).toBeNull();
