@@ -55,7 +55,10 @@ Layers, with dependencies pointing downward only:
     (`q_1'`), accepting but not start, dropping arrows to states the target lacks. Ctrl+C copies
     states when `selectedStates()` (store) has any, and the diagram as a picture (Toolbar) otherwise;
     on a focused history entry it copies that automaton (handled there, `preventDefault` so the
-    window listeners skip it).
+    window listeners skip it). Ctrl+X (`store.cutSelection`, also Cut in the state menus) copies the
+    selected states, then deletes them and the selected arrows in one undo step; the first placeless
+    paste after it lands back in place (`last.repeat` starts at −1). Ctrl+A on the canvas selects
+    every state and arrow and focuses the canvas, so Delete / Ctrl+X act on it next.
   - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
     snapshots (`trace.ts`). Each has a `can*` guard returning a user-facing reason or `null`.
     `subsetConstruction` throws past `MAX_DFA_STATES` (64).
@@ -77,7 +80,7 @@ Layers, with dependencies pointing downward only:
   main bundle.
 - `src/store/`: one Zustand store (`store.ts`) holding the automata, active id, selection, per-automaton
   viewports, the open trace, per-automaton undo/redo (capped at 100) and the clipboard
-  (`copySelection` / `paste` for states, `copyAutomaton` / `pasteAutomaton` for a whole automaton:
+  (`copySelection` / `cutSelection` / `paste` for states, `copyAutomaton` / `pasteAutomaton` for a whole automaton:
   whichever was copied last is what Ctrl+V pastes; in memory only, never saved). `automata` is kept most
   recently edited first: edits, undo/redo, creating and adding move one to the front (switching doesn't),
   and that order is what gets saved, so the app reopens on the last edited automaton. The editing lock lives here:
@@ -134,8 +137,9 @@ Layers, with dependencies pointing downward only:
     export / delete (`store.duplicateAutomaton`), Delete/Backspace on a focused entry deletes it (after a confirm in the app's own
     dialog: `askConfirm()` in `confirmStore.ts`, rendered by `ConfirmDialog.tsx` in `App`; never `window.confirm`), or every
     entry Ctrl+clicked into the history bar's own multi-selection (`data-selected`, local state, seeded with the
-    open automaton; Ctrl+A picks all while the focus is in the bar or the pointer is over it, a window listener;
-    every letter shortcut in the app (this Ctrl+A / Ctrl+C, the canvas's S / A, Ctrl+Z / Y / C / V, Toolbar's Ctrl+C)
+    open automaton; Ctrl+A picks all while the focus is in the bar or the pointer is over it, a window listener
+    in the capture phase, so it comes before the canvas's Ctrl+A (select every state);
+    every letter shortcut in the app (this Ctrl+A / Ctrl+C, the canvas's S / A, Ctrl+Z / Y / A / X / C / V, Toolbar's Ctrl+C)
     goes through `shortcut.ts` (`isCtrlLetter`, `shortcutLetter`), which reads the physical key when the layout types a
     non-Latin letter (Hebrew's Ctrl+A is `ש`) but never for punctuation (Dvorak's `;` on the Z key)), Create (a blank DFA
     named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in

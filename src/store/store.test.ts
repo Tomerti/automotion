@@ -401,6 +401,53 @@ describe('store', () => {
       expect(active().states).toHaveLength(2);
     });
 
+    it('cuts the selected states as one undo step; the first paste without a place puts them back', () => {
+      const { st, active } = setup();
+      st().select({ states: ['q0', 'q1'], transitions: [] });
+      expect(st().cutSelection()).toBe(true);
+      expect(active().states).toEqual([]);
+      expect(active().transitions).toEqual([]);
+      expect(st().selection).toEqual({ states: [], transitions: [] });
+      expect(hist(st(), 'a1').past).toHaveLength(1);
+      st().paste();
+      expect(active().states.map((q) => [q.label, q.x, q.y])).toEqual([
+        ['q0', 0, 0],
+        ['q1', 100, 0],
+      ]);
+      expect(active().transitions).toHaveLength(3);
+      // Pasting again steps off, as after a copy.
+      st().paste();
+      const again = st().selection.states.map((id) => active().states.find((q) => q.id === id)!);
+      expect(again.map((q) => [q.label, q.x])).toEqual([
+        ["q0'", PASTE_STEP],
+        ["q1'", 100 + PASTE_STEP],
+      ]);
+    });
+
+    it('a cut also deletes the selected arrows, and undo brings everything back', () => {
+      const { st, active } = setup();
+      st().select({ states: ['q0'], transitions: ['q1->q1'] });
+      expect(st().cutSelection()).toBe(true);
+      expect(active().states.map((q) => q.label)).toEqual(['q1']);
+      expect(active().transitions).toEqual([]);
+      st().undo();
+      expect(active().states).toHaveLength(2);
+      expect(active().transitions).toHaveLength(3);
+    });
+
+    it('a cut does nothing without selected states (arrows alone) or with a trace open', () => {
+      const { st, active } = setup();
+      expect(st().cutSelection()).toBe(false);
+      st().select({ states: [], transitions: ['q1->q1'] });
+      expect(st().cutSelection()).toBe(false);
+      expect(active().transitions).toHaveLength(3);
+      st().select({ states: ['q0'], transitions: [] });
+      st().openTrace(runWord(active(), 'a'));
+      expect(st().cutSelection()).toBe(false);
+      expect(active().states).toHaveLength(2);
+      expect(st().clipboard).toBeNull();
+    });
+
     it('reports when pasting ε-arrows turned a DFA into an NFA', () => {
       const { st, active } = setup();
       st().edit((a) => ({

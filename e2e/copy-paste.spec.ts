@@ -95,3 +95,43 @@ test('a copy pastes into another automaton', async ({ page }) => {
   await expect(page.getByTestId('state-q_1')).toBeVisible();
   await expect(page.getByTestId('edge-q_0-q_1')).toBeVisible();
 });
+
+test('Ctrl+A selects everything, Ctrl+X cuts it and Ctrl+V puts it back in place', async ({
+  page,
+}) => {
+  await openApp(page, { clear: true });
+  await addStateAt(page, 150, 150);
+  await addStateAt(page, 320, 150);
+  await arrow(page, 'q_0', 'q_1', 'a');
+  const q0 = await stateCenter(page, 'q_0');
+
+  await page.keyboard.press('Control+a');
+  await expect(page.getByTestId('state-q_0')).toHaveAttribute('data-selected', 'true');
+  await expect(page.getByTestId('state-q_1')).toHaveAttribute('data-selected', 'true');
+
+  await page.keyboard.press('Control+x');
+  await expect(page.getByTestId('state-q_0')).toHaveCount(0);
+  await expect(page.getByTestId('state-q_1')).toHaveCount(0);
+
+  // With the pointer off the canvas, the first paste lands where the states were cut from.
+  await page.mouse.move(5, 5);
+  await page.keyboard.press('Control+v');
+  await expect(page.getByTestId('edge-q_0-q_1')).toBeVisible();
+  const back = await stateCenter(page, 'q_0');
+  expect(Math.abs(back.x - q0.x)).toBeLessThan(2);
+  expect(Math.abs(back.y - q0.y)).toBeLessThan(2);
+
+  // Shift + drag inside a selection of everything still draws an arrow, moving nothing.
+  await page.keyboard.press('Control+a');
+  await arrow(page, 'q_1', 'q_0', 'b');
+  const after = await stateCenter(page, 'q_0');
+  expect(Math.abs(after.x - q0.x)).toBeLessThan(2);
+  expect(Math.abs(after.y - q0.y)).toBeLessThan(2);
+
+  // Ctrl+A gives the canvas the keyboard, so Delete clears it.
+  await page.getByRole('button', { name: 'Fit' }).focus();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('Delete');
+  await expect(page.getByTestId('state-q_0')).toHaveCount(0);
+  await expect(page.getByTestId('canvas-hint')).toBeVisible();
+});

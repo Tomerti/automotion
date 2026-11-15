@@ -105,14 +105,19 @@ const TABS: Tab[] = [
         hint: 'A history entry asks first. Ctrl+click history entries to delete several at once',
       },
       {
+        gesture: { keys: ['Ctrl', 'X'], on: 'selected states' },
+        action: 'Cut them',
+        hint: 'Copies them and deletes them; Ctrl+V puts them back',
+      },
+      {
         gesture: { keys: ['Ctrl', 'C'], on: 'selection or history entry' },
         action: 'Copy it',
         hint: 'With nothing selected, the diagram as a picture',
       },
       {
-        gesture: { keys: ['Ctrl', 'A'], on: 'history bar' },
-        action: 'Select every automaton',
-        hint: 'Then Delete deletes them all, after asking',
+        gesture: { keys: ['Ctrl', 'A'], on: 'canvas or history bar' },
+        action: 'Select everything',
+        hint: 'Every state and arrow; in the history bar every automaton, which Delete then deletes after asking',
       },
       {
         gesture: { keys: ['Ctrl', 'V'] },

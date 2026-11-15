@@ -52,7 +52,9 @@ describe('Controls popup', () => {
         .join('+'),
     );
     expect(new Set(combos).size).toBe(combos.length);
+    expect(combos).toEqual(expect.arrayContaining(['Ctrl+X', 'Ctrl+A']));
     expect(within(panel).getAllByText('selection or history entry')).toHaveLength(2);
+    expect(within(panel).getByText('canvas or history bar')).toBeInTheDocument();
   });
 
   it('shows only the open tab, so the dialog is as tall as that tab', async () => {
