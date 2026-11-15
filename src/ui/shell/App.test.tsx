@@ -5,7 +5,7 @@ import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { subsetConstruction } from '../../core/subset';
 import { startMinimize, startRun, startSubset } from '../../store/traceActions';
-import { PAUSING_LESSON } from '../tutorial/testing/testLesson';
+import { IDEA_LESSON, PAUSING_LESSON } from '../tutorial/testing/testLesson';
 import { endLesson, startLesson, tutorialStore } from '../tutorial/tutorialStore';
 import App from './App';
 import { HISTORY_BAR_KEY } from './historyPrefs';
@@ -212,5 +212,21 @@ it('a lesson pauses playback at the moment its step explains, even once that ste
   } finally {
     endLesson();
     vi.useRealTimers();
+  }
+});
+
+it('opens a run paused for a word the lesson steps by hand', () => {
+  try {
+    startLesson(IDEA_LESSON);
+    render(<App />);
+    act(() => screen.getByTestId('tutorial-next').click());
+    act(() => startRun('1'));
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+    act(() => appStore.getState().closeTrace());
+    act(() => startRun('01'));
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    expect(screen.getByTestId('step-counter')).toHaveTextContent(/^Step 1 \/ /);
+  } finally {
+    endLesson();
   }
 });

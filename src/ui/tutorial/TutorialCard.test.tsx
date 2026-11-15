@@ -15,7 +15,7 @@ import { BASICS } from './lessons/basics';
 import { LESSONS } from './lessons';
 import { CONVERT_LESSON } from './lessons/convert';
 import { LESSONS_DONE_KEY, markLessonFinished } from './lessonsDone';
-import { TEST_LESSON } from './testing/testLesson';
+import { IDEA_LESSON, TEST_LESSON } from './testing/testLesson';
 import {
   endLesson,
   noteLessonAction,
@@ -418,6 +418,80 @@ describe('a lesson other than Basics', () => {
     const done = lessonSteps(TEST_LESSON).length - 1;
     act(() => tutorialStore.setState({ progress: done, current: done }));
     expect(within(card()).getByText('Test lesson · Done')).toBeInTheDocument();
+  });
+
+  it('shows the idea step with a Next button and no goal row', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    act(() => startLesson(IDEA_LESSON));
+    expect(within(card()).getByTestId('tutorial-instruction')).toHaveTextContent('An idea.');
+    expect(within(card()).getByTestId('tutorial-next')).toHaveAccessibleName('Next');
+    expect(within(card()).queryByTestId('tutorial-goal')).toBeNull();
+    expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
+    await user.click(within(card()).getByTestId('tutorial-next'));
+    expect(card()).toHaveAttribute('data-step', '2');
+    expect(within(card()).getByTestId('tutorial-goal')).toBeInTheDocument();
+    expect(within(card()).queryByTestId('tutorial-next')).toBeNull();
+    // The card never keeps focus: it falls to the body, so canvas shortcuts keep working.
+    expect(card().contains(document.activeElement)).toBe(false);
+  });
+
+  it('hides Next while another automaton is open', () => {
+    render(<App />);
+    act(() => startLesson(IDEA_LESSON));
+    expect(within(card()).getByTestId('tutorial-next')).toBeInTheDocument();
+    act(() => app().setActive('Mine'));
+    expect(within(card()).getByText(/You’re on/)).toBeInTheDocument();
+    expect(within(card()).queryByTestId('tutorial-next')).toBeNull();
+  });
+
+  it('leads with the explanation, then the instruction', () => {
+    const part = TEST_LESSON.parts[0]!;
+    const explained: Lesson = {
+      ...TEST_LESSON,
+      parts: [
+        {
+          ...part,
+          steps: [
+            {
+              id: 'ex/one',
+              explain: () => 'Because it helps.',
+              instruction: () => 'Do the thing.',
+              why: () => 'Not shown.',
+              done: () => false,
+            },
+          ],
+        },
+      ],
+    };
+    render(<App />);
+    act(() => startLesson(explained));
+    const explain = within(card()).getByTestId('tutorial-explain');
+    const instruction = within(card()).getByTestId('tutorial-instruction');
+    expect(explain).toHaveTextContent('Because it helps.');
+    expect(
+      explain.compareDocumentPosition(instruction) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
+  });
+
+  it('shows a goal without a picture as text and examples only', () => {
+    const part = TEST_LESSON.parts[0]!;
+    const plain: Lesson = {
+      ...TEST_LESSON,
+      parts: [
+        {
+          ...part,
+          goal: { text: 'Turn it into a DFA', examples: [{ word: '01', accepted: true }] },
+        },
+      ],
+    };
+    render(<App />);
+    act(() => startLesson(plain));
+    const goal = within(card()).getByTestId('tutorial-goal');
+    expect(within(goal).queryByTestId('tutorial-goal-picture')).toBeNull();
+    expect(goal).toHaveTextContent('Goal: Turn it into a DFA');
+    expect(goal).toHaveTextContent('01✓');
   });
 
   it('shows only the target, in a full-width row, when the goal has an `after` picture', () => {

@@ -6,7 +6,7 @@ import { countedSteps, lessonSteps } from './engine';
 import type { Lesson } from './engine';
 import { GoalPicture } from './GoalPicture';
 import { TutorialPointer } from './TutorialPointer';
-import { finishLesson, quitLesson, tutorialContext, useTutorial } from './tutorialStore';
+import { finishLesson, pressNext, quitLesson, tutorialContext, useTutorial } from './tutorialStore';
 import './tutorial.css';
 
 /** "Tutorial" or "Lesson", for labels that start with it. */
@@ -76,6 +76,7 @@ function GoalRow({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.
       data-testid="tutorial-goal"
       data-part={part}
       data-wide-picture={goal.after ? '' : undefined}
+      data-no-picture={!goal.after && !goal.automaton ? '' : undefined}
     >
       {goal.after ? (
         <div className="av-tutorial-goal-wide" data-testid="tutorial-goal-wide">
@@ -234,7 +235,9 @@ export function TutorialCard(): React.JSX.Element | null {
   // The run that ended a part is still open: the card says so until Esc starts the next part.
   const partDone = hint?.kind === 'part-done' ? hint.part : null;
   const shownPart = partDone ?? step.part;
-  const why = partDone ? null : step.why(ctx);
+  const explain = partDone ? null : step.explain(ctx);
+  // An explanation replaces the why; an idea step has neither.
+  const why = partDone || step.idea || explain ? null : step.why(ctx);
   // Steps are numbered within their part.
   const inPart = steps.filter((s) => s.part === step.part);
   const stepInPart = inPart.indexOf(step) + 1;
@@ -302,7 +305,7 @@ export function TutorialCard(): React.JSX.Element | null {
             <PartDone lesson={lesson} part={partDone} />
           ) : (
             // Keyed by part, so each new part's goal comes in with its own entrance.
-            !last && <GoalRow key={shownPart} lesson={lesson} part={shownPart} />
+            !last && !step.idea && <GoalRow key={shownPart} lesson={lesson} part={shownPart} />
           )}
           {!last && <ProgressBar lesson={lesson} done={current} />}
           {/* One live region that stays mounted, so screen readers announce each new step and
@@ -318,9 +321,20 @@ export function TutorialCard(): React.JSX.Element | null {
                 <RichText text={hint.text} />
               </p>
             )}
+            {explain && (
+              <p
+                key={`${step.id}-explain`}
+                className="av-tutorial-explain"
+                data-testid="tutorial-explain"
+              >
+                <RichText text={explain} />
+              </p>
+            )}
             <p
               key={partDone ? `${step.id}-part-done` : step.id}
-              className="av-tutorial-text"
+              className={
+                step.idea && !partDone ? 'av-tutorial-text av-tutorial-idea' : 'av-tutorial-text'
+              }
               data-testid="tutorial-instruction"
             >
               <RichText
@@ -329,6 +343,18 @@ export function TutorialCard(): React.JSX.Element | null {
                 }
               />
             </p>
+            {step.idea && !partDone && hint?.kind !== 'elsewhere' && (
+              <div className="av-tutorial-actions">
+                <button
+                  type="button"
+                  className="av-go"
+                  data-testid="tutorial-next"
+                  onClick={pressNext}
+                >
+                  Next
+                </button>
+              </div>
+            )}
             {why && (
               <p className="av-tutorial-why" data-testid="tutorial-why">
                 <RichText text={why} />

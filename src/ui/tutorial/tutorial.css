@@ -88,6 +88,13 @@
 .av-tutorial-examples [data-accepted='false'] .av-tutorial-mark {
   color: var(--av-red);
 }
+/* A goal without a picture: the text and the examples on one line, wrapping when they don't fit. */
+.av-tutorial-goal[data-no-picture] .av-tutorial-goal-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  align-items: center;
+}
 .av-tutorial-goal-picture {
   flex: none;
   width: 250px;
@@ -240,6 +247,19 @@
 }
 .av-tutorial-now .av-tutorial-text {
   animation: av-tutorial-step 220ms ease-out;
+}
+.av-tutorial-explain {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--av-ink);
+}
+.av-tutorial-now .av-tutorial-explain {
+  animation: av-tutorial-step 220ms ease-out;
+}
+.av-tutorial-now .av-tutorial-idea {
+  font-weight: 400;
 }
 .av-tutorial-why {
   margin: 0;

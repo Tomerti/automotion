@@ -42,6 +42,7 @@ function SaveButton({ trace }: { trace: SubsetTrace | MinimizeTrace }): React.JS
     <button
       type="button"
       className="av-primary"
+      data-testid="save-trace-result"
       onClick={() => appStore.getState().addAutomaton(trace.result)}
     >
       Save as new automaton
