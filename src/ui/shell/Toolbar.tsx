@@ -16,6 +16,7 @@ import {
   CopyIcon,
   DownloadIcon,
   FitIcon,
+  LinkIcon,
   MinimizeIcon,
   RedoIcon,
   ShareIcon,
@@ -148,10 +149,10 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
   useEffect(() => {
     if (open) focusFirstItem(menuRef.current);
   }, [open]);
-  /** Copies show a clipboard icon, exports (file downloads) a download icon. */
+  /** Share link shows a link icon, copies a clipboard icon, exports (file downloads) a download icon. */
   const item = (
     label: string,
-    how: 'copy' | 'download',
+    how: 'link' | 'copy' | 'download',
     run: () => void,
     shortcut?: { aria: string; text: string },
   ): React.JSX.Element => (
@@ -164,7 +165,7 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
         run();
       }}
     >
-      {how === 'copy' ? <CopyIcon /> : <DownloadIcon />}
+      {how === 'link' ? <LinkIcon /> : how === 'copy' ? <CopyIcon /> : <DownloadIcon />}
       {label}
       {shortcut && (
         <kbd className="av-menu-shortcut" aria-hidden="true">
@@ -179,8 +180,8 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
         ref={triggerRef}
         type="button"
         className="av-icon-button"
-        aria-label="Copy or export"
-        title="Copy or export the picture or its LaTeX"
+        aria-label="Share, copy or export"
+        title="Share a link, or copy or export the picture or its LaTeX"
         aria-haspopup="menu"
         aria-expanded={open}
         disabled={disabled}
@@ -193,21 +194,22 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
           ref={menuRef}
           className="av-popover av-menu av-menu-end av-export-menu"
           role="menu"
-          aria-label="Copy or export"
+          aria-label="Share, copy or export"
           onKeyDown={onMenuKeyDown}
         >
+          {item('Share link', 'link', () => {
+            if (automaton) void copyLink(automaton);
+            else toast('Nothing to share', 'error');
+          })}
+          <div role="separator" className="av-menu-sep" />
           {item('Copy image', 'copy', () => copyDiagram(automaton), {
             aria: 'Control+C',
             text: 'Ctrl+C',
           })}
+          {item('Copy LaTeX', 'copy', () => copyLatex(automaton))}
+          <div role="separator" className="av-menu-sep" />
           {item('Export SVG', 'download', () => void exportDiagram(automaton, 'svg'))}
           {item('Export PNG', 'download', () => void exportDiagram(automaton, 'png'))}
-          <div role="separator" className="av-menu-sep" />
-          {item('Copy LaTeX', 'copy', () => copyLatex(automaton))}
-          {item('Copy link', 'copy', () => {
-            if (automaton) void copyLink(automaton);
-            else toast('Nothing to copy', 'error');
-          })}
           {item('Export LaTeX', 'download', () => exportLatex(automaton))}
         </div>
       )}

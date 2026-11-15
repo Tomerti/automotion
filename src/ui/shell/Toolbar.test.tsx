@@ -32,7 +32,7 @@ describe('Toolbar', () => {
       'Tidy',
       'Convert to DFA',
       'Minimize',
-      'Copy or export',
+      'Share, copy or export',
     ]) {
       expect(btn(n)).toBeDisabled();
     }
@@ -44,9 +44,9 @@ describe('Toolbar', () => {
     expect(btn('Undo')).toHaveAttribute('title', 'Undo (Ctrl+Z)');
     expect(btn('Fit')).toHaveAttribute('title', 'Fit to view');
     expect(btn('Tidy')).toHaveAttribute('title', 'Tidy the layout');
-    expect(btn('Copy or export')).toHaveAttribute(
+    expect(btn('Share, copy or export')).toHaveAttribute(
       'title',
-      'Copy or export the picture or its LaTeX',
+      'Share a link, or copy or export the picture or its LaTeX',
     );
   });
 
@@ -104,20 +104,37 @@ describe('Toolbar', () => {
         </div>
       </>,
     );
-    await user.click(btn('Copy or export'));
-    expect(btn('Copy or export')).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('menuitem', { name: 'Copy image' })).toHaveFocus();
-    expect(screen.getByRole('menuitem', { name: 'Export SVG' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Export PNG' })).toBeInTheDocument();
+    await user.click(btn('Share, copy or export'));
+    expect(btn('Share, copy or export')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('menuitem', { name: 'Share link' })).toHaveFocus();
+    // Share, then the copies, then the downloads, each group set off by a separator.
+    const ownText = (el: Element): string =>
+      [...el.childNodes]
+        .filter((n) => n.nodeType === Node.TEXT_NODE)
+        .map((n) => n.textContent)
+        .join('');
+    const groups = [...screen.getByRole('menu').children].map((el) =>
+      el.getAttribute('role') === 'separator' ? '---' : ownText(el),
+    );
+    expect(groups).toEqual([
+      'Share link',
+      '---',
+      'Copy image',
+      'Copy LaTeX',
+      '---',
+      'Export SVG',
+      'Export PNG',
+      'Export LaTeX',
+    ]);
     expect(screen.getByRole('menuitem', { name: 'Copy image' })).toHaveAttribute(
       'aria-keyshortcuts',
       'Control+C',
     );
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).toBeNull();
-    expect(btn('Copy or export')).toHaveFocus();
+    expect(btn('Share, copy or export')).toHaveFocus();
 
-    await user.click(btn('Copy or export'));
+    await user.click(btn('Share, copy or export'));
     await user.click(screen.getByRole('menuitem', { name: 'Export SVG' }));
     expect(screen.queryByRole('menu')).toBeNull();
     await waitFor(() => expect(names).toEqual(['my-auto.svg']));
@@ -171,7 +188,7 @@ describe('Toolbar', () => {
       const user = userEvent.setup();
       stubClipboard();
       renderWithDiagram();
-      await user.click(btn('Copy or export'));
+      await user.click(btn('Share, copy or export'));
       await user.click(screen.getByRole('menuitem', { name: 'Copy image' }));
       expect(screen.queryByRole('menu')).toBeNull();
       expect(written).toHaveLength(1);
@@ -193,7 +210,7 @@ describe('Toolbar', () => {
         configurable: true,
       });
       renderWithDiagram();
-      await user.click(btn('Copy or export'));
+      await user.click(btn('Share, copy or export'));
       await user.click(screen.getByRole('menuitem', { name: 'Copy LaTeX' }));
       expect(texts).toHaveLength(1);
       expect(texts[0]).toMatch(/^% AutoMotion NFA: .*\n% Needs \\usepackage\{tikz\}/);
@@ -203,7 +220,7 @@ describe('Toolbar', () => {
       );
     });
 
-    it('Copy link puts a link to the automaton on the clipboard', async () => {
+    it('Share link puts a link to the automaton on the clipboard', async () => {
       const user = userEvent.setup();
       const texts: string[] = [];
       Object.defineProperty(navigator, 'clipboard', {
@@ -215,8 +232,8 @@ describe('Toolbar', () => {
         configurable: true,
       });
       renderWithDiagram();
-      await user.click(btn('Copy or export'));
-      await user.click(screen.getByRole('menuitem', { name: 'Copy link' }));
+      await user.click(btn('Share, copy or export'));
+      await user.click(screen.getByRole('menuitem', { name: 'Share link' }));
       await waitFor(() => expect(texts).toHaveLength(1));
       const base = location.origin + location.pathname;
       expect(texts[0]!.startsWith(base + '#a=')).toBe(true);
@@ -305,7 +322,7 @@ describe('Toolbar', () => {
     const active = appStore.getState().automata[0]!;
     appStore.getState().openTrace(runWord(active, 'a'));
     render(<Toolbar />);
-    for (const n of ['Undo', 'Redo', 'Copy or export']) expect(btn(n)).toBeDisabled();
+    for (const n of ['Undo', 'Redo', 'Share, copy or export']) expect(btn(n)).toBeDisabled();
   });
 
   it('Undo/Redo call the store and follow history', async () => {

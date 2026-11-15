@@ -80,7 +80,15 @@ export const CopyIcon = (): React.JSX.Element => (
   </Icon>
 );
 
-/** An arrow up out of a tray: take it out of the app, copied or saved. */
+/** Two chain links: a share link. */
+export const LinkIcon = (): React.JSX.Element => (
+  <Icon>
+    <path d="M8.75 11.25a3.25 3.25 0 0 0 4.6 0l2.3-2.3a3.25 3.25 0 0 0-4.6-4.6l-.9.9" />
+    <path d="M11.25 8.75a3.25 3.25 0 0 0-4.6 0l-2.3 2.3a3.25 3.25 0 0 0 4.6 4.6l.9-.9" />
+  </Icon>
+);
+
+/** An arrow up out of a tray: take it out of the app, shared, copied or saved. */
 export const ShareIcon = (): React.JSX.Element => (
   <Icon>
     <path d="M10 12.5V3.25M6.5 6.75 10 3.25l3.5 3.5" />
