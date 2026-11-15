@@ -509,6 +509,41 @@
   font-size: 14px;
   line-height: 1.45;
   color: var(--av-ink);
+  text-wrap: pretty;
+}
+/* What a phone can and can't do: a green check or a red cross per row, the can't row muted. */
+.av-welcome-device-list {
+  display: grid;
+  gap: 3px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.av-welcome-device-list li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+.av-welcome-device-list [role='img'] {
+  display: grid;
+  place-items: center;
+}
+.av-welcome-device-list .av-icon {
+  width: 17px;
+  height: 17px;
+  stroke-width: 2;
+}
+.av-welcome-can [role='img'] {
+  color: var(--av-green);
+}
+.av-welcome-cannot [role='img'] {
+  color: var(--av-red);
+}
+.av-welcome-cannot {
+  color: var(--av-ink-muted);
 }
 .av-welcome-plan {
   margin: 0 0 18px;

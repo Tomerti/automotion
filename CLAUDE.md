@@ -156,7 +156,7 @@ Layers, with dependencies pointing downward only:
     Fit and first fit) keeps clear of it; its X asks, then
     `quitTutorial()` removes the tutorial automaton (Finish keeps it). `TutorialPointer` frames
     the target with orange corner brackets (portal, follows it each frame; not a ring, which would
-    read as accepting), and `WelcomeCard` is the first-visit dialog (on a touch-only device an amber "Open this on a computer" callout (`role="note"`) above the demo, the theme switch and one **Got it** button, no "Press ?" note) (key `automotion:seen-help`, set when it is answered,
+    read as accepting), and `WelcomeCard` is the first-visit dialog (on a touch-only device an amber "Open this on a computer" callout (`role="note"`) above the demo with a checklist of what a phone can do (✓ open shared automata, ✓ run words, ✗ build or edit; the marks are `role="img"` Yes / No), the theme switch and one **Got it** button, no "Press ?" note) (key `automotion:seen-help`, set when it is answered,
     not when it opens, so a reload before answering shows it again);
     the Controls popup no longer opens by itself. Its `WelcomeDemo` plays random words on the
     "ends in 01" NFA forever (`demoRun.ts`) through `RunTraceView` with `ambient` (silent, 1×, no

@@ -30,6 +30,7 @@ Nothing in progress: pick the next task from the list below.
 ### Phone welcome notice (2026-11-15)
 
 - [x] The phone welcome's "made for a mouse and keyboard" note is an amber callout right under the tagline, above the demo: a laptop icon, a bold "Open this on a computer" headline, and "On a phone you can only open shared automata and run words on them", so it is read before **Got it** is tapped (it was muted text under the theme switch)
+- [x] Its body is a checklist instead of two run-on sentences (the second started at the end of a line on phones): "AutoMotion is made for a mouse and keyboard. On a phone you can:" ✓ Open shared automata, ✓ Run words on them, ✗ Build or edit automata (muted). Picked from a page of mocked wording and colour options; the amber stays
 
 ### Tidy again (2026-11-15)
 
