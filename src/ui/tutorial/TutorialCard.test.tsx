@@ -13,6 +13,7 @@ import type { Lesson } from './engine';
 import { FinishedCard } from './FinishedCard';
 import { BASICS } from './lessons/basics';
 import { LESSONS } from './lessons';
+import { CONVERT_LESSON } from './lessons/convert';
 import { LESSONS_DONE_KEY, markLessonFinished } from './lessonsDone';
 import { TEST_LESSON } from './testing/testLesson';
 import { endLesson, startLesson, tutorialContext, tutorialStore } from './tutorialStore';
@@ -409,6 +410,22 @@ describe('a lesson other than Basics', () => {
     const done = lessonSteps(TEST_LESSON).length - 1;
     act(() => tutorialStore.setState({ progress: done, current: done }));
     expect(within(card()).getByText('Test lesson · Done')).toBeInTheDocument();
+  });
+
+  it('draws a second picture, after an arrow, when the goal turns one automaton into another', () => {
+    render(<App />);
+    act(() => startLesson(TEST_LESSON));
+    expect(within(card()).getAllByTestId('tutorial-goal-picture')).toHaveLength(1);
+    expect(within(card()).queryByTestId('tutorial-goal-arrow')).toBeNull();
+    act(() => endLesson());
+
+    act(() => startLesson(CONVERT_LESSON));
+    const goal = within(card()).getByTestId('tutorial-goal');
+    const pictures = within(goal).getAllByTestId('tutorial-goal-picture');
+    expect(pictures).toHaveLength(2);
+    const after = CONVERT_LESSON.parts[0]!.goal.after!;
+    expect(pictures[1]).toHaveAccessibleName(after.description);
+    expect(within(goal).getByTestId('tutorial-goal-arrow')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('says the automaton is read-only after a refused edit', () => {

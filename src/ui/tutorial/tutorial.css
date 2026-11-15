@@ -93,6 +93,25 @@
   width: 250px;
   height: 122px;
 }
+/* Before and after: two smaller pictures with an arrow between them, which may shrink further. */
+.av-tutorial-goal-pictures {
+  display: flex;
+  flex: 0 1 auto;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+}
+.av-tutorial-goal-pictures .av-tutorial-goal-picture {
+  flex: 0 1 150px;
+  width: 150px;
+  min-width: 0;
+  height: auto;
+}
+.av-tutorial-goal-arrow {
+  flex: none;
+  font-size: 18px;
+  color: var(--av-ink-muted);
+}
 /* Part 2's goal comes in with an orange flash, so the new part is hard to miss. */
 .av-tutorial-goal[data-part='2'] {
   animation: av-tutorial-new-part 900ms ease-out;
@@ -401,7 +420,8 @@
     width: calc(100% - 24px);
   }
   /* Room for the step: the goal and its words say what the picture would. */
-  .av-tutorial-goal-picture {
+  .av-tutorial-goal-picture,
+  .av-tutorial-goal-pictures {
     display: none;
   }
 }

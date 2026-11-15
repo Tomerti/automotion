@@ -72,7 +72,21 @@ function GoalRow({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.
   if (!goal) return null;
   return (
     <div className="av-tutorial-goal" data-testid="tutorial-goal" data-part={part}>
-      <GoalPicture automaton={goal.automaton} description={goal.description} />
+      {goal.after ? (
+        <div className="av-tutorial-goal-pictures">
+          <GoalPicture automaton={goal.automaton} description={goal.description} />
+          <span
+            className="av-tutorial-goal-arrow"
+            data-testid="tutorial-goal-arrow"
+            aria-hidden="true"
+          >
+            →
+          </span>
+          <GoalPicture automaton={goal.after.automaton} description={goal.after.description} />
+        </div>
+      ) : (
+        <GoalPicture automaton={goal.automaton} description={goal.description} />
+      )}
       <div className="av-tutorial-goal-body">
         <p className="av-tutorial-goal-text">
           <b>{lesson.parts.length > 1 ? `Part ${part} goal:` : 'Goal:'}</b>{' '}
