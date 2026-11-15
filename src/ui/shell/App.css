@@ -674,7 +674,8 @@ input.av-switcher-input {
   width: min(260px, 52vw);
   min-height: 34px;
   padding: 0 6px 0 14px;
-  font-family: var(--av-font-math);
+  /* The word is input symbols, set like the tape; the placeholder below stays in Geist. */
+  font-family: var(--av-font-symbol);
   font-size: 17px;
   letter-spacing: 0.06em;
   background: transparent;

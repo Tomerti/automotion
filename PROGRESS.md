@@ -10,7 +10,6 @@ Nothing in progress: pick the next task from the list below.
 
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
 - [ ] Tidy's grid refinement can spread an 8-state layout along a long diagonal (`3rd from end → DFA`): the cost barely minds the area; a compact 4 × 2 grid reads better. A compactness term in the search alone didn't change the pick
-- [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 
 ## Ideas (later)
 
@@ -26,6 +25,13 @@ Nothing in progress: pick the next task from the list below.
 - [x] Cut then paste is a move: the first paste of a cut into the automaton it came from restores the arrows into the cut states from the states left behind (on a DFA without the symbols their source reads elsewhere by then); later pastes are copies
 - [x] Tidy and the subset walkthrough's layout run in a Web Worker (`layout/layoutClient.ts`), so a 64-state layout no longer freezes the page; it falls back to the page where workers fail
 - [x] Tidy also tries a grid for parts of up to 10 states (`layout/grid.ts`: the best candidate snapped to a grid, then improved by moving or swapping states), used when it beats the other candidates by 10%: `To minimize` now comes out as a crossing-free grid with straight arrows (33.4 → 24.8), `3rd from end → DFA` loses its crossings and arrows through states (84 → 46.7); `Contains 101` and the other near ties keep their rows and circles
+
+### Dotted zero for input symbols (2026-11-15)
+
+- [x] The run tape, the word typed in "Test a word…" (its placeholder stays in Geist), edge labels and the symbol input are set in IBM Plex Mono (`--av-font-symbol`), like the tutorial's words to type: Geist's 0 read as O there (`100100` looked like `1OO1OO`), a slashed 0 would read as ∅. Its stack falls back to Geist, which draws ε (Plex Mono has no Greek). State names and prose stay in Geist (e2e `symbol-font.spec.ts`)
+- [x] Editing an arrow's symbols opens them as drawn, `0,1`, not `0, 1`: in the monospace a space after the comma is a whole character wide, so the input opened twice as spread out as the label
+- [x] Exported and copied pictures embed IBM Plex Mono 500 for the edge labels' characters next to Geist (`embedFont.ts`), so an export doesn't fall back to a system monospace (Consolas' slashed 0)
+- [x] Edge labels clear their arrow however wide they are: a label's centre sits a clearance beyond the curve plus its own half-extent (9 px a character), so `0,1` beside a vertical arrow or a sideways self-loop no longer reaches back over the line; one symbol sits 14 px out every way, as before. The layout's label boxes use the same exact width (was 8.5 px, Geist's average)
 
 ### Cut and select all (2026-11-15)
 

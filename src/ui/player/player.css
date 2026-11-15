@@ -265,8 +265,8 @@ select.av-player-speed {
   width: var(--av-cell);
   height: 50px;
   margin-left: -1.5px;
-  /* Not a monospace (a slashed 0 reads as ∅); the cells are fixed-width anyway. */
-  font-family: var(--av-font-math);
+  /* Input symbols: Plex Mono's dotted 0 reads neither as O (Geist's) nor as ∅ (a slashed one). */
+  font-family: var(--av-font-symbol);
   font-size: 24px;
   font-weight: 500;
   line-height: 1;

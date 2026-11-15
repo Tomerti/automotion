@@ -448,11 +448,13 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     const a = automaton.states.find((s) => s.id === t?.from);
     const b = automaton.states.find((s) => s.id === t?.to);
     if (!t || !a || !b) return;
-    const symbols = t.symbols.join(', ');
+    // As the label draws them: in the monospace symbol font a space after each comma is a whole
+    // character wide, so `0, 1` would open twice as spread out as the `0,1` it replaces.
+    const symbols = t.symbols.join(',');
     openInline({
       testId: 'symbol-input',
       label: 'Transition symbols',
-      initial: opts.append && symbols !== '' ? `${symbols}, ` : symbols,
+      initial: opts.append && symbols !== '' ? `${symbols},` : symbols,
       at: edgeLabelPoint(edgeEl, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }),
       fontSize: EDGE_LABEL_FONT_SIZE,
       covers: t.id,

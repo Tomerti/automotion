@@ -9,6 +9,8 @@ export interface InlineInputProps {
   at: Point;
   /** On-screen font size (px), so the text matches the label it replaces. */
   fontSize: number;
+  /** Set in the symbol font, like the edge label it replaces (else like a state's name). */
+  symbols?: boolean;
   /**
    * Where the drawn label puts its alphabetic baseline for a text, in ems below `at`: the input's
    * text is set on that baseline, so it doesn't jump when the input opens or closes. Without it
@@ -30,8 +32,19 @@ export interface InlineInputProps {
  * text. Enter or blur commits, Escape cancels.
  */
 export function InlineInput(props: InlineInputProps): React.JSX.Element {
-  const { testId, label, initial, at, fontSize, baseline, normalize, onSubmit, onCancel, onBlur } =
-    props;
+  const {
+    testId,
+    label,
+    initial,
+    at,
+    fontSize,
+    symbols,
+    baseline,
+    normalize,
+    onSubmit,
+    onCancel,
+    onBlur,
+  } = props;
   const [value, setValue] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   /** How far (px) the box moves down from centred on `at`, to put its text on `baseline`. */
@@ -98,7 +111,7 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
   return (
     <div
       ref={boxRef}
-      className="av-inline"
+      className={symbols ? 'av-inline av-inline-symbols' : 'av-inline'}
       data-invalid={error !== null}
       style={{
         left: at.x,

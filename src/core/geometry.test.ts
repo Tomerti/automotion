@@ -96,6 +96,54 @@ describe('selfLoopGeometry', () => {
   });
 });
 
+describe('edge label clearance', () => {
+  const C = { x: 0, y: 200 }; // A → C points down
+
+  it('moves a wider label out beside a vertical edge, so its near side keeps its distance', () => {
+    const one = edgeGeometry(A, C, 0, 'left', '0');
+    const three = edgeGeometry(A, C, 0, 'left', '0,1');
+    expect(Math.abs(three.label.x) - Math.abs(one.label.x)).toBeCloseTo(9); // half its extra 18 px
+    expect(three.label.y).toBeCloseTo(one.label.y);
+  });
+  it('keeps a label above a horizontal edge where it is, however wide', () => {
+    const one = edgeGeometry(A, B, 0, 'left', '0');
+    const five = edgeGeometry(A, B, 0, 'left', '0,1,2');
+    expect(five.label.x).toBeCloseTo(one.label.x);
+    expect(five.label.y).toBeCloseTo(one.label.y);
+  });
+  it('puts a label one symbol wide 14 px out whichever way the edge runs, as it always was', () => {
+    expect(Math.abs(edgeGeometry(A, C, 0, 'left', '0').label.x)).toBeCloseTo(14);
+    expect(Math.abs(edgeGeometry(A, B, 0, 'left', '0').label.y)).toBeCloseTo(14);
+    const diagonal = edgeGeometry(A, { x: 200, y: 200 }, 0, 'left', '0');
+    expect(Math.hypot(diagonal.label.x - 100, diagonal.label.y - 100)).toBeCloseTo(14);
+  });
+  it('places an empty label (a new edge being drawn) where one symbol would go', () => {
+    expect(edgeGeometry(A, C, 0, 'left', '')).toEqual(edgeGeometry(A, C, 0, 'left', '0'));
+  });
+  it("moves a sideways self-loop's wider label out, and leaves an upward one's where it is", () => {
+    const right = (text: string): number => selfLoopGeometry(O, 0, text).label.x;
+    expect(right('0,1') - right('0')).toBeCloseTo(9);
+    const up = (text: string): number => selfLoopGeometry(O, -Math.PI / 2, text).label.y;
+    expect(up('0,1')).toBeCloseTo(up('0'));
+  });
+  it('measures a transition by its symbols as drawn ("0,1")', () => {
+    const m = fixture({
+      kind: 'DFA',
+      alphabet: '01',
+      states: ['q0', 'q1'],
+      edges: [
+        ['q0', '0', 'q1'],
+        ['q1', '01', 'q1'],
+      ],
+      start: 'q0',
+    });
+    const [q0, q1] = m.states as [State, State];
+    const angle = bestLoopAngle(q1, [q0]);
+    expect(transitionGeometry(m, q1, q1)).toEqual(selfLoopGeometry(q1, angle, '0,1'));
+    expect(transitionGeometry(m, q1, q1)).not.toEqual(selfLoopGeometry(q1, angle, '0'));
+  });
+});
+
 describe('bestLoopAngle', () => {
   it('defaults to up and avoids neighbors', () => {
     expect(bestLoopAngle(O, [])).toBeCloseTo(-Math.PI / 2);
