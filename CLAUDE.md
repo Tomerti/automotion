@@ -133,7 +133,7 @@ Layers, with dependencies pointing downward only:
     `canvas/Thumbnail.tsx` picture, newest edit first, a ⋯ menu per entry for rename / duplicate /
     export / delete (`store.duplicateAutomaton`), Delete/Backspace on a focused entry deletes it (after a confirm), or every
     entry Ctrl+clicked into the history bar's own multi-selection (`data-selected`, local state, seeded with the
-    open automaton), Create (a blank DFA
+    open automaton; Ctrl+A on an entry picks all), Create (a blank DFA
     named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in
     `historyPrefs.ts`), the DFA/NFA switch floating at the top of the canvas (`KindPill.tsx`, hidden
     while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,

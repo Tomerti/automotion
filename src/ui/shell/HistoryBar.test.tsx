@@ -288,6 +288,35 @@ describe('HistoryBar actions', () => {
     expect(items()[0]!.dataset.selected).toBeUndefined();
   });
 
+  it('Ctrl+A on an entry picks every automaton, and Delete deletes them all', async () => {
+    const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
+    resetAppStore({ automata: [parity, blank, third], activeId: parity.id });
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<HistoryBar />);
+    await user.click(items()[1]!);
+    await user.keyboard('{Control>}a{/Control}');
+    expect(items().map((el) => el.dataset.selected)).toEqual(['true', 'true', 'true']);
+    expect(st().activeId).toBe(blank.id);
+
+    // Ctrl+click still takes one out.
+    await user.keyboard('{Control>}');
+    await user.click(items()[0]!);
+    await user.keyboard('{/Control}');
+    expect(items().map((el) => el.dataset.selected)).toEqual([undefined, 'true', 'true']);
+
+    await user.keyboard('{Control>}a{/Control}{Delete}');
+    expect(confirm).toHaveBeenCalledWith('Delete 3 automata ("Parity", "Blank" and "Third")?');
+    expect(st().automata).toHaveLength(1);
+    expect(st().automata[0]).toMatchObject({ name: 'Untitled', kind: 'DFA', states: [] });
+
+    // In the rename field, Ctrl+A selects its text, not the entries.
+    await user.dblClick(items()[0]!);
+    await user.keyboard('{Control>}a{/Control}');
+    expect(screen.getByRole('textbox', { name: 'Automaton name' })).toBeInTheDocument();
+    expect(items()[0]!.dataset.selected).toBeUndefined();
+  });
+
   it('Ctrl+click on a picked entry takes it out; a plain click, Escape or a click outside clears', async () => {
     const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
     resetAppStore({ automata: [parity, blank, third], activeId: parity.id });

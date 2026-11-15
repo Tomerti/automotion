@@ -29,6 +29,7 @@ Nothing in progress: pick the next task from the list below.
 ### Delete several automata (2026-11-15)
 
 - [x] Ctrl+click (⌘-click) in the history bar picks several entries without opening them, starting from the open automaton as in a file explorer (Ctrl+click a picked one to take it out); picked entries are tinted orange. Delete or Backspace then deletes them all after one confirm (`Delete 3 automata ("A", "B" and "C")?`). A plain click, Escape or a click outside the list drops the selection; Ctrl+double-click doesn't rename. The Controls guide's Delete row says so
+- [x] Ctrl+A (⌘A) on a focused history entry picks every automaton, so Delete clears the whole history (a blank "Untitled" takes its place); in the rename field it still selects the text. Listed in the Controls guide's Keys tab
 
 ### Minimize labels (2026-11-15)
 

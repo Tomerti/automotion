@@ -164,3 +164,28 @@ test('Ctrl+click picks several history entries and Delete deletes them together'
   await expect(entries.first()).not.toHaveAttribute('data-selected');
   await expect(entries.first()).toHaveAttribute('aria-current', 'page');
 });
+
+test('Ctrl+A on a history entry picks every automaton and Delete deletes them all', async ({
+  page,
+}) => {
+  await openApp(page, { clear: true });
+  const bar = page.getByRole('navigation', { name: 'History' });
+  const entries = bar.getByTestId('history-item');
+  await bar.getByRole('button', { name: 'Create' }).click();
+  await bar.getByRole('button', { name: 'Create' }).click();
+  await expect(entries).toHaveCount(3);
+
+  await entries.nth(1).click();
+  await page.keyboard.press('ControlOrMeta+a');
+  for (let i = 0; i < 3; i++) await expect(entries.nth(i)).toHaveAttribute('data-selected', 'true');
+
+  page.once('dialog', (d) => {
+    expect(d.message()).toBe('Delete 3 automata ("Untitled 3", "Untitled 2" and "Untitled")?');
+    void d.accept();
+  });
+  await page.keyboard.press('Delete');
+  // The canvas is never left empty: a fresh blank automaton takes their place.
+  await expect(entries).toHaveCount(1);
+  await expect(entries.first()).toContainText('Untitled');
+  await expect(entries.first()).toContainText('DFA · 0 states');
+});

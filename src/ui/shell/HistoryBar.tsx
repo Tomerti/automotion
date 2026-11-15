@@ -49,6 +49,11 @@ function deleteWithConfirm(list: readonly Automaton[]): boolean {
   return true;
 }
 
+/** Ctrl+A (⌘A), without Shift or Alt. */
+function isSelectAllKey(e: React.KeyboardEvent): boolean {
+  return (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'a';
+}
+
 /** Ctrl+click (⌘-click) adds an entry to the multi-selection or takes it out. */
 function isPickClick(e: React.MouseEvent): boolean {
   return e.ctrlKey || e.metaKey;
@@ -304,8 +309,9 @@ function EntryMenu(props: {
  * The left bar: every automaton, most recently edited first, with a picture of its diagram.
  * Clicking one opens it; Delete on it, or its ⋯ menu, deletes it after asking; the menu also
  * renames, duplicates and exports (JSON or LaTeX). Ctrl+click (⌘-click) picks several entries,
- * starting from the open one, without opening them; Delete then deletes them all after one
- * confirm, and a plain click, Escape or a click outside the list drops the selection. Ctrl+C on one copies it, and Ctrl+V (anywhere) adds a copy. Create sits at the top, Import and Export all at the bottom.
+ * starting from the open one, without opening them, and Ctrl+A on an entry picks them all;
+ * Delete then deletes the picked ones after one confirm, and a plain click, Escape or a click
+ * outside the list drops the selection. Ctrl+C on one copies it, and Ctrl+V (anywhere) adds a copy. Create sits at the top, Import and Export all at the bottom.
  */
 export function HistoryBar(): React.JSX.Element {
   const automata = useAppStore((s) => s.automata);
@@ -421,6 +427,10 @@ export function HistoryBar(): React.JSX.Element {
                       // Handled here: the canvas would copy its selection, the toolbar a picture.
                       e.preventDefault();
                       copyWithToast(a);
+                    } else if (isSelectAllKey(e)) {
+                      // Instead of selecting the page's text.
+                      e.preventDefault();
+                      setPickedIds(new Set(automata.map((x) => x.id)));
                     } else if (e.key === 'Delete' || e.key === 'Backspace') {
                       e.preventDefault();
                       if (deleteWithConfirm(picking ? picked : [a])) clearPicked();

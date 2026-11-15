@@ -110,6 +110,11 @@ const TABS: Tab[] = [
         hint: 'With nothing selected, the diagram as a picture',
       },
       {
+        gesture: { keys: ['Ctrl', 'A'], on: 'history entry' },
+        action: 'Select every automaton',
+        hint: 'Then Delete deletes them all, after asking',
+      },
+      {
         gesture: { keys: ['Ctrl', 'V'] },
         action: 'Paste',
         hint: 'States at the pointer; an automaton as a new copy; LaTeX (TikZ) code as new automata (also Import → Paste LaTeX…)',
