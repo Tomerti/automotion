@@ -799,6 +799,61 @@ input.av-switcher-input {
 .av-modal-head .av-icon-button {
   margin-right: -8px;
 }
+/* askConfirm's dialog (ConfirmDialog.tsx): the app's own stand-in for window.confirm. */
+.av-confirm {
+  width: min(400px, 100%);
+  padding: 20px 22px 18px;
+}
+.av-confirm-title {
+  font-size: 17px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.av-confirm-body {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: var(--av-ink-muted);
+}
+.av-confirm-items {
+  display: grid;
+  gap: 2px;
+  max-height: 168px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  overflow-y: auto;
+  color: var(--av-ink);
+  list-style: none;
+  background: var(--av-hover);
+  border-radius: 8px;
+}
+.av-confirm-items li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.av-confirm-items .av-confirm-more {
+  color: var(--av-ink-muted);
+}
+.av-confirm-note {
+  margin: 0;
+}
+.av-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+.av-danger,
+button.av-danger:hover:not(:disabled) {
+  font-weight: 600;
+  color: var(--av-on-accent);
+  background: var(--av-red);
+  border-color: var(--av-red);
+}
+button.av-danger:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
 /* The tutorial button sits beside the close button, pushed to the right with it. */
 .av-guide-tutorial {
   margin-left: auto;

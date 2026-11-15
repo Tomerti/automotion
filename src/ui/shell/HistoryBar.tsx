@@ -6,6 +6,7 @@ import { serialize } from '../../persistence/fileFormat';
 import { appStore, useAppStore } from '../../store/store';
 import { latexDocument, latexDocumentAll } from '../canvas/exportLatex';
 import { Thumbnail } from '../canvas/Thumbnail';
+import { askConfirm } from './confirmStore';
 import { copyLink } from './copyLink';
 import { downloadText, slug } from './download';
 import { IMPORT_ACCEPT, importFile } from './importFile';
@@ -20,29 +21,22 @@ const MIME = 'application/json';
 /** Room the ⋯ menu needs below its button before it opens upward instead. */
 const MENU_ROOM = 215;
 
-/** Names quoted and joined for a sentence: `"A"`, `"A" and "B"`, `"A", "B", "C" and 2 more`. */
-function quotedNames(list: readonly Automaton[], max = 4): string {
-  const shown = list.length > max ? list.slice(0, max - 1) : list;
-  const quoted = shown.map((a) => `"${a.name}"`);
-  const rest = list.length - shown.length;
-  if (rest > 0) return `${quoted.join(', ')} and ${rest} more`;
-  return quoted.length < 2
-    ? (quoted[0] ?? '')
-    : `${quoted.slice(0, -1).join(', ')} and ${quoted[quoted.length - 1]}`;
-}
-
 /**
- * Delete `list` after one confirm; false if the user said no. The canvas is never left
- * without an automaton.
+ * Delete `list` after one confirm in the app's dialog; false if the user said no. The canvas is
+ * never left without an automaton.
  */
-function deleteWithConfirm(list: readonly Automaton[]): boolean {
+async function deleteWithConfirm(list: readonly Automaton[]): Promise<boolean> {
   const [only] = list;
   if (!only) return false;
-  const question =
-    list.length === 1
-      ? `Delete "${only.name}"?`
-      : `Delete ${list.length} automata (${quotedNames(list)})?`;
-  if (!window.confirm(question)) return false;
+  const several = list.length > 1;
+  const ok = await askConfirm({
+    title: several ? `Delete ${list.length} automata?` : `Delete "${only.name}"?`,
+    items: several ? list.map((a) => a.name) : undefined,
+    note: 'This can’t be undone.',
+    confirmLabel: 'Delete',
+    danger: true,
+  });
+  if (!ok) return false;
   const st = appStore.getState();
   for (const a of list) st.deleteAutomaton(a.id);
   if (appStore.getState().automata.length === 0) st.addAutomaton(emptyAutomaton('Untitled', 'DFA'));
@@ -298,7 +292,7 @@ function EntryMenu(props: {
           {item('Export JSON', () => exportOne(automaton))}
           {item('Export LaTeX', () => exportLatex(automaton))}
           <div role="separator" className="av-menu-sep" />
-          {item('Delete', () => deleteWithConfirm([automaton]), { danger: true })}
+          {item('Delete', () => void deleteWithConfirm([automaton]), { danger: true })}
         </div>
       )}
     </div>
@@ -340,7 +334,9 @@ export function HistoryBar(): React.JSX.Element {
   useEffect(() => {
     if (!picking) return;
     const onPointerDown = (e: PointerEvent): void => {
-      if (e.target instanceof Node && listRef.current?.contains(e.target)) return;
+      if (!(e.target instanceof Element)) return;
+      // Inside the list, or answering the delete dialog (Cancel keeps the selection).
+      if (listRef.current?.contains(e.target) || e.target.closest('.av-modal-backdrop')) return;
       setPickedIds(new Set());
     };
     document.addEventListener('pointerdown', onPointerDown);
@@ -433,7 +429,9 @@ export function HistoryBar(): React.JSX.Element {
                       setPickedIds(new Set(automata.map((x) => x.id)));
                     } else if (e.key === 'Delete' || e.key === 'Backspace') {
                       e.preventDefault();
-                      if (deleteWithConfirm(picking ? picked : [a])) clearPicked();
+                      void deleteWithConfirm(picking ? picked : [a]).then((ok) => {
+                        if (ok) clearPicked();
+                      });
                     } else if (e.key === 'Escape' && picking) {
                       // Only drops the selection, not an open trace too.
                       e.stopPropagation();

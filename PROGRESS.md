@@ -30,6 +30,7 @@ Nothing in progress: pick the next task from the list below.
 
 - [x] Ctrl+click (⌘-click) in the history bar picks several entries without opening them, starting from the open automaton as in a file explorer (Ctrl+click a picked one to take it out); picked entries are tinted orange. Delete or Backspace then deletes them all after one confirm (`Delete 3 automata ("A", "B" and "C")?`). A plain click, Escape or a click outside the list drops the selection; Ctrl+double-click doesn't rename. The Controls guide's Delete row says so
 - [x] Ctrl+A (⌘A) on a focused history entry picks every automaton, so Delete clears the whole history (a blank "Untitled" takes its place); in the rename field it still selects the text. Listed in the Controls guide's Keys tab
+- [x] Deleting asks in the app's own dialog instead of the browser's `window.confirm` ("tomerti.github.io says"): `askConfirm()` (`ui/shell/confirmStore.ts`) and `ConfirmDialog.tsx`, mounted once in `App`. Its heading asks (`Delete "Parity"?`, `Delete 3 automata?` with the names listed, cut short past six), "This can’t be undone.", Cancel and a red **Delete** (`.av-danger`) that has the focus, so Delete then Enter still works; Escape or the backdrop cancels and focus goes back to the entry. Cancel keeps a Ctrl+click selection
 
 ### Minimize labels (2026-11-15)
 

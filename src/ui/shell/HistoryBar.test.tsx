@@ -7,6 +7,8 @@ import { serialize } from '../../persistence/fileFormat';
 import { decodeShare, readShareHash, sameAutomaton } from '../../persistence/shareLink';
 import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
+import { ConfirmDialog } from './ConfirmDialog';
+import { confirmStore } from './confirmStore';
 import { HistoryBar } from './HistoryBar';
 import { toastStore } from './toastStore';
 
@@ -38,9 +40,29 @@ async function openAction(
   await user.click(screen.getByRole('menuitem', { name: action }));
 }
 
+/** The bar with the app's confirm dialog (rendered by `App` in the real app). */
+function renderWithDialog(extra?: React.ReactNode): void {
+  render(
+    <>
+      <HistoryBar />
+      <ConfirmDialog />
+      {extra}
+    </>,
+  );
+}
+
+/** Click `label` in the open confirm dialog. */
+async function answer(
+  user: ReturnType<typeof userEvent.setup>,
+  label: 'Delete' | 'Cancel',
+): Promise<void> {
+  await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: label }));
+}
+
 beforeEach(() => {
   resetAppStore({ automata: [parity, blank], activeId: parity.id });
   toastStore.setState({ toasts: [] });
+  confirmStore.setState({ request: null });
 });
 afterEach(() => {
   cleanup();
@@ -220,45 +242,54 @@ describe('HistoryBar actions', () => {
     );
   });
 
-  it('Delete asks, removes that automaton and always keeps one', async () => {
+  it('Delete asks in the app’s dialog, removes that automaton and always keeps one', async () => {
     const user = userEvent.setup();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    render(<HistoryBar />);
+    const confirm = vi.spyOn(window, 'confirm');
+    renderWithDialog();
     await openAction(user, 'Blank', 'Delete');
-    expect(confirm).toHaveBeenCalledWith('Delete "Blank"?');
+    const ask = screen.getByRole('alertdialog', { name: 'Delete "Blank"?' });
+    expect(ask).toHaveTextContent('This can’t be undone.');
+    expect(within(ask).queryByRole('list')).toBeNull();
+    await answer(user, 'Cancel');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(names()).toEqual(['Parity', 'Blank']);
 
-    confirm.mockReturnValue(true);
     await openAction(user, 'Blank', 'Delete');
+    await answer(user, 'Delete');
     expect(names()).toEqual(['Parity']);
     // Deleting another automaton keeps the open one.
     expect(st().activeId).toBe(parity.id);
 
     await openAction(user, 'Parity', 'Delete');
+    await answer(user, 'Delete');
     expect(st().automata).toHaveLength(1);
     expect(st().automata[0]).toMatchObject({ name: 'Untitled', kind: 'DFA', states: [] });
     expect(st().activeId).toBe(st().automata[0]?.id);
+    expect(confirm).not.toHaveBeenCalled();
   });
 
-  it('the Delete key on a clicked entry asks and deletes it; keys in a rename field don’t', async () => {
+  it('the Delete key on a clicked entry asks; Escape cancels, Enter deletes; keys in a rename field don’t', async () => {
     const user = userEvent.setup();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    render(<HistoryBar />);
+    renderWithDialog();
     await user.click(items()[1]!);
     expect(items()[1]).toHaveFocus();
     await user.keyboard('{Delete}');
-    expect(confirm).toHaveBeenCalledWith('Delete "Blank"?');
+    const ask = screen.getByRole('alertdialog', { name: 'Delete "Blank"?' });
+    expect(within(ask).getByRole('button', { name: 'Delete' })).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(names()).toEqual(['Parity', 'Blank']);
+    // Focus is back on the entry, so the key works again.
+    expect(items()[1]).toHaveFocus();
 
-    confirm.mockReturnValue(true);
     await user.keyboard('{Backspace}');
+    await user.keyboard('{Enter}');
     expect(names()).toEqual(['Parity']);
     expect(st().activeId).toBe(parity.id);
 
-    confirm.mockClear();
     await user.dblClick(items()[0]!);
     await user.keyboard('{Backspace}{Delete}');
-    expect(confirm).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(names()).toEqual(['Parity']);
   });
 
@@ -266,8 +297,7 @@ describe('HistoryBar actions', () => {
     const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
     resetAppStore({ automata: [parity, blank, third], activeId: parity.id });
     const user = userEvent.setup();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    render(<HistoryBar />);
+    renderWithDialog();
     await user.keyboard('{Control>}');
     await user.click(items()[2]!);
     await user.keyboard('{/Control}');
@@ -277,12 +307,19 @@ describe('HistoryBar actions', () => {
     expect(items().map((el) => el.dataset.selected)).toEqual(['true', undefined, 'true']);
 
     await user.keyboard('{Delete}');
-    expect(confirm).toHaveBeenCalledWith('Delete 2 automata ("Parity" and "Third")?');
+    const ask = screen.getByRole('alertdialog', { name: 'Delete 2 automata?' });
+    expect(
+      within(ask)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Parity', 'Third']);
+    // Cancel keeps the selection.
+    await answer(user, 'Cancel');
     expect(names()).toEqual(['Parity', 'Blank', 'Third']);
     expect(items().filter((el) => el.dataset.selected)).toHaveLength(2);
 
-    confirm.mockReturnValue(true);
     await user.keyboard('{Backspace}');
+    await answer(user, 'Delete');
     expect(names()).toEqual(['Blank']);
     expect(st().activeId).toBe(blank.id);
     expect(items()[0]!.dataset.selected).toBeUndefined();
@@ -292,8 +329,7 @@ describe('HistoryBar actions', () => {
     const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
     resetAppStore({ automata: [parity, blank, third], activeId: parity.id });
     const user = userEvent.setup();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<HistoryBar />);
+    renderWithDialog();
     await user.click(items()[1]!);
     await user.keyboard('{Control>}a{/Control}');
     expect(items().map((el) => el.dataset.selected)).toEqual(['true', 'true', 'true']);
@@ -306,7 +342,8 @@ describe('HistoryBar actions', () => {
     expect(items().map((el) => el.dataset.selected)).toEqual([undefined, 'true', 'true']);
 
     await user.keyboard('{Control>}a{/Control}{Delete}');
-    expect(confirm).toHaveBeenCalledWith('Delete 3 automata ("Parity", "Blank" and "Third")?');
+    expect(screen.getByRole('alertdialog', { name: 'Delete 3 automata?' })).toBeInTheDocument();
+    await answer(user, 'Delete');
     expect(st().automata).toHaveLength(1);
     expect(st().automata[0]).toMatchObject({ name: 'Untitled', kind: 'DFA', states: [] });
 
@@ -321,13 +358,7 @@ describe('HistoryBar actions', () => {
     const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
     resetAppStore({ automata: [parity, blank, third], activeId: parity.id });
     const user = userEvent.setup();
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(
-      <>
-        <HistoryBar />
-        <button type="button">Outside</button>
-      </>,
-    );
+    renderWithDialog(<button type="button">Outside</button>);
     const picked = (): (string | undefined)[] => items().map((el) => el.dataset.selected);
     const ctrlClick = async (el: HTMLElement): Promise<void> => {
       await user.keyboard('{Control>}');
@@ -360,7 +391,8 @@ describe('HistoryBar actions', () => {
     expect(st().activeId).toBe(third.id);
     // With nothing picked, Delete takes only the focused entry.
     await user.keyboard('{Delete}');
-    expect(confirm).toHaveBeenLastCalledWith('Delete "Third"?');
+    expect(screen.getByRole('alertdialog', { name: 'Delete "Third"?' })).toBeInTheDocument();
+    await answer(user, 'Delete');
     expect(names()).toEqual(['Parity', 'Blank']);
   });
 
