@@ -108,6 +108,11 @@ export interface StepSpec {
   latch?(ctx: TutorialContext): boolean;
   /** Done (latched) once any of these actions is reported (see `noteLessonAction`). */
   action?: LessonAction[];
+  /**
+   * The step of the open run or walkthrough where playback pauses while this step is on the
+   * card: the moment the next step explains (see `lessonStopAt`). Null: nowhere.
+   */
+  pauseAt?(ctx: TutorialContext): number | null;
 }
 
 export interface LessonPart {
@@ -134,8 +139,6 @@ export interface Lesson {
   /** The automaton it opens on; null: a blank DFA (Basics). */
   start: Automaton | null;
   editable: boolean;
-  /** Runs and conversions of its automata start playing as they open. */
-  autoPlay: boolean;
   parts: LessonPart[];
   /** The closing card's text. */
   closing: string;
@@ -155,6 +158,7 @@ export interface Step {
   run?: { word: string; accepted: boolean };
   latch?(ctx: TutorialContext): boolean;
   action?: LessonAction[];
+  pauseAt?(ctx: TutorialContext): number | null;
 }
 
 /** q0 is the start state (or the first state before there is one); q1 is the first other state. */
@@ -278,6 +282,7 @@ function toStep(lesson: Lesson, all: readonly Placed[], i: number): Step {
     ...(spec.run ? { run: spec.run } : {}),
     ...(spec.latch ? { latch: spec.latch } : {}),
     ...(spec.action ? { action: spec.action } : {}),
+    ...(spec.pauseAt ? { pauseAt: spec.pauseAt } : {}),
   };
 }
 

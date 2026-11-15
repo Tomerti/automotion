@@ -59,52 +59,43 @@ function subsetOf(ctx: TutorialContext): SubsetTrace | null {
 const needConvert = (ctx: TutorialContext): string | null =>
   subsetOf(ctx) ? null : 'First, press Convert to DFA again.';
 
-/**
- * The walkthrough has reached the turn of the DFA state {q_0,q_1}: it has appeared (one step after
- * the first state) and the next steps expand it.
- */
-function pairTurn(ctx: TutorialContext): boolean {
+/** Where the open walkthrough first shows the DFA state «{q_0,q_1}», if one is open. */
+function pairAt(ctx: TutorialContext): number | null {
   const t = subsetOf(ctx);
-  const turn = t?.steps.findIndex(
-    (s) => s.phase === 'expand' && s.subset.includes('q_0') && s.subset.includes('q_1'),
-  );
-  return turn !== undefined && turn >= 0 && ctx.stepIndex >= turn;
+  const pair = t?.result.states.find((s) => s.label === '{q_0,q_1}')?.id;
+  if (!t || pair === undefined) return null;
+  const at = t.steps.findIndex((s) => s.revealedStates.includes(pair));
+  return at >= 0 ? at : null;
 }
 
 const STEPS: StepSpec[] = [
   {
     id: 'convert/open',
     instruction: () => 'Press Convert to DFA at the top.',
-    why: () => 'It builds a DFA that accepts exactly the same words.',
+    why: () =>
+      'A DFA can’t guess, so each of its states stands for every NFA state you could be in.',
     latch: (ctx) => subsetOf(ctx) !== null,
     target: () => 'button[aria-label="Convert to DFA"]',
   },
   {
-    id: 'convert/first',
-    instruction: () => 'Look at the first DFA state, «{q_0}», then press [→] once.',
+    id: 'convert/pair',
+    instruction: () => 'Watch it build the DFA: it pauses at a new state.',
     why: () =>
-      'A DFA can’t guess, so each of its states stands for every NFA state you could be in: here «{q_0}».',
+      'It follows each symbol from each set, so every set the NFA can reach becomes a state.',
+    // Playback pauses as «{q_0,q_1}» appears, which latches this step: the next one explains it.
+    pauseAt: pairAt,
     latch: (ctx) => {
-      const t = subsetOf(ctx);
-      const init = t?.steps.findIndex((s) => s.phase === 'init') ?? -1;
-      return init >= 0 && ctx.stepIndex > init;
+      const at = pairAt(ctx);
+      return at !== null && ctx.stepIndex >= at;
     },
     first: needConvert,
     target: () => DOCK,
   },
   {
-    id: 'convert/pair',
-    instruction: () => 'Keep stepping until «{q_0,q_1}» is expanded.',
-    why: (l) =>
-      `After a \`0\` the NFA is in ${l.q0} or has moved to ${l.q1}, so the DFA state holds both.`,
-    latch: pairTurn,
-    first: needConvert,
-    target: () => '.av-player-explanation',
-  },
-  {
     id: 'convert/end',
-    instruction: () => 'Press Play, or [Space], to run it to the end.',
-    why: () => 'A set accepts when it holds an accepting NFA state: some guess got there.',
+    instruction: () => 'Press Play to finish building it.',
+    why: (l) =>
+      `After a \`0\` the NFA could still be in ${l.q0} or have moved to ${l.q1}, so the DFA state is both.`,
     latch: (ctx) => {
       const t = subsetOf(ctx);
       return t !== null && ctx.stepIndex === t.steps.length - 1;
@@ -121,8 +112,8 @@ const STEPS: StepSpec[] = [
       if (ctx.owned.length > 1) return null;
       const t = subsetOf(ctx);
       if (!t) return needConvert(ctx);
-      // The walkthrough reopens paused, and saving shows only at its last step.
-      return ctx.stepIndex < t.steps.length - 1 ? 'First, press Play to reach the end.' : null;
+      // Saving shows only at the last step; a reopened walkthrough plays there by itself.
+      return ctx.stepIndex < t.steps.length - 1 ? 'First, let it play to the end.' : null;
     },
     target: () => DOCK,
   },
@@ -136,7 +127,6 @@ export const CONVERT_LESSON: Lesson & { id: 'convert' } = {
   minutes: 1,
   start: CONTAINS_01,
   editable: false,
-  autoPlay: false,
   parts: [
     {
       title: 'Convert an NFA',

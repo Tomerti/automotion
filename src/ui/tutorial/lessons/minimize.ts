@@ -58,6 +58,12 @@ function minimizeOf(ctx: TutorialContext): MinimizeTrace | null {
 const needMinimize = (ctx: TutorialContext): string | null =>
   minimizeOf(ctx) ? null : 'First, press Minimize again.';
 
+/** Where the open walkthrough first splits a block, if one is open. */
+function splitAt(ctx: TutorialContext): number | null {
+  const at = minimizeOf(ctx)?.steps.findIndex((s) => s.phase === 'split') ?? -1;
+  return at >= 0 ? at : null;
+}
+
 const STEPS: StepSpec[] = [
   {
     id: 'minimize/open',
@@ -68,21 +74,23 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'minimize/split',
-    instruction: () => 'Step with [→] until a block splits.',
+    instruction: () => 'Press Play: it pauses when a block splits.',
     why: () =>
-      'On a `1`, «{q_0}» stays put but «{q_0,q_1}» reaches an accepting state, so they differ.',
+      'It starts from accepting and not, and a block splits when a symbol sends its states to different blocks.',
+    // Playback pauses on the split, which latches this step: the next one explains it.
+    pauseAt: splitAt,
     latch: (ctx) => {
-      const split = minimizeOf(ctx)?.steps.findIndex((s) => s.phase === 'split') ?? -1;
-      return split >= 0 && ctx.stepIndex >= split;
+      const at = splitAt(ctx);
+      return at !== null && ctx.stepIndex >= at;
     },
     first: needMinimize,
-    target: () => '.av-player-explanation',
+    target: () => DOCK,
   },
   {
     id: 'minimize/end',
-    instruction: () => 'Press Play, or [Space], to run it to the end.',
+    instruction: () => 'Press Play to finish.',
     why: () =>
-      'Nothing splits any more, so states in a block act alike: each block becomes one state.',
+      'On a `1`, «{q_0}» stays put but «{q_0,q_1}» reaches an accepting state, so they differ.',
     latch: (ctx) => {
       const t = minimizeOf(ctx);
       return t !== null && ctx.stepIndex === t.steps.length - 1;
@@ -114,7 +122,6 @@ export const MINIMIZE_LESSON: Lesson & { id: 'minimize' } = {
   minutes: 1,
   start: CONTAINS_01_DFA,
   editable: false,
-  autoPlay: false,
   parts: [
     {
       title: 'Minimize a DFA',

@@ -11,7 +11,7 @@ import { TutorialCard } from '../tutorial/TutorialCard';
 import { FinishedCard } from '../tutorial/FinishedCard';
 import {
   closeCelebration,
-  lessonAutoPlay,
+  lessonStopAt,
   requestLesson,
   useTutorial,
 } from '../tutorial/tutorialStore';
@@ -78,6 +78,8 @@ export default function App(): React.JSX.Element {
   const [welcomeOpen, closeWelcome] = useWelcome(arrivedByLink());
   const [historyOpen, toggleHistory] = useHistoryOpen();
   const celebrating = useTutorial((s) => s.celebrating);
+  // A number or null: stable, and re-read as the lesson moves on.
+  const stopAt = useTutorial((s) => (trace ? lessonStopAt(trace, s) : null));
   const step = trace?.steps[stepIndex];
   const [dockRef, dockHeight] = useDockHeight();
 
@@ -122,9 +124,8 @@ export default function App(): React.JSX.Element {
                 onIndex={setStep}
                 explanation={step.explanation}
                 onClose={closeTrace}
-                autoPlay={
-                  (trace.kind === 'run' || trace.kind === 'subset') && lessonAutoPlay(trace)
-                }
+                autoPlay={trace.kind === 'run' || trace.kind === 'subset'}
+                stopAt={stopAt}
                 extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
               />
             )}

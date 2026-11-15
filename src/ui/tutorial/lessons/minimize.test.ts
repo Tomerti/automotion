@@ -107,15 +107,34 @@ describe('the Minimize a DFA lesson', () => {
     expect(steps[3]!.hint(ctx(null))).not.toBeNull();
   });
 
+  it('pauses playback where the block splits, the step it latches on', () => {
+    expect(steps[1]!.pauseAt!(ctx(trace, 0))).toBe(firstSplit);
+    expect(steps[1]!.pauseAt!(ctx(null))).toBeNull();
+    for (const i of [0, 2, 3]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+  });
+
+  it('says to press Play, and explains the split on the card while paused there', () => {
+    expect(steps[1]!.instruction(ctx(null))).toBe('Press Play: it pauses when a block splits.');
+    expect(steps[2]!.instruction(ctx(null))).toBe('Press Play to finish.');
+    expect(steps[2]!.why(ctx(null))).toBe(
+      'On a `1`, «{q_0}» stays put but «{q_0,q_1}» reaches an accepting state, so they differ.',
+    );
+  });
+
+  it('starts from accepting and non-accepting, as the step before the split says', () => {
+    expect(trace.steps[0]!.phase).toBe('partition');
+    expect(trace.steps[0]!.blocks.map((b) => b.length)).toEqual([2, 2]);
+    expect(steps[1]!.why(ctx(null))).toContain('accepting and not');
+  });
+
   it('ignores a walkthrough of an automaton it does not own', () => {
     const other = minimize({ ...start, id: 'someone-else' });
     expect(advance(L, 0, new Set(), ctx(other, 0)).current).toBe(0);
   });
 
-  it('points at the Minimize button, the explanation, then the dock', () => {
+  it('points at the Minimize button, then the dock', () => {
     expect(steps[0]!.target(ctx(null))).toBe('button[aria-label="Minimize"]');
-    expect(steps[1]!.target(ctx(null))).toBe('.av-player-explanation');
-    expect(steps[2]!.target(ctx(null))).toBe('[data-testid="dock"]');
+    for (const i of [1, 2, 3]) expect(steps[i]!.target(ctx(null))).toBe('[data-testid="dock"]');
   });
 
   it('asks to press Play on the save step while the reopened walkthrough is short of its end', () => {

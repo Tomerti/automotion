@@ -20,7 +20,7 @@ export const CONTAINS_01 = fixture({
 
 /**
  * A lesson for the engine's tests only (not in `LESSONS`): one part on a read-only copy of
- * `CONTAINS_01` whose walkthroughs open paused, with a latch, an action and a latch on a saved DFA.
+ * `CONTAINS_01`, with a latch, an action and a latch on a saved DFA.
  */
 export const TEST_LESSON: Lesson = {
   id: 'test',
@@ -30,7 +30,6 @@ export const TEST_LESSON: Lesson = {
   minutes: 1,
   start: CONTAINS_01,
   editable: false,
-  autoPlay: false,
   parts: [
     {
       title: 'Convert it',
@@ -60,4 +59,36 @@ export const TEST_LESSON: Lesson = {
     },
   ],
   closing: 'You converted it.',
+};
+
+/**
+ * A lesson whose second step pauses an owned conversion at its step 2 and latches there, so the
+ * step that pauses is gone from the card by the time the player has paused.
+ */
+export const PAUSING_LESSON: Lesson = {
+  ...TEST_LESSON,
+  parts: [
+    {
+      ...TEST_LESSON.parts[0]!,
+      steps: [
+        {
+          id: 'pause/open',
+          instruction: () => 'Press Convert to DFA.',
+          latch: (ctx) => ctx.trace?.kind === 'subset' && ownsTrace(ctx),
+        },
+        {
+          id: 'pause/watch',
+          instruction: () => 'Watch: it stops at step 3.',
+          pauseAt: (ctx) => (ctx.trace?.kind === 'subset' && ownsTrace(ctx) ? 2 : null),
+          latch: (ctx) => ctx.trace?.kind === 'subset' && ownsTrace(ctx) && ctx.stepIndex >= 2,
+        },
+        {
+          id: 'pause/end',
+          instruction: () => 'Press Play to finish.',
+          latch: (ctx) =>
+            ctx.trace?.kind === 'subset' && ctx.stepIndex === ctx.trace.steps.length - 1,
+        },
+      ],
+    },
+  ],
 };

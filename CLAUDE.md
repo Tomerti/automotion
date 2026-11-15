@@ -103,8 +103,9 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
 - `tutorial/engine.ts` holds the `Lesson`/`StepSpec` types, `lessonSteps` and `advance`: a step completes by
   a check on the automaton, a run reaching its verdict, a latch, or a reported action. `tutorial/lessons/`
   has `basics.ts` (the original tutorial), `nfa`, `convert`, `minimize` and `share`; `index.ts` lists them in
-  order. Lessons open a read-only copy of a ready-made automaton with walkthroughs paused; automata saved
-  from their walkthroughs belong to the lesson (Quit removes them, Finish keeps them).
+  order. Lessons open a read-only copy of a ready-made automaton; automata saved from their walkthroughs
+  belong to the lesson (Quit removes them, Finish keeps them). Runs play as everywhere; a step's
+  `pauseAt` pauses the player (`stopAt`, via `lessonStopAt`) at the moment the next step explains.
 - Lesson texts mark keys `[Shift]`, states `«even»` and words to type in backticks. `lessons/index.test.ts`
   caps them: instructions 100 chars, why lines 110 (70 for Basics, so its wording stays as it was).
 - `TutorialPointer.tsx` draws over the top bar for toolbar buttons, with a tight frame on buttons. Finished

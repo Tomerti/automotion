@@ -133,11 +133,19 @@ Step ids are namespaced per lesson (`convert/open`); `StepId` becomes a string.
 
 ### Playback
 
-Runs and conversions start playing as they open (`App.tsx` passes `autoPlay` for `run` and
-`subset`), which would tick off "step until…" steps on their own at 800 ms a step. So a lesson
-has `autoPlay: boolean`: Basics `true` (its run steps rely on it), the others `false`, and while
-such a lesson runs, every walkthrough or run of an owned automaton opens paused. Steps then say
-"step with [→]" or "press Play" and mean it.
+Runs and conversions play as they open and minimizations open paused, in lessons as everywhere
+else. A lesson instead pauses the player at the moment a step explains (changed 2026-11-15 on
+user feedback: the first build opened lesson runs paused, so Run seemed to do nothing until Play):
+
+- `TracePlayer` takes `stopAt?: number | null`: while playing, after stepping onto that index it
+  pauses, as at the end. Play from there goes on; stepping and jumps ignore it. The interval holds
+  the `stopAt` it stepped with, because reaching the index can move the lesson on (to a step with no
+  pause point) before React re-renders.
+- A step may have `pauseAt(ctx)`: the trace index to pause on while it is the step on the card. Such
+  a step latches on reaching that same index, so while the player is paused the card shows the next
+  step, which explains the moment and says to press Play (a test checks the "Press Play" part).
+- `lessonStopAt(trace)` (tutorial store) is the current step's `pauseAt` for a run or walkthrough
+  of an owned automaton while a lesson runs, else `null`; `App.tsx` passes it to the player.
 
 ### Editing
 
@@ -211,45 +219,45 @@ language and shape; ids equal labels.
 accepting with a loop on 0,1. Its DFA has 4 states.) Goal: "Turn this NFA into a DFA", NFA → DFA
 pictures, `1011` ✓ `110` ✗.
 
-1. Press **Convert to DFA** at the top. / It builds a DFA that accepts exactly the same words.
-   (latch: a subset walkthrough of an owned automaton is open)
-2. Look at the first DFA state, «{q_0}», then press [→] once. / A DFA can't guess, so each of its
-   states stands for every NFA state you could be in: here «{q_0}». (latch: that walkthrough is past
-   its `init` step, so once the first press has been made)
-3. Keep stepping until «{q_0,q_1}» is expanded. / After a `0` the NFA is in q_0 or has moved to
-   q_1, so the DFA state holds both. (latch: the walkthrough has reached the step that expands
-   {q_0,q_1}) Points at the walkthrough's explanation.
-4. Press Play, or [Space], to run it to the end. / A set accepts when it holds an accepting NFA
-   state: some guess got there. (latch: last step)
-5. Press **Save as new automaton** to keep the DFA. / Saved, it's an automaton of its own: you can
+1. Press **Convert to DFA** at the top. / A DFA can't guess, so each of its states stands for
+   every NFA state you could be in. (latch: a subset walkthrough of an owned automaton is open) The
+   reason sits here, not on step 2, because step 2 is on the card for only one 800 ms step.
+2. Watch it build the DFA: it pauses at a new state. / It follows each symbol from each set, so
+   every set the NFA can reach becomes a state. (pauses at, and latches on, the step where
+   «{q_0,q_1}» appears: {q_0} on `0`)
+3. Press Play to finish building it. / After a `0` the NFA could still be in «q_0» or
+   have moved to «q_1», so the DFA state is both. (latch: last step; on the card while paused)
+4. Press **Save as new automaton** to keep the DFA. / Saved, it's an automaton of its own: you can
    run words on it, or minimize it next. (latch: an owned DFA saved from it exists; with the
-   walkthrough reopened short of its end, the card first asks to press Play to reach the end)
+   walkthrough reopened short of its end, the card first says "let it play to the end": a reopened
+   walkthrough plays by itself)
 
 **Minimize a DFA** (opens that 4-state DFA, named by its subsets; it minimizes to 3: {q₀, q₂} and
 {q₀, q₁, q₂} merge, after one split). Goal: "Make this DFA as small as possible", before → after.
 
 1. Press **Minimize** at the top. / It looks for states no word can tell apart, and merges them.
    (latch)
-2. Step with [→] until a block splits. / On a `1`, «{q_0}» stays put but «{q_0,q_1}» reaches an
-   accepting state, so they differ. (latch: the split step) Points at the explanation.
-3. Press Play, or [Space], to run it to the end. / Nothing splits any more, so states in a block
-   act alike: each block becomes one state. (latch: last step)
+2. Press Play: it pauses when a block splits. / It starts from accepting and not, and a
+   block splits when a symbol sends its states to different blocks. (pauses at, and latches on, the
+   split step)
+3. Press Play to finish. / On a `1`, «{q_0}» stays put but «{q_0,q_1}» reaches an
+   accepting state, so they differ. (latch: last step; on the card while paused at the split)
 4. Press **Save as new automaton** to keep the smaller DFA. / Saved, it's an automaton of its own:
-   you can run words on it, or share it. (latch: the minimized DFA saved; as in Convert, the card
-   asks to press Play first when the reopened walkthrough is short of its end)
+   you can run words on it, or share it. (latch: the minimized DFA saved; the card asks to press
+   Play first when the reopened walkthrough, which opens paused, is short of its end)
 
 **NFAs** (opens an NFA for a\*b\*: q₀ start, loop on a; q₀ –ε→ q₁; q₁ accepting, loop on b).
 Goal: "Run an NFA", `aab` ✓ `aba` ✗.
 
-1. Type `aab` in the word box and press Run. / The run starts in q_0 and q_1 at once: the ε-arrow
-   moves without reading. (latch: the run is open)
-2. Step with [→] until a branch is crossed out. / q_1 has no arrow on `a`, so that guess dies while
-   q_0 carries on. (latch: the first step where a branch dies)
-3. Press Play, or [Space], to run it to the verdict. / One branch reaching an accepting state is
-   enough: the NFA accepts if any guess works. (run latched)
-4. Press [Esc], run `aba`, then press Play. / Every branch dies on the last `a`, so no branch
-   accepts and the word is rejected. (run latched; the run opens paused, so while it is short of
-   its last step the card asks to press Play, or [Space], to see the verdict)
+1. Type `aab` in the word box and press Run. / The run starts in q_0 and q_1 at once, since the
+   ε-arrow moves without reading. (latch: the run is open)
+2. Watch: the run pauses where a branch dies. / An NFA follows every guess at once, and a guess
+   dies when it has no arrow to take. (pauses at, and latches on, the first step where a branch
+   dies: reading the first `a`)
+3. Press Play to see the verdict. / q_1 has no arrow on `a`, so that guess dies while
+   q_0 carries on. (run latched; on the card while paused)
+4. Press [Esc], then run `aba`. / By the last `a` every branch has died, so none is left to accept
+   and it's rejected. (run latched; it plays to its verdict)
 
 **Share and export** (opens the Basics DFA, even zeros, its states named «even» and «odd»). Goal: "Share your automaton", no examples.
 

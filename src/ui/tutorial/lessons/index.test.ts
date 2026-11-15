@@ -23,6 +23,13 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
     }
   });
 
+  it('follows a step that pauses playback with one that says to press Play', () => {
+    const steps = lessonSteps(lesson);
+    steps.forEach((s, i) => {
+      if (s.pauseAt) expect(steps[i + 1]?.instruction(ctx), s.id).toMatch(/^Press Play to /);
+    });
+  });
+
   it('has at most six counted steps, unless it is Basics', () => {
     if (id !== 'basics') expect(countedSteps(lesson)).toBeLessThanOrEqual(6);
   });

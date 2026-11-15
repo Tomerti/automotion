@@ -9,11 +9,11 @@ import { appStore, resetAppStore } from '../../store/store';
 import { answerConfirm, confirmStore } from '../shell/confirmStore';
 import { advance, lessonSteps } from './engine';
 import type { LessonId, TutorialContext } from './engine';
-import { CONTAINS_01, TEST_LESSON } from './testing/testLesson';
+import { CONTAINS_01, PAUSING_LESSON as PAUSING, TEST_LESSON } from './testing/testLesson';
 import {
   endLesson,
   finishLesson,
-  lessonAutoPlay,
+  lessonStopAt,
   noteLessonAction,
   quitLesson,
   requestLesson,
@@ -184,17 +184,24 @@ describe('a lesson with a start automaton', () => {
     expect(tut().lessonId).toBe('basics');
   });
 
-  it('opens owned walkthroughs paused, others as before', () => {
+  it('pauses owned runs and walkthroughs where the step on the card says, others nowhere', () => {
     // A run trace, as if of `a`.
     const runOf = (a: Automaton): AnyTrace => ({ ...runWord(CONTAINS_01, '01'), source: a });
     const elsewhere = runOf(other());
-    expect(lessonAutoPlay(elsewhere)).toBe(true);
-    startLesson(TEST_LESSON);
-    expect(lessonAutoPlay(subsetConstruction(active()))).toBe(false);
-    expect(lessonAutoPlay(runOf(active()))).toBe(false);
-    expect(lessonAutoPlay(elsewhere)).toBe(true);
-    startLesson('basics');
-    expect(lessonAutoPlay(runOf(active()))).toBe(true);
+    expect(lessonStopAt(elsewhere)).toBeNull();
+    startLesson(PAUSING);
+    // The step on the card has no pause point.
+    expect(lessonStopAt(subsetConstruction(active()))).toBeNull();
+    const trace = convert();
+    expect(tut().current).toBe(1);
+    expect(lessonStopAt(trace)).toBe(2);
+    expect(lessonStopAt(runOf(active()))).toBeNull();
+    expect(lessonStopAt(elsewhere)).toBeNull();
+    app().setStep(2);
+    expect(tut().current).toBe(2);
+    expect(lessonStopAt(trace)).toBeNull();
+    endLesson();
+    expect(lessonStopAt(trace)).toBeNull();
   });
 });
 

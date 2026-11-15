@@ -244,7 +244,6 @@ export const BASICS: Lesson & { id: 'basics' } = {
   minutes: 2,
   start: null,
   editable: true,
-  autoPlay: true,
   parts: [
     {
       title: 'Even number of zeros',

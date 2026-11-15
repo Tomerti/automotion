@@ -254,12 +254,17 @@ export function noteLessonAction(action: LessonAction): void {
 }
 
 /**
- * Whether a run or walkthrough opens playing: paused for an automaton owned by a running lesson
- * that has `autoPlay: false`, so its "step until…" steps don't tick themselves off.
+ * Where playback of `trace` pauses on its way to the end: the step on the card's `pauseAt`, for a
+ * run or walkthrough of an automaton the running lesson owns; null otherwise.
  */
-export function lessonAutoPlay(trace: AnyTrace): boolean {
-  const t = tutorialStore.getState();
-  return !(t.active && t.lesson?.autoPlay === false && t.owned.includes(trace.source.id));
+export function lessonStopAt(
+  trace: AnyTrace,
+  t: TutorialState = tutorialStore.getState(),
+): number | null {
+  if (!t.active || !t.lesson || !t.owned.includes(trace.source.id)) return null;
+  const pauseAt = lessonSteps(t.lesson)[t.current]?.pauseAt;
+  if (!pauseAt) return null;
+  return pauseAt({ ...tutorialContext(appStore.getState(), t.automatonId, t), trace });
 }
 
 /**

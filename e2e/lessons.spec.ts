@@ -22,7 +22,12 @@ test('? opens the guide, Lessons lists Basics, and its row starts the tutorial',
   await expect(guide.getByTestId('lesson-basics')).toContainText('Restart');
 });
 
-test('the NFAs lesson runs aab step by step, plays it, runs aba and finishes', async ({ page }) => {
+/** Playing to a pause or to the end takes a few 800 ms steps. */
+const PLAYING = { timeout: 15_000 };
+
+test('the NFAs lesson pauses aab where a branch dies, plays on, runs aba and finishes', async ({
+  page,
+}) => {
   await openApp(page, { clear: true });
   await page.keyboard.press('?');
   const guide = page.getByRole('dialog', { name: 'Controls' });
@@ -30,30 +35,29 @@ test('the NFAs lesson runs aab step by step, plays it, runs aba and finishes', a
   await guide.getByTestId('lesson-nfa').click();
   const card = page.getByTestId('tutorial-card');
   await expect(card).toBeVisible();
-  const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
+  const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n), PLAYING);
   await at(1);
 
   const word = page.getByLabel('Word');
   await word.fill('aab');
   await word.press('Enter');
-  await at(2);
 
-  // Opened paused: step with → until the first branch is crossed out.
-  await page.keyboard.press('ArrowRight');
-  await page.keyboard.press('ArrowRight');
+  // It plays by itself and pauses where the q_1 branch dies, the card explaining why.
   await at(3);
+  const counter = page.getByTestId('step-counter');
+  await expect(counter).toHaveText('Step 3 / 8');
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await expect(card).toContainText('has no arrow on');
 
   await page.getByRole('button', { name: 'Play' }).click();
-  await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'true');
+  await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'true', PLAYING);
   await at(4);
 
   await page.keyboard.press('Escape');
   await word.fill('aba');
   await word.press('Enter');
-  // Opened paused: the card asks for Play, as for aab.
-  await expect(card).toContainText('press Play');
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'false');
+  // Nothing to explain on the way: it plays to its verdict.
+  await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'false', PLAYING);
   await at(5);
 
   await card.getByRole('button', { name: 'Finish' }).click();
@@ -64,7 +68,7 @@ test('the NFAs lesson runs aab step by step, plays it, runs aba and finishes', a
   await expect(guide.getByTestId('lesson-nfa')).toContainText('✓');
 });
 
-test('the Convert lesson steps through the subset construction, saves the DFA and finishes', async ({
+test('the Convert lesson pauses as {q_0,q_1} appears, plays on, saves the DFA and finishes', async ({
   page,
 }) => {
   await openApp(page, { clear: true });
@@ -75,24 +79,23 @@ test('the Convert lesson steps through the subset construction, saves the DFA an
   const card = page.getByTestId('tutorial-card');
   await expect(card).toBeVisible();
   await expect(card.getByTestId('tutorial-goal-picture')).toHaveCount(1);
-  const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
+  const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n), PLAYING);
   await at(1);
 
   await page.getByRole('button', { name: 'Convert to DFA' }).click();
-  await at(2);
 
-  // Opened paused on the first DFA state: one press moves on, two more reach the pair's turn.
-  await page.keyboard.press('ArrowRight');
+  // It plays by itself and pauses as {q_0,q_1} appears, the card explaining why.
   await at(3);
-  await page.keyboard.press('ArrowRight');
-  await page.keyboard.press('ArrowRight');
-  await at(4);
+  await expect(page.getByTestId('step-counter')).toHaveText('Step 2 / 10');
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await expect(card).toContainText('After a 0');
 
-  await page.getByRole('button', { name: 'Last' }).click();
-  await at(5);
+  await page.getByRole('button', { name: 'Play' }).click();
+  await at(4);
+  await expect(page.getByTestId('step-counter')).toHaveText('Step 10 / 10');
 
   await page.getByRole('button', { name: 'Save as new automaton' }).click();
-  await at(6);
+  await at(5);
 
   await card.getByRole('button', { name: 'Finish' }).click();
   const popup = page.getByRole('dialog', { name: 'Lesson complete' });
@@ -121,15 +124,18 @@ test('the Minimize lesson splits a block, merges the states, saves the DFA and f
   await page.getByRole('button', { name: 'Minimize' }).click();
   await at(2);
 
-  // Opened paused: step with the arrow until the block splits.
-  for (let i = 0; i < 12; i++) {
-    if ((await card.getAttribute('data-step')) !== '2') break;
-    await page.keyboard.press('ArrowRight');
-  }
+  // Opened paused, as everywhere: Play runs it to the split and pauses there.
+  const counter = page.getByTestId('step-counter');
+  await expect(counter).toHaveText('Step 1 / 3');
+  await page.getByRole('button', { name: 'Play' }).click();
   await at(3);
+  await expect(counter).toHaveText('Step 2 / 3');
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await expect(card).toContainText('stays put');
 
-  await page.getByRole('button', { name: 'Last' }).click();
+  await page.getByRole('button', { name: 'Play' }).click();
   await at(4);
+  await expect(counter).toHaveText('Step 3 / 3');
 
   await page.getByRole('button', { name: 'Save as new automaton' }).click();
   await at(5);

@@ -60,7 +60,6 @@ export const SHARE_LESSON: Lesson & { id: 'share' } = {
   minutes: 1,
   start: EVEN_ZEROS,
   editable: false,
-  autoPlay: false,
   parts: [
     {
       title: 'Share and export',

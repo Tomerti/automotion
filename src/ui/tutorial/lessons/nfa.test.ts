@@ -26,7 +26,12 @@ const at = (word: string, i?: number): TutorialContext => {
   return ctx(t, i ?? t.steps.length - 1);
 };
 
-const firstRead = runWord(start, 'aab').steps.findIndex((s) => s.phase === 'read');
+const aab = runWord(start, 'aab');
+const firstRead = aab.steps.findIndex((s) => s.phase === 'read');
+/** Where the q_1 branch dies: «q_1» has no arrow on `a`. */
+const death = aab.steps.findIndex(
+  (s) => s.phase === 'read' && s.symbol === 'a' && s.before.includes('q_1'),
+);
 
 describe('the NFAs lesson', () => {
   it('holds its goal examples on the start automaton', () => {
@@ -39,6 +44,12 @@ describe('the NFAs lesson', () => {
     expect(countedSteps(NFA_LESSON)).toBeLessThanOrEqual(6);
   });
 
+  it('kills the q_1 branch on the first a, with q_0 carrying on', () => {
+    const step = aab.steps[death]!;
+    expect(death).toBe(firstRead);
+    expect(step.active).toEqual(['q_0']);
+  });
+
   it('walks from running aab, to a branch dying, to the verdict, to aba and the closing card', () => {
     const none = advance(NFA_LESSON, 0, new Set(), ctx(null));
     expect(none.current).toBe(0);
@@ -46,7 +57,7 @@ describe('the NFAs lesson', () => {
     const opened = advance(NFA_LESSON, 0, new Set(), at('aab', 0));
     expect(opened.current).toBe(1);
 
-    const died = advance(NFA_LESSON, opened.progress, opened.latched, at('aab', firstRead));
+    const died = advance(NFA_LESSON, opened.progress, opened.latched, at('aab', death));
     expect(died.current).toBe(2);
 
     const verdict = advance(NFA_LESSON, died.progress, died.latched, at('aab'));
@@ -85,9 +96,20 @@ describe('the NFAs lesson', () => {
     });
   });
 
-  it('gives the reason for acceptance, not the rule', () => {
+  it('pauses the aab run where the branch dies, the step it latches on', () => {
+    expect(steps[1]!.pauseAt!(at('aab', 0))).toBe(death);
+    expect(steps[1]!.pauseAt!(ctx(null))).toBeNull();
+    expect(steps[1]!.pauseAt!(at('ab', 0))).toBeNull();
+    const opened = advance(NFA_LESSON, 0, new Set(), at('aab', 0));
+    expect(advance(NFA_LESSON, 1, opened.latched, at('aab', death - 1)).current).toBe(1);
+    expect(advance(NFA_LESSON, 1, opened.latched, at('aab', death)).current).toBe(2);
+    for (const i of [0, 2, 3]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+  });
+
+  it('explains the paused moment on the card while paused, and says to press Play', () => {
+    expect(steps[2]!.instruction(ctx(null))).toBe('Press Play to see the verdict.');
     expect(steps[2]!.why(ctx(null))).toBe(
-      'One branch reaching an accepting state is enough: the NFA accepts if any guess works.',
+      '«q_1» has no arrow on `a`, so that guess dies while «q_0» carries on.',
     );
   });
 
@@ -98,14 +120,18 @@ describe('the NFAs lesson', () => {
     expect(steps[3]!.target(ctx(null))).toContain('Word');
   });
 
-  it('asks to press Play while the aba run is open short of its verdict', () => {
-    const text = 'Press Play, or [Space], to see the verdict.';
-    expect(steps[3]!.hint(at('aba', 0))).toEqual({ kind: 'first', text });
+  it('lets the aba run play to its verdict without asking for Play', () => {
+    expect(steps[3]!.instruction(ctx(null))).toBe('Press [Esc], then run `aba`.');
+    expect(steps[3]!.hint(at('aba', 0))).toBeNull();
     expect(steps[3]!.hint(at('aba'))).toBeNull();
-    expect(steps[3]!.hint(ctx(null))).toBeNull();
   });
 
-  it('tells to press Play in the aba instruction too', () => {
-    expect(steps[3]!.instruction(ctx(null))).toBe('Press [Esc], run `aba`, then press Play.');
+  it('says every branch has died by the last a of aba, as the run shows', () => {
+    const aba = runWord(start, 'aba');
+    const end = aba.steps[aba.steps.length - 1]!;
+    expect(end.phase).toBe('stuck');
+    expect(end.symbol).toBe('a');
+    expect(end.active).toEqual([]);
+    expect(steps[3]!.why(ctx(null))).toContain('last `a` every branch has died');
   });
 });

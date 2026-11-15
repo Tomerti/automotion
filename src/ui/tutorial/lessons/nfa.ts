@@ -46,6 +46,13 @@ function firstDeath(t: RunTrace): number {
   );
 }
 
+/** Where the open `aab` run first loses a branch, if one is open. */
+function deathOf(ctx: TutorialContext): number | null {
+  const t = runOf(ctx, 'aab');
+  const at = t ? firstDeath(t) : -1;
+  return at >= 0 ? at : null;
+}
+
 const needRun = (ctx: TutorialContext): string | null =>
   runOf(ctx, 'aab') ? null : 'First, run `aab` again.';
 
@@ -53,7 +60,8 @@ const STEPS: StepSpec[] = [
   {
     id: 'nfa/run',
     instruction: () => 'Type `aab` in the word box and press Run.',
-    why: (l) => `The run starts in ${l.q0} and ${l.q1} at once: the ε-arrow moves without reading.`,
+    why: (l) =>
+      `The run starts in ${l.q0} and ${l.q1} at once, since the ε-arrow moves without reading.`,
     latch: (ctx) => runOf(ctx, 'aab') !== null,
     // A latch step, so the engine's wrong-word hint doesn't apply: same wording here.
     hint: (ctx) => {
@@ -65,38 +73,31 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'nfa/branch',
-    instruction: () => 'Step with [→] until a branch is crossed out.',
-    why: (l) => `${l.q1} has no arrow on \`a\`, so that guess dies while ${l.q0} carries on.`,
+    instruction: () => 'Watch: the run pauses where a branch dies.',
+    why: () => 'An NFA follows every guess at once, and a guess dies when it has no arrow to take.',
+    // Playback pauses on the death, which latches this step: the next one explains it.
+    pauseAt: deathOf,
     latch: (ctx) => {
-      const t = runOf(ctx, 'aab');
-      if (!t) return false;
-      const at = firstDeath(t);
-      return at >= 0 && ctx.stepIndex >= at;
+      const at = deathOf(ctx);
+      return at !== null && ctx.stepIndex >= at;
     },
     first: needRun,
     target: () => DOCK,
   },
   {
     id: 'nfa/verdict',
-    instruction: () => 'Press Play, or [Space], to run it to the verdict.',
-    why: () =>
-      'One branch reaching an accepting state is enough: the NFA accepts if any guess works.',
+    instruction: () => 'Press Play to see the verdict.',
+    why: (l) => `${l.q1} has no arrow on \`a\`, so that guess dies while ${l.q0} carries on.`,
     run: { word: 'aab', accepted: true },
     first: needRun,
     target: () => DOCK,
   },
   {
     id: 'nfa/aba',
-    instruction: () => 'Press [Esc], run `aba`, then press Play.',
-    why: () => 'Every branch dies on the last `a`, so no branch accepts and the word is rejected.',
+    instruction: () => 'Press [Esc], then run `aba`.',
+    why: () =>
+      'By the last `a` every branch has died, so none is left to accept and it’s rejected.',
     run: { word: 'aba', accepted: false },
-    // The run opens paused, and the verdict comes only at its last step.
-    first: (ctx) => {
-      const t = runOf(ctx, 'aba');
-      return t && ctx.stepIndex < t.steps.length - 1
-        ? 'Press Play, or [Space], to see the verdict.'
-        : null;
-    },
     target: () => RUN_PILL,
   },
 ];
@@ -109,7 +110,6 @@ export const NFA_LESSON: Lesson & { id: 'nfa' } = {
   minutes: 1,
   start: A_STAR_B_STAR,
   editable: false,
-  autoPlay: false,
   parts: [
     {
       title: 'Run an NFA',

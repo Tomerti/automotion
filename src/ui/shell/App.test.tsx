@@ -3,7 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, it, expect, vi } from 'vitest';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
+import { subsetConstruction } from '../../core/subset';
 import { startMinimize, startRun, startSubset } from '../../store/traceActions';
+import { PAUSING_LESSON } from '../tutorial/testing/testLesson';
+import { endLesson, startLesson, tutorialStore } from '../tutorial/tutorialStore';
 import App from './App';
 import { HISTORY_BAR_KEY } from './historyPrefs';
 import { toastStore } from './toastStore';
@@ -183,4 +186,31 @@ it('a minimization walkthrough opens paused', () => {
   render(<App />);
   act(() => startMinimize());
   expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+});
+
+it('a lesson pauses playback at the moment its step explains, even once that step is done', () => {
+  vi.useFakeTimers();
+  try {
+    startLesson(PAUSING_LESSON);
+    render(<App />);
+    const state = appStore.getState();
+    const lesson = state.automata.find((a) => a.id === state.activeId)!;
+    act(() => appStore.getState().openTrace(subsetConstruction(lesson)));
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+    act(() => void vi.advanceTimersByTime(800));
+    act(() => void vi.advanceTimersByTime(800));
+    const total = appStore.getState().trace!.steps.length;
+    expect(screen.getByTestId('step-counter')).toHaveTextContent(`Step 3 / ${total}`);
+    // Reaching step 3 latched the pausing step: the card is on the next one, the player paused.
+    expect(tutorialStore.getState().current).toBe(2);
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    act(() => void vi.advanceTimersByTime(2400));
+    expect(screen.getByTestId('step-counter')).toHaveTextContent(`Step 3 / ${total}`);
+    act(() => screen.getByRole('button', { name: 'Play' }).click());
+    for (let i = 3; i < total; i++) act(() => void vi.advanceTimersByTime(800));
+    expect(screen.getByTestId('step-counter')).toHaveTextContent(`Step ${total} / ${total}`);
+  } finally {
+    endLesson();
+    vi.useRealTimers();
+  }
 });
