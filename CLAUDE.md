@@ -10,217 +10,108 @@ https://tomerti.github.io/automotion/.
 
 - Stack: TypeScript (strict, `noUncheckedIndexedAccess`), React 19, Vite, custom SVG renderer, elkjs,
   Zustand + immer, zod, Vitest + fast-check + Testing Library, Playwright.
-- MIT licensed (`LICENSE`); the link-preview image is `public/og.png`, rendered from `docs/brand/og/og.html` by
-  `node docs/brand/og/render.mjs`; `index.html` carries the Open Graph / Twitter tags.
 - Design spec (binding when behavior is unclear): `docs/superpowers/specs/2026-10-28-automotion-design.md`.
 - Track tasks in `PROGRESS.md`: tick items off when they're done and add follow-up tasks as they come up.
+- The link-preview image `public/og.png` is rendered from `docs/brand/og/og.html` by `node docs/brand/og/render.mjs`.
 
 ## Commands
 
 - `npm run dev`: dev server (Vite `base` is `/automotion/`, so open `http://localhost:5173/automotion/`)
 - `npm test`: all unit/component tests once; `npm run test:watch` to watch
 - One test file: `npx vitest run src/core/run.test.ts`; one test by name: `npx vitest run -t "stuck run"`
-- `npm run typecheck`, `npm run lint`, `npm run build`
+- `npm run typecheck`, `npm run lint`, `npm run build`, `npm run format` (CI runs `npm run format:check`)
 - `npm run e2e`: Playwright (Chromium) against a production build served by `vite preview` on port 4173.
   First time: `npx playwright install chromium`. One spec: `npx playwright test e2e/convert.spec.ts`.
-- CI (`.github/workflows/ci.yml`) runs typecheck, lint, the Prettier check, unit tests and e2e on every push/PR, then
-  compiles the LaTeX that e2e `latex-samples.spec.ts` exported (`LATEX_SAMPLES_DIR`) with pdflatex
-  (job `latex`; there is no TeX locally), and deploys to GitHub Pages from `master` only after all pass.
-- `npm run format:check` (`prettier --check .`) runs in CI; `npm run format` fixes. `.gitattributes` pins LF
-  line endings (`eol=lf`), so a Windows checkout with `core.autocrlf` still checks clean.
+- CI runs typecheck, lint, the Prettier check, unit tests and e2e on every push/PR, then compiles the LaTeX
+  that `e2e/latex-samples.spec.ts` exports with pdflatex (there is no TeX locally, so LaTeX output is
+  only checked there), and deploys to GitHub Pages from `master` once all pass.
 
 ## Architecture
 
-Layers, with dependencies pointing downward only:
+`core/` is pure TypeScript with no React and imports none of the other folders; `layout/` imports only
+`core/`. Nothing outside `ui/` imports `ui/`.
 
-- `src/core/`: pure TypeScript, no React. Must not import from `layout/`, `store/`, `persistence/` or `ui/`.
-  - `model.ts`: one `Automaton` type for DFAs and NFAs (`kind` selects the rules). States carry their own
-    `x`/`y` (and an optional `startAngle`, the direction their start arrow comes from; default the
-    left; and `mergedFrom`, set by minimizing: the labels of the states a merged one stands for,
-    shown on hover as `A = {q₀, q₁}` (`format.ts` `mergedNote`, a `<title>` left out of exports)); at most one `Transition` per (from, to) pair, holding all its `symbols` (and an optional
-    `bend`, `loopAngle`, and `labelSide`: the side of from→to its symbols are drawn on, absent
-    meaning outside the curve; `core/geometry.ts` `labelSideOf`). `EPSILON = 'ε'`
-    never appears in `alphabet`; the symbol type is `Sym` (not `Symbol`). `starts` lists the start
-    states: at most one on a DFA, any number on an NFA (accepting when a run from any of them does);
-    `startStates(a)` ignores stale ids. Converting a multi-start NFA first adds a single start state
-    `q_s` with ε-transitions to the old ones (`withSingleStart` in `subset.ts`).
-  - `validate.ts` returns `Issue[]` (errors/warnings) and never throws; the UI disables actions with the
-    reason instead. An incomplete DFA is an error (code `incomplete-dfa`, one per incomplete state,
-    with its `stateId`) that blocks a run, but
-    minimization (it adds a dead state) and the NFA → DFA kind switch skip it via `ignoringIncomplete`,
-    so only NFA runs get stuck.
-  - `edit.ts`: every edit is a pure `Automaton → Automaton` function, shared by the canvas and the table.
-  - `clipboard.ts`: Ctrl+C / Ctrl+V. `copyStates` snapshots states with their arrows out (to each other
-    and to outside states, never into the copy); `pasteClip` adds them with fresh ids, primed labels
-    (`q_1'`), accepting but not start, dropping arrows to states the target lacks. Ctrl+C copies
-    states when `selectedStates()` (store) has any, and the diagram as a picture (Toolbar) otherwise;
-    on a focused history entry it copies that automaton (handled there, `preventDefault` so the
-    window listeners skip it). Ctrl+X (`store.cutSelection`, also Cut in the state menus) copies the
-    selected states, then deletes them and the selected arrows in one undo step; the first placeless
-    paste after it lands back in place (`last.repeat` starts at −1), and the first paste
-    of a cut into the automaton it came from restores the arrows into the cut states from states left behind
-    (`incomingArrows`, `pasteClip`'s `incoming`; on a DFA minus symbols the source state reads elsewhere by then). Ctrl+A on the canvas selects
-    every state and arrow and focuses the canvas, so Delete / Ctrl+X act on it next.
-  - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
-    snapshots (`trace.ts`). Each has a `can*` guard returning a user-facing reason or `null`.
-    `subsetConstruction` throws past `MAX_DFA_STATES` (64).
-  - `geometry.ts`: how the diagram is drawn, as pure math (state radius, edge curves with their
-    automatic bends, self-loops and their automatic direction, start arrows, label spots).
-    An edge label's centre sits a clearance beyond its curve plus its own half-extent that way
-    (`EDGE_LABEL_CHAR_WIDTH` a character: the font is a monospace), so a wide label beside a
-    vertical arrow or a sideways loop clears it; one symbol sits 14 px out every way.
-    `transitionGeometry` measures the transition's symbols; the layout's label boxes use the same width.
-    `transitionPolyline` samples an arrow's drawn curve; the layout scores layouts with it.
-  - `testing/fixtures.ts` (`fixture()`: ids equal labels) and `testing/arbitraries.ts` (fast-check
-    generators) back the property tests.
-- `src/layout/` (imports only `core/`): `layoutAutomaton` (Tidy, subset walkthrough results). Each
-  connected part gets several candidate layouts (`candidates.ts`: a row and a circle in reading
-  order (`order.ts`, BFS / DFS from the start), ELK layered variants, a stress layout of its own),
-  each with its arrows bent clear of states and its start arrows pointed into free space
-  (`aesthetics.ts` `assignBends` / `assignStartAngles`), and the cheapest by `layoutCost` wins:
-  crossings, arrows through states, labels on states / labels / arrows, bunched arrows, arrows
-  forward in reading order not pointing right, skewed angles, length, bends and area, all on the
-  curves the canvas draws. Parts of up to 10 states also get grid candidates (`grid.ts`
-  `refineOnGrid`: the best candidate snapped to a SPACING grid, then hill-climbed by moving or
-  swapping states while the cost drops). That search keeps arrows straight by spreading states
-  out (a diagonal, at worst), so that grid and every candidate are also packed into compact
-  rectangles (`compactSeeds`: by columns or rows, keeping their order; any shape the search then
-  finds is fine) and the best two refined without growing, scored with the arrows through a
-  state bent around it (`aesthetics.ts` `bendClearOfStates`, a quick `assignBends`): with
-  automatic bends a compact grid looks far worse than it reads. A grid wins only when it beats
-  the rest by `GRID_MARGIN` (10%), so a near tie keeps the classic row or circle. The weights were tuned on `samples.ts` (typical course automata;
-  `layout.test.ts` checks them). Tidy replaces positions, bends, loop and start arrow directions
-  and label sides. It runs in a Web Worker (`layoutClient.ts` `layoutInWorker`, one worker kept
-  for later layouts; `layout.worker.ts` assigns `self.onmessage` after its imports, since
-  `elk.bundled.js` claims it inside a worker), loaded with a dynamic `import()`, so elk (~1.5 MB)
-  stays out of the main bundle and a 64-state layout (~1 s) doesn't freeze the page. Without
-  workers (jsdom tests), or if the worker fails to start, it runs on the page.
-- `src/store/`: one Zustand store (`store.ts`) holding the automata, active id, selection, per-automaton
-  viewports, the open trace, per-automaton undo/redo (capped at 100) and the clipboard
-  (`copySelection` / `cutSelection` / `paste` for states, `copyAutomaton` / `pasteAutomaton` for a whole automaton:
-  whichever was copied last is what Ctrl+V pastes; in memory only, never saved). `automata` is kept most
-  recently edited first: edits, undo/redo, creating and adding move one to the front (switching doesn't),
-  and that order is what gets saved, so the app reopens on the last edited automaton. The editing lock lives here:
-  `edit`, `checkpoint` and undo/redo do nothing while a trace is open. Selecting, creating or adding an
-  automaton closes the trace. `useAppStore` selectors must return stable references (see its doc comment)
-  or React 19 loops. `traceActions.ts` opens traces (`startRun`, `startSubset`, `startMinimize`).
-- `src/persistence/`: localStorage autosave (key `automotion:v1`, 500 ms debounce, flush on `pagehide`),
-  and the versioned JSON file format
-  (`{ format: "automotion", version, automata }`, version 2 (the schema rejects start/accepting ids that are not states); `migrate()` turns v1's single `start`
-  into `starts`). Every load goes through `migrate()` and the zod schema; the autosave load alone first drops dangling
-  start/accepting ids (`parseFile(…, { repair: true })`: older builds could save them), while imports and share links stay
-  strict; corrupt stored data is copied to a backup key and a blank automaton loads instead. There are no
-  built-in examples; e2e specs import `e2e/fixtures/automata.json`. The first release seeded three:
-  the first load in a browser (flag `automotion:old-examples-checked`) removes the ones never
-  changed (`oldExamples.ts`) and saves the result. The project was called Automaton Vis until
-  2026-10-29: files tagged `"automaton-vis"` still import (`LEGACY_FORMAT`), and `migrateLegacyKeys()`
-  (first thing in `main.tsx`) moves old `automaton-vis:*` localStorage keys to `automotion:*`.
-  `shareLink.ts`: one automaton in the URL hash (`#a=`, `shareUrl(a, base)`): `encodeShare` drops the id and
-  rounds x/y, deflate-raw through the browser's `CompressionStream` (no dependency) and base64url; `decodeShare` stops inflating past
-  `MAX_SHARE_BYTES` (2 MB: a crafted link could inflate to gigabytes), validates with the schema and gives a fresh id; `readShareHash`; `sameAutomaton` compares by normalized content, not key order.
-  LaTeX: `latexImport.ts` (`parseLatex`) reads every `tikzpicture` of a `.tex` file as an automaton,
-  leniently (positioning, `edge`/`to`/`--`, loops, bends, label sides from `swap`/`'`/`auto=right`
-  or `node[below]`, `initial` or a drawn start arrow) and
-  validates it with the zod schema; `latexText.ts` holds the shared conventions (`PX_PER_CM` = 50,
-  label/symbol escaping both ways, the `% AutoMotion NFA: name` comment that round-trips kind and
-  name, and `% AutoMotion merged: A = {q_0, q_1}` before a node, which round-trips `mergedFrom`). The writer is `ui/canvas/exportLatex.ts` (it needs the canvas geometry: automatic bends and
-  loop directions; `latexDocumentAll` is Export all, a page per automaton); `importFile.ts` picks
-  LaTeX by the `.tex` extension or a `\begin{tikzpicture}`. Ctrl+V with TikZ on the system clipboard
-  imports it too (`ui/shell/pasteLatex.ts`, the window's `paste` event): the canvas's Ctrl+V pastes
-  the app's own clipboard at once while the window kept the focus since the app's last copy, and
-  otherwise defers to the paste event (`deferPaste`) in case something was copied elsewhere.
-- `src/ui/`:
-  - `canvas/`: `Diagram.tsx` renders an automaton as SVG from props (`highlight` drives active/taken
-    states, tints, visibility). Its `data-testid`s and `data-*` attributes are a contract used by tests,
-    e2e and export. `useCanvasEditing.ts` holds all editing gestures; pointer capture starts only once a
-    drag crosses 3 px, so double-clicks keep their real target. Pure math is in `core/geometry.ts` / `viewport.ts`;
-    `snap.ts` snaps a dragged state (alignment guides and equal-gap markers, both kept out of exports).
-  - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
-    `traceExtraActions.tsx` adds the "Save as new automaton" button. A minimized result names each
-    merged state by its block (`blockName`: A … Z, AA, …, as in `MinimizeTraceView`'s legend; see
-    `resultLabels` in `core/minimize.ts`), not by its members' labels joined; its `mergedFrom`
-    keeps those labels. The views are movable:
-    `useFittedViewport` fits the diagram and, unless `interactive: false` (`RunTraceView`'s `ambient`: the welcome
-    demo stays inert), the wheel zooms around the pointer (non-passive listener, every step compounds), dragging pans
-    and `FitButton.tsx` (`trace-fit`) appears once moved. The user's view is fitted again when the states' extent or the
-    pane's width changes; a height-only change (the dock's explanation wrapping, the minimize legend, the tutorial
-    card) keeps it, shifted by half the difference. `ZOOM_STEP` and `DRAG_THRESHOLD` are shared with the canvas through `canvas/viewport.ts`.
-  - `shell/`: top bar (history toggle, the open automaton's name to rename it, toolbar, issues chip (while its popover is open, `canvas/issueMarks.ts` rings
-    the states the issues are about; the canvas paints only non-incomplete errors red all the time),
-    theme menu (System / Light / Dark: `theme.ts` resolves it to `<html data-theme>`; the welcome's
-    `ThemeSwitch` picks it too, and both follow `saveTheme` through `useThemePref` in `themeChoices.ts`), Controls popup), the left history bar (`HistoryBar.tsx`, floating over the full-width canvas so everything stays
-    centred on the window; fits keep `--av-history-inset` clear on both sides: every automaton with a
-    `canvas/Thumbnail.tsx` picture, newest edit first, a ⋯ menu per entry for rename / duplicate /
-    export / delete (`store.duplicateAutomaton`), Delete/Backspace on a focused entry deletes it (after a confirm in the app's own
-    dialog: `askConfirm()` in `confirmStore.ts`, rendered by `ConfirmDialog.tsx` in `App`; never `window.confirm`), or every
-    entry Ctrl+clicked into the history bar's own multi-selection (`data-selected`, local state, seeded with the
-    open automaton; Ctrl+A picks all while the focus is in the bar or the pointer is over it, a window listener
-    in the capture phase, so it comes before the canvas's Ctrl+A (select every state);
-    every letter shortcut in the app (this Ctrl+A / Ctrl+C, the canvas's S / A, Ctrl+Z / Y / A / X / C / V, Toolbar's Ctrl+C)
-    goes through `shortcut.ts` (`isCtrlLetter`, `shortcutLetter`), which reads the physical key when the layout types a
-    non-Latin letter (Hebrew's Ctrl+A is `ש`) but never for punctuation (Dvorak's `;` on the Z key)), Create (a blank DFA
-    named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in
-    `historyPrefs.ts`), the DFA/NFA switch floating at the top of the canvas (`KindPill.tsx`, hidden
-    while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,
-    import/export plumbing (Import is a menu: a file, or `PasteLatexDialog.tsx`; "Share link" in the toolbar's share menu (Share link | Copy image, Copy LaTeX | Export SVG, PNG, LaTeX) and each
-    history entry's ⋯ menu is `copyLink.ts`; `useSharedLink.ts` opens a `#a=` share link on load and on `hashchange`:
-    opens the saved copy (`sameAutomaton`) or adds the automaton (replacing a lone blank automaton, a fresh visitor's
-    "Untitled"), fits it, toasts and clears the hash, and the welcome stays away on such a visit; `touch.ts`
-    `isTouchOnly()`: coarse main pointer and no fine one (`useTouchOnly()` follows the media queries, so attaching a mouse
-    changes the welcome), makes the welcome the phone variant; on phones (≤ 480 px, `App.css`) toasts sit under the
-    DFA/NFA switch, placed from `.av-body`; hover styles are all inside `@media (hover: hover)`, so taps don't leave them
-    stuck). Thumbnails are their own
-    small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or
-    alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
-  - `tutorial/`: the interactive tutorial. `steps.ts` is a pure step table (each step's `done`,
-    `hint`, pointer `target`) over the tutorial automaton and the open trace, with `advance()`
-    (moves on, falls back within a part, latches runs at their verdict), and `PART_GOALS`: what
-    each part builds (a few words, example words, the finished automaton), shown at the top of
-    the card with `GoalPicture.tsx` (its own SVG, no `Diagram` test ids). Each step is one short
-    `instruction` plus an optional few-word `why` (lengths capped by a test); the states are named
-    `even` / `odd`, and `any` at the end. Its texts mark keys as
-    `[Shift]` (rendered as `<kbd>`), states as `«even»` (a small state), and words/symbols to
-    type in backticks (`<code>`, in the dotted-zero `--av-font-symbol`, since Geist's 0 reads as
-    O); prose says "zeros", not "`0`s". `tutorialStore.ts`
-    subscribes to `appStore` while a tutorial runs. `TutorialCard` floats at the top centre under the
-    DFA/NFA switch: the part's goal (a green "Part 1 complete!" panel at the hand-over), a
-    progress bar and the one step to do now. It sets
-    `--av-tutorial-pad` on the canvas area so trace views start below it and `fitActive` (the canvas's
-    Fit and first fit) keeps clear of it; its X asks, then
-    `quitTutorial()` removes the tutorial automaton (Finish keeps it). `TutorialPointer` frames
-    the target with orange corner brackets (portal, follows it each frame; not a ring, which would
-    read as accepting), and `WelcomeCard` is the first-visit dialog (on a touch-only device an amber "Open this on a computer" callout (`role="note"`) above the demo with a checklist of what a phone can do (✓ open shared automata, ✓ run words, ✗ build or edit; the marks are `role="img"` Yes / No), the theme switch and one **Got it** button, no "Press ?" note) (key `automotion:seen-help`, set when it is answered,
-    not when it opens, so a reload before answering shows it again);
-    the Controls popup no longer opens by itself. Its `WelcomeDemo` plays random words on the
-    "ends in 01" NFA forever (`demoRun.ts`) through `RunTraceView` with `ambient` (silent, 1×, no
-    verdict banner), inert and `aria-hidden`; while the welcome is open its `data-testid`s
-    (`diagram`, `run-token`, …) exist twice. Finish fits the view and opens `FinishedCard`
-    (a random joke from `cheers.ts`, confetti, a fanfare from `player/sound.ts`); ticked steps
-    stay silent. `.av-go` (theme.css) is the orange pill of Run, Start tutorial and Finish; its `--av-run`, like the run's highlighter, is the same orange in both themes (dark mode only darkens the tints).
-  - `LabelText.tsx` renders `q_1` / `q_{12}` subscripts in HTML text (`core/label.ts` parses them;
-    the canvas uses `<tspan>`s; `StateNode.tsx` `LabelSpans`, also used by `GoalPicture`). Canvas and goal-picture state labels sit on the alphabetic baseline
-    at `labelBaselineOffset` (`core/label.ts`), which centres the body of the main letters (tallest
-    top down to the baseline) from per-glyph Geist 500 ink metrics; descenders (`y`'s tail) and
-    subscripts hang below, so every label's letters sit at the same height.
-    `dominant-baseline: central` centred the em box and left `q₀` ~3 px low. Edge labels still use
-    `central` (digits come out centred that way). The rename input follows suit: `InlineInput`'s
-    `baseline` measures where its text's baseline sits (an empty inline-block in its sizer) and
-    moves it to `labelBaselineOffset`, so the name doesn't jump when the input opens; the symbol
-    input stays centred, like `central`.
-  - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain
-    fallbacks: SVG/PNG export resolves `var()` against a hidden `.av-theme-light` probe, so exports always
-    use the light palette.
-  - Fonts: names and prose are Geist (`--av-font-ui` / `--av-font-math`); input symbols (the run tape, the
-    word typed in "Test a word…" but not its placeholder, edge labels and the symbol input, the tutorial's
-    words to type) are IBM Plex Mono (`--av-font-symbol`), whose dotted 0 reads neither as O (Geist's) nor
-    as ∅ (a slashed one). Plex Mono has no Greek, so the stack falls back to Geist for ε.
-  - Exported pictures (SVG, PNG, Copy image / Ctrl+C) come from one standalone SVG
-    (`canvas/exportDiagram.ts`): the whole automaton, ignoring zoom and pan, PNGs at a fixed
-    `PNG_SCALE`. `canvas/embedFont.ts` embeds Geist 500 for every label and IBM Plex Mono 500 for the
-    edge labels (`.av-edge-label`), each cut down to the characters drawn, fetched from Google Fonts at
-    export time (Geist gets the edge labels' characters too, for ε). If a diagram font or weight changes,
-    change it there too (and `EDGE_LABEL_CHAR_WIDTH` for edge labels), and re-measure the ink table in
-    `core/label.ts` for state labels.
+### `src/core/`
 
-Tests are colocated as `*.test.ts(x)`; Playwright specs live in `e2e/`. Interactive elements have stable
-`data-testid`s and accessible names that the e2e specs rely on, so keep them when restyling.
+- `model.ts`: one `Automaton` type for DFAs and NFAs (`kind` selects the rules). States carry their own
+  `x`/`y`. At most one `Transition` per (from, to) pair, holding all its `symbols`. `EPSILON = 'ε'` never
+  appears in `alphabet`; the symbol type is `Sym` (not `Symbol`). `starts`: at most one on a DFA, any
+  number on an NFA; `startStates(a)` ignores stale ids.
+- `validate.ts` returns `Issue[]` and never throws; the UI disables actions with the reason instead.
+  An incomplete DFA is an error (`incomplete-dfa`) that blocks a run, but minimization and the
+  NFA → DFA kind switch skip it via `ignoringIncomplete`.
+- `edit.ts`: every edit is a pure `Automaton → Automaton` function. There is no alphabet editor:
+  `store.edit` keeps `alphabet` in sync with the transitions.
+- `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
+  snapshots (`trace.ts`); each has a `can*` guard returning a user-facing reason or `null`.
+  `subsetConstruction` throws past `MAX_DFA_STATES` (64).
+- `geometry.ts`: how the diagram is drawn, as pure math (radius, curves and automatic bends, loops,
+  start arrows, label spots). The canvas, exports and the layout's scoring all use it, so change it here.
+- `testing/fixtures.ts` (`fixture()`: ids equal labels) and `testing/arbitraries.ts` (fast-check
+  generators) back the property tests.
+
+### `src/layout/`
+
+`layoutAutomaton` (Tidy, subset walkthrough results) builds several candidate layouts per connected part
+and keeps the cheapest by `layoutCost`, measured on the curves the canvas draws. The cost weights were tuned
+on `samples.ts` and `layout.test.ts` guards them: rerun it after touching costs or candidates.
+It runs in a Web Worker (`layoutClient.ts`) loaded by dynamic `import()`, so elk (~1.5 MB) stays out of
+the main bundle; `layout.worker.ts` must assign `self.onmessage` after its imports, because
+`elk.bundled.js` claims it inside a worker. Without workers (jsdom tests) it runs on the page.
+
+### `src/store/`
+
+- One Zustand store (`store.ts`). `useAppStore` selectors must return stable references (see its doc
+  comment) or React 19 loops.
+- The editing lock lives here: `edit`, `checkpoint` and undo/redo do nothing while a trace is open.
+- `automata` is kept most recently edited first and saved in that order (the app reopens on the last
+  edited one): edits, undo/redo, creating and adding move one to the front; switching doesn't.
+- The clipboard is in memory only, never saved. `traceActions.ts` opens traces.
+
+### `src/persistence/`
+
+- localStorage autosave (key `automotion:v1`) and the JSON file format
+  `{ format: "automotion", version, automata }` (version 2). Every load goes through `migrate()` and the
+  zod schema; only the autosave load repairs dangling start/accepting ids, imports and share links stay
+  strict. Bump the version and extend `migrate()` for any format change.
+- Keep the legacy paths: files tagged `"automaton-vis"` (`LEGACY_FORMAT`) and `migrateLegacyKeys()`
+  (old `automaton-vis:*` keys), from before the 2026-10-29 rename.
+- `shareLink.ts`: one automaton in the URL hash (`#a=`), deflate-raw via `CompressionStream` + base64url;
+  `decodeShare` caps inflation at `MAX_SHARE_BYTES` against crafted links.
+- LaTeX: `latexImport.ts` reads TikZ leniently; `latexText.ts` holds the conventions shared with the
+  writer (`ui/canvas/exportLatex.ts`, which needs the canvas geometry), including the `% AutoMotion …`
+  comments that round-trip kind, name and `mergedFrom`. Change both sides together.
+- There are no built-in examples; e2e specs import `e2e/fixtures/automata.json`.
+
+### `src/ui/`
+
+- `canvas/Diagram.tsx` renders an automaton as SVG from props. Its `data-testid`s and `data-*`
+  attributes are a contract used by tests, e2e and export. Thumbnails and the tutorial's
+  `GoalPicture` are their own SVGs so those ids stay unique (the welcome demo does duplicate them
+  while the welcome is open).
+- `canvas/useCanvasEditing.ts` holds all editing gestures; pointer capture starts only once a drag
+  crosses 3 px, so double-clicks keep their real target.
+- `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`).
+- `shell/`: top bar, history bar, dock, dialogs, import/export. Confirmations use `askConfirm()`
+  (`confirmStore.ts`), never `window.confirm`.
+- Every letter shortcut goes through `shell/shortcut.ts` (`isCtrlLetter`, `shortcutLetter`), which handles
+  non-Latin layouts (Hebrew Ctrl+A is `ש`).
+- Hover styles go inside `@media (hover: hover)`, so taps don't leave them stuck.
+- `tutorial/steps.ts` is a pure step table. Step texts mark keys `[Shift]`, states `«even»` and words to
+  type in backticks; a test caps their lengths.
+
+Interactive elements have stable `data-testid`s and accessible names that e2e relies on: keep them when
+restyling. Tests are colocated as `*.test.ts(x)`; Playwright specs live in `e2e/`.
+
+### Theme, fonts and export
+
+- Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain
+  fallbacks: SVG/PNG export resolves `var()` against a hidden `.av-theme-light` probe, so exports always
+  use the light palette.
+- Names and prose are Geist; input symbols (tape, typed word, edge labels, tutorial words) are IBM Plex
+  Mono (`--av-font-symbol`), whose dotted 0 reads neither as O nor ∅. It has no Greek, so ε falls back to Geist.
+- Exports (`canvas/exportDiagram.ts`) embed subsetted fonts from Google Fonts (`canvas/embedFont.ts`).
+  If a diagram font or weight changes, update `embedFont.ts`, `EDGE_LABEL_CHAR_WIDTH` (`core/geometry.ts`)
+  and the glyph ink table in `core/label.ts`.
+- State labels sit on the alphabetic baseline at `labelBaselineOffset` (`core/label.ts`), not
+  `dominant-baseline: central` (which left `q₀` ~3 px low); edge labels do use `central`.
