@@ -2,12 +2,18 @@ import { useStore } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
-import { clipCenter, copyStates, internalTransitions, pasteClip } from '../core/clipboard';
+import {
+  clipCenter,
+  copyStates,
+  incomingArrows,
+  internalTransitions,
+  pasteClip,
+} from '../core/clipboard';
 import type { Clip } from '../core/clipboard';
 import { removeState, removeTransition, syncAlphabet } from '../core/edit';
 import { newId } from '../core/id';
 import { emptyAutomaton } from '../core/model';
-import type { Automaton, AutomatonKind } from '../core/model';
+import type { Automaton, AutomatonKind, Transition } from '../core/model';
 import type { AnyTrace } from '../core/trace';
 import type { Selection, Viewport } from './types';
 
@@ -21,7 +27,9 @@ export const PASTE_STEP = 40;
 /**
  * What Ctrl+C copied last (in memory only, never saved): states of an automaton, or a whole
  * automaton from the history bar. For states, `last` is where the last paste went: pasting again
- * at the same place (or again without a place) steps `repeat` times further along. An automaton
+ * at the same place (or again without a place) steps `repeat` times further along. After a cut,
+ * `incoming` holds the arrows that came into the cut states from states left behind: the first
+ * paste restores them when it goes into the automaton cut from, then they are dropped. An automaton
  * is a snapshot with the view it had, so later edits to it, or deleting it, don't change the paste.
  */
 export type Clipboard =
@@ -29,6 +37,7 @@ export type Clipboard =
       kind: 'states';
       clip: Clip;
       last: { at: { x: number; y: number } | null; repeat: number } | null;
+      incoming?: { automatonId: string; transitions: Transition[] };
     }
   | { kind: 'automaton'; automaton: Automaton; viewport?: Viewport };
 
@@ -304,7 +313,18 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           });
           set((s) => {
             // `repeat: -1`: the first placeless paste steps 0 times, back onto the cut states' spot.
-            s.clipboard = { kind: 'states', clip, last: { at: null, repeat: -1 } };
+            s.clipboard = {
+              kind: 'states',
+              clip,
+              last: { at: null, repeat: -1 },
+              incoming: {
+                automatonId: current!.id,
+                transitions: incomingArrows(
+                  current!,
+                  clip.states.map((st) => st.id),
+                ),
+              },
+            };
             s.selection = NO_SELECTION;
           });
           return true;
@@ -333,7 +353,7 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           const { activeId, trace, automata: all, clipboard } = get();
           const current = all.find((a) => a.id === activeId);
           if (clipboard?.kind !== 'states' || trace || !current) return null;
-          const { clip, last } = clipboard;
+          const { clip, last, incoming } = clipboard;
           const again =
             last !== null &&
             (at === undefined
@@ -346,7 +366,12 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
             x: (at ? at.x - center.x : 0) + repeat * PASTE_STEP,
             y: (at ? at.y - center.y : 0) + repeat * PASTE_STEP,
           };
-          const result = pasteClip(current, clip, offset);
+          const result = pasteClip(
+            current,
+            clip,
+            offset,
+            incoming?.automatonId === current.id ? incoming.transitions : [],
+          );
           get().edit(() => result.automaton);
           set((s) => {
             s.clipboard = { kind: 'states', clip, last: { at: at ?? null, repeat } };

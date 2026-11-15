@@ -57,7 +57,9 @@ Layers, with dependencies pointing downward only:
     on a focused history entry it copies that automaton (handled there, `preventDefault` so the
     window listeners skip it). Ctrl+X (`store.cutSelection`, also Cut in the state menus) copies the
     selected states, then deletes them and the selected arrows in one undo step; the first placeless
-    paste after it lands back in place (`last.repeat` starts at −1). Ctrl+A on the canvas selects
+    paste after it lands back in place (`last.repeat` starts at −1), and the first paste
+    of a cut into the automaton it came from restores the arrows into the cut states from states left behind
+    (`incomingArrows`, `pasteClip`'s `incoming`; on a DFA minus symbols the source state reads elsewhere by then). Ctrl+A on the canvas selects
     every state and arrow and focuses the canvas, so Delete / Ctrl+X act on it next.
   - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
     snapshots (`trace.ts`). Each has a `can*` guard returning a user-facing reason or `null`.

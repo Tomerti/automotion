@@ -34,6 +34,15 @@ export function copyStates(a: Automaton, ids: readonly StateId[]): Clip | null {
   };
 }
 
+/**
+ * Arrows into the states `ids` from states outside them: what copying leaves out. A cut keeps
+ * them so that pasting it back (`pasteClip`'s `incoming`) is a move, not a copy.
+ */
+export function incomingArrows(a: Automaton, ids: readonly StateId[]): Transition[] {
+  const picked = new Set(ids);
+  return a.transitions.filter((t) => picked.has(t.to) && !picked.has(t.from));
+}
+
 /** `label`, or `label'`, `label''`, … if taken. */
 export function uniqueLabel(label: string, taken: ReadonlySet<string>): string {
   let out = label;
@@ -62,11 +71,17 @@ export function internalTransitions(a: Automaton, stateIds: readonly StateId[]):
  * free, otherwise gain primes (q_1 → q_1'). Accepting is copied, start is not. Arrows between
  * copied states are copied; arrows to an outside state are kept when `a` has that state. An
  * ε-arrow pasted into a DFA turns it into an NFA (`promoted`). The alphabet is synced.
+ *
+ * `incoming` (from `incomingArrows`, for a cut pasted back) are arrows from states of `a` into
+ * the copied states: each is restored into the copy when `a` still has its source state. On a
+ * DFA, symbols the source state now reads on another arrow are left off, so it stays
+ * deterministic, and an arrow left with none is dropped.
  */
 export function pasteClip(
   a: Automaton,
   clip: Clip,
   offset: { x: number; y: number },
+  incoming: readonly Transition[] = [],
 ): { automaton: Automaton; stateIds: StateId[]; transitionIds: string[]; promoted: boolean } {
   const taken = new Set(a.states.map((s) => s.label));
   const newIds = new Map<StateId, StateId>();
@@ -91,6 +106,18 @@ export function pasteClip(
     const to = newIds.get(t.to) ?? (existing.has(t.to) ? t.to : undefined);
     if (from === undefined || to === undefined) continue;
     transitions.push({ ...t, id: newId(), from, to, symbols: [...t.symbols] });
+  }
+  for (const t of incoming) {
+    const to = newIds.get(t.to);
+    if (to === undefined || !existing.has(t.from)) continue;
+    const used = new Set(
+      a.kind === 'DFA'
+        ? a.transitions.filter((u) => u.from === t.from).flatMap((u) => u.symbols)
+        : [],
+    );
+    const symbols = t.symbols.filter((s) => !used.has(s));
+    if (symbols.length === 0) continue;
+    transitions.push({ ...t, id: newId(), to, symbols });
   }
   const promoted = a.kind === 'DFA' && transitions.some((t) => t.symbols.includes(EPSILON));
   const automaton = syncAlphabet({
