@@ -258,6 +258,11 @@ input.av-switcher-input {
   background: color-mix(in srgb, var(--av-red) 9%, transparent);
   border-color: color-mix(in srgb, var(--av-red) 35%, transparent);
 }
+.av-chip[data-severity='muted'] {
+  color: var(--av-ink-muted);
+  background: transparent;
+  border-color: var(--av-rule-strong);
+}
 .av-chip:hover:not(:disabled) {
   background: color-mix(in srgb, currentColor 16%, transparent);
   border-color: currentColor;
