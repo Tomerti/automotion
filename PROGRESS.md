@@ -24,9 +24,13 @@ Nothing in progress: pick the next task from the list below.
 - [x] Four one-minute lessons: NFAs, Convert NFA → DFA, Minimize a DFA, Share and export. Each opens a read-only copy of a ready-made automaton; automata saved from them belong to the lesson (Quit removes them, Finish keeps them)
 - [x] Read-only automata (`readOnly` in the store): layout moves, Tidy and runs work; structural edits, undo into structure, cut and paste are refused (`sameStructure`), counted in `blockedEdits`, and the card says it's read-only
 - [x] Controls (?) has a Lessons tab with ✓ for finished lessons (`automotion:lessons-done`); the finish popup offers "Next: …"; starting another lesson midway asks first
-- [x] A goal with `after` shows only the target picture in a full-width row; the pointer draws over the top bar for toolbar buttons, with a tight frame on buttons
+- [x] The pointer draws over the top bar for toolbar buttons, with a tight frame on buttons
 - [x] `lessons/index.test.ts` caps every lesson's text: instructions 100 characters, why lines 110 (70 for Basics)
-- [x] Lesson runs and walkthroughs play as everywhere instead of opening paused; a step's `pauseAt` pauses the player at the moment the next step explains (`TracePlayer` `stopAt`, `lessonStopAt`), and the NFAs, Convert and Minimize steps were rewritten around that pause
+- [x] Walkthroughs pause where a step explains (`pauseAt`, `TracePlayer` `stopAt`, `lessonStopAt`); Convert stops at 2 and 5 of 10, Minimize opens paused and stops at 2 of 3
+- [x] Lessons rework (`2026-11-15-lessons-flow-design.md`): idea steps with a Next button, a step's `explain` shown before its instruction, and goal pictures and word-box/dock frames only in Basics
+- [x] NFAs is stepped by hand on `001` (`pausedRuns`, `lessons/handStep.ts`), and a new ε-moves lesson follows it on `b` and `ba`
+- [x] The Controls header Lessons button is gone: the Lessons tab is the only way in
+- [x] `e2e/lessons.spec.ts` covers the idea steps, hand-stepped NFA and ε runs, the Convert and Minimize stops, and Convert pressed before Next
 
 ### Theme switch without a blink (2026-11-15)
 

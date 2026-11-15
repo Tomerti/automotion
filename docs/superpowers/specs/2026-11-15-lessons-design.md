@@ -85,6 +85,8 @@ interface LessonPart {
 }
 ```
 
+> Superseded: the `after` picture is gone; only Basics shows goal pictures. See `2026-11-15-lessons-flow-design.md`.
+
 `Goal` (today's: text, examples, picture, description) gains an optional `after` picture, for
 lessons that turn one automaton into another (Convert: the NFA → the DFA). A goal with `after`
 shows only that target picture, in a full-width row of its own: the start automaton is already on
@@ -133,6 +135,8 @@ Step ids are namespaced per lesson (`convert/open`); `StepId` becomes a string.
 
 ### Playback
 
+> Superseded: lesson runs now open paused and stop where each step explains, with idea steps and `explain` text. See `2026-11-15-lessons-flow-design.md`.
+
 Runs and conversions play as they open and minimizations open paused, in lessons as everywhere
 else. A lesson instead pauses the player at the moment a step explains (changed 2026-11-15 on
 user feedback: the first build opened lesson runs paused, so Run seemed to do nothing until Play):
@@ -171,7 +175,7 @@ shouldn't get stuck behind it (e2e needn't grant clipboard permission either).
 
 ### Where lessons are found
 
-- **Controls popup.** The header's "Take the tutorial" button becomes **Lessons** (an intended
+- **Controls popup.** (Superseded: the header button is gone, the Lessons tab is the only way in. See `2026-11-15-lessons-flow-design.md`.) The header's "Take the tutorial" button becomes **Lessons** (an intended
   change: `ControlsDialog.test.tsx` and any e2e that clicks it are updated), which opens a
   new **Lessons** tab (last in the tab row, so `?` still opens on the controls). Each row: title,
   summary, "~1 min", and a ✓ once finished. Clicking a row closes the popup and starts it. The
@@ -211,6 +215,8 @@ throws; a bad value counts as none finished.
 - Same markup as now: `[Key]`, «state», `word`.
 
 ### The first lessons
+
+> Superseded: the NFAs, Convert and Minimize lessons were reworked and an ε-moves lesson added. See `2026-11-15-lessons-flow-design.md`.
 
 Wording below is as built (changed during implementation, 2026-11-15, to fit the length caps). Fixtures are given as their
 language and shape; ids equal labels.
