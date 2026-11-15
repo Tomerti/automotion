@@ -5,8 +5,8 @@ test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
 
 async function copyLink(page: Page): Promise<string> {
   await page.evaluate(() => navigator.clipboard.writeText(''));
-  await page.getByRole('button', { name: 'Copy or export' }).click();
-  await page.getByRole('menuitem', { name: 'Copy link' }).click();
+  await page.getByRole('button', { name: 'Share, copy or export' }).click();
+  await page.getByRole('menuitem', { name: 'Share link' }).click();
   await expect(page.getByText('Link copied')).toBeVisible();
   return page.evaluate(() => navigator.clipboard.readText());
 }
