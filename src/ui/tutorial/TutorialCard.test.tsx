@@ -418,25 +418,24 @@ describe('a lesson other than Basics', () => {
     expect(within(card()).getByText('Test lesson · Done')).toBeInTheDocument();
   });
 
-  it('draws a second picture, after an arrow, when the goal turns one automaton into another', () => {
+  it('shows only the target, in a full-width row, when the goal has an `after` picture', () => {
     render(<App />);
     act(() => startLesson(TEST_LESSON));
     expect(within(card()).getAllByTestId('tutorial-goal-picture')).toHaveLength(1);
-    expect(within(card()).queryByTestId('tutorial-goal-arrow')).toBeNull();
-    expect(within(card()).queryByTestId('tutorial-goal-pictures')).toBeNull();
+    expect(within(card()).queryByTestId('tutorial-goal-wide')).toBeNull();
+    expect(within(card()).getByTestId('tutorial-goal-picture')).toHaveAccessibleName(
+      TEST_LESSON.parts[0]!.goal.description,
+    );
     act(() => endLesson());
 
     act(() => startLesson(CONVERT_LESSON));
     const goal = within(card()).getByTestId('tutorial-goal');
-    const pictures = within(goal).getAllByTestId('tutorial-goal-picture');
-    expect(pictures).toHaveLength(2);
-    const after = CONVERT_LESSON.parts[0]!.goal.after!;
-    expect(pictures[1]).toHaveAccessibleName(after.description);
-    expect(within(goal).getByTestId('tutorial-goal-arrow')).toHaveAttribute('aria-hidden', 'true');
-    // Both pictures and the arrow share the goal's full-width row of their own.
-    const row = within(goal).getByTestId('tutorial-goal-pictures');
-    expect(within(row).getAllByTestId('tutorial-goal-picture')).toHaveLength(2);
-    expect(row).toContainElement(within(goal).getByTestId('tutorial-goal-arrow'));
+    const goalSpec = CONVERT_LESSON.parts[0]!.goal;
+    const row = within(goal).getByTestId('tutorial-goal-wide');
+    const picture = within(row).getByTestId('tutorial-goal-picture');
+    expect(picture).toHaveAccessibleName(goalSpec.after!.description);
+    // The only picture: the NFA being converted is already on the canvas.
+    expect(within(goal).getAllByTestId('tutorial-goal-picture')).toHaveLength(1);
   });
 
   it('lifts the pointer over the top bar and frames a toolbar button tightly', () => {

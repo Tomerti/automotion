@@ -93,33 +93,19 @@
   width: 250px;
   height: 122px;
 }
-/* Before and after: the pictures stack (before, arrow, after), each as wide as the card, above the words. */
-.av-tutorial-goal[data-before-after] {
+/* A goal with an `after` picture: the target as one wide, short picture on a row of its own above the words. */
+.av-tutorial-goal[data-wide-picture] {
   flex-wrap: wrap;
   gap: 6px 14px;
 }
-.av-tutorial-goal-pictures {
-  display: flex;
+.av-tutorial-goal-wide {
   flex: 1 1 100%;
-  flex-direction: column;
-  gap: 0;
-  align-items: stretch;
   min-width: 0;
 }
-.av-tutorial-goal-pictures .av-tutorial-goal-picture {
-  flex: none;
+.av-tutorial-goal-wide .av-tutorial-goal-picture {
   width: 100%;
   height: auto;
-  max-height: 160px;
-}
-.av-tutorial-goal-pictures .av-tutorial-goal-arrow {
-  align-self: center;
-  line-height: 1;
-}
-.av-tutorial-goal-arrow {
-  flex: none;
-  font-size: 18px;
-  color: var(--av-ink-muted);
+  max-height: 145px;
 }
 /* Part 2's goal comes in with an orange flash, so the new part is hard to miss. */
 .av-tutorial-goal[data-part='2'] {
@@ -441,7 +427,7 @@
   }
   /* Room for the step: the goal and its words say what the picture would. */
   .av-tutorial-goal-picture,
-  .av-tutorial-goal-pictures {
+  .av-tutorial-goal-wide {
     display: none;
   }
 }

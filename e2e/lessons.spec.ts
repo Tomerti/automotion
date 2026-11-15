@@ -72,7 +72,7 @@ test('the Convert lesson steps through the subset construction, saves the DFA an
   await guide.getByTestId('lesson-convert').click();
   const card = page.getByTestId('tutorial-card');
   await expect(card).toBeVisible();
-  await expect(card.getByTestId('tutorial-goal-picture')).toHaveCount(2);
+  await expect(card.getByTestId('tutorial-goal-picture')).toHaveCount(1);
   const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
   await at(1);
 
@@ -112,7 +112,7 @@ test('the Minimize lesson splits a block, merges the states, saves the DFA and f
   await guide.getByTestId('lesson-minimize').click();
   const card = page.getByTestId('tutorial-card');
   await expect(card).toBeVisible();
-  await expect(card.getByTestId('tutorial-goal-picture')).toHaveCount(2);
+  await expect(card.getByTestId('tutorial-goal-picture')).toHaveCount(1);
   const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
   await at(1);
 
