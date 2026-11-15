@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import type { Automaton } from '../../core/model';
-import { runWord } from '../../core/run';
-import { fixture } from '../../core/testing/fixtures';
-import type { FixtureSpec } from '../../core/testing/fixtures';
-import type { AnyTrace } from '../../core/trace';
-import { advance, COUNTED_STEPS, PART_GOALS, roles, runSucceeded, STEPS } from './steps';
-import type { StepId, TutorialContext } from './steps';
+import type { Automaton } from '../../../core/model';
+import { runWord } from '../../../core/run';
+import { fixture } from '../../../core/testing/fixtures';
+import type { FixtureSpec } from '../../../core/testing/fixtures';
+import type { AnyTrace } from '../../../core/trace';
+import { advance, countedSteps, lessonSteps, runSucceeded } from '../engine';
+import type { TutorialContext } from '../engine';
+import { BASICS, roles } from './basics';
+
+const STEPS = lessonSteps(BASICS);
 
 const tut = (spec: Partial<FixtureSpec>): Automaton =>
   fixture({ kind: 'DFA', alphabet: '01', states: [], name: 'tut', ...spec });
@@ -32,7 +35,16 @@ function ctx(
   automaton: Automaton | undefined,
   more: Partial<TutorialContext> = {},
 ): TutorialContext {
-  return { automaton, isActive: true, trace: null, stepIndex: 0, selected: [], ...more };
+  return {
+    automaton,
+    isActive: true,
+    trace: null,
+    stepIndex: 0,
+    selected: [],
+    owned: automaton ? [automaton.id] : [],
+    actions: new Set(),
+    ...more,
+  };
 }
 
 /** A run of `word` on `a`, shown at its verdict (or at `at`). */
@@ -41,10 +53,10 @@ function ran(a: Automaton, word: string, at?: number): Partial<TutorialContext> 
   return { trace, stepIndex: at ?? trace.steps.length - 1 };
 }
 
-const idx = (id: StepId): number => STEPS.findIndex((s) => s.id === id);
-const step = (id: StepId) => STEPS[idx(id)]!;
-const none: ReadonlySet<StepId> = new Set();
-const hintText = (id: StepId, c: TutorialContext): string | undefined => {
+const idx = (id: string): number => STEPS.findIndex((s) => s.id === id);
+const step = (id: string) => STEPS[idx(id)]!;
+const none: ReadonlySet<string> = new Set();
+const hintText = (id: string, c: TutorialContext): string | undefined => {
   const h = step(id).hint(c);
   return h?.kind === 'text' ? h.text : undefined;
 };
@@ -69,7 +81,7 @@ describe('the step table', () => {
       'run-10-again',
       'done',
     ]);
-    expect(COUNTED_STEPS).toBe(15);
+    expect(countedSteps(BASICS)).toBe(15);
     expect(STEPS.map((s) => s.part)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3]);
   });
 
@@ -84,11 +96,11 @@ describe('the step table', () => {
 
 describe('the goals', () => {
   it('picture what each part builds, with the names the steps ask for', () => {
-    const one = PART_GOALS[1].automaton;
+    const one = BASICS.parts[0]!.goal.automaton;
     expect(one.states.map((s) => s.label)).toEqual(['even', 'odd']);
     expect(step('loop-q1').done(ctx(one))).toBe(true);
-    expect(advance(0, none, ctx(one)).current).toBe(idx('run-1010'));
-    const two = PART_GOALS[2].automaton;
+    expect(advance(BASICS, 0, none, ctx(one)).current).toBe(idx('run-1010'));
+    const two = BASICS.parts[1]!.goal.automaton;
     expect(two.states.map((s) => s.label)).toEqual(['any']);
     expect(step('loop-01').done(ctx(two))).toBe(true);
     expect(step('rename-q0').done(ctx(two))).toBe(true);
@@ -96,7 +108,7 @@ describe('the goals', () => {
 
   it('give example words that the goal really accepts or rejects', () => {
     for (const part of [1, 2] as const) {
-      const goal = PART_GOALS[part];
+      const goal = BASICS.parts[part - 1]!.goal;
       for (const e of goal.examples) {
         expect(runWord(goal.automaton, e.word).accepted, `${part}: ${e.word}`).toBe(e.accepted);
       }
@@ -167,7 +179,7 @@ describe('done', () => {
       ...a,
       states: a.states.map((s) => (s.id === 'even' ? { ...s, label: 'evem' } : s)),
     };
-    expect(advance(idx('run-1010'), none, ctx(typo)).current).toBe(idx('name-q0'));
+    expect(advance(BASICS, idx('run-1010'), none, ctx(typo)).current).toBe(idx('name-q0'));
   });
 
   it('names the start state even when the second state came first', () => {
@@ -266,11 +278,11 @@ describe('runSucceeded', () => {
 
 describe('advance', () => {
   it('stays on the first step of an empty automaton', () => {
-    expect(advance(0, none, ctx(tut({})))).toMatchObject({ progress: 0, current: 0 });
+    expect(advance(BASICS, 0, none, ctx(tut({})))).toMatchObject({ progress: 0, current: 0 });
   });
 
   it('moves through every step already done at once, up to the first run', () => {
-    const p = advance(0, none, ctx(evenZeros()));
+    const p = advance(BASICS, 0, none, ctx(evenZeros()));
     expect(p.progress).toBe(idx('run-1010'));
     expect(p.current).toBe(idx('run-1010'));
   });
@@ -278,61 +290,63 @@ describe('advance', () => {
   it('stops at naming a state that still has its q-number', () => {
     const a = evenZeros();
     const unnamed = { ...a, states: a.states.map((s, i) => ({ ...s, label: `q_${i}` })) };
-    expect(advance(0, none, ctx(unnamed)).current).toBe(idx('name-q0'));
+    expect(advance(BASICS, 0, none, ctx(unnamed)).current).toBe(idx('name-q0'));
   });
 
   it('falls back to a step that came undone, keeping the furthest point', () => {
     const a = { ...evenZeros(), starts: [] };
-    const p = advance(idx('loop-q1'), none, ctx(a));
+    const p = advance(BASICS, idx('loop-q1'), none, ctx(a));
     expect(p.current).toBe(idx('start'));
     expect(p.progress).toBe(idx('loop-q1'));
   });
 
   it('latches a run once its verdict shows, and moves on', () => {
     const a = evenZeros();
-    const p = advance(idx('run-1010'), none, ctx(a, ran(a, '1010')));
+    const p = advance(BASICS, idx('run-1010'), none, ctx(a, ran(a, '1010')));
     expect(p.latched.has('run-1010')).toBe(true);
     expect(p.current).toBe(idx('run-10'));
     // Closing the trace keeps it done.
-    expect(advance(p.progress, p.latched, ctx(a)).current).toBe(idx('run-10'));
+    expect(advance(BASICS, p.progress, p.latched, ctx(a)).current).toBe(idx('run-10'));
   });
 
   it('does not latch a run before its verdict or on another automaton', () => {
     const a = evenZeros();
-    expect(advance(idx('run-1010'), none, ctx(a, ran(a, '1010', 0))).latched.size).toBe(0);
+    expect(advance(BASICS, idx('run-1010'), none, ctx(a, ran(a, '1010', 0))).latched.size).toBe(0);
     const other = { ...a, id: 'other' };
-    expect(advance(idx('run-1010'), none, ctx(a, ran(other, '1010'))).latched.size).toBe(0);
+    expect(advance(BASICS, idx('run-1010'), none, ctx(a, ran(other, '1010'))).latched.size).toBe(0);
   });
 
   it('a run does not count while the automaton it needs came undone', () => {
     const broken = { ...evenZeros(), accepting: [] };
-    const p = advance(idx('run-1010'), none, ctx(broken, ran(broken, '1010')));
+    const p = advance(BASICS, idx('run-1010'), none, ctx(broken, ran(broken, '1010')));
     expect(p.current).toBe(idx('accepting'));
     expect(p.latched.size).toBe(0);
   });
 
   it('part 2 never falls back into part 1', () => {
-    const latched: ReadonlySet<StepId> = new Set(['run-1010', 'run-10']);
-    expect(advance(idx('delete-q1'), latched, ctx(evenZeros())).current).toBe(idx('delete-q1'));
-    expect(advance(idx('delete-q1'), latched, ctx(tut({}))).current).toBe(idx('delete-q1'));
+    const latched: ReadonlySet<string> = new Set(['run-1010', 'run-10']);
+    expect(advance(BASICS, idx('delete-q1'), latched, ctx(evenZeros())).current).toBe(
+      idx('delete-q1'),
+    );
+    expect(advance(BASICS, idx('delete-q1'), latched, ctx(tut({}))).current).toBe(idx('delete-q1'));
   });
 
   it('reaches the closing card after the last run and stays there', () => {
     const b = { ...everything(), states: [{ ...everything().states[0]!, label: 'any' }] };
-    const p = advance(idx('run-10-again'), none, ctx(b, ran(b, '10')));
+    const p = advance(BASICS, idx('run-10-again'), none, ctx(b, ran(b, '10')));
     expect(p.current).toBe(idx('done'));
     expect(p.progress).toBe(idx('done'));
-    expect(advance(p.progress, p.latched, ctx(b)).current).toBe(idx('done'));
+    expect(advance(BASICS, p.progress, p.latched, ctx(b)).current).toBe(idx('done'));
   });
 
   it('never moves on while the tutorial automaton is not the active one', () => {
-    const p = advance(0, none, ctx(evenZeros(), { isActive: false }));
+    const p = advance(BASICS, 0, none, ctx(evenZeros(), { isActive: false }));
     expect(p).toMatchObject({ progress: 0, current: 0 });
   });
 
   it('keeps the step it fell back to while another automaton is open', () => {
     const a = { ...evenZeros(), starts: [] };
-    const p = advance(idx('loop-q1'), none, ctx(a, { isActive: false }), idx('start'));
+    const p = advance(BASICS, idx('loop-q1'), none, ctx(a, { isActive: false }), idx('start'));
     expect(p).toMatchObject({ progress: idx('loop-q1'), current: idx('start') });
   });
 });

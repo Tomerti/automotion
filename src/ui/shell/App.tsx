@@ -9,7 +9,8 @@ import { TracePlayer } from '../player/TracePlayer';
 import { TraceView } from '../player/TraceView';
 import { TutorialCard } from '../tutorial/TutorialCard';
 import { FinishedCard } from '../tutorial/FinishedCard';
-import { closeCelebration, startTutorial, useTutorial } from '../tutorial/tutorialStore';
+import { lessonById } from '../tutorial/lessons';
+import { closeCelebration, startLesson, useTutorial } from '../tutorial/tutorialStore';
 import { WelcomeCard } from '../tutorial/WelcomeCard';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ControlsDialog } from './ControlsDialog';
@@ -132,7 +133,7 @@ export default function App(): React.JSX.Element {
           onClose={() => setHelpOpen(false)}
           onStartTutorial={() => {
             setHelpOpen(false);
-            startTutorial();
+            startLesson('basics');
           }}
         />
       )}
@@ -141,11 +142,11 @@ export default function App(): React.JSX.Element {
           onClose={closeWelcome}
           onStart={() => {
             closeWelcome();
-            startTutorial();
+            startLesson('basics');
           }}
         />
       )}
-      {celebrating && <FinishedCard onClose={closeCelebration} />}
+      {celebrating && <FinishedCard lesson={lessonById(celebrating)} onClose={closeCelebration} />}
     </div>
   );
 }

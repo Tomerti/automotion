@@ -142,7 +142,7 @@ export function ControlsDialog({
   onClose: () => void;
   onStartTutorial: () => void;
 }): React.JSX.Element {
-  const tutorialRunning = useTutorial((s) => s.active);
+  const tutorialRunning = useTutorial((s) => s.active && s.lessonId === 'basics');
   const dialogRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState(0);
   const baseId = useId();

@@ -2,11 +2,16 @@ import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } f
 import { appStore, useAppStore } from '../../store/store';
 import { LabelText } from '../LabelText';
 import { CloseIcon } from '../shell/icons';
+import { countedSteps, lessonSteps } from './engine';
+import type { Lesson } from './engine';
 import { GoalPicture } from './GoalPicture';
-import { COUNTED_STEPS, PART1_DONE, PART_GOALS, PART_TITLES, STEPS } from './steps';
+import { lessonById } from './lessons';
 import { TutorialPointer } from './TutorialPointer';
-import { finishTutorial, quitTutorial, tutorialContext, useTutorial } from './tutorialStore';
+import { finishLesson, quitLesson, tutorialContext, useTutorial } from './tutorialStore';
 import './tutorial.css';
+
+/** "Tutorial" or "Lesson", for labels that start with it. */
+const capitalized = (noun: string): string => noun.charAt(0).toUpperCase() + noun.slice(1);
 
 /** A `word` to type, a [Key] to press, or a «state». */
 const MARKUP = /(`[^`]*`|\[[^\]\s]+\]|«[^»]*»)/;
@@ -63,14 +68,16 @@ function Markup({ part }: { part: string }): React.JSX.Element {
  * What the part builds, at the top of the card: a picture of the finished automaton, the goal in
  * a few words, and words it accepts (✓) and rejects (✗).
  */
-function GoalRow({ part }: { part: 1 | 2 }): React.JSX.Element {
-  const goal = PART_GOALS[part];
+function GoalRow({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.Element | null {
+  const goal = lesson.parts[part - 1]?.goal;
+  if (!goal) return null;
   return (
     <div className="av-tutorial-goal" data-testid="tutorial-goal" data-part={part}>
       <GoalPicture automaton={goal.automaton} description={goal.description} />
       <div className="av-tutorial-goal-body">
         <p className="av-tutorial-goal-text">
-          <b>Part {part} goal:</b> <RichText text={goal.text} />
+          <b>{lesson.parts.length > 1 ? `Part ${part} goal:` : 'Goal:'}</b>{' '}
+          <RichText text={goal.text} />
         </p>
         <ul className="av-tutorial-examples" aria-label="For example">
           {goal.examples.map((e) => (
@@ -92,37 +99,41 @@ function GoalRow({ part }: { part: 1 | 2 }): React.JSX.Element {
 }
 
 /**
- * The hand-over between the parts, while the run that ended part 1 is still open: what part 1
- * achieved, and what part 2 is.
+ * The hand-over between the parts, while the run that ended `part` is still open: what it
+ * achieved, and what the next part is.
  */
-function PartDone(): React.JSX.Element {
+function PartDone({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.Element {
   return (
     <div className="av-tutorial-part-done" data-testid="tutorial-part-done" role="status">
       <p className="av-tutorial-part-done-title">
         <span className="av-tutorial-part-done-mark" aria-hidden="true">
           ✓
         </span>
-        Part 1 complete!
+        Part {part} complete!
       </p>
-      <p className="av-tutorial-part-done-text">{PART1_DONE}</p>
+      <p className="av-tutorial-part-done-text">{lesson.parts[part - 1]?.done}</p>
       <p className="av-tutorial-next">
-        Next: <b>Part 2 · {PART_TITLES[2]}</b>
+        Next:{' '}
+        <b>
+          Part {part + 1} · {lesson.parts[part]?.title}
+        </b>
       </p>
     </div>
   );
 }
 
 /** One segment per step, filled up to the step on the card; a wider gap between the parts. */
-function ProgressBar({ done }: { done: number }): React.JSX.Element {
-  const counted = STEPS.slice(0, COUNTED_STEPS);
+function ProgressBar({ lesson, done }: { lesson: Lesson; done: number }): React.JSX.Element {
+  const total = countedSteps(lesson);
+  const counted = lessonSteps(lesson).slice(0, total);
   return (
     <div
       className="av-tutorial-progress"
       data-testid="tutorial-progress"
       role="progressbar"
-      aria-label="Tutorial progress"
+      aria-label={`${capitalized(lesson.noun)} progress`}
       aria-valuemin={0}
-      aria-valuemax={COUNTED_STEPS}
+      aria-valuemax={total}
       aria-valuenow={done}
     >
       {counted.map((s, i) => (
@@ -170,6 +181,7 @@ function useCardPad(ref: React.RefObject<HTMLElement | null>, shown: boolean): v
  */
 export function TutorialCard(): React.JSX.Element | null {
   const active = useTutorial((s) => s.active);
+  const lessonId = useTutorial((s) => s.lessonId);
   const automatonId = useTutorial((s) => s.automatonId);
   const current = useTutorial((s) => s.current);
   // The tutorial automaton X was clicked for, so a restart never opens on the question.
@@ -183,14 +195,18 @@ export function TutorialCard(): React.JSX.Element | null {
   useAppStore((s) => s.selection);
   const openName = useAppStore((s) => s.automata.find((a) => a.id === s.activeId)?.name);
   const tutorialName = useAppStore((s) => s.automata.find((a) => a.id === automatonId)?.name);
-  useCardPad(cardRef, active && STEPS[current] !== undefined);
+  const lesson = lessonId === null ? null : lessonById(lessonId);
+  const steps = lesson ? lessonSteps(lesson) : [];
+  useCardPad(cardRef, active && steps[current] !== undefined);
 
-  if (!active) return null;
-  const step = STEPS[current];
+  if (!active || !lesson) return null;
+  const step = steps[current];
   if (!step) return null;
   const ctx = tutorialContext(appStore.getState(), automatonId);
   const hint = step.hint(ctx);
-  const last = step.part === 3;
+  const parts = lesson.parts.length;
+  const last = step.part > parts;
+  const noun = lesson.noun;
   // Finishing behind the question makes it moot: nothing to lose any more.
   const quitting = quitFor !== null && quitFor === automatonId && !last;
 
@@ -203,41 +219,44 @@ export function TutorialCard(): React.JSX.Element | null {
   const shownPart = partDone ?? step.part;
   const why = partDone ? null : step.why(ctx);
   // Steps are numbered within their part.
-  const inPart = STEPS.filter((s) => s.part === step.part);
+  const inPart = steps.filter((s) => s.part === step.part);
   const stepInPart = inPart.indexOf(step) + 1;
+  const stepCount = `Step ${stepInPart} of ${inPart.length}`;
 
   return (
     <section
       ref={cardRef}
       className="av-tutorial"
-      aria-label="Tutorial"
+      aria-label={capitalized(noun)}
       data-testid="tutorial-card"
       data-step={current + 1}
     >
       <header className="av-tutorial-head">
         <span className="av-tutorial-count">
           {last
-            ? 'Tutorial · Done'
+            ? `${noun === 'tutorial' ? 'Tutorial' : lesson.title} · Done`
             : partDone
-              ? `Part ${partDone} of 2 · Complete`
-              : `Part ${step.part} of 2 · Step ${stepInPart} of ${inPart.length}`}
+              ? `Part ${partDone} of ${parts} · Complete`
+              : parts > 1
+                ? `Part ${step.part} of ${parts} · ${stepCount}`
+                : `${lesson.title} · ${stepCount}`}
         </span>
         <button
           ref={closeRef}
           type="button"
           className="av-icon-button"
-          aria-label="End tutorial"
-          title="End tutorial"
+          aria-label={`End ${noun}`}
+          title={`End ${noun}`}
           // Nothing to lose once it's done: close it like Finish. Midway, ask first.
-          onClick={last ? finishTutorial : () => setQuitFor(automatonId)}
+          onClick={last ? finishLesson : () => setQuitFor(automatonId)}
         >
           <CloseIcon />
         </button>
       </header>
       {quitting ? (
-        <div className="av-tutorial-quit" role="group" aria-label="Quit the tutorial?">
+        <div className="av-tutorial-quit" role="group" aria-label={`Quit the ${noun}?`}>
           <p className="av-tutorial-text">
-            Quit the tutorial? <b>{tutorialName ?? 'Its automaton'}</b> will be removed from your
+            Quit the {noun}? <b>{tutorialName ?? 'Its automaton'}</b> will be removed from your
             history.
           </p>
           <div className="av-tutorial-actions">
@@ -245,7 +264,7 @@ export function TutorialCard(): React.JSX.Element | null {
             <button type="button" autoFocus onClick={keepGoing}>
               Keep going
             </button>
-            <button type="button" className="av-tutorial-quit-button" onClick={quitTutorial}>
+            <button type="button" className="av-tutorial-quit-button" onClick={quitLesson}>
               Quit
             </button>
           </div>
@@ -253,12 +272,12 @@ export function TutorialCard(): React.JSX.Element | null {
       ) : (
         <>
           {partDone ? (
-            <PartDone />
+            <PartDone lesson={lesson} part={partDone} />
           ) : (
-            // Keyed by part, so part 2's goal comes in with its own entrance.
-            shownPart !== 3 && <GoalRow key={shownPart} part={shownPart} />
+            // Keyed by part, so each new part's goal comes in with its own entrance.
+            !last && <GoalRow key={shownPart} lesson={lesson} part={shownPart} />
           )}
-          {!last && <ProgressBar done={current} />}
+          {!last && <ProgressBar lesson={lesson} done={current} />}
           {/* One live region that stays mounted, so screen readers announce each new step and
               hint as it appears. */}
           <div className="av-tutorial-now" data-testid="tutorial-step" aria-live="polite">
@@ -291,7 +310,9 @@ export function TutorialCard(): React.JSX.Element | null {
                   className="av-tutorial-link"
                   onClick={() => automatonId && appStore.getState().setActive(automatonId)}
                 >
-                  Back to Tutorial
+                  {noun === 'tutorial'
+                    ? 'Back to Tutorial'
+                    : `Back to ${tutorialName ?? 'the lesson'}`}
                 </button>
               </p>
             ) : (
@@ -304,7 +325,7 @@ export function TutorialCard(): React.JSX.Element | null {
           </div>
           {last && (
             <div className="av-tutorial-actions">
-              <button type="button" className="av-go" onClick={finishTutorial}>
+              <button type="button" className="av-go" onClick={finishLesson}>
                 Finish
               </button>
             </div>

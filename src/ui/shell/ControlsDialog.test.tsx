@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { resetAppStore } from '../../store/store';
 import App from './App';
-import { endTutorial } from '../tutorial/tutorialStore';
+import { endLesson } from '../tutorial/tutorialStore';
 import { SEEN_HELP_KEY } from './help';
 
 const dialog = () => screen.queryByRole('dialog', { name: 'Controls' });
@@ -140,6 +140,6 @@ describe('Controls popup', () => {
     expect(screen.getByTestId('tutorial-card')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Controls' }));
     expect(within(dialog()!).getByRole('button', { name: 'Restart tutorial' })).toBeInTheDocument();
-    act(() => endTutorial());
+    act(() => endLesson());
   });
 });

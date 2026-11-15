@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { CloseIcon } from '../shell/icons';
 import { useModalDialog } from '../shell/useModalDialog';
 import { CHEERS } from './cheers';
+import type { Lesson } from './engine';
 import './tutorial.css';
 
 /** Confetti pieces: horizontal position (%), delay (s), colour token. */
@@ -15,10 +16,18 @@ const CONFETTI = Array.from({ length: 18 }, (_, i) => ({
  * The popup after Finish: well done, with a joke. Escape, the backdrop, the close button and the
  * button dismiss it.
  */
-export function FinishedCard({ onClose }: { onClose: () => void }): React.JSX.Element {
+export function FinishedCard({
+  lesson,
+  onClose,
+}: {
+  lesson: Lesson;
+  onClose: () => void;
+}): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalDialog(dialogRef, onClose);
   const [cheer] = useState(() => CHEERS[Math.floor(Math.random() * CHEERS.length)]!);
+  const tutorial = lesson.noun === 'tutorial';
+  const title = tutorial ? 'Tutorial complete' : 'Lesson complete';
 
   return (
     <div
@@ -33,7 +42,7 @@ export function FinishedCard({ onClose }: { onClose: () => void }): React.JSX.El
         className="av-modal av-welcome av-finished"
         role="dialog"
         aria-modal="true"
-        aria-label="Tutorial complete"
+        aria-label={title}
         tabIndex={-1}
       >
         <div className="av-confetti" aria-hidden="true">
@@ -49,7 +58,7 @@ export function FinishedCard({ onClose }: { onClose: () => void }): React.JSX.El
           ))}
         </div>
         <header className="av-modal-head">
-          <h2>Tutorial complete!</h2>
+          <h2>{title}!</h2>
           <button
             type="button"
             className="av-icon-button"
@@ -65,7 +74,9 @@ export function FinishedCard({ onClose }: { onClose: () => void }): React.JSX.El
           {cheer}
         </p>
         <p className="av-welcome-note av-finished-note">
-          Your Tutorial automaton stays in the history.
+          {tutorial
+            ? 'Your Tutorial automaton stays in the history.'
+            : 'Its automata stay in your history.'}
         </p>
         <div className="av-welcome-actions">
           <button type="button" className="av-go" data-focus-stop onClick={onClose}>
