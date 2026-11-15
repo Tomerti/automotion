@@ -13,10 +13,7 @@ Nothing in progress: pick the next task from the list below.
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
       incomplete DFA): consider muting it, or saying in the card that it is expected
-- [ ] Share links: cap the inflated size in `decodeShare` (a zip-bomb link could exhaust memory)
 - [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is not reactive (a keyboard attached later doesn't change the welcome)
-
-- [ ] Other shortcuts (Ctrl+Z / Y / C / V on the canvas and toolbar) still read `e.key`, so they don't fire on a Hebrew or other non-Latin layout: switch them to `shell/shortcut.ts` `isCtrlLetter`, as the history bar's Ctrl+A / Ctrl+C do
 
 - [ ] Copy and paste follow-ups: Ctrl+X (cut), Ctrl+A (select all), and Shift + click as an alternative to Ctrl + click (Ctrl + click is a right-click on a Mac, so Mac users have ⌘ only)
 
@@ -27,6 +24,12 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### Shortcuts on any layout, share-link cap (2026-11-15)
+
+- [x] Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y (undo, redo), the canvas's Ctrl+C / Ctrl+V (copy and paste states), Toolbar's Ctrl+C (copy image) and the plain S / A keys (start, accepting) work on a Hebrew or other non-Latin layout: they go through `shell/shortcut.ts` like the history bar's Ctrl+A / Ctrl+C, reading the physical key when the layout types `ז`, `ב`, `ד`, … Undo and redo ignore Ctrl+Alt (AltGr on Windows)
+- [x] `shortcutLetter` falls back to the physical key only for letters of another script, not punctuation, so Dvorak's Ctrl+; (on the Z key) doesn't undo and Ctrl+. (on the V key) doesn't paste
+- [x] Share links stop inflating past `MAX_SHARE_BYTES` (2 MB of JSON, far above any real automaton): a crafted link of a few KB that deflates to gigabytes says "This link is too large to open" instead of exhausting memory
 
 ### Delete several automata (2026-11-15)
 

@@ -23,6 +23,7 @@ import type { Automaton, State, StateId, Transition } from '../../core/model';
 import { appStore, useAppStore } from '../../store/store';
 import type { Selection, Viewport } from '../../store/types';
 import { deferPaste, systemClipboardMayBeNewer } from '../shell/pasteLatex';
+import { isCtrlLetter, shortcutLetter } from '../shell/shortcut';
 import { toast } from '../shell/toastStore';
 import type { MenuItem } from './ContextMenu';
 import {
@@ -825,7 +826,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       automaton.transitions.some((t) => t.id === id),
     );
     const stateId = states[0];
-    const key = e.key.toLowerCase();
+    const key = shortcutLetter(e);
     if (key === 's' && stateId) {
       e.preventDefault();
       edit((a) => toggleStart(a, stateId));
@@ -852,10 +853,9 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
   // (copied in the history bar) as a new copy of it.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
-      if (e.defaultPrevented || !isAdditive(e) || e.shiftKey || e.altKey || isTyping(e.target))
-        return;
-      const key = e.key.toLowerCase();
-      if (key !== 'c' && key !== 'v') return;
+      if (e.defaultPrevented || isTyping(e.target)) return;
+      const key = isCtrlLetter(e, 'c') ? 'c' : isCtrlLetter(e, 'v') ? 'v' : null;
+      if (!key) return;
       if (document.querySelector('[aria-modal="true"]')) return;
       const store = appStore.getState();
       if (store.trace) return;
@@ -889,11 +889,12 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Undo/redo are listened for app-wide.
+  // Undo/redo are listened for app-wide, on any keyboard layout (`shortcutLetter`). Not with Alt:
+  // AltGr is Ctrl+Alt on Windows, and AltGr+Z types a letter on some layouts (Polish ż).
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
-      if (isTyping(e.target) || !(e.ctrlKey || e.metaKey)) return;
-      const key = e.key.toLowerCase();
+      if (isTyping(e.target) || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const key = shortcutLetter(e);
       const store = appStore.getState();
       if (key === 'z') {
         e.preventDefault();
