@@ -183,3 +183,18 @@ describe('clipCenter', () => {
     expect(clipCenter(copyStates(chain(), ['q0', 'q2'])!)).toEqual({ x: 100, y: 0 });
   });
 });
+
+describe('pasting a minimized state', () => {
+  it('keeps what it stands for (mergedFrom)', () => {
+    const a = chain();
+    const merged: Automaton = {
+      ...a,
+      states: a.states.map((s) => (s.id === 'q0' ? { ...s, mergedFrom: ['p', 'r'] } : s)),
+    };
+    const { automaton: b, stateIds } = pasteClip(merged, copyStates(merged, ['q0'])!, {
+      x: 0,
+      y: 50,
+    });
+    expect(b.states.find((s) => s.id === stateIds[0])?.mergedFrom).toEqual(['p', 'r']);
+  });
+});

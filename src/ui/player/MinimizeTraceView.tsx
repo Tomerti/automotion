@@ -1,4 +1,5 @@
 import { formatSet } from '../../core/format';
+import { blockName } from '../../core/minimize';
 import type { MinimizeTrace } from '../../core/trace';
 import { Diagram } from '../canvas/Diagram';
 import { LabelText } from '../LabelText';
@@ -55,9 +56,7 @@ export function MinimizeTraceView({ trace, stepIndex }: MinimizeTraceViewProps):
         {step.blocks.map((block, i) => (
           <li key={i} className="av-block-legend-item">
             <span className="av-block-swatch" data-tint={i % TINT_COUNT} aria-hidden="true" />
-            <LabelText
-              text={`${String.fromCharCode(65 + i)}: ${formatSet(step.automaton, block)}`}
-            />
+            <LabelText text={`${blockName(i)}: ${formatSet(step.automaton, block)}`} />
           </li>
         ))}
       </ul>

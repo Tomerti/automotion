@@ -69,7 +69,7 @@ export interface MinimizeStep extends StepBase {
   removed?: StateId[];
   /** 'complete': the added dead state. */
   deadState?: StateId;
-  /** Current partition; block i is named String.fromCharCode(65 + i). */
+  /** Current partition; block i is named `blockName(i)` (minimize.ts): A … Z, AA, AB, … */
   blocks: StateId[][];
   split?: { block: number; parts: StateId[][]; witness: { p: StateId; q: StateId; symbol: Sym } };
 }

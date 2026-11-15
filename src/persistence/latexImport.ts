@@ -5,9 +5,11 @@ import type { Automaton, AutomatonKind, LabelSide, State, Sym, Transition } from
 import type { ParseResult } from './fileFormat';
 import {
   BEND_APEX,
+  MERGED_COMMENT,
   META_COMMENT,
   PX_PER_CM,
   skipGroup,
+  splitMembers,
   splitTopLevel,
   texToSymbols,
   texToText,
@@ -21,6 +23,7 @@ import { automatonSchema } from './schema';
  * `loop above`, `bend left=45`, `in`/`out`; start states by `initial` or by an arrow from a point
  * into the state. A `% AutoMotion NFA: name` comment before a picture (as exported) gives its
  * kind and name; otherwise the name comes from the file and the kind from the transitions.
+ * `% AutoMotion merged: A = {q_0, q_1}` inside a picture gives state A its `mergedFrom`.
  */
 
 /** TikZ coordinates in cm, y up. */
@@ -724,6 +727,8 @@ export function parseLatex(text: string, fallbackName: string): ParseResult {
     options: string;
     body: string;
     meta?: { kind: AutomatonKind; name: string };
+    /** State label → `mergedFrom`, from the picture's merged comments. */
+    merged: Map<string, string[]>;
   }[] = [];
   const metas = [...text.matchAll(META_COMMENT)].map((m) => ({
     at: m.index,
@@ -741,7 +746,14 @@ export function parseLatex(text: string, fallbackName: string): ParseResult {
     if (!end) break;
     let bodyStart = m.index + m[0].length;
     let options = '';
-    const rest = stripComments(text.slice(bodyStart, end.index));
+    const raw = text.slice(bodyStart, end.index);
+    const merged = new Map(
+      [...raw.matchAll(MERGED_COMMENT)].map((c) => [
+        (c[1] as string).trim(),
+        splitMembers(c[2] as string),
+      ]),
+    );
+    const rest = stripComments(raw);
     const lead = /^\s*\[/.exec(rest);
     let body = rest;
     if (lead) {
@@ -751,7 +763,7 @@ export function parseLatex(text: string, fallbackName: string): ParseResult {
     }
     bodyStart = end.index + end[0].length;
     const meta = metas.filter((x) => x.at >= prevEnd && x.at < beginAt).pop();
-    pictures.push({ options, body, ...(meta ? { meta } : {}) });
+    pictures.push({ options, body, merged, ...(meta ? { meta } : {}) });
     prevEnd = bodyStart;
     begin.lastIndex = bodyStart;
   }
@@ -774,6 +786,15 @@ export function parseLatex(text: string, fallbackName: string): ParseResult {
       };
     }
     if (!a) continue;
+    if (p.merged.size > 0) {
+      a = {
+        ...a,
+        states: a.states.map((s) => {
+          const mergedFrom = p.merged.get(s.label);
+          return mergedFrom && mergedFrom.length > 0 ? { ...s, mergedFrom } : s;
+        }),
+      };
+    }
     const checked = automatonSchema.safeParse(a);
     if (!checked.success) {
       return {

@@ -162,4 +162,13 @@ describe('share link', () => {
     if (!r.ok) return;
     expect(sameAutomaton(a, r.automata[0]!)).toBe(true);
   });
+
+  it('carries what a minimized state stands for', async () => {
+    const base = fixture({ kind: 'DFA', alphabet: 'a', states: ['A'], start: 'A' });
+    const a = { ...base, states: base.states.map((s) => ({ ...s, mergedFrom: ['q_0', 'q_1'] })) };
+    const r = await decodeShare(await encodeShare(a), new Set());
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.automata[0]?.states[0]?.mergedFrom).toEqual(['q_0', 'q_1']);
+  });
 });

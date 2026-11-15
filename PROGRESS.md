@@ -9,7 +9,6 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
-- [ ] Minimize walkthrough: a merged state's long label (`{{q_0,q_2},{q_0,q_1,q_2}}`) spills out of its circle over the arrows; shorten or wrap merged labels there
 - [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
 - [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
@@ -26,6 +25,12 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Regex → NFA
 
 ## Done
+
+### Minimize labels (2026-11-15)
+
+- [x] A minimized automaton names each merged state by its block (A, B, …, as in the walkthrough's legend and explanations; `resultLabels` in `core/minimize.ts`) instead of its joined member labels, which spilled out of the circle over the arrows after a subset construction (`{{q_0,q_2},{q_0,q_1,q_2}}`). Both the done step and Save as new automaton use these names; the legend says what each block merged. States that weren't merged keep their name, unless one reads as a block name, then every state takes its block's name
+- [x] Block names go on past Z as AA, AB, …, like spreadsheet columns (`blockName`); the 27th block was `[`
+- [x] A merged state remembers what it stands for (`State.mergedFrom`, the member labels; optional in the file schema, so no version bump): hovering it shows `A = {q₀, q₁, q₂}` (a native tooltip, Unicode subscripts, left out of SVG/PNG exports), on the walkthrough's done step and on the saved automaton. Kept through renames, copy and paste, share links, JSON and minimizing again; a state renamed only to dodge a clash says its old label. Export LaTeX writes `% AutoMotion merged: A = {q_0, q_1, q_2}` before the node, and import reads it back
 
 ### Phone welcome notice (2026-11-15)
 

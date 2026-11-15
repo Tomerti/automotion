@@ -7,7 +7,7 @@ const LOOP_ALLOWANCE = 28; // room for self-loops and edge labels around a state
 
 /** Elements that exist only for pointer interaction. */
 const INTERACTION_ONLY =
-  '[data-testid="rubber-band"], [data-testid="snap-guide"], [data-testid="gap-guide"], .av-state-hit, .av-edge-hit, .av-state-issue';
+  '[data-testid="rubber-band"], [data-testid="snap-guide"], [data-testid="gap-guide"], .av-state-hit, .av-edge-hit, .av-state-issue, .av-state-note';
 
 /**
  * Replace each var() with its light-theme value: a hidden probe carrying `.av-theme-light`

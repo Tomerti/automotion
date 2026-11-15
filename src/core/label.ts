@@ -47,6 +47,30 @@ export function labelDisplayText(label: string): string {
     .join('');
 }
 
+const SUBSCRIPT_CHARS: Record<string, string> = Object.fromEntries(
+  Array.from('0123456789+-=()aehijklmnoprstuvx').map((c, i) => [
+    c,
+    Array.from('₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜᵤᵥₓ')[i] as string,
+  ]),
+);
+
+/**
+ * The label as plain text, for places that can't draw subscripts (a tooltip): subscripts in
+ * Unicode (`q_{12}` → `q₁₂`), or kept as written when a character has no subscript form.
+ */
+export function labelPlainText(label: string): string {
+  return parseLabel(label)
+    .map((seg) => {
+      if (!seg.sub) return seg.text;
+      const chars = Array.from(seg.text);
+      if (chars.every((c) => c in SUBSCRIPT_CHARS)) {
+        return chars.map((c) => SUBSCRIPT_CHARS[c]).join('');
+      }
+      return chars.length === 1 ? `_${seg.text}` : `_{${seg.text}}`;
+    })
+    .join('');
+}
+
 /** Subscripts are set at this share of the label size, lowered by SUB_SHIFT of the label size. */
 export const SUB_SCALE = 0.7;
 export const SUB_SHIFT = 0.25;

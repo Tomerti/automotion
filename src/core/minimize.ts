@@ -2,7 +2,7 @@ import { completeWithDeadState, removeUnreachable } from './analysis';
 import { formatSet, withSuffix } from './format';
 import { newId } from './id';
 import { startStates } from './model';
-import type { Automaton, StateId, Sym, Transition } from './model';
+import type { Automaton, State, StateId, Sym, Transition } from './model';
 import type { MinimizeStep, MinimizeTrace } from './trace';
 import { hasErrors, ignoringIncomplete, validate } from './validate';
 
@@ -14,7 +14,29 @@ export function canMinimize(a: Automaton): string | null {
   return null;
 }
 
-const blockName = (i: number): string => String.fromCharCode(65 + i);
+/** Block i's name: A … Z, then AA, AB, … like spreadsheet columns. */
+export function blockName(i: number): string {
+  let name = '';
+  for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) {
+    name = String.fromCharCode(65 + ((n - 1) % 26)) + name;
+  }
+  return name;
+}
+
+/**
+ * Labels of the result's states, block i's at i. A merged state (a block of two or more) is
+ * named by its block's name, as in the walkthrough's legend: its members' labels joined would
+ * not fit in a circle (`{{q_0,q_2},{q_0,q_1,q_2}}` after a subset construction). The others keep
+ * their own label, unless one reads as a block name, then every state takes its block's name.
+ */
+export function resultLabels(memberLabels: string[][]): string[] {
+  const merged = memberLabels.map((labels) => labels.length > 1);
+  const names = new Set(memberLabels.flatMap((_, i) => (merged[i] ? [blockName(i)] : [])));
+  const clash = memberLabels.some((labels, i) => !merged[i] && names.has(labels[0] as string));
+  return memberLabels.map((labels, i) =>
+    merged[i] || clash ? blockName(i) : (labels[0] as string),
+  );
+}
 
 function joinParts(parts: string[]): string {
   if (parts.length <= 2) return parts.join(' and ');
@@ -141,16 +163,19 @@ export function minimize(dfa: Automaton): MinimizeTrace {
 function buildResult(dfa: Automaton, work: Automaton, blocks: StateId[][]): Automaton {
   const ids = blocks.map(() => newId());
   const indexOf = (q: StateId): number => blocks.findIndex((b) => b.includes(q));
-  const states = blocks.map((block, i) => {
-    const members = work.states.filter((s) => block.includes(s.id));
+  const memberStates = blocks.map((block) => work.states.filter((s) => block.includes(s.id)));
+  const labels = resultLabels(memberStates.map((members) => members.map((m) => m.label)));
+  const states: State[] = memberStates.map((members, i) => {
+    const label = labels[i] as string;
+    const only = members.length === 1 ? members[0] : undefined;
+    // Renamed states say what they stand for; one that kept its name keeps its own note.
+    const mergedFrom = only?.label === label ? only.mergedFrom : members.map((m) => m.label);
     return {
       id: ids[i] as string,
-      label:
-        members.length === 1
-          ? (members[0]?.label as string)
-          : `{${members.map((m) => m.label).join(',')}}`,
+      label,
       x: members.reduce((sum, m) => sum + m.x, 0) / members.length,
       y: members.reduce((sum, m) => sum + m.y, 0) / members.length,
+      ...(mergedFrom ? { mergedFrom } : {}),
     };
   });
 

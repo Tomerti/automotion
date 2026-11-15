@@ -240,4 +240,15 @@ describe('Diagram start arrows', () => {
     expect(screen.queryByTestId('start-arrow')).toBeNull();
     expect(screen.getByTestId('state-q0')).toHaveAttribute('data-start', 'false');
   });
+
+  it('shows what a minimized state stands for on hover (its title)', () => {
+    const base = fixture({ kind: 'DFA', alphabet: 'a', states: ['A', 'q_3'] });
+    const a = {
+      ...base,
+      states: base.states.map((s) => (s.label === 'A' ? { ...s, mergedFrom: ['q_0', 'q_1'] } : s)),
+    };
+    render(<Diagram automaton={a} viewport={vp} />);
+    expect(screen.getByTestId('state-A').querySelector('title')).toHaveTextContent('A = {q₀, q₁}');
+    expect(screen.getByTestId('state-q_3').querySelector('title')).toBeNull();
+  });
 });
