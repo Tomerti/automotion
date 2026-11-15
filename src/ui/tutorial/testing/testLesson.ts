@@ -92,3 +92,32 @@ export const PAUSING_LESSON: Lesson = {
     },
   ],
 };
+
+/**
+ * A lesson that opens with an idea step, then a step that pauses an owned conversion at its step
+ * 2 (so the pause is governed by the step after the idea), and opens runs of `01` paused.
+ */
+export const IDEA_LESSON: Lesson = {
+  ...TEST_LESSON,
+  pausedRuns: ['01'],
+  parts: [
+    {
+      ...TEST_LESSON.parts[0]!,
+      steps: [
+        { id: 'idea/idea', idea: true, instruction: () => 'An idea.' },
+        {
+          id: 'idea/open',
+          instruction: () => 'Press Convert to DFA.',
+          pauseAt: (ctx) => (ctx.trace?.kind === 'subset' && ownsTrace(ctx) ? 2 : null),
+          latch: (ctx) => ctx.trace?.kind === 'subset' && ownsTrace(ctx) && ctx.stepIndex >= 2,
+        },
+        {
+          id: 'idea/end',
+          instruction: () => 'Press Play to finish.',
+          latch: (ctx) =>
+            ctx.trace?.kind === 'subset' && ctx.stepIndex === ctx.trace.steps.length - 1,
+        },
+      ],
+    },
+  ],
+};

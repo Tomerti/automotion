@@ -96,11 +96,11 @@ describe('the step table', () => {
 
 describe('the goals', () => {
   it('picture what each part builds, with the names the steps ask for', () => {
-    const one = BASICS.parts[0]!.goal.automaton;
+    const one = BASICS.parts[0]!.goal.automaton!;
     expect(one.states.map((s) => s.label)).toEqual(['even', 'odd']);
     expect(step('loop-q1').done(ctx(one))).toBe(true);
     expect(advance(BASICS, 0, none, ctx(one)).current).toBe(idx('run-1010'));
-    const two = BASICS.parts[1]!.goal.automaton;
+    const two = BASICS.parts[1]!.goal.automaton!;
     expect(two.states.map((s) => s.label)).toEqual(['any']);
     expect(step('loop-01').done(ctx(two))).toBe(true);
     expect(step('rename-q0').done(ctx(two))).toBe(true);
@@ -110,7 +110,7 @@ describe('the goals', () => {
     for (const part of [1, 2] as const) {
       const goal = BASICS.parts[part - 1]!.goal;
       for (const e of goal.examples) {
-        expect(runWord(goal.automaton, e.word).accepted, `${part}: ${e.word}`).toBe(e.accepted);
+        expect(runWord(goal.automaton!, e.word).accepted, `${part}: ${e.word}`).toBe(e.accepted);
       }
     }
   });

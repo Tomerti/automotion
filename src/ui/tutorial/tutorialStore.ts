@@ -11,7 +11,7 @@ import type { AppState } from '../../store/store';
 import { fitActive } from '../canvas/useCanvasEditing';
 import { playFanfareSound } from '../player/sound';
 import { askConfirm } from '../shell/confirmStore';
-import { advance, lessonSteps } from './engine';
+import { advance, lessonSteps, pacingStep } from './engine';
 import type { Lesson, LessonAction, LessonId, TutorialContext } from './engine';
 import { lessonById } from './lessons';
 import { isLessonId, markLessonFinished } from './lessonsDone';
@@ -262,9 +262,36 @@ export function lessonStopAt(
   t: TutorialState = tutorialStore.getState(),
 ): number | null {
   if (!t.active || !t.lesson || !t.owned.includes(trace.source.id)) return null;
-  const pauseAt = lessonSteps(t.lesson)[t.current]?.pauseAt;
+  const pauseAt = pacingStep(t.lesson, t.current)?.pauseAt;
   if (!pauseAt) return null;
   return pauseAt({ ...tutorialContext(appStore.getState(), t.automatonId, t), trace });
+}
+
+/**
+ * A run of `trace` opens paused: it is a run of an automaton the running lesson owns, of a word in
+ * the lesson's `pausedRuns`.
+ */
+export function lessonOpensPaused(
+  trace: AnyTrace,
+  t: TutorialState = tutorialStore.getState(),
+): boolean {
+  return (
+    t.active &&
+    t.lesson?.pausedRuns !== undefined &&
+    trace.kind === 'run' &&
+    t.owned.includes(trace.source.id) &&
+    t.lesson.pausedRuns.includes(trace.word)
+  );
+}
+
+/** Next on an idea step: latch it and move on. Does nothing on any other step. */
+export function pressNext(): void {
+  const t = tutorialStore.getState();
+  if (!t.active || !t.lesson) return;
+  const step = lessonSteps(t.lesson)[t.current];
+  if (!step?.idea) return;
+  tutorialStore.setState({ latched: new Set([...t.latched, step.id]) });
+  moveOn(appStore.getState());
 }
 
 /**

@@ -39,7 +39,7 @@ describe('the Convert NFA → DFA lesson', () => {
   it('holds its goal examples on both pictures', () => {
     const goal = L.parts[0]!.goal;
     for (const e of goal.examples) {
-      expect(runWord(goal.automaton, e.word).accepted, e.word).toBe(e.accepted);
+      expect(runWord(goal.automaton!, e.word).accepted, e.word).toBe(e.accepted);
       expect(runWord(goal.after!.automaton, e.word).accepted, e.word).toBe(e.accepted);
     }
     expect(goal.after!.automaton.states).toHaveLength(4);

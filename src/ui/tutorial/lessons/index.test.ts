@@ -37,7 +37,7 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
   it('shows goal examples its goal automaton agrees with', () => {
     for (const part of lesson.parts) {
       for (const e of part.goal.examples) {
-        expect(runWord(part.goal.automaton, e.word).accepted, e.word).toBe(e.accepted);
+        expect(runWord(part.goal.automaton!, e.word).accepted, e.word).toBe(e.accepted);
       }
     }
   });

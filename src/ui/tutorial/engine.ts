@@ -2,7 +2,7 @@ import { startStates } from '../../core/model';
 import type { Automaton, State, StateId, Sym } from '../../core/model';
 import type { AnyTrace } from '../../core/trace';
 
-export const LESSON_IDS = ['basics', 'nfa', 'convert', 'minimize', 'share'] as const;
+export const LESSON_IDS = ['basics', 'nfa', 'epsilon', 'convert', 'minimize', 'share'] as const;
 export type LessonId = (typeof LESSON_IDS)[number];
 
 /** Something done in the shell that leaves no trace in the state (see the spec's *Actions*). */
@@ -48,8 +48,8 @@ function onOwned(ctx: TutorialContext): boolean {
 export interface Goal {
   text: string;
   examples: { word: string; accepted: boolean }[];
-  automaton: Automaton;
-  description: string;
+  automaton?: Automaton;
+  description?: string;
   after?: { automaton: Automaton; description: string };
 }
 
@@ -89,6 +89,16 @@ export interface StepSpec {
    * with `LabelText`. `ctx` for a step that follows the user halfway through it.
    */
   instruction(l: Labels, ctx: TutorialContext): string;
+  /**
+   * An idea step: a short explanation with no task and no target. It is done only once the user
+   * presses Next (`pressNext`), which latches it.
+   */
+  idea?: true;
+  /**
+   * What the paused moment shows (same markup), rendered before the instruction while the run or
+   * walkthrough sits at the step `pauseAt` names.
+   */
+  explain?(l: Labels, ctx: TutorialContext): string;
   /** Why, in a few words, under the instruction (same markup), if it needs saying. */
   why?(l: Labels, ctx: TutorialContext): string;
   done?(ctx: TutorialContext): boolean;
@@ -142,6 +152,8 @@ export interface Lesson {
   parts: LessonPart[];
   /** The closing card's text. */
   closing: string;
+  /** Words whose runs of an owned automaton open paused (see `lessonOpensPaused`). */
+  pausedRuns?: readonly string[];
 }
 
 export interface Step {
@@ -149,6 +161,10 @@ export interface Step {
   /** From 1; `parts.length + 1` is the closing card. */
   part: number;
   instruction(ctx: TutorialContext): string;
+  /** An idea step: done once Next latches it. */
+  idea: boolean;
+  /** What the paused moment shows, before the instruction; null if the step has none. */
+  explain(ctx: TutorialContext): string | null;
   why(ctx: TutorialContext): string | null;
   /** Structural check. Run, latch and action steps are done once latched instead (see `advance`). */
   done(ctx: TutorialContext): boolean;
@@ -242,7 +258,7 @@ function toStep(lesson: Lesson, all: readonly Placed[], i: number): Step {
   const closing = part > lesson.parts.length;
   const partHint = lesson.parts[part - 1]?.hint;
   // A check on the automaton: the only kind of step that needs the editor back first.
-  const structural = !spec.run && !spec.latch && !spec.action && !closing;
+  const structural = !spec.run && !spec.latch && !spec.action && !spec.idea && !closing;
   const done = (ctx: TutorialContext): boolean =>
     spec.done ? spec.done(ctx) : (spec.edges ?? []).every((e) => edgeIs(ctx, e));
   const hint = (ctx: TutorialContext): Hint | null => {
@@ -275,6 +291,8 @@ function toStep(lesson: Lesson, all: readonly Placed[], i: number): Step {
     id: spec.id,
     part,
     instruction: (ctx) => spec.instruction(labels(ctx), ctx),
+    idea: spec.idea === true,
+    explain: (ctx) => spec.explain?.(labels(ctx), ctx) ?? null,
     why: (ctx) => spec.why?.(labels(ctx), ctx) ?? null,
     done,
     hint,
@@ -286,12 +304,13 @@ function toStep(lesson: Lesson, all: readonly Placed[], i: number): Step {
   };
 }
 
-/** Run, latch and action steps: done once latched, not by a check on the automaton. */
-const latching = (s: Step): boolean => s.run !== undefined || !!s.latch || !!s.action;
+/** Idea, run, latch and action steps: done once latched, not by a check on the automaton. */
+const latching = (s: Step): boolean => s.idea || s.run !== undefined || !!s.latch || !!s.action;
 
-/** The latching step `s` has just happened. */
+/** The latching step `s` has just happened (an idea step never does: `pressNext` latches it). */
 const happened = (s: Step, ctx: TutorialContext): boolean =>
-  runSucceeded(s, ctx) || !!s.latch?.(ctx) || !!s.action?.some((a) => ctx.actions.has(a));
+  !s.idea &&
+  (runSucceeded(s, ctx) || !!s.latch?.(ctx) || !!s.action?.some((a) => ctx.actions.has(a)));
 
 const stepsOf = new WeakMap<Lesson, readonly Step[]>();
 
@@ -311,6 +330,16 @@ export function lessonSteps(lesson: Lesson): readonly Step[] {
   const steps = all.map((_, i) => toStep(lesson, all, i));
   stepsOf.set(lesson, steps);
   return steps;
+}
+
+/**
+ * The step whose `pauseAt` governs playback while `current` is on the card: `current`'s own, or
+ * the next one's when `current` is an idea step (the user opens the run during the idea).
+ */
+export function pacingStep(lesson: Lesson, current: number): Step | undefined {
+  const steps = lessonSteps(lesson);
+  const s = steps[current];
+  return s?.idea ? steps[current + 1] : s;
 }
 
 /** The steps the progress bar counts: all but the closing card. */

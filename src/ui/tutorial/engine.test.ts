@@ -7,14 +7,22 @@ import { subsetConstruction } from '../../core/subset';
 import type { AnyTrace, SubsetTrace } from '../../core/trace';
 import { appStore, resetAppStore } from '../../store/store';
 import { answerConfirm, confirmStore } from '../shell/confirmStore';
-import { advance, lessonSteps } from './engine';
+import { advance, lessonSteps, pacingStep } from './engine';
 import type { LessonId, TutorialContext } from './engine';
-import { CONTAINS_01, PAUSING_LESSON as PAUSING, TEST_LESSON } from './testing/testLesson';
+import { BASICS } from './lessons/basics';
+import {
+  CONTAINS_01,
+  IDEA_LESSON as IDEA,
+  PAUSING_LESSON as PAUSING,
+  TEST_LESSON,
+} from './testing/testLesson';
 import {
   endLesson,
   finishLesson,
+  lessonOpensPaused,
   lessonStopAt,
   noteLessonAction,
+  pressNext,
   quitLesson,
   requestLesson,
   startLesson,
@@ -203,6 +211,34 @@ describe('a lesson with a start automaton', () => {
     endLesson();
     expect(lessonStopAt(trace)).toBeNull();
   });
+
+  it('Next latches the idea step and moves on', () => {
+    startLesson(IDEA);
+    expect(tut().current).toBe(0);
+    pressNext();
+    expect(tut().current).toBe(1);
+    pressNext();
+    expect(tut().current).toBe(1);
+  });
+
+  it("pauses a walkthrough opened during the idea step at the next step's stop", () => {
+    startLesson(IDEA);
+    const trace = convert();
+    expect(tut().current).toBe(0);
+    expect(lessonStopAt(trace)).toBe(2);
+    app().setStep(2);
+    pressNext();
+    expect(lessonSteps(IDEA)[tut().current]!.id).toBe('idea/end');
+  });
+
+  it('opens a run paused only for a word in pausedRuns, on an owned automaton', () => {
+    expect(lessonOpensPaused(runWord(CONTAINS_01, '01'))).toBe(false);
+    startLesson(IDEA);
+    const own = active();
+    expect(lessonOpensPaused(runWord(own, '01'))).toBe(true);
+    expect(lessonOpensPaused(runWord(own, '1'))).toBe(false);
+    expect(lessonOpensPaused({ ...runWord(own, '01'), source: other() })).toBe(false);
+  });
 });
 
 /** A hand-made context on `CONTAINS_01`, owned and open. */
@@ -223,6 +259,39 @@ function ctx(more: Partial<TutorialContext> = {}): TutorialContext {
 
 describe('the engine', () => {
   const none: ReadonlySet<string> = new Set();
+
+  it('an idea step is done only once latched', () => {
+    const c = ctx({ automaton: CONTAINS_01, owned: [CONTAINS_01.id] });
+    expect(advance(IDEA, 0, none, c).current).toBe(0);
+    expect(advance(IDEA, 0, new Set(['idea/idea']), c).current).toBe(1);
+  });
+
+  it('an idea step never asks to press Esc first', () => {
+    const trace = subsetConstruction(CONTAINS_01);
+    const c = ctx({ automaton: CONTAINS_01, trace, owned: [CONTAINS_01.id] });
+    expect(lessonSteps(IDEA)[0]!.hint(c)).toBeNull();
+  });
+
+  it('an idea step looks ahead to the next step for pacing', () => {
+    expect(pacingStep(IDEA, 0)!.id).toBe('idea/open');
+    expect(pacingStep(IDEA, 1)!.id).toBe('idea/open');
+    expect(pacingStep(PAUSING, 0)!.id).toBe('pause/open');
+  });
+
+  it('passes explain through, null when unset', () => {
+    const lesson = {
+      ...TEST_LESSON,
+      parts: [
+        {
+          ...TEST_LESSON.parts[0]!,
+          steps: [{ id: 'x', instruction: () => 'Do.', explain: () => 'Look.' }],
+        },
+      ],
+    };
+    const c = ctx();
+    expect(lessonSteps(lesson)[0]!.explain(c)).toBe('Look.');
+    expect(lessonSteps(BASICS)[0]!.explain(c)).toBeNull();
+  });
 
   it('is not elsewhere while a walkthrough of an owned automaton is open', () => {
     const trace = subsetConstruction(CONTAINS_01);
