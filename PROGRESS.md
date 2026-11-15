@@ -32,6 +32,15 @@ Nothing in progress: pick the next task from the list below.
 - [x] Block names go on past Z as AA, AB, …, like spreadsheet columns (`blockName`); the 27th block was `[`
 - [x] A merged state remembers what it stands for (`State.mergedFrom`, the member labels; optional in the file schema, so no version bump): hovering it shows `A = {q₀, q₁, q₂}` (a native tooltip, Unicode subscripts, left out of SVG/PNG exports), on the walkthrough's done step and on the saved automaton. Kept through renames, copy and paste, share links, JSON and minimizing again; a state renamed only to dodge a clash says its old label. Export LaTeX writes `% AutoMotion merged: A = {q_0, q_1, q_2}` before the node, and import reads it back
 
+### Phone welcome notice (2026-11-15)
+
+- [x] The phone welcome's "made for a mouse and keyboard" note is an amber callout right under the tagline, above the demo: a laptop icon, a bold "Open this on a computer" headline, and "On a phone you can only open shared automata and run words on them", so it is read before **Got it** is tapped (it was muted text under the theme switch)
+- [x] Its body is a checklist instead of two run-on sentences (the second started at the end of a line on phones): "AutoMotion is made for a mouse and keyboard. On a phone you can:" ✓ Open shared automata, ✓ Run words on them, ✗ Build or edit automata (muted). Picked from a page of mocked wording and colour options; the amber stays
+
+### Tidy again (2026-11-15)
+
+- [x] Tidy on an already tidy automaton only fits the view: no undo entry and no edit (it used to add an undo step each press, undoing to the same picture, and move the automaton to the top of the history); a layout test checks that laying out a laid-out sample changes nothing
+
 ### v1.0.0 (2026-11-14)
 
 - [x] Tagged `v1.0.0` on master at the README refresh's merge (PR #52; the app is as launch prep's merge, e51ab17, left it) and published the GitHub release, with notes from PR #50 and #52

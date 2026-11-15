@@ -147,9 +147,23 @@ it('on a touch-only device offers Got it instead of the tutorial', async () => {
     const user = userEvent.setup();
     render(<App />);
     const d = welcome()!;
+    expect(within(d).getByText(/made for a mouse and keyboard/)).toBeInTheDocument();
+    // A callout with a headline, above the demo, so it is read before Got it is tapped.
+    const note = within(d).getByRole('note');
+    expect(note).toHaveTextContent('Open this on a computer');
+    // What a phone can do, each row marked Yes or No for screen readers too.
+    const rows = within(note)
+      .getAllByRole('listitem')
+      .map((li) => `${within(li).getByRole('img').getAttribute('aria-label')}: ${li.textContent}`);
+    expect(rows).toEqual([
+      'Yes: Open shared automata',
+      'Yes: Run words on them',
+      'No: Build or edit automata',
+    ]);
     expect(
-      within(d).getByText(/made for a computer with a mouse and keyboard/),
-    ).toBeInTheDocument();
+      note.compareDocumentPosition(within(d).getByTestId('welcome-demo')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(within(d).queryByRole('button', { name: 'Start tutorial' })).toBeNull();
     expect(within(d).queryByRole('button', { name: 'Not now' })).toBeNull();
     expect(within(d).getByTestId('welcome-demo')).toBeInTheDocument();

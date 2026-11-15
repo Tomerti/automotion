@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { CloseIcon } from '../shell/icons';
+import { CheckIcon, CloseIcon, LaptopIcon } from '../shell/icons';
 import { ThemeSwitch } from '../shell/ThemeSwitch';
 import { isTouchOnly } from '../shell/touch';
 import { useModalDialog } from '../shell/useModalDialog';
@@ -11,6 +11,13 @@ const PLAN: { what: string; how: string }[] = [
   { what: 'Build', how: 'a DFA that accepts the words with an even number of zeros' },
   { what: 'Run', how: 'words on it and watch it read them, one symbol at a time' },
   { what: 'Change', how: 'it to accept every word' },
+];
+
+/** The phone notice's checklist: what works on a touch-only device and what doesn't. */
+const PHONE_CAN: { what: string; can: boolean }[] = [
+  { what: 'Open shared automata', can: true },
+  { what: 'Run words on them', can: true },
+  { what: 'Build or edit automata', can: false },
 ];
 
 /**
@@ -60,6 +67,31 @@ export function WelcomeCard({
           </button>
         </header>
         <p className="av-welcome-tagline">Watch automata come to life.</p>
+        {touchOnly && (
+          // First thing after the title, above the demo, so it is read before Got it is tapped.
+          <div className="av-welcome-device" role="note" data-testid="welcome-device-note">
+            <span className="av-welcome-device-icon">
+              <LaptopIcon />
+            </span>
+            <div>
+              <p className="av-welcome-device-head">Open this on a computer</p>
+              <p className="av-welcome-device-body">
+                AutoMotion is made for a mouse and keyboard. On a phone you can:
+              </p>
+              <ul className="av-welcome-device-list">
+                {PHONE_CAN.map(({ what, can }) => (
+                  <li key={what} className={can ? 'av-welcome-can' : 'av-welcome-cannot'}>
+                    {/* The mark is the item's meaning, so it is named for screen readers. */}
+                    <span role="img" aria-label={can ? 'Yes' : 'No'}>
+                      {can ? <CheckIcon /> : <CloseIcon />}
+                    </span>
+                    <span>{what}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
         <WelcomeDemo />
         <div className="av-welcome-theme">
           <span className="av-welcome-text">Theme</span>
@@ -67,10 +99,6 @@ export function WelcomeCard({
         </div>
         {touchOnly ? (
           <>
-            <p className="av-welcome-text av-welcome-touch">
-              AutoMotion is made for a computer with a mouse and keyboard. On a phone you can open
-              shared automata and run words on them.
-            </p>
             <div className="av-welcome-actions">
               <button type="button" className="av-go" data-focus-stop onClick={onClose}>
                 Got it

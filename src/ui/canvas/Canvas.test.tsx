@@ -1417,6 +1417,32 @@ describe('Fit and Tidy', () => {
     expect(active()).toEqual(messy);
   });
 
+  it('Tidy again leaves no undo entry and keeps the automaton when nothing changes', async () => {
+    const a = two('DFA', 'a', [['q0', 'a', 'q1']]);
+    load(a);
+    render(<Canvas />);
+    sizeCanvas(640, 480);
+    await act(() => tidyActive());
+    expect(st().history.m?.past).toHaveLength(1);
+    const tidied = active();
+    // Another automaton edited since: a needless edit would move this one back to the front.
+    const other = {
+      ...fixture({ kind: 'DFA', alphabet: 'a', states: ['p'], edges: [], name: 'other' }),
+      id: 'other',
+    };
+    act(() => appStore.setState({ automata: [other, tidied] }));
+    act(() => st().setViewport('m', { x: 5, y: 5, zoom: 3 }));
+    await act(() => tidyActive());
+    await act(() => tidyActive());
+    expect(active()).toBe(tidied);
+    expect(st().automata.map((x) => x.id)).toEqual(['other', 'm']);
+    expect(st().history.m?.past).toHaveLength(1);
+    // Still fits the view.
+    expect(st().viewports.m).toEqual(fitToView(tidied.states, { width: 640, height: 480 }));
+    act(() => st().undo());
+    expect(st().history.m?.past ?? []).toHaveLength(0);
+  });
+
   it('Tidy reports a layout failure and leaves no undo entry', async () => {
     toastStore.setState({ toasts: [] });
     load(two('DFA', 'a', [['q0', 'a', 'q1']]));
