@@ -67,6 +67,9 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
 - `automata` is kept most recently edited first and saved in that order (the app reopens on the last
   edited one): edits, undo/redo, creating and adding move one to the front; switching doesn't.
 - The clipboard is in memory only, never saved. `traceActions.ts` opens traces.
+- Read-only automata: ids in `readOnly` (set by lessons, never saved) refuse `edit`, undo/redo into other
+  structure, cut and paste unless `sameStructure` (`core/edit.ts`) holds, so layout moves, Tidy and runs
+  still work. Each refusal bumps `blockedEdits`, which the tutorial card reads to say it's read-only.
 
 ### `src/persistence/`
 
@@ -97,8 +100,15 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
 - Every letter shortcut goes through `shell/shortcut.ts` (`isCtrlLetter`, `shortcutLetter`), which handles
   non-Latin layouts (Hebrew Ctrl+A is `ש`).
 - Hover styles go inside `@media (hover: hover)`, so taps don't leave them stuck.
-- `tutorial/steps.ts` is a pure step table. Step texts mark keys `[Shift]`, states `«even»` and words to
-  type in backticks; a test caps their lengths.
+- `tutorial/engine.ts` holds the `Lesson`/`StepSpec` types, `lessonSteps` and `advance`: a step completes by
+  a check on the automaton, a run reaching its verdict, a latch, or a reported action. `tutorial/lessons/`
+  has `basics.ts` (the original tutorial), `nfa`, `convert`, `minimize` and `share`; `index.ts` lists them in
+  order. Lessons open a read-only copy of a ready-made automaton with walkthroughs paused; automata saved
+  from their walkthroughs belong to the lesson (Quit removes them, Finish keeps them).
+- Lesson texts mark keys `[Shift]`, states `«even»` and words to type in backticks. `lessons/index.test.ts`
+  caps them: instructions 100 chars, why lines 110 (70 for Basics, whose card is narrower).
+- `TutorialPointer.tsx` draws over the top bar for toolbar buttons, with a tight frame on buttons. Finished
+  lessons are saved under `automotion:lessons-done` (`lessonsDone.ts`); the Controls Lessons tab shows ✓.
 
 Interactive elements have stable `data-testid`s and accessible names that e2e relies on: keep them when
 restyling. Tests are colocated as `*.test.ts(x)`; Playwright specs live in `e2e/`.

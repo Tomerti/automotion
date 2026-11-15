@@ -8,13 +8,23 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
-- [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
+- [ ] Lesson: Arrange (box select, Ctrl+click, move together, copy and paste, Tidy)
 
 ## Ideas (later)
 
 - [ ] Regex → NFA
+- [ ] Lessons for regex → NFA, TMs, and checking an automaton against a language, as those features land
 
 ## Done
+
+### Lessons (2026-11-15)
+
+- [x] The tutorial is a lesson engine (`ui/tutorial/engine.ts`, `lessons/`; `steps.ts` is gone): a step completes by a check, a run at its verdict, a latch or a reported action. Basics is the old tutorial, unchanged
+- [x] Four one-minute lessons: NFAs, Convert NFA → DFA, Minimize a DFA, Share and export. Each opens a read-only copy of a ready-made automaton and its walkthroughs open paused; automata saved from them belong to the lesson (Quit removes them, Finish keeps them)
+- [x] Read-only automata (`readOnly` in the store): layout moves, Tidy and runs work; structural edits, undo into structure, cut and paste are refused (`sameStructure`), counted in `blockedEdits`, and the card says it's read-only
+- [x] Controls (?) has a Lessons tab with ✓ for finished lessons (`automotion:lessons-done`); the finish popup offers "Next: …"; starting another lesson midway asks first
+- [x] A goal with `after` shows only the target picture in a full-width row; the pointer draws over the top bar for toolbar buttons, with a tight frame on buttons
+- [x] `lessons/index.test.ts` caps every lesson's text: instructions 100 characters, why lines 110 (70 for Basics)
 
 ### Theme switch without a blink (2026-11-15)
 
