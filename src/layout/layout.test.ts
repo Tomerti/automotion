@@ -140,6 +140,13 @@ describe('layoutAutomaton', () => {
     }
   });
 
+  it('lays out a laid-out automaton as it is (Tidy again changes nothing)', async () => {
+    for (const a of layoutSamples()) {
+      const once = await layoutAutomaton(a);
+      expect(await layoutAutomaton(once), a.name).toEqual(once);
+    }
+  });
+
   it('lays a chain out as one row in reading order, back arrows curved around it', async () => {
     for (const name of ['Exactly two a', '(a|b)*abb with ε', 'Contains 101']) {
       const out = await layoutAutomaton(sample(name));

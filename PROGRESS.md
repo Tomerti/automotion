@@ -27,6 +27,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Tidy again (2026-11-15)
+
+- [x] Tidy on an already tidy automaton only fits the view: no undo entry and no edit (it used to add an undo step each press, undoing to the same picture, and move the automaton to the top of the history); a layout test checks that laying out a laid-out sample changes nothing
+
 ### v1.0.0 (2026-11-14)
 
 - [x] Tagged `v1.0.0` on master at the README refresh's merge (PR #52; the app is as launch prep's merge, e51ab17, left it) and published the GitHub release, with notes from PR #50 and #52
