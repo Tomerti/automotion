@@ -21,14 +21,14 @@ Nothing in progress: pick the next task from the list below.
 ### Lessons (2026-11-15)
 
 - [x] The tutorial is a lesson engine (`ui/tutorial/engine.ts`, `lessons/`; `steps.ts` is gone): a step completes by a check, a run at its verdict, a latch or a reported action. Basics is the old tutorial, unchanged
-- [x] Four one-minute lessons: NFAs, Convert NFA → DFA, Minimize a DFA, Share and export. Each opens a read-only copy of a ready-made automaton; automata saved from them belong to the lesson (Quit removes them, Finish keeps them)
+- [x] Five one-minute lessons: NFAs, ε-moves, Convert NFA → DFA, Minimize a DFA, Share and export. Each opens a read-only copy of a ready-made automaton; automata saved from them belong to the lesson (Quit removes them, Finish keeps them)
 - [x] Read-only automata (`readOnly` in the store): layout moves, Tidy and runs work; structural edits, undo into structure, cut and paste are refused (`sameStructure`), counted in `blockedEdits`, and the card says it's read-only
 - [x] Controls (?) has a Lessons tab with ✓ for finished lessons (`automotion:lessons-done`); the finish popup offers "Next: …"; starting another lesson midway asks first
 - [x] The pointer draws over the top bar for toolbar buttons, with a tight frame on buttons
 - [x] `lessons/index.test.ts` caps every lesson's text: instructions 100 characters, why lines 110 (70 for Basics)
 - [x] Walkthroughs pause where a step explains (`pauseAt`, `TracePlayer` `stopAt`, `lessonStopAt`); Convert stops at 2 and 5 of 10, Minimize opens paused and stops at 2 of 3
 - [x] Lessons rework (`2026-11-15-lessons-flow-design.md`): idea steps with a Next button, a step's `explain` shown before its instruction, and goal pictures and word-box/dock frames only in Basics
-- [x] NFAs is stepped by hand on `001` (`pausedRuns`, `lessons/handStep.ts`), and a new ε-moves lesson follows it on `b` and `ba`
+- [x] NFAs is stepped by hand on `001` and the new ε-moves lesson on `b`, then `ba` plays (`pausedRuns`, `lessons/handStep.ts`)
 - [x] The Controls header Lessons button is gone: the Lessons tab is the only way in
 - [x] `e2e/lessons.spec.ts` covers the idea steps, hand-stepped NFA and ε runs, the Convert and Minimize stops, and Convert pressed before Next
 
