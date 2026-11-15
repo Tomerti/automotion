@@ -1,5 +1,11 @@
 import type { Automaton, State, StateId, Transition } from '../core/model';
-import { SPACING, assignBends, assignStartAngles, layoutCost } from './aesthetics';
+import {
+  SPACING,
+  assignBends,
+  assignStartAngles,
+  bendClearOfStates,
+  layoutCost,
+} from './aesthetics';
 import {
   LAYERED_VARIANTS,
   circleLayout,
@@ -8,15 +14,16 @@ import {
   stressLayout,
   type Positions,
 } from './candidates';
-import { refineOnGrid } from './grid';
+import { compactSeeds, refineOnGrid } from './grid';
 import { readingOrders } from './order';
 
 /** Largest connected part laid out on a single row, or around a circle, as a candidate. */
 const MAX_ROW = 8;
 const MAX_CIRCLE = 12;
-/** Largest connected part also refined on a grid (`refineOnGrid`), from its best candidates. */
+/** Largest connected part also refined on a grid (`refineOnGrid`), from its best candidate. */
 const MAX_GRID = 10;
-const GRID_FROM = 1;
+/** How many compact grids (`compactSeeds`) are refined, the best first. */
+const COMPACT_SEARCH = 2;
 /** How much better (a fraction of its cost) a grid must be than the other candidates to win. */
 const GRID_MARGIN = 0.1;
 /** Parts larger than this choose bends for their two best candidates only. */
@@ -76,14 +83,29 @@ async function bestLayout(part: Automaton): Promise<Automaton> {
   candidates.push(stressLayout(part, order!));
   const grids: Positions[] = [];
   if (part.states.length <= MAX_GRID) {
-    // With automatic bends: quick to score, and a grid should read well without bending around.
-    const quick = (p: Positions): number => layoutCost(place(part, p));
     const ids = part.states.map((s) => s.id);
-    const seeds = candidates
+    // With automatic bends: quick to score, and the search finds the automaton's structure,
+    // though it may spread it out to keep the arrows straight.
+    const quick = (p: Positions): number => layoutCost(place(part, p));
+    const seed = candidates
       .map((c) => ({ c, cost: quick(c) }))
+      .reduce((p, q) => (q.cost < p.cost ? q : p)).c;
+    const spread = refineOnGrid(ids, seed, quick);
+    grids.push(spread);
+    // That search keeps arrows straight by spreading states out, along a diagonal at worst: so
+    // the structure found (that grid, and every candidate) is also packed into compact
+    // rectangles, and the best of those improved without spreading out. Compact grids read well
+    // only with their arrows bent around the states in between, so they are scored that way.
+    const bent = (p: Positions): number => layoutCost(bendClearOfStates(place(part, p)));
+    const compact = new Map<string, Positions>();
+    for (const c of [spread, ...candidates]) {
+      for (const s of compactSeeds(ids, c)) compact.set(signature(s), s);
+    }
+    const best = [...compact.values()]
+      .map((c) => ({ c, cost: bent(c) }))
       .sort((p, q) => p.cost - q.cost)
-      .slice(0, GRID_FROM);
-    for (const { c } of seeds) grids.push(refineOnGrid(ids, c, quick));
+      .slice(0, COMPACT_SEARCH);
+    for (const { c } of best) grids.push(refineOnGrid(ids, c, bent, { grow: false }));
   }
 
   // Distinct candidates, start arrows pointed. Large parts first keep the two that read best

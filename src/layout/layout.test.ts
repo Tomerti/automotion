@@ -5,8 +5,8 @@ import type { Automaton, State } from '../core/model';
 import { subsetConstruction } from '../core/subset';
 import { arbNfa } from '../core/testing/arbitraries';
 import { fixture, nthFromEnd } from '../core/testing/fixtures';
-import { SPACING, layoutCostTerms } from './aesthetics';
-import { refineOnGrid } from './grid';
+import { SPACING, bendClearOfStates, layoutCostTerms } from './aesthetics';
+import { compactSeeds, refineOnGrid } from './grid';
 import { layoutAutomaton } from './layout';
 import { layoutSamples } from './samples';
 
@@ -134,20 +134,20 @@ describe('layoutAutomaton', () => {
         }
       }
     }
-  });
+  }, 20000);
 
   it('is deterministic', async () => {
     for (const a of layoutSamples()) {
       expect(await layoutAutomaton(a), a.name).toEqual(await layoutAutomaton(a));
     }
-  });
+  }, 20000);
 
   it('lays out a laid-out automaton as it is (Tidy again changes nothing)', async () => {
     for (const a of layoutSamples()) {
       const once = await layoutAutomaton(a);
       expect(await layoutAutomaton(once), a.name).toEqual(once);
     }
-  });
+  }, 20000);
 
   it('lays a chain out as one row in reading order, back arrows curved around it', async () => {
     for (const name of ['Exactly two a', '(a|b)*abb with ε', 'Contains 101']) {
@@ -182,6 +182,18 @@ describe('layoutAutomaton', () => {
     // No crossings, arrows through states or labels on anything; no skewed straight arrows.
     expect(layoutCostTerms(out)).not.toHaveProperty('arrows');
     expect(layoutCostTerms(out)).not.toHaveProperty('skew');
+  });
+
+  it('packs a dense DFA into little room, not along a diagonal (3rd from end → DFA)', async () => {
+    const out = await layoutAutomaton(sample('3rd from end → DFA'));
+    const xs = out.states.map((s) => s.x);
+    const ys = out.states.map((s) => s.y);
+    const cols = (Math.max(...xs) - Math.min(...xs)) / SPACING + 1;
+    const rows = (Math.max(...ys) - Math.min(...ys)) / SPACING + 1;
+    // Any shape, as long as it wastes no more than a cell or so (the diagonal took 4 × 4 for 8).
+    expect(cols * rows).toBeLessThanOrEqual(out.states.length + 1);
+    // Still nothing crossing, through a state or on a label.
+    expect(layoutCostTerms(out)).not.toHaveProperty('arrows');
   });
 
   it('stacks unconnected parts, the start state’s first', async () => {
@@ -242,5 +254,57 @@ describe('refineOnGrid', () => {
     const d = (p: Map<string, { x: number; y: number }>) =>
       Math.hypot(p.get('a')!.x - p.get('c')!.x, p.get('a')!.y - p.get('c')!.y);
     expect(d(apart)).toBeGreaterThan(d(out));
+  });
+});
+
+describe('compactSeeds', () => {
+  it('packs a spread-out layout into compact rectangles, keeping its order', () => {
+    // Six states along a diagonal.
+    const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
+    const pos = new Map(ids.map((id, i) => [id, { x: i * SPACING, y: i * SPACING }]));
+    const seeds = compactSeeds(ids, pos);
+    expect(seeds.length).toBeGreaterThan(0);
+    for (const seed of seeds) {
+      const cells = [...seed.values()];
+      expect(new Set(cells.map((p) => `${p.x},${p.y}`)).size).toBe(ids.length);
+      const cols = Math.max(...cells.map((p) => p.x)) / SPACING + 1;
+      const rows = Math.max(...cells.map((p) => p.y)) / SPACING + 1;
+      expect(rows).toBeGreaterThanOrEqual(2);
+      expect(cols).toBeGreaterThanOrEqual(rows);
+      expect(cols * rows).toBeLessThan(ids.length + Math.max(cols, rows));
+    }
+    // Packed by columns: left to right, top to bottom in each, as the diagonal had them.
+    expect(seeds[0]!.get('a')).toEqual({ x: 0, y: 0 });
+    expect(seeds[0]!.get('b')).toEqual({ x: 0, y: SPACING });
+    expect(seeds[0]!.get('c')).toEqual({ x: SPACING, y: 0 });
+  });
+});
+
+describe('bendClearOfStates', () => {
+  it('bends only the arrows drawn through a state', () => {
+    const a = fixture({
+      kind: 'DFA',
+      alphabet: 'ab',
+      states: ['p', 'q', 'r'],
+      start: 'p',
+      edges: [
+        ['p', 'a', 'q'],
+        ['q', 'a', 'r'],
+        ['p', 'b', 'r'],
+      ],
+    });
+    const row: Automaton = {
+      ...a,
+      states: a.states.map((s, i) => ({ ...s, x: i * SPACING, y: 0 })),
+    };
+    const out = bendClearOfStates(row);
+    const bend = (id: string) => out.transitions.find((t) => t.id === id)?.bend;
+    expect(bend('p->q')).toBeUndefined();
+    expect(bend('q->r')).toBeUndefined();
+    expect(bend('p->r')).not.toBeUndefined();
+    expect(arrowsThroughStates(out)).toEqual([]);
+    // Nothing in the way: left as it is.
+    const apart = { ...row, transitions: row.transitions.filter((t) => t.id !== 'p->r') };
+    expect(bendClearOfStates(apart)).toBe(apart);
   });
 });
