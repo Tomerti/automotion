@@ -138,6 +138,14 @@ export const WarningIcon = (): React.JSX.Element => (
   </Icon>
 );
 
+/** A laptop: the phone welcome's "open this on a computer". */
+export const LaptopIcon = (): React.JSX.Element => (
+  <Icon>
+    <rect x="4" y="4.5" width="12" height="8.5" rx="1.25" />
+    <path d="M2 15.5h16" />
+  </Icon>
+);
+
 export const CloseIcon = (): React.JSX.Element => (
   <Icon>
     <path d="m5.5 5.5 9 9M14.5 5.5l-9 9" />

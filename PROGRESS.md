@@ -27,6 +27,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Phone welcome notice (2026-11-15)
+
+- [x] The phone welcome's "made for a mouse and keyboard" note is an amber callout right under the tagline, above the demo: a laptop icon, a bold "Open this on a computer" headline, and "On a phone you can only open shared automata and run words on them", so it is read before **Got it** is tapped (it was muted text under the theme switch)
+
 ### v1.0.0 (2026-11-14)
 
 - [x] Tagged `v1.0.0` on master at the README refresh's merge (PR #52; the app is as launch prep's merge, e51ab17, left it) and published the GitHub release, with notes from PR #50 and #52
