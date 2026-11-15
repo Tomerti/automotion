@@ -147,15 +147,18 @@ const LESSONS_TAB = TABS.length;
 export function ControlsDialog({
   onClose,
   onStartLesson,
+  openOnLessons = false,
 }: {
   onClose: () => void;
   onStartLesson: (id: LessonId) => void;
+  /** Open on the Lessons tab (from the popup after the tutorial) instead of the first. */
+  openOnLessons?: boolean;
 }): React.JSX.Element {
   const running = useTutorial((s) => (s.active ? s.lessonId : null));
   const touchOnly = useTouchOnly();
   const [done] = useState(finishedLessons);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState(openOnLessons ? LESSONS_TAB : 0);
   const baseId = useId();
   useModalDialog(dialogRef, onClose);
 

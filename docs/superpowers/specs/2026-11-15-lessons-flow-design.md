@@ -229,8 +229,12 @@ paste it into notes, slides or a chat and you get a picture of the automaton."; 
 - While another automaton is open (or a trace of one), the card is hidden entirely, instead of
   saying "You're on …" with a link back. It comes back on the lesson's own automaton (picked in the
   history bar). The lesson keeps running.
-- The popup after Basics doesn't offer "Next: …". It says "More lessons, on NFAs, converting and
-  minimizing, are in the Lessons tab: press ?." (`more-lessons`). The other lessons still offer Next.
+- The popup after Basics doesn't start the next lesson or describe the others. It has two buttons:
+  **Start building** (closes it) and **See the lessons** (opens the Controls on the Lessons tab).
+  The other lessons still offer Next.
+- Finishing Basics removes its practice automaton (by then a one-state DFA accepting every word,
+  and Basics can be retaken any time): the user's own automata are left, or a blank Untitled to
+  start building on. A lesson's Finish keeps its automata, since a saved DFA is the user's work.
 
 ### Controls popup
 

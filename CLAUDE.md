@@ -113,8 +113,9 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   Next would land on (`pacingStep`), so a run opened early is paced too. A step done on reaching a
   point of a run or walkthrough has `steppedBack`: stepped back (←) before that point, it shows again,
   so the card follows the trace back. While another automaton is open the card hides (it comes back on
-  the lesson's own); the popup after Basics points to the Lessons tab, other lessons offer Next. Only
-  Basics has goal pictures and frames the word box and dock.
+  the lesson's own). Finishing Basics removes its automaton and its popup offers Start building or See
+  the lessons (Controls on the Lessons tab); a lesson's Finish keeps its automata and offers Next.
+  Only Basics has goal pictures and frames the word box and dock.
 - Lesson texts mark keys `[Shift]`, states `«even»` and words to type in backticks. `lessons/index.test.ts`
   caps them: instructions 100 chars (idea steps 240), why lines 110 (70 for Basics, so its wording
   stays as it was), `explain` 140.

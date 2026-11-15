@@ -22,9 +22,12 @@ const CONFETTI = Array.from({ length: 18 }, (_, i) => ({
 export function FinishedCard({
   lesson,
   onClose,
+  onSeeLessons,
 }: {
   lesson: Lesson;
   onClose: () => void;
+  /** After the tutorial, See the lessons: open the Controls on the Lessons tab. */
+  onSeeLessons?: () => void;
 }): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalDialog(dialogRef, onClose);
@@ -78,40 +81,52 @@ export function FinishedCard({
         <p className="av-finished-cheer" data-testid="tutorial-cheer">
           {cheer}
         </p>
-        <p className="av-welcome-note av-finished-note">
-          {tutorial
-            ? 'Your Tutorial automaton stays in the history.'
-            : 'Its automata stay in your history.'}
-        </p>
-        {tutorial && (
-          <p className="av-welcome-note av-finished-note" data-testid="more-lessons">
-            More lessons, on NFAs, converting and minimizing, are in the Lessons tab: press{' '}
-            <kbd>?</kbd>.
-          </p>
+        {!tutorial && (
+          <p className="av-welcome-note av-finished-note">Its automata stay in your history.</p>
         )}
         <div className="av-welcome-actions">
-          {next && (
-            <button
-              type="button"
-              className="av-go"
-              data-testid="next-lesson"
-              data-focus-stop
-              onClick={() => {
-                onClose();
-                void requestLesson(next.id);
-              }}
-            >
-              Next: {next.title}
-            </button>
+          {tutorial ? (
+            <>
+              <button type="button" className="av-go" data-focus-stop onClick={onClose}>
+                Start building
+              </button>
+              <button
+                type="button"
+                data-focus-stop
+                onClick={() => {
+                  onClose();
+                  onSeeLessons?.();
+                }}
+              >
+                See the lessons
+              </button>
+            </>
+          ) : (
+            <>
+              {next && (
+                <button
+                  type="button"
+                  className="av-go"
+                  data-testid="next-lesson"
+                  data-focus-stop
+                  onClick={() => {
+                    onClose();
+                    void requestLesson(next.id);
+                  }}
+                >
+                  Next: {next.title}
+                </button>
+              )}
+              <button
+                type="button"
+                className={next ? undefined : 'av-go'}
+                data-focus-stop
+                onClick={onClose}
+              >
+                Back to building
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            className={next ? undefined : 'av-go'}
-            data-focus-stop
-            onClick={onClose}
-          >
-            Back to building
-          </button>
         </div>
       </div>
     </div>

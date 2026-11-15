@@ -301,16 +301,23 @@ export function pressNext(): void {
 export function quitLesson(): void {
   const { owned } = tutorialStore.getState();
   endLesson();
-  if (owned.length === 0) return;
+  removeAutomata(owned);
+}
+
+/** Remove `ids` from the history, never leaving the canvas without an automaton. */
+function removeAutomata(ids: readonly string[]): void {
+  if (ids.length === 0) return;
   const app = appStore.getState();
-  for (const id of owned) app.deleteAutomaton(id);
+  for (const id of ids) app.deleteAutomaton(id);
   if (appStore.getState().automata.length === 0)
     app.addAutomaton(emptyAutomaton('Untitled', 'DFA'));
 }
 
 /**
- * Finish from the closing card: the lesson's automata stay, the run or walkthrough that ended the
- * lesson closes, back to editing, the view fits what is open, and the congratulations popup opens.
+ * Finish from the closing card: the run or walkthrough that ended the lesson closes, back to
+ * editing, and the congratulations popup opens. A lesson's automata stay (a saved DFA is the
+ * user's work) and the view fits them; the tutorial's practice automaton is removed, leaving the
+ * user's own automata, or a blank Untitled to start building on.
  */
 export function finishLesson(): void {
   const { owned, lesson } = tutorialStore.getState();
@@ -318,6 +325,12 @@ export function finishLesson(): void {
   if (lesson && isLessonId(lesson.id)) markLessonFinished(lesson.id);
   const app = appStore.getState();
   if (app.trace && owned.includes(app.trace.source.id)) app.closeTrace();
+  if (lesson?.noun === 'tutorial') {
+    removeAutomata(owned);
+    tutorialStore.setState({ celebrating: lesson });
+    playFanfareSound();
+    return;
+  }
   tutorialStore.setState({ celebrating: lesson });
   playFanfareSound();
   // Once the editing canvas is back on screen, so the fit has its size.
@@ -331,7 +344,7 @@ export function closeCelebration(): void {
   tutorialStore.setState({ celebrating: null });
 }
 
-/** Stop following the app and unlock its automata, which stay like any other (Finish keeps them). */
+/** Stop following the app and unlock its automata, which stay like any other. */
 export function endLesson(): void {
   unsubscribe?.();
   unsubscribe = null;

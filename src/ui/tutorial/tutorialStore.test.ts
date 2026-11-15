@@ -150,7 +150,7 @@ describe('startLesson', () => {
     expect(app().trace).toBeNull();
   });
 
-  it('Finish keeps the automaton and closes the run that ended the tutorial', () => {
+  it('Finish removes the Tutorial automaton, with its run, and leaves a blank Untitled', () => {
     startLesson('basics');
     const id = tut().automatonId;
     app().edit((a) => addState(a, { x: 0, y: 0 }));
@@ -160,7 +160,18 @@ describe('startLesson', () => {
     finishLesson();
     expect(tut().active).toBe(false);
     expect(app().trace).toBeNull();
-    expect(app().automata.some((a) => a.id === id)).toBe(true);
+    expect(app().automata.some((a) => a.id === id)).toBe(false);
+    expect(app().automata).toHaveLength(1);
+    expect(active()?.name).toBe('Untitled');
+    expect(active()?.states).toEqual([]);
+  });
+
+  it('Finish of Basics leaves the user’s own automata, opening one of them', () => {
+    resetAppStore({ automata: [loop()] });
+    startLesson('basics');
+    finishLesson();
+    expect(app().automata.map((a) => a.id)).toEqual(['mine']);
+    expect(app().activeId).toBe('mine');
   });
 
   it('Finish leaves a run on another automaton open', () => {

@@ -76,6 +76,8 @@ export default function App(): React.JSX.Element {
   const setStep = useAppStore((s) => s.setStep);
   const closeTrace = useAppStore((s) => s.closeTrace);
   const [helpOpen, setHelpOpen] = useControlsHelp();
+  // The Controls opened from the popup after the tutorial start on the Lessons tab.
+  const [helpOnLessons, setHelpOnLessons] = useState(false);
   const [welcomeOpen, closeWelcome] = useWelcome(arrivedByLink());
   const [historyOpen, toggleHistory] = useHistoryOpen();
   const celebrating = useTutorial((s) => s.celebrating);
@@ -139,9 +141,14 @@ export default function App(): React.JSX.Element {
       <ConfirmDialog />
       {helpOpen && (
         <ControlsDialog
-          onClose={() => setHelpOpen(false)}
+          openOnLessons={helpOnLessons}
+          onClose={() => {
+            setHelpOpen(false);
+            setHelpOnLessons(false);
+          }}
           onStartLesson={(id) => {
             setHelpOpen(false);
+            setHelpOnLessons(false);
             void requestLesson(id);
           }}
         />
@@ -155,7 +162,16 @@ export default function App(): React.JSX.Element {
           }}
         />
       )}
-      {celebrating && <FinishedCard lesson={celebrating} onClose={closeCelebration} />}
+      {celebrating && (
+        <FinishedCard
+          lesson={celebrating}
+          onClose={closeCelebration}
+          onSeeLessons={() => {
+            setHelpOnLessons(true);
+            setHelpOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

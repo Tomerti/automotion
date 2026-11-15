@@ -30,21 +30,6 @@ async function rename(page: Page, label: string, name: string): Promise<void> {
   await page.keyboard.press('Enter');
 }
 
-/** Every state drawn on the canvas has its centre inside the canvas. */
-async function expectStatesInCanvas(page: Page): Promise<void> {
-  const canvas = (await page.getByTestId('canvas').boundingBox())!;
-  const bodies = await page.getByTestId('canvas').locator('.av-state-body').all();
-  expect(bodies.length).toBeGreaterThan(0);
-  for (const body of bodies) {
-    const b = (await body.boundingBox())!;
-    const c = { x: b.x + b.width / 2, y: b.y + b.height / 2 };
-    expect(c.x).toBeGreaterThan(canvas.x);
-    expect(c.x).toBeLessThan(canvas.x + canvas.width);
-    expect(c.y).toBeGreaterThan(canvas.y);
-    expect(c.y).toBeLessThan(canvas.y + canvas.height);
-  }
-}
-
 /** The history entry named exactly `name`, not just one whose name contains it. */
 const entry = (page: Page, name: string) =>
   page
@@ -141,22 +126,18 @@ test('the first visit offers the tutorial, which walks through building and chan
   await expect(card).toHaveCount(0);
   const popup = page.getByRole('dialog', { name: 'Tutorial complete' });
   await expect(popup).toBeVisible();
-  await popup.getByRole('button', { name: 'Back to building' }).click();
+  // No lesson is started for you: Start building, or See the lessons.
+  await expect(popup.getByRole('button', { name: 'See the lessons' })).toBeVisible();
+  await popup.getByRole('button', { name: 'Start building' }).click();
   await expect(popup).toHaveCount(0);
 
-  // Finish also closes the last run, back to editing; the automaton stays: one state, now
-  // named "any", looping on 0 and 1…
+  // Finish also closes the last run, back to editing, and removes the practice automaton: a
+  // blank Untitled is left to start building on.
   await expect(page.getByTestId('verdict')).toHaveCount(0);
   await expect(page.getByLabel('Word')).toBeVisible();
-  await expect(page.getByTestId('edge-any-any').getByTestId('edge-label')).toHaveText('0,1');
-  await expect(entry(page, 'Tutorial')).toHaveCount(1);
-  await expect(page.getByTestId('canvas').locator('.av-state-body')).toHaveCount(1);
-  await expectStatesInCanvas(page);
-  // …centred: the view fits it, wherever q0 was drawn.
-  const canvas = (await page.getByTestId('canvas').boundingBox())!;
-  const centre = await stateCenter(page, 'any');
-  expect(Math.abs(centre.x - (canvas.x + canvas.width / 2))).toBeLessThan(30);
-  expect(Math.abs(centre.y - (canvas.y + canvas.height / 2))).toBeLessThan(30);
+  await expect(entry(page, 'Tutorial')).toHaveCount(0);
+  await expect(entry(page, 'Untitled')).toHaveCount(1);
+  await expect(page.getByTestId('canvas').locator('.av-state-body')).toHaveCount(0);
 });
 
 test('quitting the tutorial midway asks first, then removes it from the history', async ({

@@ -20,6 +20,7 @@ import { LESSONS_DONE_KEY, markLessonFinished } from './lessonsDone';
 import { IDEA_LESSON, TEST_LESSON } from './testing/testLesson';
 import {
   endLesson,
+  finishLesson,
   noteLessonAction,
   pressNext,
   startLesson,
@@ -299,7 +300,7 @@ it('Quit ends it and removes its automaton from the history', async () => {
   expect(app().activeId).toBe('Mine');
 });
 
-it('once done, the close button ends it without asking and keeps the automaton', async () => {
+it('once done, the close button finishes it without asking, removing the practice automaton', async () => {
   const user = userEvent.setup();
   render(<App />);
   act(() => startLesson('basics'));
@@ -307,7 +308,7 @@ it('once done, the close button ends it without asking and keeps the automaton',
   at('done');
   await user.click(within(card()).getByRole('button', { name: 'End tutorial' }));
   expect(screen.queryByTestId('tutorial-card')).toBeNull();
-  expect(app().automata.some((a) => a.id === id)).toBe(true);
+  expect(app().automata.some((a) => a.id === id)).toBe(false);
 });
 
 it('the closing card has Finish, which ends it', async () => {
@@ -329,7 +330,7 @@ it('Finish opens a congratulations popup with a joke, which closes', async () =>
   await user.click(within(card()).getByRole('button', { name: 'Finish' }));
   const popup = screen.getByRole('dialog', { name: 'Tutorial complete' });
   expect(CHEERS).toContain(within(popup).getByTestId('tutorial-cheer').textContent);
-  await user.click(within(popup).getByRole('button', { name: 'Back to building' }));
+  await user.click(within(popup).getByRole('button', { name: 'Start building' }));
   expect(screen.queryByRole('dialog', { name: 'Tutorial complete' })).toBeNull();
 });
 
@@ -684,14 +685,36 @@ describe('a lesson other than Basics', () => {
     expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: Basics');
   });
 
-  it('after the tutorial, points to the Lessons tab instead of starting one', () => {
+  it('after the tutorial, offers Start building and See the lessons instead of starting a lesson', async () => {
     localStorage.removeItem(LESSONS_DONE_KEY);
-    render(<FinishedCard lesson={BASICS} onClose={() => {}} />);
+    const onClose = vi.fn();
+    const onSeeLessons = vi.fn();
+    render(<FinishedCard lesson={BASICS} onClose={onClose} onSeeLessons={onSeeLessons} />);
+    const popup = screen.getByRole('dialog', { name: 'Tutorial complete' });
     expect(screen.queryByTestId('next-lesson')).toBeNull();
-    expect(screen.getByTestId('more-lessons')).toHaveTextContent(
-      'More lessons, on NFAs, converting and minimizing, are in the Lessons tab: press ?.',
+    expect(popup).not.toHaveTextContent('history');
+    expect(within(popup).queryByRole('button', { name: 'Back to building' })).toBeNull();
+    const build = within(popup).getByRole('button', { name: 'Start building' });
+    expect(build).toHaveClass('av-go');
+    const user = userEvent.setup();
+    await user.click(within(popup).getByRole('button', { name: 'See the lessons' }));
+    expect(onSeeLessons).toHaveBeenCalledTimes(1);
+    await user.click(build);
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('See the lessons opens the Controls on the Lessons tab', async () => {
+    render(<App />);
+    act(() => startLesson('basics'));
+    act(() => finishLesson());
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'See the lessons' }));
+    expect(screen.queryByRole('dialog', { name: 'Tutorial complete' })).toBeNull();
+    const guide = screen.getByRole('dialog', { name: 'Controls' });
+    expect(within(guide).getByRole('tab', { name: 'Lessons' })).toHaveAttribute(
+      'aria-selected',
+      'true',
     );
-    expect(screen.getByRole('button', { name: 'Back to building' })).toHaveClass('av-go');
   });
 
   it('has no Next once every lesson is finished', () => {
