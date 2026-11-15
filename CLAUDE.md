@@ -110,8 +110,9 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   ε-moves on `b`; `lessons/handStep.ts`). A step's `pauseAt` pauses the player (`stopAt`, via
   `lessonStopAt`) at the moment the card explains while the run is before it, else at the next one
   (every hand-stepped, Convert and Minimize step). During an idea step the pacing step is the one
-  Next would land on (`pacingStep`), so a run opened early is paced too. Only Basics has goal
-  pictures and frames the word box and dock.
+  Next would land on (`pacingStep`), so a run opened early is paced too. A step done on reaching a
+  point of a run or walkthrough has `steppedBack`: stepped back (←) before that point, it shows again,
+  so the card follows the trace back. Only Basics has goal pictures and frames the word box and dock.
 - Lesson texts mark keys `[Shift]`, states `«even»` and words to type in backticks. `lessons/index.test.ts`
   caps them: instructions 100 chars (idea steps 240), why lines 110 (70 for Basics, so its wording
   stays as it was), `explain` 140.

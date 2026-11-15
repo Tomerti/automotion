@@ -85,6 +85,31 @@ test('the NFAs lesson steps 001 by hand, each stop explained, and finishes', asy
   await check();
 });
 
+test('the NFAs card follows the run back with ←, from the closing card too', async ({ page }) => {
+  await openApp(page, { clear: true });
+  const { card } = await startLesson(page, 'lesson-nfa');
+  await card.getByTestId('tutorial-next').click();
+  const word = page.getByLabel('Word');
+  await word.fill('001');
+  await word.press('Enter');
+
+  const counter = page.getByTestId('step-counter');
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight');
+  await expect(counter).toHaveText('Step 5 / 5');
+  await expect(card.getByRole('button', { name: 'Finish' })).toBeVisible();
+
+  // Back three steps: the card explains where the run is, not where it was.
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft');
+  await expect(counter).toHaveText('Step 2 / 5');
+  await expect(card).toContainText('follows both');
+  await expect(card).not.toContainText('reached');
+  await expect(card.getByRole('button', { name: 'Finish' })).toHaveCount(0);
+
+  // Forward again: it moves on with the run, back to the closing card.
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+  await expect(card.getByRole('button', { name: 'Finish' })).toBeVisible();
+});
+
 test('the ε-moves lesson steps b by hand, then plays ba and finishes', async ({ page }) => {
   await openApp(page, { clear: true });
   const { guide, card } = await startLesson(page, 'lesson-epsilon');

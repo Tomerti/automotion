@@ -11,10 +11,11 @@ export function runOf(ctx: TutorialContext, word: string): RunTrace | null {
 }
 
 /**
- * The playback pause and the way back for a card that explains the moment at index `moment` of the
- * open run of `word`. Playback stops at the moment while the run is before it, and one step on
+ * The playback pause, the rerun hint and the way back for a card that explains the moment at
+ * index `moment` of the open run of `word`. Playback stops at the moment while the run is before it, and one step on
  * (the next card's moment) once it has got there; the lesson's last card (`final`) has no next
- * moment, so the run's end stops it. Elsewhere, and for any other run, it doesn't pause.
+ * moment, so the run's end stops it. Elsewhere, and for any other run, it doesn't pause. With
+ * the run stepped back to the moment or before it, the card shows again (`steppedBack`).
  */
 export function atMoment(
   word: string,
@@ -23,17 +24,18 @@ export function atMoment(
 ): {
   pauseAt(ctx: TutorialContext): number | null;
   first(ctx: TutorialContext): string | null;
+  steppedBack(ctx: TutorialContext): boolean;
 } {
   return {
+    // The card is done once the run passes its moment; stepped back to it or before, it shows again.
+    steppedBack: (ctx) => runOf(ctx, word) !== null && ctx.stepIndex <= moment,
     pauseAt(ctx) {
       if (!runOf(ctx, word)) return null;
       if (ctx.stepIndex < moment) return moment;
       return final ? null : moment + 1;
     },
-    first(ctx) {
-      if (!runOf(ctx, word)) return `First, run \`${word}\` again.`;
-      return ctx.stepIndex < moment ? 'First, press [→] to get back to this point.' : null;
-    },
+    // Stepped back, the card follows the run (`steppedBack`), so only a closed run needs a word.
+    first: (ctx) => (runOf(ctx, word) ? null : `First, run \`${word}\` again.`),
   };
 }
 

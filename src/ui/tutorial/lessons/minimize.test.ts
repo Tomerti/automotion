@@ -111,6 +111,16 @@ describe('the Minimize a DFA lesson', () => {
     expect(steps[2]!.id).toBe('minimize/groups');
   });
 
+  it('follows the walkthrough back with ←', () => {
+    const upToSave = new Set(steps.slice(0, 4).map((s) => s.id));
+    expect(steps[advance(L, 4, upToSave, ctx(trace, last), 4).current]!.id).toBe('minimize/save');
+    expect(steps[advance(L, 4, upToSave, ctx(trace, firstSplit), 4).current]!.id).toBe(
+      'minimize/split',
+    );
+    expect(steps[advance(L, 4, upToSave, ctx(trace, 0), 4).current]!.id).toBe('minimize/groups');
+    expect(advance(L, 4, upToSave, ctx(null), 4).current).toBe(4);
+  });
+
   it('asks to press Minimize again once the walkthrough is closed, without losing steps', () => {
     const p = advance(L, 0, idea, ctx(trace, 0));
     const split = advance(L, p.progress, p.latched, ctx(trace, firstSplit));

@@ -28,7 +28,6 @@ const last = (word: string): TutorialContext => {
 };
 
 const idea = new Set(['epsilon/idea']);
-const BACK = { kind: 'first', text: 'First, press [→] to get back to this point.' };
 const RERUN = { kind: 'first', text: 'First, run `b` again.' };
 
 describe('the ε-moves lesson', () => {
@@ -86,12 +85,18 @@ describe('the ε-moves lesson', () => {
     expect(steps[4]!.pauseAt!(ctx(null))).toBeNull();
   });
 
-  it('hints how to get back to the explained moment', () => {
+  it('follows the b run back with ←, and keeps the steps while ba runs', () => {
+    const upToBa = new Set(steps.slice(0, 5).map((s) => s.id));
+    const back = advance(EPSILON_LESSON, 5, upToBa, at('b', 1), 5);
+    expect(steps[back.current]!.id).toBe('epsilon/read');
+    expect(advance(EPSILON_LESSON, 5, upToBa, at('ba', 0), 5).current).toBe(5);
+    expect(advance(EPSILON_LESSON, 5, upToBa, ctx(null), 5).current).toBe(5);
+  });
+
+  it('asks to run b again once the run is closed', () => {
     expect(steps[2]!.hint(ctx(null))).toEqual(RERUN);
     expect(steps[2]!.hint(at('b', 0))).toBeNull();
-    expect(steps[3]!.hint(at('b', 0))).toEqual(BACK);
     expect(steps[3]!.hint(at('b', 1))).toBeNull();
-    expect(steps[4]!.hint(at('b', 1))).toEqual(BACK);
     expect(steps[4]!.hint(at('b', 2))).toBeNull();
     expect(steps[4]!.hint(ctx(null))).toEqual(RERUN);
   });

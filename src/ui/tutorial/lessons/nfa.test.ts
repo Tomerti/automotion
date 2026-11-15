@@ -24,7 +24,6 @@ function ctx(trace: RunTrace | null, stepIndex = 0, more: Partial<TutorialContex
 const at = (word: string, i: number): TutorialContext => ctx(runWord(start, word), i);
 
 const idea = new Set(['nfa/idea']);
-const BACK = { kind: 'first', text: 'First, press [→] to get back to this point.' };
 const RERUN = { kind: 'first', text: 'First, run `001` again.' };
 
 describe('the NFAs lesson', () => {
@@ -82,13 +81,33 @@ describe('the NFAs lesson', () => {
     expect(steps[5]!.pauseAt!(at('001', 3))).toBeNull();
   });
 
-  it('keeps the card when the run is stepped back below its moment', () => {
+  it('follows the run back when it is stepped back with ←', () => {
     const latched = new Set(['nfa/idea', 'nfa/run', 'nfa/read-0', 'nfa/guess', 'nfa/dies']);
     const ahead = advance(NFA_LESSON, 5, latched, at('001', 3), 5);
     expect(steps[ahead.current]!.id).toBe('nfa/reach');
     const back = advance(NFA_LESSON, 5, latched, at('001', 1), ahead.current);
-    expect(back.current).toBe(ahead.current);
-    expect(back.latched).toEqual(latched);
+    expect(steps[back.current]!.id).toBe('nfa/guess');
+    expect(steps[back.current]!.hint(at('001', 1))).toBeNull();
+    const forward = advance(NFA_LESSON, back.progress, back.latched, at('001', 3), back.current);
+    expect(steps[forward.current]!.id).toBe('nfa/reach');
+  });
+
+  it('leaves the closing card for the moment the run is stepped back to, and comes back', () => {
+    const all = new Set([...steps.slice(0, 6).map((s) => s.id)]);
+    const done = steps.length - 1;
+    expect(advance(NFA_LESSON, done, all, at('001', 4), done).current).toBe(done);
+    const back = advance(NFA_LESSON, done, all, at('001', 2), done);
+    expect(steps[back.current]!.id).toBe('nfa/dies');
+    expect(
+      advance(NFA_LESSON, back.progress, back.latched, at('001', 4), back.current).current,
+    ).toBe(done);
+  });
+
+  it('keeps finished steps once the run is closed or another word runs', () => {
+    const all = new Set([...steps.slice(0, 6).map((s) => s.id)]);
+    const done = steps.length - 1;
+    expect(advance(NFA_LESSON, done, all, ctx(null), done).current).toBe(done);
+    expect(advance(NFA_LESSON, done, all, at('01', 0), done).current).toBe(done);
   });
 
   it('playing from the start stops at 1, 2, 3, 4 in turn', () => {
@@ -102,15 +121,13 @@ describe('the NFAs lesson', () => {
     expect(steps[p.current]!.id).toBe('done');
   });
 
-  it('hints how to get back to the explained moment', () => {
-    expect(steps[4]!.hint(at('001', 1))).toEqual(BACK);
+  it('asks to run 001 again once the run is closed or another word runs', () => {
+    expect(steps[4]!.hint(at('001', 1))).toBeNull();
     expect(steps[4]!.hint(ctx(null))).toEqual(RERUN);
     expect(steps[4]!.hint(at('01', 0))).toEqual(RERUN);
     expect(steps[4]!.hint(at('001', 2))).toBeNull();
     expect(steps[2]!.hint(ctx(null))).toEqual(RERUN);
     expect(steps[2]!.hint(at('001', 0))).toBeNull();
-    expect(steps[3]!.hint(at('001', 0))).toEqual(BACK);
-    expect(steps[5]!.hint(at('001', 2))).toEqual(BACK);
     expect(steps[5]!.hint(at('001', 3))).toBeNull();
   });
 

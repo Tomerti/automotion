@@ -478,7 +478,7 @@ describe('a lesson other than Basics', () => {
     expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
   });
 
-  it('shows no explanation beside a hint to get back to its moment', () => {
+  it('follows the run back with ←, and shows no explanation beside a hint to rerun it', () => {
     render(<App />);
     act(() => startLesson(NFA_LESSON));
     const own = app().automata.find((x) => x.id === tutorialStore.getState().automatonId)!;
@@ -488,9 +488,10 @@ describe('a lesson other than Basics', () => {
     expect(tutorialStore.getState().current).toBe(5);
     expect(within(card()).getByTestId('tutorial-explain')).toBeInTheDocument();
     act(() => app().setStep(1));
-    expect(within(card()).getByTestId('tutorial-first')).toHaveTextContent(
-      'get back to this point',
-    );
+    expect(tutorialStore.getState().current).toBe(3);
+    expect(within(card()).getByTestId('tutorial-explain')).toHaveTextContent('follows both');
+    act(() => app().closeTrace());
+    expect(within(card()).getByTestId('tutorial-first')).toHaveTextContent('run 001 again');
     expect(within(card()).queryByTestId('tutorial-explain')).toBeNull();
   });
 

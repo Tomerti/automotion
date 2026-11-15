@@ -74,14 +74,18 @@ const STEPS: StepSpec[] = [
   {
     id: 'convert/pair',
     instruction: () => 'Press Play.',
-    explain: (l) =>
-      `After a \`0\` the NFA could be in ${l.q0} or ${l.q1}, so the DFA gets the state «${PAIR}».`,
+    // Only once the pair is on screen: stepped back before it, the card just says to press Play.
+    explain: (l, ctx) =>
+      shown(PAIR)(ctx)
+        ? `After a \`0\` the NFA could be in ${l.q0} or ${l.q1}, so the DFA gets the state «${PAIR}».`
+        : null,
     // Before the pair's moment (stepped back, or reopened there): stop on it first.
     pauseAt: (ctx) => {
       const pair = stateAt(ctx, PAIR);
       return pair !== null && ctx.stepIndex < pair ? pair : stateAt(ctx, ACCEPTING_PAIR);
     },
     latch: shown(ACCEPTING_PAIR),
+    steppedBack: (ctx) => subsetOf(ctx) !== null && !shown(ACCEPTING_PAIR)(ctx),
     first: needConvert,
   },
   {
@@ -94,6 +98,7 @@ const STEPS: StepSpec[] = [
       return at !== null && ctx.stepIndex < at ? at : null;
     },
     latch: atEnd,
+    steppedBack: (ctx) => subsetOf(ctx) !== null && !atEnd(ctx),
     first: needConvert,
   },
   {

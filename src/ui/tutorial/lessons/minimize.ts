@@ -57,6 +57,18 @@ function splitAt(ctx: TutorialContext): number | null {
   return at >= 0 ? at : null;
 }
 
+/** The open walkthrough has reached the split. */
+const splitReached = (ctx: TutorialContext): boolean => {
+  const at = splitAt(ctx);
+  return at !== null && ctx.stepIndex >= at;
+};
+
+/** The open walkthrough is at its last step. */
+const atEnd = (ctx: TutorialContext): boolean => {
+  const t = minimizeOf(ctx);
+  return t !== null && ctx.stepIndex === t.steps.length - 1;
+};
+
 const STEPS: StepSpec[] = [
   {
     id: 'minimize/idea',
@@ -77,10 +89,8 @@ const STEPS: StepSpec[] = [
       'It starts with two groups, accepting and not: the empty word already tells those apart.',
     // Playback pauses on the split, which latches this step.
     pauseAt: splitAt,
-    latch: (ctx) => {
-      const at = splitAt(ctx);
-      return at !== null && ctx.stepIndex >= at;
-    },
+    latch: splitReached,
+    steppedBack: (ctx) => minimizeOf(ctx) !== null && !splitReached(ctx),
     first: needMinimize,
   },
   {
@@ -92,10 +102,8 @@ const STEPS: StepSpec[] = [
       const at = splitAt(ctx);
       return at !== null && ctx.stepIndex < at ? at : null;
     },
-    latch: (ctx) => {
-      const t = minimizeOf(ctx);
-      return t !== null && ctx.stepIndex === t.steps.length - 1;
-    },
+    latch: atEnd,
+    steppedBack: (ctx) => minimizeOf(ctx) !== null && !atEnd(ctx),
     first: needMinimize,
   },
   {

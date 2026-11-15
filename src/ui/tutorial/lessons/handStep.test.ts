@@ -41,11 +41,18 @@ describe('atMoment', () => {
     expect(m.pauseAt(ctx(null, 0))).toBeNull();
   });
 
-  it('asks to rerun, or to step forward to the moment', () => {
+  it('asks to rerun once the run is closed or another word runs, and nothing else', () => {
     expect(m.first(ctx(null, 0))).toBe('First, run `001` again.');
     expect(m.first(ctx('01', 0))).toBe('First, run `001` again.');
-    expect(m.first(ctx('001', 1))).toBe('First, press [→] to get back to this point.');
-    expect(m.first(ctx('001', 2))).toBeNull();
+    expect(m.first(ctx('001', 1))).toBeNull();
     expect(m.first(ctx('001', 4))).toBeNull();
+  });
+
+  it('shows the card again with the run stepped back to its moment or before', () => {
+    expect(m.steppedBack(ctx('001', 1))).toBe(true);
+    expect(m.steppedBack(ctx('001', 2))).toBe(true);
+    expect(m.steppedBack(ctx('001', 3))).toBe(false);
+    expect(m.steppedBack(ctx('01', 0))).toBe(false);
+    expect(m.steppedBack(ctx(null, 0))).toBe(false);
   });
 });

@@ -108,6 +108,21 @@ describe('the Convert NFA → DFA lesson', () => {
     expect(steps[2]!.id).toBe('convert/pair');
   });
 
+  it('follows the walkthrough back with ←, from saving to the stop it is stepped back to', () => {
+    const upToSave = new Set(steps.slice(0, 4).map((s) => s.id));
+    const onSave = advance(L, 4, upToSave, ctx(trace, last), 4);
+    expect(steps[onSave.current]!.id).toBe('convert/save');
+    const toAccepting = advance(L, 4, upToSave, ctx(trace, acceptingAt), 4);
+    expect(steps[toAccepting.current]!.id).toBe('convert/accepting');
+    const toPair = advance(L, 4, upToSave, ctx(trace, pairAt), 4);
+    expect(steps[toPair.current]!.id).toBe('convert/pair');
+    // Before the pair's moment it explains nothing yet: Play stops on the pair.
+    expect(steps[toPair.current]!.hint(ctx(trace, 0))).toBeNull();
+    expect(steps[toPair.current]!.explain(ctx(trace, 0))).toBeNull();
+    expect(steps[toPair.current]!.explain(ctx(trace, pairAt))).toContain('After a');
+    expect(advance(L, 4, upToSave, ctx(null), 4).current).toBe(4);
+  });
+
   it('keeps saying to press Convert to DFA until the first stop', () => {
     expect(advance(L, 0, idea, ctx(trace, 0)).current).toBe(1);
     expect(steps[1]!.instruction(ctx(null))).toBe('Press Convert to DFA at the top.');
@@ -116,7 +131,7 @@ describe('the Convert NFA → DFA lesson', () => {
   it('explains each moment, with the instruction a plain press', () => {
     expect(steps[1]!.explain(ctx(null))).toBeNull();
     expect(steps[2]!.instruction(ctx(null))).toBe('Press Play.');
-    expect(steps[2]!.explain(ctx(null))).toBe(
+    expect(steps[2]!.explain(ctx(trace, pairAt))).toBe(
       'After a `0` the NFA could be in «q_0» or «q_1», so the DFA gets the state «{q_0,q_1}».',
     );
     expect(steps[3]!.instruction(ctx(null))).toBe('Press Play to finish.');

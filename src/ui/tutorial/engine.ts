@@ -121,6 +121,12 @@ export interface StepSpec {
    * card: the moment the next step explains (see `lessonStopAt`). Null: nowhere.
    */
   pauseAt?(ctx: TutorialContext): number | null;
+  /**
+   * For a latch or run step done on reaching a point of a run or walkthrough: that trace is open
+   * but stepped back (←) to before the point. The step shows again, so the card follows the trace
+   * back; once the trace is closed, or another one is open, the step stays done.
+   */
+  steppedBack?(ctx: TutorialContext): boolean;
 }
 
 export interface LessonPart {
@@ -173,6 +179,7 @@ export interface Step {
   latch?(ctx: TutorialContext): boolean;
   action?: LessonAction[];
   pauseAt?(ctx: TutorialContext): number | null;
+  steppedBack?(ctx: TutorialContext): boolean;
 }
 
 /** q0 is the start state (or the first state before there is one); q1 is the first other state. */
@@ -299,6 +306,7 @@ function toStep(lesson: Lesson, all: readonly Placed[], i: number): Step {
     ...(spec.latch ? { latch: spec.latch } : {}),
     ...(spec.action ? { action: spec.action } : {}),
     ...(spec.pauseAt ? { pauseAt: spec.pauseAt } : {}),
+    ...(spec.steppedBack ? { steppedBack: spec.steppedBack } : {}),
   };
 }
 
@@ -377,7 +385,8 @@ export interface Progress {
 /**
  * Move through every step that is done, latching runs that reached their verdict, latches that
  * hold and reported actions. Never moves while an automaton the lesson doesn't own is open, and
- * never falls back past the start of `progress`'s part.
+ * never falls back past the start of `progress`'s part, except that a latched step whose trace is
+ * stepped back (`steppedBack`) shows again, from the closing card too.
  */
 export function advance(
   lesson: Lesson,
@@ -394,11 +403,19 @@ export function advance(
     const part = steps[i]?.part;
     return steps.findIndex((s) => s.part === part);
   };
+  const back = (s: Step): boolean => !!s.steppedBack?.(ctx);
+  // On the closing card, the last part's steps are done; one stepped back to shows again.
+  if (steps[progress]!.part > lesson.parts.length) {
+    for (let i = partStart(progress - 1); i < progress; i++) {
+      const s = steps[i]!;
+      if (latching(s) && latched.has(s.id) && back(s)) return { progress, current: i, latched };
+    }
+  }
   let held = latched;
   for (;;) {
     const isDone = (i: number): boolean => {
       const s = steps[i]!;
-      return latching(s) ? held.has(s.id) : s.done(ctx);
+      return latching(s) ? held.has(s.id) && !back(s) : s.done(ctx);
     };
     let undone: number | undefined;
     for (let i = partStart(progress); i <= progress; i++) {
@@ -409,7 +426,7 @@ export function advance(
     }
     if (undone !== undefined) {
       const s = steps[undone]!;
-      if (latching(s) && happened(s, ctx)) {
+      if (latching(s) && !back(s) && happened(s, ctx)) {
         held = new Set([...held, s.id]);
         continue;
       }

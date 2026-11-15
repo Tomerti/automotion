@@ -122,7 +122,9 @@ latches only what has happened, and the card lands on the moment the trace is pa
   `lessonStopAt` is, to pass `autoPlay={false}`; builder's call on the shape).
 - Each following step is "Press [→] …" and latches when `stepIndex` reaches its index; it also sets
   `pauseAt` to that index, so Play or Space still stops at every explained moment instead of
-  running to the end. Stepping back with [←] doesn't undo a latch.
+  running to the end. Stepping back with [←] while the run is open takes the card back with it
+  (`steppedBack`; changed after user feedback: a card left ahead of the run explained a moment not
+  on screen). Closed, or with another word running, finished steps stay done.
 - A run of another word, or of the right word that was left: the existing "That was `x`" hint and
   `first` hints handle it, as now.
 
@@ -223,7 +225,7 @@ row). `ControlsDialog.test.tsx` and any e2e that clicks the header button are up
 ## Testing
 
 - Engine: the idea step latches only on Next; a hand-stepped run opens paused and each step latches
-  at its index; Play stops at every explained index; ← doesn't unlatch.
+  at its index; Play stops at every explained index; ← takes the card back while the run is open.
 - Each lesson: its unit test walks every step on fixture contexts (as `testLesson.ts` does today),
   checks its goal examples against its start automaton, and the caps.
 - Card: no goal picture outside Basics; goal row hidden on the idea step; Next button present only on
