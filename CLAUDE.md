@@ -134,7 +134,8 @@ Layers, with dependencies pointing downward only:
     export / delete (`store.duplicateAutomaton`), Delete/Backspace on a focused entry deletes it (after a confirm in the app's own
     dialog: `askConfirm()` in `confirmStore.ts`, rendered by `ConfirmDialog.tsx` in `App`; never `window.confirm`), or every
     entry Ctrl+clicked into the history bar's own multi-selection (`data-selected`, local state, seeded with the
-    open automaton; Ctrl+A on an entry picks all), Create (a blank DFA
+    open automaton; Ctrl+A picks all while the focus is in the bar or the pointer is over it, a window listener;
+    its Ctrl+A / Ctrl+C go through `shortcut.ts` `isCtrlLetter`, which reads the physical key on non-Latin layouts), Create (a blank DFA
     named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in
     `historyPrefs.ts`), the DFA/NFA switch floating at the top of the canvas (`KindPill.tsx`, hidden
     while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,

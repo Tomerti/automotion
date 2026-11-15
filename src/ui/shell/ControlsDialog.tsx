@@ -110,7 +110,7 @@ const TABS: Tab[] = [
         hint: 'With nothing selected, the diagram as a picture',
       },
       {
-        gesture: { keys: ['Ctrl', 'A'], on: 'history entry' },
+        gesture: { keys: ['Ctrl', 'A'], on: 'history bar' },
         action: 'Select every automaton',
         hint: 'Then Delete deletes them all, after asking',
       },

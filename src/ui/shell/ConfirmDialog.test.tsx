@@ -40,6 +40,27 @@ describe('ConfirmDialog', () => {
     expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 
+  it('opens with the dialog focused, not a button; Enter confirms, Enter on a tabbed-to Cancel cancels', async () => {
+    const user = userEvent.setup();
+    render(<ConfirmDialog />);
+    let answer: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      answer = askConfirm({ title: 'Delete "A"?', confirmLabel: 'Delete', danger: true });
+    });
+    const ask = screen.getByRole('alertdialog', { name: 'Delete "A"?' });
+    expect(ask).toHaveFocus();
+    await user.keyboard('{Enter}');
+    await expect(answer).resolves.toBe(true);
+
+    act(() => {
+      answer = askConfirm({ title: 'Delete "B"?', confirmLabel: 'Delete', danger: true });
+    });
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    await expect(answer).resolves.toBe(false);
+  });
+
   it('the backdrop cancels, and a new question cancels the open one', async () => {
     const user = userEvent.setup();
     render(<ConfirmDialog />);

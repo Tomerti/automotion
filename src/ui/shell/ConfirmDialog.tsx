@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react';
+import { useId, useRef } from 'react';
 import { answerConfirm, type ConfirmRequest, useConfirmRequest } from './confirmStore';
 import { useModalDialog } from './useModalDialog';
 
@@ -14,11 +14,10 @@ export function ConfirmDialog(): React.JSX.Element | null {
 function ConfirmModal({ request }: { request: ConfirmRequest }): React.JSX.Element {
   const { title, items = [], note, confirmLabel, danger } = request;
   const dialogRef = useRef<HTMLDivElement>(null);
-  const confirmRef = useRef<HTMLButtonElement>(null);
   const id = useId();
+  // The dialog itself takes the focus, not the confirm button: a button focused right after a
+  // key press (Delete on a history entry) would show the keyboard focus ring.
   useModalDialog(dialogRef, () => answerConfirm(false));
-  // After the dialog's own focus (effects run in order): Enter confirms, as in a native confirm.
-  useEffect(() => confirmRef.current?.focus(), []);
 
   const shown = items.length > MAX_ITEMS ? items.slice(0, MAX_ITEMS - 1) : items;
   const rest = items.length - shown.length;
@@ -40,7 +39,14 @@ function ConfirmModal({ request }: { request: ConfirmRequest }): React.JSX.Eleme
         aria-describedby={items.length > 0 || note ? `${id}-body` : undefined}
         tabIndex={-1}
         // Keys pressed here (Delete, Ctrl+Z, …) are for the dialog, not the app underneath.
-        onKeyDown={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          // Enter confirms, as in a native confirm, while no button has been tabbed to.
+          if (e.key === 'Enter' && e.target === e.currentTarget) {
+            e.preventDefault();
+            answerConfirm(true);
+          }
+        }}
       >
         <h2 id={`${id}-title`} className="av-confirm-title">
           {title}
@@ -63,7 +69,6 @@ function ConfirmModal({ request }: { request: ConfirmRequest }): React.JSX.Eleme
             Cancel
           </button>
           <button
-            ref={confirmRef}
             type="button"
             className={danger ? 'av-danger' : 'av-primary'}
             data-focus-stop

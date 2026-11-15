@@ -138,9 +138,10 @@ test('the Delete key deletes a clicked history entry after asking', async ({ pag
   await expect(ask).toHaveCount(0);
   await expect(entries).toHaveCount(2);
   await expect(entries.nth(1)).toBeFocused();
-  // Delete, then Enter on the focused Delete button.
+  // Delete, then Enter. The dialog has the focus, not the Delete button, so no focus ring.
   await page.keyboard.press('Delete');
-  await expect(ask.getByRole('button', { name: 'Delete' })).toBeFocused();
+  await expect(ask).toBeFocused();
+  await expect(ask.getByRole('button', { name: 'Delete' })).not.toBeFocused();
   await page.keyboard.press('Enter');
   await expect(entries).toHaveCount(1);
   await expect(entries.first()).toContainText('Untitled 2');
@@ -183,9 +184,14 @@ test('Ctrl+A on a history entry picks every automaton and Delete deletes them al
   await bar.getByRole('button', { name: 'Create' }).click();
   await expect(entries).toHaveCount(3);
 
-  await entries.nth(1).click();
+  // Click the bar's empty space below the entries (it focuses nothing), then Ctrl+A.
+  const list = bar.getByRole('list');
+  const box = await list.boundingBox();
+  await list.click({ position: { x: 20, y: (box?.height ?? 400) - 6 } });
   await page.keyboard.press('ControlOrMeta+a');
   for (let i = 0; i < 3; i++) await expect(entries.nth(i)).toHaveAttribute('data-selected', 'true');
+  // The open entry took the focus, so Delete is for the history bar.
+  await expect(entries.nth(0)).toBeFocused();
 
   await page.keyboard.press('Delete');
   const ask = page.getByRole('alertdialog', { name: 'Delete 3 automata?' });

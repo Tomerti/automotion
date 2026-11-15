@@ -7,6 +7,8 @@ import { appStore, useAppStore } from '../../store/store';
 import { latexDocument, latexDocumentAll } from '../canvas/exportLatex';
 import { Thumbnail } from '../canvas/Thumbnail';
 import { askConfirm } from './confirmStore';
+import { isTypingTarget } from './help';
+import { isCtrlLetter } from './shortcut';
 import { copyLink } from './copyLink';
 import { downloadText, slug } from './download';
 import { IMPORT_ACCEPT, importFile } from './importFile';
@@ -43,19 +45,9 @@ async function deleteWithConfirm(list: readonly Automaton[]): Promise<boolean> {
   return true;
 }
 
-/** Ctrl+A (⌘A), without Shift or Alt. */
-function isSelectAllKey(e: React.KeyboardEvent): boolean {
-  return (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'a';
-}
-
 /** Ctrl+click (⌘-click) adds an entry to the multi-selection or takes it out. */
 function isPickClick(e: React.MouseEvent): boolean {
   return e.ctrlKey || e.metaKey;
-}
-
-/** Ctrl+C (⌘C), without Shift or Alt. */
-function isCopyKey(e: React.KeyboardEvent): boolean {
-  return (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'c';
 }
 
 /** Copy `a` for Ctrl+V to add a copy of it, and say so: nothing on screen changes otherwise. */
@@ -316,7 +308,10 @@ export function HistoryBar(): React.JSX.Element {
   const [pastingLatex, setPastingLatex] = useState(false);
   /** The Ctrl+click multi-selection; may hold ids deleted since, so read `picked`. */
   const [pickedIds, setPickedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const navRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  /** The pointer is over the bar (clicking its empty space focuses nothing, so hover counts). */
+  const hoveredRef = useRef(false);
   const picked = automata.filter((a) => pickedIds.has(a.id));
   const picking = picked.length > 0;
 
@@ -343,6 +338,29 @@ export function HistoryBar(): React.JSX.Element {
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [picking]);
 
+  // Ctrl+A picks every automaton while the focus is in the bar or the pointer is over it, so it
+  // also works after clicking the bar's empty space. The open entry then takes the focus, so
+  // Delete deletes them.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (!isCtrlLetter(e, 'a') || e.defaultPrevented || isTypingTarget(e.target)) return;
+      const nav = navRef.current;
+      if (!nav || document.querySelector('[aria-modal="true"]')) return;
+      const inside = e.target instanceof Node && nav.contains(e.target);
+      if (!inside && !hoveredRef.current) return;
+      e.preventDefault();
+      setPickedIds(new Set(appStore.getState().automata.map((a) => a.id)));
+      if (!inside) {
+        const entries = Array.from(
+          nav.querySelectorAll<HTMLElement>('button[data-testid="history-item"]'),
+        );
+        (entries.find((el) => el.getAttribute('aria-current') === 'page') ?? entries[0])?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   /** Rename edits the open automaton, so open it first (never while a trace is open). */
   const startRename = (id: string): void => {
     const st = appStore.getState();
@@ -360,7 +378,13 @@ export function HistoryBar(): React.JSX.Element {
   };
 
   return (
-    <nav className="av-history" aria-label="History">
+    <nav
+      ref={navRef}
+      className="av-history"
+      aria-label="History"
+      onPointerEnter={() => (hoveredRef.current = true)}
+      onPointerLeave={() => (hoveredRef.current = false)}
+    >
       <div className="av-history-actions">
         <button
           type="button"
@@ -419,14 +443,11 @@ export function HistoryBar(): React.JSX.Element {
                     if (!isPickClick(e)) startRename(a.id);
                   }}
                   onKeyDown={(e) => {
-                    if (isCopyKey(e)) {
+                    // Ctrl+A is the bar's window listener (it also works over the empty space).
+                    if (isCtrlLetter(e, 'c')) {
                       // Handled here: the canvas would copy its selection, the toolbar a picture.
                       e.preventDefault();
                       copyWithToast(a);
-                    } else if (isSelectAllKey(e)) {
-                      // Instead of selecting the page's text.
-                      e.preventDefault();
-                      setPickedIds(new Set(automata.map((x) => x.id)));
                     } else if (e.key === 'Delete' || e.key === 'Backspace') {
                       e.preventDefault();
                       void deleteWithConfirm(picking ? picked : [a]).then((ok) => {

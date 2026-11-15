@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { emptyAutomaton } from '../../core/model';
@@ -275,7 +275,8 @@ describe('HistoryBar actions', () => {
     expect(items()[1]).toHaveFocus();
     await user.keyboard('{Delete}');
     const ask = screen.getByRole('alertdialog', { name: 'Delete "Blank"?' });
-    expect(within(ask).getByRole('button', { name: 'Delete' })).toHaveFocus();
+    // The dialog has the focus, not a button (no focus ring); Enter there confirms.
+    expect(ask).toHaveFocus();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(names()).toEqual(['Parity', 'Blank']);
@@ -352,6 +353,35 @@ describe('HistoryBar actions', () => {
     await user.keyboard('{Control>}a{/Control}');
     expect(screen.getByRole('textbox', { name: 'Automaton name' })).toBeInTheDocument();
     expect(items()[0]!.dataset.selected).toBeUndefined();
+  });
+
+  it('Ctrl+A works over the bar’s empty space too, and on a Hebrew layout; not elsewhere', async () => {
+    const user = userEvent.setup();
+    renderWithDialog(<button type="button">Outside</button>);
+    const picked = (): (string | undefined)[] => items().map((el) => el.dataset.selected);
+    const nav = screen.getByRole('navigation', { name: 'History' });
+
+    // Focus elsewhere and the pointer away from the bar: not the bar's shortcut.
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    await user.keyboard('{Control>}a{/Control}');
+    expect(picked()).toEqual([undefined, undefined]);
+
+    // Clicking the bar's empty space focuses nothing; the pointer over it is enough.
+    await user.click(screen.getByRole('list'));
+    expect(document.activeElement).toBe(document.body);
+    await user.keyboard('{Control>}a{/Control}');
+    expect(picked()).toEqual(['true', 'true']);
+    // The open entry takes the focus, so Delete deletes them.
+    expect(items()[0]).toHaveFocus();
+    await user.keyboard('{Delete}');
+    expect(screen.getByRole('alertdialog', { name: 'Delete 2 automata?' })).toBeInTheDocument();
+    await answer(user, 'Cancel');
+
+    // A Hebrew layout reports Ctrl+A as ש on the A key.
+    await user.keyboard('{Escape}');
+    expect(picked()).toEqual([undefined, undefined]);
+    fireEvent.keyDown(nav, { key: 'ש', code: 'KeyA', ctrlKey: true });
+    expect(picked()).toEqual(['true', 'true']);
   });
 
   it('Ctrl+click on a picked entry takes it out; a plain click, Escape or a click outside clears', async () => {
