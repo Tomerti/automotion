@@ -26,11 +26,11 @@ export const CONTAINS_01: Automaton = {
 };
 
 /** Where the picture of the DFA puts its states (by label): a row of three, the fourth under the last. */
-const AFTER_SPOTS: Record<string, { x: number; y: number }> = {
+export const AFTER_SPOTS: Record<string, { x: number; y: number }> = {
   '{q_0}': { x: 0, y: 0 },
-  '{q_0,q_1}': { x: 200, y: 0 },
-  '{q_0,q_2}': { x: 400, y: 0 },
-  '{q_0,q_1,q_2}': { x: 400, y: 110 },
+  '{q_0,q_1}': { x: 140, y: 0 },
+  '{q_0,q_2}': { x: 280, y: 0 },
+  '{q_0,q_1,q_2}': { x: 280, y: 120 },
 };
 
 /** The DFA the subset construction builds, laid out by hand so it reads at the picture's size. */
@@ -112,7 +112,7 @@ const STEPS: StepSpec[] = [
   {
     id: 'convert/save',
     instruction: () => 'Press Save as new automaton to keep the DFA.',
-    why: () => 'It’s added to your history as a new automaton.',
+    why: () => 'Saved, it’s an automaton of its own: you can run words on it, or minimize it next.',
     latch: (ctx) => ctx.owned.length > 1,
     first: (ctx) => (ctx.owned.length > 1 ? null : needConvert(ctx)),
     target: () => DOCK,
