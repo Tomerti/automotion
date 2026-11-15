@@ -316,11 +316,11 @@ describe('Canvas editing', () => {
     render(<Canvas />);
     drawEdge();
     // No second arrow and input on top of the first: its own label turns into the input,
-    // with what it reads already there.
+    // with what it reads already there, set as drawn (no space: the symbol font is a monospace).
     expect(screen.queryByTestId('rubber-band')).toBeNull();
     expect(screen.getByTestId('edge-q0-q1')).toHaveAttribute('data-editing', 'true');
     const input = screen.getByTestId('symbol-input');
-    expect(input).toHaveValue('a, ');
+    expect(input).toHaveValue('a,');
     await user.type(input, 'b, a{Enter}');
     expect(active().transitions).toEqual([
       expect.objectContaining({ id: 'q0->q1', symbols: ['a', 'b'] }),
@@ -515,7 +515,7 @@ describe('Canvas editing', () => {
     const label = () => within(screen.getByTestId('edge-q0-q1')).getByTestId('edge-label');
     fireEvent.doubleClick(label(), { clientX: 50, clientY: -14 });
     const input = screen.getByTestId('symbol-input');
-    expect(input).toHaveValue('a, b');
+    expect(input).toHaveValue('a,b'); // as the label draws it
     await user.clear(input);
     await user.type(input, 'b{Enter}');
     expect(active().transitions[0]?.symbols).toEqual(['b']);
@@ -550,7 +550,7 @@ describe('Canvas editing', () => {
     load(two('DFA', 'ab', [['q0', 'ab', 'q1']]));
     render(<Canvas />);
     fireEvent.doubleClick(diagram(), { clientX: 52, clientY: -12 });
-    expect(screen.getByTestId('symbol-input')).toHaveValue('a, b');
+    expect(screen.getByTestId('symbol-input')).toHaveValue('a,b');
     expect(active().states).toHaveLength(2);
   });
 
