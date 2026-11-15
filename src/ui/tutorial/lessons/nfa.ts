@@ -55,6 +55,12 @@ const STEPS: StepSpec[] = [
     instruction: () => 'Type `aab` in the word box and press Run.',
     why: (l) => `The run starts in ${l.q0} and ${l.q1} at once: the ε-arrow moves without reading.`,
     latch: (ctx) => runOf(ctx, 'aab') !== null,
+    // A latch step, so the engine's wrong-word hint doesn't apply: same wording here.
+    hint: (ctx) => {
+      const t = ctx.trace;
+      if (t?.kind !== 'run' || t.word === 'aab' || !ownsTrace(ctx)) return null;
+      return `That was \`${t.word === '' ? 'ε' : t.word}\`. Press [Esc] and run \`aab\`.`;
+    },
     target: () => RUN_PILL,
   },
   {
@@ -73,7 +79,8 @@ const STEPS: StepSpec[] = [
   {
     id: 'nfa/verdict',
     instruction: () => 'Press Play, or [Space], to run it to the verdict.',
-    why: () => 'Accepted: at least one branch ended in an accepting state.',
+    why: () =>
+      'One branch reaching an accepting state is enough: the NFA accepts if any guess works.',
     run: { word: 'aab', accepted: true },
     first: needRun,
     target: () => DOCK,

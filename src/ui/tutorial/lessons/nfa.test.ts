@@ -72,6 +72,25 @@ describe('the NFAs lesson', () => {
     expect(steps[2]!.hint(ctx(null))).toEqual({ kind: 'first', text: 'First, run `aab` again.' });
   });
 
+  it('says which word is open when another word than aab is run on the first step', () => {
+    expect(steps[0]!.hint(at('ab', 0))).toEqual({
+      kind: 'text',
+      text: 'That was `ab`. Press [Esc] and run `aab`.',
+    });
+    expect(steps[0]!.hint(at('aab', 0))).toBeNull();
+    expect(steps[0]!.hint(ctx(null))).toBeNull();
+    expect(steps[0]!.hint(at('', 0))).toEqual({
+      kind: 'text',
+      text: 'That was `ε`. Press [Esc] and run `aab`.',
+    });
+  });
+
+  it('gives the reason for acceptance, not the rule', () => {
+    expect(steps[2]!.why(ctx(null))).toBe(
+      'One branch reaching an accepting state is enough: the NFA accepts if any guess works.',
+    );
+  });
+
   it('points at the run pill, then the dock', () => {
     expect(steps[0]!.target(ctx(null))).toContain('Word');
     expect(steps[1]!.target(ctx(null))).toBe('[data-testid="dock"]');

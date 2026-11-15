@@ -12,6 +12,7 @@ import { lessonSteps } from './engine';
 import type { Lesson } from './engine';
 import { FinishedCard } from './FinishedCard';
 import { BASICS } from './lessons/basics';
+import { LESSONS } from './lessons';
 import { LESSONS_DONE_KEY, markLessonFinished } from './lessonsDone';
 import { TEST_LESSON } from './testing/testLesson';
 import { endLesson, startLesson, tutorialContext, tutorialStore } from './tutorialStore';
@@ -474,8 +475,7 @@ describe('a lesson other than Basics', () => {
   });
 
   it('has no Next once every lesson is finished', () => {
-    markLessonFinished('basics');
-    markLessonFinished('nfa');
+    for (const l of LESSONS) markLessonFinished(l.id);
     render(<FinishedCard lesson={TEST_LESSON} onClose={() => {}} />);
     expect(screen.queryByTestId('next-lesson')).toBeNull();
     expect(screen.getByRole('button', { name: 'Back to building' })).toHaveClass('av-go');
