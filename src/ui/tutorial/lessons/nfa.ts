@@ -48,7 +48,7 @@ const STEPS: StepSpec[] = [
     id: 'nfa/guess',
     instruction: () => 'Press [→] to read the second `0`.',
     explain: (l) =>
-      `It guessed this \`0\` starts the final \`01\`, so it follows both ${l.q0} and ${l.q1}.`,
+      `From ${l.q0}, a \`0\` can stay in ${l.q0} or move to ${l.q1}. It follows both, so it’s in both at once.`,
     ...atMoment('001', 1),
     latch: reached(2),
   },
@@ -56,7 +56,7 @@ const STEPS: StepSpec[] = [
     id: 'nfa/dies',
     instruction: () => 'Press [→] to read the `1`.',
     explain: (l) =>
-      `${l.q1} had no arrow on \`0\`, so that guess died; ${l.q0} made the same guess again.`,
+      `${l.q1} had no arrow on \`0\`, so that guess died; from ${l.q0} it took both arrows again.`,
     ...atMoment('001', 2),
     latch: reached(3),
   },

@@ -155,10 +155,10 @@ describe('the NFAs lesson', () => {
     expect(steps[0]!.idea).toBe(true);
     expect(steps[2]!.explain(c)).toBe('It starts in «q_0», with nothing guessed yet.');
     expect(steps[3]!.explain(c)).toBe(
-      'It guessed this `0` starts the final `01`, so it follows both «q_0» and «q_1».',
+      'From «q_0», a `0` can stay in «q_0» or move to «q_1». It follows both, so it’s in both at once.',
     );
     expect(steps[4]!.explain(c)).toBe(
-      '«q_1» had no arrow on `0`, so that guess died; «q_0» made the same guess again.',
+      '«q_1» had no arrow on `0`, so that guess died; from «q_0» it took both arrows again.',
     );
     expect(steps[5]!.explain(c)).toBe('The guess in «q_1» read `1` and reached «q_2».');
     for (const s of steps) {

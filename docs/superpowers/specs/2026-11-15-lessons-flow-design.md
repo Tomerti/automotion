@@ -148,10 +148,10 @@ again), read 1 → {q₀,q₂}, verdict accept: indices 0–4 (no ε, so no clos
    every guess at once, and accepts if any guess ends in an accepting state." [Next]
 2. Run `001`. (latch: an owned run of `001` is open; it opens paused at index 0)
 3. Paused at 0. Press [→] to read the first `0`. / It starts in «q_0», with nothing guessed yet.
-4. Paused at 1. Press [→] to read the second `0`. / It guessed this `0` starts the final `01`, so it
-   follows both «q_0» and «q_1».
-5. Paused at 2. Press [→] to read the `1`. / «q_1» had no arrow on `0`, so that guess died; «q_0»
-   made the same guess again.
+4. Paused at 1. Press [→] to read the second `0`. / From «q_0», a `0` can stay in «q_0» or move to
+   «q_1». It follows both, so it's in both at once.
+5. Paused at 2. Press [→] to read the `1`. / «q_1» had no arrow on `0`, so that guess died; from
+   «q_0» it took both arrows again.
 6. Paused at 3. Press [→] for the verdict. / The guess in «q_1» read `1` and reached «q_2».
 
 Closing (up at the verdict): "One guess reached an accepting state, and one is enough: an NFA
