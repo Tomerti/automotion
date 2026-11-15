@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { StoreApi } from 'zustand/vanilla';
-import { moveState, renameAutomaton } from '../core/edit';
+import { addState, moveState, renameAutomaton } from '../core/edit';
 import { runWord } from '../core/run';
 import { fixture } from '../core/testing/fixtures';
 import { appStore, createAppStore, PASTE_STEP, resetAppStore } from './store';
@@ -508,5 +508,46 @@ describe('store', () => {
       appStore.getState().deleteAutomaton('z');
       expect(appStore.getState().automata).toEqual([]);
     });
+  });
+});
+
+describe('read-only automata', () => {
+  it('refuses a structural edit and counts it', () => {
+    const { st, active } = setup();
+    const before = active();
+    st().setReadOnly(['a1']);
+    st().edit((a) => addState(a, { x: 1, y: 1 }));
+    expect(active()).toBe(before);
+    expect(st().blockedEdits).toBe(1);
+  });
+
+  it('lets layout through', () => {
+    const { st, active } = setup();
+    const x = x0(active());
+    st().setReadOnly(['a1']);
+    st().edit((a) => moveState(a, 'q0', { x: x + 50, y: 0 }));
+    expect(x0(active())).toBe(x + 50);
+    expect(st().blockedEdits).toBe(0);
+    st().undo();
+    expect(x0(active())).toBe(x);
+    expect(st().blockedEdits).toBe(0);
+  });
+
+  it('refuses an undo into a structural change', () => {
+    const { st, active } = setup();
+    st().edit((a) => addState(a, { x: 1, y: 1 }));
+    const before = active();
+    st().setReadOnly(['a1']);
+    st().undo();
+    expect(active()).toBe(before);
+    expect(st().blockedEdits).toBe(1);
+  });
+
+  it('other automata stay editable', () => {
+    const s = createAppStore({ automata: [dfa('a1'), dfa('a2')], activeId: 'a2' });
+    s.getState().setReadOnly(['a1']);
+    s.getState().edit((a) => addState(a, { x: 1, y: 1 }));
+    expect(s.getState().automata.find((a) => a.id === 'a2')!.states).toHaveLength(3);
+    expect(s.getState().blockedEdits).toBe(0);
   });
 });

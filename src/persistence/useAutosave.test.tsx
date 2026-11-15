@@ -36,6 +36,16 @@ describe('useAutosave', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toContain('"A"');
   });
 
+  it('does not save which automata are read-only', () => {
+    renderHook(() => useAutosave());
+    add('A');
+    act(() => appStore.getState().setReadOnly([appStore.getState().activeId!]));
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(localStorage.getItem(STORAGE_KEY)).not.toContain('readOnly');
+  });
+
   it('reports a failed save once through onFail', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('full');
