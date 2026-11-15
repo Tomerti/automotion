@@ -12,13 +12,15 @@ const MAX_ROUNDS = 12;
  * `pos` snapped onto a grid SPACING apart (each state to its nearest free cell, in the order
  * given), then improved by hill climbing: each move of one state to a free cell around the layout,
  * or swap of two states, that lowers `cost` is taken as soon as it is found, until a whole pass
- * finds none. Hand-drawn automata sit on such a
- * grid; the candidates that find their structure (a stress layout, ELK's layers) rarely do.
+ * finds none. Hand-drawn automata sit on such a grid; the candidates that find their structure
+ * (a stress layout, ELK's layers) rarely do. Without `grow`, states move only to free cells
+ * inside the layout's bounding box, so it doesn't spread out.
  */
 export function refineOnGrid(
   ids: readonly StateId[],
   pos: Positions,
   cost: (pos: Positions) => number,
+  { grow = true }: { grow?: boolean } = {},
 ): Positions {
   const xs = ids.map((id) => pos.get(id)!.x);
   const ys = ids.map((id) => pos.get(id)!.y);
@@ -52,10 +54,11 @@ export function refineOnGrid(
       // Cells around the layout as it is now (it changes as moves are taken).
       const all = [...best.values()];
       const used = new Set(all.map(key));
-      const c0 = Math.min(...all.map((p) => p.c)) - 1;
-      const c1 = Math.max(...all.map((p) => p.c)) + 1;
-      const r0 = Math.min(...all.map((p) => p.r)) - 1;
-      const r1 = Math.max(...all.map((p) => p.r)) + 1;
+      const m = grow ? 1 : 0;
+      const c0 = Math.min(...all.map((p) => p.c)) - m;
+      const c1 = Math.max(...all.map((p) => p.c)) + m;
+      const r0 = Math.min(...all.map((p) => p.r)) - m;
+      const r1 = Math.max(...all.map((p) => p.r)) + m;
       for (let c = c0; c <= c1; c++) {
         for (let r = r0; r <= r1; r++) {
           if (used.has(key({ c, r }))) continue;
@@ -73,6 +76,55 @@ export function refineOnGrid(
     if (!improved) break;
   }
   return toPositions(best);
+}
+
+/** Rectangles that hold `n` states: at least two rows, wider than tall (we read left to right). */
+function compactShapes(n: number): { cols: number; rows: number }[] {
+  const shapes: { cols: number; rows: number }[] = [];
+  for (let cols = Math.ceil(Math.sqrt(n)); cols <= Math.ceil(n / 2); cols++) {
+    const rows = Math.ceil(n / cols);
+    if (rows >= 2) shapes.push({ cols, rows });
+  }
+  return shapes;
+}
+
+/**
+ * Compact starting points for `refineOnGrid`, from a layout `pos` (a candidate that found the
+ * automaton's structure but spreads it out): its states packed into each compact rectangle,
+ * keeping their order: into columns by x, then top to bottom by y in each, and into rows by y,
+ * then left to right by x. Only starting points: the search moves states out of them freely, so
+ * no shape is forced on the result; they let it reach compact layouts that hill climbing from the
+ * spread-out candidate can't.
+ */
+export function compactSeeds(ids: readonly StateId[], pos: Positions): Positions[] {
+  const at = (c: number, r: number) => ({ x: c * SPACING, y: r * SPACING });
+  const p = (id: StateId) => pos.get(id)!;
+  const byX = [...ids].sort((a, b) => p(a).x - p(b).x || p(a).y - p(b).y);
+  const byY = [...ids].sort((a, b) => p(a).y - p(b).y || p(a).x - p(b).x);
+  const seeds: Positions[] = [];
+  for (const { cols, rows } of compactShapes(ids.length)) {
+    seeds.push(
+      new Map(
+        chunks(byX, rows).flatMap((col, c) =>
+          col.sort((a, b) => p(a).y - p(b).y).map((id, r) => [id, at(c, r)] as const),
+        ),
+      ),
+    );
+    seeds.push(
+      new Map(
+        chunks(byY, cols).flatMap((line, r) =>
+          line.sort((a, b) => p(a).x - p(b).x).map((id, c) => [id, at(c, r)] as const),
+        ),
+      ),
+    );
+  }
+  return seeds;
+}
+
+function chunks<T>(xs: readonly T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < xs.length; i += size) out.push(xs.slice(i, i + size));
+  return out;
 }
 
 /** The free cell nearest `want` (rings of growing size around it). */

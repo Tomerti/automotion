@@ -9,13 +9,18 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
-- [ ] Tidy's grid refinement can spread an 8-state layout along a long diagonal (`3rd from end → DFA`): the cost barely minds the area; a compact 4 × 2 grid reads better. A compactness term in the search alone didn't change the pick
 
 ## Ideas (later)
 
 - [ ] Regex → NFA
 
 ## Done
+
+### Compact Tidy (2026-11-15)
+
+- [x] Tidy no longer spreads a dense automaton along a diagonal: `3rd from end → DFA` comes out as a 4 × 2 grid (was 4 × 4 with half the cells empty), nothing crossing or running through a state. The grid search judged layouts with automatic bends, so a compact grid, whose arrows must curve around a state in between, looked far worse than it reads (132.9 against 43.9 once bent) and the search ran from it; a compactness term in that search couldn't help
+- [x] The grid result and every candidate are also packed into compact rectangles (`grid.ts` `compactSeeds`, keeping their order by columns or rows) and the best two refined inside their bounding box, scored with the arrows through a state bent around it (`bendClearOfStates`, as `assignBends` would, but only for those arrows). The rectangles are only starting points: the search moves states out of them, so no shape is forced
+- [x] Empty space costs twice as much (`W_AREA` 0.4 → 0.8): besides `3rd from end`, `Divisible by 5` becomes a 3 × 2 grid with every arrow at a clean angle (was a skewed diamond) and `Length mod 5` a 3 × 2 loop; the rows, circles and other grids stay. A layout test checks `3rd from end` wastes at most a cell, whatever its shape
 
 ### Polish batch (2026-11-15)
 
