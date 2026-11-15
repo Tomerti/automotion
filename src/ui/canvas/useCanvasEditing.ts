@@ -196,7 +196,8 @@ export function fitActive(): void {
 }
 
 /**
- * Auto-layout the active automaton as one undo step, then fit it. A layout failure shows an
+ * Auto-layout the active automaton as one undo step, then fit it. A layout that draws it as it
+ * already is (Tidy pressed again) only fits: no undo entry, no edit. A layout failure shows an
  * error toast; if the automaton, the active automaton or the trace changes meanwhile, the layout
  * is dropped.
  */
@@ -214,10 +215,38 @@ export async function tidyActive(): Promise<void> {
   }
   const now = appStore.getState();
   if (now.activeId !== a.id || activeAutomaton() !== a || now.trace) return;
-  // Checkpoint and edit together, after the await, so a dropped layout leaves no undo entry.
-  now.checkpoint();
-  now.edit((cur) => withDrawing(cur, laidOut), { record: false });
+  if (!sameDrawing(a, withDrawing(a, laidOut))) {
+    // Checkpoint and edit together, after the await, so a dropped layout leaves no undo entry.
+    now.checkpoint();
+    now.edit((cur) => withDrawing(cur, laidOut), { record: false });
+  }
   fitActive();
+}
+
+/**
+ * Whether `a` and `b` (the same automaton, as `withDrawing` makes them) are drawn alike: what
+ * `withDrawing` sets is equal on every state and transition.
+ */
+function sameDrawing(a: Automaton, b: Automaton): boolean {
+  const states = new Map(b.states.map((s) => [s.id, s]));
+  const transitions = new Map(b.transitions.map((t) => [t.id, t]));
+  return (
+    a.states.length === b.states.length &&
+    a.transitions.length === b.transitions.length &&
+    a.states.every((s) => {
+      const o = states.get(s.id);
+      return o !== undefined && s.x === o.x && s.y === o.y && s.startAngle === o.startAngle;
+    }) &&
+    a.transitions.every((t) => {
+      const o = transitions.get(t.id);
+      return (
+        o !== undefined &&
+        t.bend === o.bend &&
+        t.loopAngle === o.loopAngle &&
+        t.labelSide === o.labelSide
+      );
+    })
+  );
 }
 
 /**
