@@ -5,7 +5,6 @@ import { CloseIcon } from '../shell/icons';
 import { countedSteps, lessonSteps } from './engine';
 import type { Lesson } from './engine';
 import { GoalPicture } from './GoalPicture';
-import { lessonById } from './lessons';
 import { TutorialPointer } from './TutorialPointer';
 import { finishLesson, quitLesson, tutorialContext, useTutorial } from './tutorialStore';
 import './tutorial.css';
@@ -79,20 +78,22 @@ function GoalRow({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.
           <b>{lesson.parts.length > 1 ? `Part ${part} goal:` : 'Goal:'}</b>{' '}
           <RichText text={goal.text} />
         </p>
-        <ul className="av-tutorial-examples" aria-label="For example">
-          {goal.examples.map((e) => (
-            <li key={e.word} data-accepted={e.accepted}>
-              <code>{e.word}</code>
-              <span
-                className="av-tutorial-mark"
-                role="img"
-                aria-label={e.accepted ? 'accepted' : 'rejected'}
-              >
-                {e.accepted ? '✓' : '✗'}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {goal.examples.length > 0 && (
+          <ul className="av-tutorial-examples" aria-label="For example">
+            {goal.examples.map((e) => (
+              <li key={e.word} data-accepted={e.accepted}>
+                <code>{e.word}</code>
+                <span
+                  className="av-tutorial-mark"
+                  role="img"
+                  aria-label={e.accepted ? 'accepted' : 'rejected'}
+                >
+                  {e.accepted ? '✓' : '✗'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
@@ -103,6 +104,7 @@ function GoalRow({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.
  * achieved, and what the next part is.
  */
 function PartDone({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.Element {
+  const done = lesson.parts[part - 1]?.done;
   return (
     <div className="av-tutorial-part-done" data-testid="tutorial-part-done" role="status">
       <p className="av-tutorial-part-done-title">
@@ -111,7 +113,7 @@ function PartDone({ lesson, part }: { lesson: Lesson; part: number }): React.JSX
         </span>
         Part {part} complete!
       </p>
-      <p className="av-tutorial-part-done-text">{lesson.parts[part - 1]?.done}</p>
+      {done && <p className="av-tutorial-part-done-text">{done}</p>}
       <p className="av-tutorial-next">
         Next:{' '}
         <b>
@@ -181,9 +183,13 @@ function useCardPad(ref: React.RefObject<HTMLElement | null>, shown: boolean): v
  */
 export function TutorialCard(): React.JSX.Element | null {
   const active = useTutorial((s) => s.active);
-  const lessonId = useTutorial((s) => s.lessonId);
+  const lesson = useTutorial((s) => s.lesson);
   const automatonId = useTutorial((s) => s.automatonId);
+  const owned = useTutorial((s) => s.owned);
   const current = useTutorial((s) => s.current);
+  const blockedSeen = useTutorial((s) => s.blockedSeen);
+  // Subscribed so the card follows reported actions too.
+  useTutorial((s) => s.actions);
   // The tutorial automaton X was clicked for, so a restart never opens on the question.
   const [quitFor, setQuitFor] = useState<string | null>(null);
   const cardRef = useRef<HTMLElement>(null);
@@ -193,9 +199,9 @@ export function TutorialCard(): React.JSX.Element | null {
   useAppStore((s) => s.trace);
   useAppStore((s) => s.stepIndex);
   useAppStore((s) => s.selection);
+  const blockedEdits = useAppStore((s) => s.blockedEdits);
   const openName = useAppStore((s) => s.automata.find((a) => a.id === s.activeId)?.name);
   const tutorialName = useAppStore((s) => s.automata.find((a) => a.id === automatonId)?.name);
-  const lesson = lessonId === null ? null : lessonById(lessonId);
   const steps = lesson ? lessonSteps(lesson) : [];
   useCardPad(cardRef, active && steps[current] !== undefined);
 
@@ -222,6 +228,10 @@ export function TutorialCard(): React.JSX.Element | null {
   const inPart = steps.filter((s) => s.part === step.part);
   const stepInPart = inPart.indexOf(step) + 1;
   const stepCount = `Step ${stepInPart} of ${inPart.length}`;
+  // What quitting removes: the lesson's automata, in the order the lesson came by them.
+  const all = appStore.getState().automata;
+  const ownedNames = owned.flatMap((id) => all.find((a) => a.id === id)?.name ?? []);
+  const removed = ownedNames.length > 0 ? ownedNames : [tutorialName ?? 'Its automaton'];
 
   return (
     <section
@@ -256,8 +266,14 @@ export function TutorialCard(): React.JSX.Element | null {
       {quitting ? (
         <div className="av-tutorial-quit" role="group" aria-label={`Quit the ${noun}?`}>
           <p className="av-tutorial-text">
-            Quit the {noun}? <b>{tutorialName ?? 'Its automaton'}</b> will be removed from your
-            history.
+            Quit the {noun}?{' '}
+            {removed.map((name, i) => (
+              <Fragment key={i}>
+                {i > 0 && (i === removed.length - 1 ? ' and ' : ', ')}
+                <b>{name}</b>
+              </Fragment>
+            ))}{' '}
+            will be removed from your history.
           </p>
           <div className="av-tutorial-actions">
             {/* Focus moves here from X, so screen readers read the question out. */}
@@ -281,6 +297,11 @@ export function TutorialCard(): React.JSX.Element | null {
           {/* One live region that stays mounted, so screen readers announce each new step and
               hint as it appears. */}
           <div className="av-tutorial-now" data-testid="tutorial-step" aria-live="polite">
+            {blockedEdits > blockedSeen && (
+              <p className="av-tutorial-first" data-testid="tutorial-read-only">
+                This lesson's automaton is read-only: quit the lesson to change it.
+              </p>
+            )}
             {hint?.kind === 'first' && (
               <p className="av-tutorial-first" data-testid="tutorial-first">
                 <RichText text={hint.text} />

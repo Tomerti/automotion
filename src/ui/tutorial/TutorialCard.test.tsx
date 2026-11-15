@@ -1,14 +1,18 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { addState, renameState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
+import { subsetConstruction } from '../../core/subset';
 import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
 import App from '../shell/App';
 import { CHEERS } from './cheers';
 import { lessonSteps } from './engine';
+import type { Lesson } from './engine';
+import { FinishedCard } from './FinishedCard';
 import { BASICS } from './lessons/basics';
+import { TEST_LESSON } from './testing/testLesson';
 import { endLesson, startLesson, tutorialContext, tutorialStore } from './tutorialStore';
 
 const card = () => screen.getByTestId('tutorial-card');
@@ -368,4 +372,90 @@ it('announces each step from one live region that stays mounted', () => {
   addAt(100);
   expect(card().querySelector('[aria-live="polite"]')).toBe(live);
   expect(live).toHaveTextContent(/an even number of zeros so far/);
+});
+
+describe('a lesson other than Basics', () => {
+  const active = () => app().automata.find((a) => a.id === app().activeId)!;
+  const ownName = () =>
+    app().automata.find((a) => a.id === tutorialStore.getState().automatonId)!.name;
+
+  it('uses lesson wording', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    act(() => startLesson(TEST_LESSON));
+    expect(card()).toHaveAccessibleName('Lesson');
+    expect(within(card()).getByText('Test lesson · Step 1 of 3')).toBeInTheDocument();
+    const goal = within(card()).getByTestId('tutorial-goal');
+    expect(goal).toHaveTextContent('Goal: Turn it into a DFA');
+    // No words to show: no list.
+    expect(within(goal).queryByRole('list')).toBeNull();
+
+    act(() => app().setActive('Mine'));
+    await user.click(within(card()).getByRole('button', { name: `Back to ${ownName()}` }));
+    expect(active().name).toBe('Contains 01');
+
+    const trace = subsetConstruction(active());
+    act(() => app().openTrace(trace));
+    act(() => app().addAutomaton(trace.result));
+    await user.click(within(card()).getByRole('button', { name: 'End lesson' }));
+    const ask = within(card()).getByRole('group', { name: 'Quit the lesson?' });
+    expect(ask).toHaveTextContent(
+      `Quit the lesson? Contains 01 and ${trace.result.name} will be removed from your history.`,
+    );
+    await user.click(within(ask).getByRole('button', { name: 'Keep going' }));
+
+    const done = lessonSteps(TEST_LESSON).length - 1;
+    act(() => tutorialStore.setState({ progress: done, current: done }));
+    expect(within(card()).getByText('Test lesson · Done')).toBeInTheDocument();
+  });
+
+  it('says the automaton is read-only after a refused edit', () => {
+    render(<App />);
+    act(() => startLesson(TEST_LESSON));
+    expect(screen.queryByTestId('tutorial-read-only')).toBeNull();
+    addAt(100);
+    expect(active().states).toHaveLength(3);
+    expect(within(card()).getByTestId('tutorial-read-only')).toHaveTextContent(
+      "This lesson's automaton is read-only: quit the lesson to change it.",
+    );
+    // The step changes: the line goes.
+    act(() => app().openTrace(subsetConstruction(active())));
+    expect(card()).toHaveAttribute('data-step', '2');
+    expect(screen.queryByTestId('tutorial-read-only')).toBeNull();
+  });
+
+  it('hands over between parts without a text when the part has none', () => {
+    const part = TEST_LESSON.parts[0]!;
+    const twoParts: Lesson = {
+      ...TEST_LESSON,
+      parts: [
+        {
+          ...part,
+          steps: [
+            { id: 'two/run', instruction: () => 'Run `01`.', run: { word: '01', accepted: true } },
+          ],
+        },
+        {
+          ...part,
+          title: 'Second',
+          steps: [{ id: 'two/edit', instruction: () => 'Edit it.', done: () => false }],
+        },
+      ],
+    };
+    render(<App />);
+    act(() => startLesson(twoParts));
+    act(() => startRun('01'));
+    act(() => app().setStep(app().trace!.steps.length - 1));
+    const done = within(card()).getByTestId('tutorial-part-done');
+    expect(done).toHaveTextContent('Part 1 complete!');
+    expect(done).toHaveTextContent('Next: Part 2 · Second');
+    expect(done.querySelector('.av-tutorial-part-done-text')).toBeNull();
+  });
+
+  it('finishes with lesson wording', () => {
+    render(<FinishedCard lesson={TEST_LESSON} onClose={() => {}} />);
+    const popup = screen.getByRole('dialog', { name: 'Lesson complete' });
+    expect(within(popup).getByRole('heading')).toHaveTextContent('Lesson complete!');
+    expect(popup).toHaveTextContent('Its automata stay in your history.');
+  });
 });

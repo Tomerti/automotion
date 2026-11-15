@@ -550,4 +550,31 @@ describe('read-only automata', () => {
     expect(s.getState().automata.find((a) => a.id === 'a2')!.states).toHaveLength(3);
     expect(s.getState().blockedEdits).toBe(0);
   });
+
+  it('cut does nothing: nothing copied, the selection kept, the refusal counted', () => {
+    const { st, active } = setup();
+    const before = active();
+    st().setReadOnly(['a1']);
+    const sel = { states: ['q1'], transitions: [] };
+    st().select(sel);
+    expect(st().cutSelection()).toBe(false);
+    expect(active()).toBe(before);
+    expect(st().clipboard).toBeNull();
+    expect(st().selection).toEqual(sel);
+    expect(st().blockedEdits).toBe(1);
+  });
+
+  it('paste does nothing: no states, the selection and clipboard kept, the refusal counted', () => {
+    const { st, active } = setup();
+    st().select({ states: ['q1'], transitions: [] });
+    st().copySelection();
+    const clipboard = st().clipboard;
+    const before = active();
+    st().setReadOnly(['a1']);
+    expect(st().paste()).toBeNull();
+    expect(active()).toBe(before);
+    expect(st().selection).toEqual({ states: ['q1'], transitions: [] });
+    expect(st().clipboard).toBe(clipboard);
+    expect(st().blockedEdits).toBe(1);
+  });
 });

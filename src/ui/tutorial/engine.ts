@@ -12,16 +12,29 @@ export type LessonAction =
 export interface TutorialContext {
   /** The lesson's own automaton. */
   automaton: Automaton | undefined;
-  /** The lesson's automaton is the one open. */
+  /** An automaton the lesson owns is the one open (for Basics: its own automaton). */
   isActive: boolean;
   trace: AnyTrace | null;
   stepIndex: number;
   /** The selected states. */
   selected: readonly StateId[];
-  /** The automata the lesson owns: for now only its own automaton. */
+  /**
+   * The automata the lesson owns: its own automaton, and any saved from a walkthrough of an owned
+   * one while the lesson runs.
+   */
   owned: readonly string[];
-  /** Actions reported while the lesson runs: none yet. */
+  /** Actions reported on an owned automaton since the lesson started (see `noteLessonAction`). */
   actions: ReadonlySet<LessonAction>;
+}
+
+/** The open trace is a run or walkthrough of an automaton the lesson owns. */
+export function ownsTrace(ctx: TutorialContext): boolean {
+  return ctx.trace !== null && ctx.owned.includes(ctx.trace.source.id);
+}
+
+/** An owned automaton is open, or a walkthrough of one: anything else is "elsewhere". */
+function onOwned(ctx: TutorialContext): boolean {
+  return ctx.isActive || ownsTrace(ctx);
 }
 
 /**
@@ -86,6 +99,13 @@ export interface StepSpec {
   /** CSS selector of what to point at, if anything. */
   target?(ctx: TutorialContext): string | null;
   run?: { word: string; accepted: boolean };
+  /**
+   * Something that comes and goes (a walkthrough opening, reaching its end): the step latches
+   * once this holds, like a run step at its verdict, and stays done after.
+   */
+  latch?(ctx: TutorialContext): boolean;
+  /** Done (latched) once any of these actions is reported (see `noteLessonAction`). */
+  action?: LessonAction[];
 }
 
 export interface LessonPart {
@@ -124,12 +144,14 @@ export interface Step {
   part: number;
   instruction(ctx: TutorialContext): string;
   why(ctx: TutorialContext): string | null;
-  /** Structural check. Run steps are done once latched (see `runSucceeded`). */
+  /** Structural check. Run, latch and action steps are done once latched instead (see `advance`). */
   done(ctx: TutorialContext): boolean;
   hint(ctx: TutorialContext): Hint | null;
   /** CSS selector of what to point at, if anything. */
   target(ctx: TutorialContext): string | null;
   run?: { word: string; accepted: boolean };
+  latch?(ctx: TutorialContext): boolean;
+  action?: LessonAction[];
 }
 
 /** q0 is the start state (or the first state before there is one); q1 is the first other state. */
@@ -212,11 +234,12 @@ function toStep(lesson: Lesson, all: readonly Placed[], i: number): Step {
   const { spec, part } = all[i]!;
   const closing = part > lesson.parts.length;
   const partHint = lesson.parts[part - 1]?.hint;
-  const structural = spec.run === undefined && !closing;
+  // A check on the automaton: the only kind of step that needs the editor back first.
+  const structural = !spec.run && !spec.latch && !spec.action && !closing;
   const done = (ctx: TutorialContext): boolean =>
     spec.done ? spec.done(ctx) : (spec.edges ?? []).every((e) => edgeIs(ctx, e));
   const hint = (ctx: TutorialContext): Hint | null => {
-    if (!ctx.isActive) return { kind: 'elsewhere' };
+    if (!onOwned(ctx)) return { kind: 'elsewhere' };
     if (structural && ctx.trace) {
       const prev = all[i - 1];
       const t = ctx.trace;
@@ -250,8 +273,17 @@ function toStep(lesson: Lesson, all: readonly Placed[], i: number): Step {
     hint,
     target: (ctx) => spec.target?.(ctx) ?? null,
     ...(spec.run ? { run: spec.run } : {}),
+    ...(spec.latch ? { latch: spec.latch } : {}),
+    ...(spec.action ? { action: spec.action } : {}),
   };
 }
+
+/** Run, latch and action steps: done once latched, not by a check on the automaton. */
+const latching = (s: Step): boolean => s.run !== undefined || !!s.latch || !!s.action;
+
+/** The latching step `s` has just happened. */
+const happened = (s: Step, ctx: TutorialContext): boolean =>
+  runSucceeded(s, ctx) || !!s.latch?.(ctx) || !!s.action?.some((a) => ctx.actions.has(a));
 
 const stepsOf = new WeakMap<Lesson, readonly Step[]>();
 
@@ -301,8 +333,9 @@ export interface Progress {
 }
 
 /**
- * Move through every step that is done, latching runs that reached their verdict. Never moves
- * while another automaton is open, and never falls back past the start of `progress`'s part.
+ * Move through every step that is done, latching runs that reached their verdict, latches that
+ * hold and reported actions. Never moves while an automaton the lesson doesn't own is open, and
+ * never falls back past the start of `progress`'s part.
  */
 export function advance(
   lesson: Lesson,
@@ -312,7 +345,7 @@ export function advance(
   /** The step on the card now: kept as it is while another automaton is open. */
   current: number = progress,
 ): Progress {
-  if (!ctx.isActive || !ctx.automaton) return { progress, current, latched };
+  if (!onOwned(ctx) || !ctx.automaton) return { progress, current, latched };
   const steps = lessonSteps(lesson);
   const last = steps.length - 1;
   const partStart = (i: number): number => {
@@ -323,7 +356,7 @@ export function advance(
   for (;;) {
     const isDone = (i: number): boolean => {
       const s = steps[i]!;
-      return s.run ? held.has(s.id) : s.done(ctx);
+      return latching(s) ? held.has(s.id) : s.done(ctx);
     };
     let undone: number | undefined;
     for (let i = partStart(progress); i <= progress; i++) {
@@ -334,7 +367,7 @@ export function advance(
     }
     if (undone !== undefined) {
       const s = steps[undone]!;
-      if (s.run && runSucceeded(s, ctx)) {
+      if (latching(s) && happened(s, ctx)) {
         held = new Set([...held, s.id]);
         continue;
       }

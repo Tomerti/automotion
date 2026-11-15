@@ -325,12 +325,12 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           const current = all.find((a) => a.id === activeId);
           const clip = current && !trace ? copyStates(current, selection.states) : null;
           if (!clip) return false;
-          get().edit((a) => {
-            let out = a;
-            for (const t of selection.transitions) out = removeTransition(out, t);
-            for (const st of clip.states) out = removeState(out, st.id);
-            return out;
-          });
+          let next = current!;
+          for (const t of selection.transitions) next = removeTransition(next, t);
+          for (const st of clip.states) next = removeState(next, st.id);
+          // Refused on a read-only automaton: nothing copied, the selection kept.
+          if (blocked(current!, syncAlphabet(next))) return false;
+          get().edit(() => next);
           set((s) => {
             // `repeat: -1`: the first placeless paste steps 0 times, back onto the cut states' spot.
             s.clipboard = {
@@ -392,6 +392,8 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
             offset,
             incoming?.automatonId === current.id ? incoming.transitions : [],
           );
+          // Refused on a read-only automaton: the clipboard and the selection stay as they were.
+          if (blocked(current, syncAlphabet(result.automaton))) return null;
           get().edit(() => result.automaton);
           set((s) => {
             s.clipboard = { kind: 'states', clip, last: { at: at ?? null, repeat } };

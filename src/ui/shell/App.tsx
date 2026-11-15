@@ -10,7 +10,12 @@ import { TraceView } from '../player/TraceView';
 import { TutorialCard } from '../tutorial/TutorialCard';
 import { FinishedCard } from '../tutorial/FinishedCard';
 import { lessonById } from '../tutorial/lessons';
-import { closeCelebration, startLesson, useTutorial } from '../tutorial/tutorialStore';
+import {
+  closeCelebration,
+  lessonAutoPlay,
+  requestLesson,
+  useTutorial,
+} from '../tutorial/tutorialStore';
 import { WelcomeCard } from '../tutorial/WelcomeCard';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ControlsDialog } from './ControlsDialog';
@@ -118,7 +123,9 @@ export default function App(): React.JSX.Element {
                 onIndex={setStep}
                 explanation={step.explanation}
                 onClose={closeTrace}
-                autoPlay={trace.kind === 'run' || trace.kind === 'subset'}
+                autoPlay={
+                  (trace.kind === 'run' || trace.kind === 'subset') && lessonAutoPlay(trace)
+                }
                 extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
               />
             )}
@@ -133,7 +140,7 @@ export default function App(): React.JSX.Element {
           onClose={() => setHelpOpen(false)}
           onStartTutorial={() => {
             setHelpOpen(false);
-            startLesson('basics');
+            void requestLesson('basics');
           }}
         />
       )}
@@ -142,7 +149,7 @@ export default function App(): React.JSX.Element {
           onClose={closeWelcome}
           onStart={() => {
             closeWelcome();
-            startLesson('basics');
+            void requestLesson('basics');
           }}
         />
       )}

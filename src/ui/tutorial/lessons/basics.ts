@@ -273,7 +273,9 @@ export const BASICS: Lesson = {
       },
       done: 'Your DFA accepts exactly the words with an even number of zeros.',
       steps: PART1_STEPS,
-      // Any arrow of part 1 can be drawn early, so all four are checked on every part-1 step.
+      // Any arrow of part 1 can be drawn early, so all four are checked on every part-1 step. This
+      // runs before the step's own `edges` check (see `toStep`) to the same effect: the card shows
+      // the earliest undone step, so the arrows before the step's own already read right.
       hint: (ctx) => part1Hint(ctx) ?? nfaHint(ctx) ?? wrongSymbols(ctx, PART1_EDGES),
     },
     {
