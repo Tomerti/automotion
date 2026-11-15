@@ -62,13 +62,33 @@ describe('the NFAs lesson', () => {
     expect(steps[p.current]!.id).toBe('done');
   });
 
-  it('pauses at the next index, only for an owned run of 001', () => {
-    expect([2, 3, 4].map((i) => steps[i]!.pauseAt!(at('001', 0)))).toEqual([1, 2, 3]);
+  it('pauses at the explained moment, only for an owned run of 001', () => {
+    expect([2, 3, 4].map((i) => steps[i]!.pauseAt!(at('001', 0)))).toEqual([1, 1, 2]);
+    expect(steps[4]!.pauseAt!(at('001', 1))).toBe(2);
+    expect(steps[4]!.pauseAt!(at('001', 2))).toBe(3);
     for (const i of [2, 3, 4]) {
       expect(steps[i]!.pauseAt!(ctx(null))).toBeNull();
       expect(steps[i]!.pauseAt!(at('01', 0))).toBeNull();
     }
-    for (const i of [0, 1, 5]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+    for (const i of [0, 1]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+  });
+
+  it('stops at the explained moment, not past it, after stepping back or rerunning', () => {
+    expect(steps[3]!.pauseAt!(at('001', 0))).toBe(1);
+    expect(steps[4]!.pauseAt!(at('001', 0))).toBe(2);
+    expect(steps[4]!.pauseAt!(at('001', 1))).toBe(2);
+    expect(steps[5]!.pauseAt!(at('001', 0))).toBe(3);
+    expect(steps[5]!.pauseAt!(at('001', 2))).toBe(3);
+    expect(steps[5]!.pauseAt!(at('001', 3))).toBeNull();
+  });
+
+  it('keeps the card when the run is stepped back below its moment', () => {
+    const latched = new Set(['nfa/idea', 'nfa/run', 'nfa/read-0', 'nfa/guess', 'nfa/dies']);
+    const ahead = advance(NFA_LESSON, 5, latched, at('001', 3), 5);
+    expect(steps[ahead.current]!.id).toBe('nfa/reach');
+    const back = advance(NFA_LESSON, 5, latched, at('001', 1), ahead.current);
+    expect(back.current).toBe(ahead.current);
+    expect(back.latched).toEqual(latched);
   });
 
   it('playing from the start stops at 1, 2, 3, 4 in turn', () => {

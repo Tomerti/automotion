@@ -86,17 +86,24 @@ describe('the Convert NFA → DFA lesson', () => {
 
   it('pauses where «{q_0,q_1}» and «{q_0,q_2}» appear', () => {
     expect(steps[1]!.pauseAt!(ctx(trace, 0))).toBe(pairAt);
-    expect(steps[2]!.pauseAt!(ctx(trace, 0))).toBe(acceptingAt);
     expect(steps[1]!.pauseAt!(ctx(null))).toBeNull();
-    for (const i of [0, 3, 4]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+    // Stepped back or reopened below the explained moment: stop there first.
+    expect(steps[2]!.pauseAt!(ctx(trace, 0))).toBe(pairAt);
+    expect(steps[2]!.pauseAt!(ctx(trace, pairAt))).toBe(acceptingAt);
+    expect(steps[3]!.pauseAt!(ctx(trace, 0))).toBe(acceptingAt);
+    expect(steps[3]!.pauseAt!(ctx(trace, acceptingAt))).toBeNull();
+    expect(steps[3]!.pauseAt!(ctx(null))).toBeNull();
+    for (const i of [0, 4]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
     const moment = trace.steps[pairAt]!;
     expect(moment).toMatchObject({ subset: ['q_0'], symbol: '0', isNew: true });
     expect(moment.moved).toEqual(['q_0', 'q_1']);
   });
 
   it('lands on the first stop when the walkthrough was opened during the idea step', () => {
-    expect(pacingStep(L, 0)!.id).toBe('convert/open');
-    expect(pacingStep(L, 0)!.pauseAt!(ctx(trace, 0))).toBe(1);
+    const c = ctx(trace, 0);
+    const at0 = { progress: 0, current: 0, latched: new Set<string>() };
+    expect(pacingStep(L, at0, c)!.id).toBe('convert/open');
+    expect(pacingStep(L, at0, c)!.pauseAt!(c)).toBe(1);
     expect(advance(L, 0, idea, ctx(trace, pairAt), 0).current).toBe(2);
     expect(steps[2]!.id).toBe('convert/pair');
   });

@@ -1,7 +1,7 @@
 import { EPSILON } from '../../../core/model';
 import type { Automaton } from '../../../core/model';
 import type { Lesson, StepSpec } from '../engine';
-import { getBack, otherWordHint, pauseAfter, reached, runOf } from './handStep';
+import { atMoment, otherWordHint, reached, runOf } from './handStep';
 
 /** The lesson opens on this NFA for a*b*: `q_0 –ε→ q_1` makes the second state start with the first. */
 const A_STAR_B_STAR: Automaton = {
@@ -39,18 +39,16 @@ const STEPS: StepSpec[] = [
     id: 'epsilon/closure',
     instruction: () => 'Press [→] to follow the ε-arrow.',
     explain: (l) => `It starts in ${l.q0} and hasn't read anything yet.`,
-    pauseAt: pauseAfter('b', 1),
+    ...atMoment('b', 0),
     latch: reached('b', 1),
-    first: getBack('b', 0),
   },
   {
     id: 'epsilon/read',
     instruction: () => 'Press [→] to read the `b`.',
     explain: (l) =>
       `It took the ε-arrow for free: it's in ${l.q0} and ${l.q1} before reading a letter.`,
-    pauseAt: pauseAfter('b', 2),
+    ...atMoment('b', 1),
     latch: reached('b', 2),
-    first: getBack('b', 1),
   },
   {
     id: 'epsilon/verdict',
@@ -58,12 +56,18 @@ const STEPS: StepSpec[] = [
     explain: (l) => `${l.q0} has no arrow on \`b\`, but ${l.q1} does: no \`a\` was needed.`,
     // A run step, so the next step's wrong-word hint accepts the still-open `b` run.
     run: { word: 'b', accepted: true },
-    first: getBack('b', 2),
+    ...atMoment('b', 2, true),
   },
   {
     id: 'epsilon/ba',
     instruction: () => 'Press [Esc], then run `ba`.',
-    explain: (l) => `It ended in ${l.q1}, which accepts.`,
+    // Only while the `b` run is open at its verdict: it says nothing about `ba`.
+    explain: (l, ctx) => {
+      const t = runOf(ctx, 'b');
+      return t !== null && ctx.stepIndex === t.steps.length - 1
+        ? `It ended in ${l.q1}, which accepts.`
+        : null;
+    },
     run: { word: 'ba', accepted: false },
   },
 ];

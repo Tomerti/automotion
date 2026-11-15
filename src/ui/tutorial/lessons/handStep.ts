@@ -10,22 +10,32 @@ export function runOf(ctx: TutorialContext, word: string): RunTrace | null {
   return t?.kind === 'run' && t.word === word && ownsTrace(ctx) ? t : null;
 }
 
-/** Where playback pauses next: the card explains the moment one index on. */
-export const pauseAfter =
-  (word: string, next: number) =>
-  (ctx: TutorialContext): number | null =>
-    runOf(ctx, word) ? next : null;
-
 /**
- * Before a paused step: run `word` again if it isn't open, or step back to the moment the card
- * explains (index `moment`) if the run is before it.
+ * The playback pause and the way back for a card that explains the moment at index `moment` of the
+ * open run of `word`. Playback stops at the moment while the run is before it, and one step on
+ * (the next card's moment) once it has got there; the lesson's last card (`final`) has no next
+ * moment, so the run's end stops it. Elsewhere, and for any other run, it doesn't pause.
  */
-export const getBack =
-  (word: string, moment: number) =>
-  (ctx: TutorialContext): string | null => {
-    if (!runOf(ctx, word)) return `First, run \`${word}\` again.`;
-    return ctx.stepIndex < moment ? 'First, press [→] to get back to this point.' : null;
+export function atMoment(
+  word: string,
+  moment: number,
+  final = false,
+): {
+  pauseAt(ctx: TutorialContext): number | null;
+  first(ctx: TutorialContext): string | null;
+} {
+  return {
+    pauseAt(ctx) {
+      if (!runOf(ctx, word)) return null;
+      if (ctx.stepIndex < moment) return moment;
+      return final ? null : moment + 1;
+    },
+    first(ctx) {
+      if (!runOf(ctx, word)) return `First, run \`${word}\` again.`;
+      return ctx.stepIndex < moment ? 'First, press [→] to get back to this point.' : null;
+    },
   };
+}
 
 /** The run of `word` is open and has reached `index`. */
 export const reached = (word: string, index: number) => (ctx: TutorialContext) =>

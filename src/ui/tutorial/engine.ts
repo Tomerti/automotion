@@ -40,8 +40,9 @@ function onOwned(ctx: TutorialContext): boolean {
 
 /**
  * What a part builds, shown at the top of the card for the whole part so the steps have a point:
- * a few words (same markup as the steps), words it accepts and rejects, and a picture of the
- * finished automaton, with `description` as the picture's text alternative.
+ * a few words (same markup as the steps) and words it accepts and rejects. Basics also has a
+ * picture of the finished automaton, with `description` as its text alternative; the other
+ * lessons have none.
  */
 export interface Goal {
   text: string;
@@ -93,9 +94,9 @@ export interface StepSpec {
   idea?: true;
   /**
    * What the paused moment shows (same markup), rendered before the instruction while the run or
-   * walkthrough sits at the step `pauseAt` names.
+   * walkthrough sits at the step `pauseAt` names. Null: nothing to say for what is on screen.
    */
-  explain?(l: Labels, ctx: TutorialContext): string;
+  explain?(l: Labels, ctx: TutorialContext): string | null;
   /** Why, in a few words, under the instruction (same markup), if it needs saying. */
   why?(l: Labels, ctx: TutorialContext): string;
   done?(ctx: TutorialContext): boolean;
@@ -331,12 +332,19 @@ export function lessonSteps(lesson: Lesson): readonly Step[] {
 
 /**
  * The step whose `pauseAt` governs playback while `current` is on the card: `current`'s own, or
- * the next one's when `current` is an idea step (the user opens the run during the idea).
+ * on an idea step (the user opens the run during the idea) the step the lesson would land on once
+ * Next latches the idea, given what is on screen.
  */
-export function pacingStep(lesson: Lesson, current: number): Step | undefined {
+export function pacingStep(
+  lesson: Lesson,
+  at: { progress: number; current: number; latched: ReadonlySet<string> },
+  ctx: TutorialContext,
+): Step | undefined {
   const steps = lessonSteps(lesson);
-  const s = steps[current];
-  return s?.idea ? steps[current + 1] : s;
+  const s = steps[at.current];
+  if (!s?.idea) return s;
+  const latched = new Set([...at.latched, s.id]);
+  return steps[advance(lesson, at.progress, latched, ctx, at.current).current];
 }
 
 /** The steps the progress bar counts: all but the closing card. */

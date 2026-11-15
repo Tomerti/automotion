@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { addState, renameState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
+import { runWord } from '../../core/run';
 import { subsetConstruction } from '../../core/subset';
 import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
@@ -14,11 +15,13 @@ import { FinishedCard } from './FinishedCard';
 import { BASICS } from './lessons/basics';
 import { LESSONS } from './lessons';
 import { CONVERT_LESSON } from './lessons/convert';
+import { NFA_LESSON } from './lessons/nfa';
 import { LESSONS_DONE_KEY, markLessonFinished } from './lessonsDone';
 import { IDEA_LESSON, TEST_LESSON } from './testing/testLesson';
 import {
   endLesson,
   noteLessonAction,
+  pressNext,
   startLesson,
   tutorialContext,
   tutorialStore,
@@ -473,6 +476,29 @@ describe('a lesson other than Basics', () => {
       explain.compareDocumentPosition(instruction) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(within(card()).queryByTestId('tutorial-why')).toBeNull();
+  });
+
+  it('shows no explanation beside a hint to get back to its moment', () => {
+    render(<App />);
+    act(() => startLesson(NFA_LESSON));
+    const own = app().automata.find((x) => x.id === tutorialStore.getState().automatonId)!;
+    act(() => pressNext());
+    act(() => app().openTrace(runWord(own, '001')));
+    act(() => app().setStep(3));
+    expect(tutorialStore.getState().current).toBe(5);
+    expect(within(card()).getByTestId('tutorial-explain')).toBeInTheDocument();
+    act(() => app().setStep(1));
+    expect(within(card()).getByTestId('tutorial-first')).toHaveTextContent(
+      'get back to this point',
+    );
+    expect(within(card()).queryByTestId('tutorial-explain')).toBeNull();
+  });
+
+  it('keeps Next out of the live region', () => {
+    render(<App />);
+    act(() => startLesson(IDEA_LESSON));
+    const next = within(card()).getByTestId('tutorial-next');
+    expect(within(card()).getByTestId('tutorial-step').contains(next)).toBe(false);
   });
 
   it('shows a goal without a picture as text and examples only', () => {

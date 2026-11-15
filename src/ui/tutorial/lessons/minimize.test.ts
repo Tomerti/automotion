@@ -105,7 +105,8 @@ describe('the Minimize a DFA lesson', () => {
   });
 
   it('lands on the groups step when the walkthrough was opened during the idea step', () => {
-    expect(pacingStep(L, 0)!.id).toBe('minimize/open');
+    const at0 = { progress: 0, current: 0, latched: new Set<string>() };
+    expect(pacingStep(L, at0, ctx(trace, 0))!.id).toBe('minimize/groups');
     expect(advance(L, 0, idea, ctx(trace, 0), 0).current).toBe(2);
     expect(steps[2]!.id).toBe('minimize/groups');
   });
@@ -132,7 +133,11 @@ describe('the Minimize a DFA lesson', () => {
   it('pauses playback where the block splits', () => {
     expect(steps[2]!.pauseAt!(ctx(trace, 0))).toBe(firstSplit);
     expect(steps[2]!.pauseAt!(ctx(null))).toBeNull();
-    for (const i of [0, 1, 3, 4]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+    // The split card stops at the split while it is ahead, then runs to the end.
+    expect(steps[3]!.pauseAt!(ctx(trace, 0))).toBe(firstSplit);
+    expect(steps[3]!.pauseAt!(ctx(trace, firstSplit))).toBeNull();
+    expect(steps[3]!.pauseAt!(ctx(null))).toBeNull();
+    for (const i of [0, 1, 4]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
   });
 
   it('explains each moment, with the instruction a plain press', () => {

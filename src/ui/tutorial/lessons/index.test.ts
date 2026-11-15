@@ -27,7 +27,11 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
   it('follows a step that pauses playback with one whose instruction says what to press', () => {
     const steps = lessonSteps(lesson);
     steps.forEach((s, i) => {
-      if (s.pauseAt) expect(steps[i + 1]?.instruction(ctx), s.id).toMatch(/^Press /);
+      const next = steps[i + 1];
+      // A last card's pause is before its own moment: no card follows but the closing one.
+      if (s.pauseAt && next && next.part <= lesson.parts.length) {
+        expect(next.instruction(ctx), s.id).toMatch(/^Press /);
+      }
     });
   });
 

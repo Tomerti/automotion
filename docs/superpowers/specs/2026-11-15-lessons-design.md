@@ -135,7 +135,7 @@ Step ids are namespaced per lesson (`convert/open`); `StepId` becomes a string.
 
 ### Playback
 
-> Superseded: lesson runs now open paused and stop where each step explains, with idea steps and `explain` text. See `2026-11-15-lessons-flow-design.md`.
+> Superseded: runs of the words in a lesson's `pausedRuns` now open paused, and playback stops where each step explains, with idea steps and `explain` text. See `2026-11-15-lessons-flow-design.md`.
 
 Runs and conversions play as they open and minimizations open paused, in lessons as everywhere
 else. A lesson instead pauses the player at the moment a step explains (changed 2026-11-15 on

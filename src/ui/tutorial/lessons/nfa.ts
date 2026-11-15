@@ -1,12 +1,6 @@
 import type { Automaton } from '../../../core/model';
 import type { Lesson, StepSpec } from '../engine';
-import {
-  getBack,
-  otherWordHint,
-  pauseAfter as pauseAfterWord,
-  reached as reachedWord,
-  runOf,
-} from './handStep';
+import { atMoment, otherWordHint, reached as reachedWord, runOf } from './handStep';
 
 /** The lesson opens on this NFA for words ending in `01`: `q_0` guesses where the `01` starts. */
 const ENDS_01: Automaton = {
@@ -28,9 +22,7 @@ const ENDS_01: Automaton = {
   ],
 };
 
-const pauseAfter = (next: number) => pauseAfterWord('001', next);
 const reached = (index: number) => reachedWord('001', index);
-const back = (moment: number) => getBack('001', moment);
 
 const STEPS: StepSpec[] = [
   {
@@ -49,34 +41,31 @@ const STEPS: StepSpec[] = [
     id: 'nfa/read-0',
     instruction: () => 'Press [→] to read the first `0`.',
     explain: (l) => `It starts in ${l.q0}, with nothing guessed yet.`,
-    pauseAt: pauseAfter(1),
+    ...atMoment('001', 0),
     latch: reached(1),
-    first: back(0),
   },
   {
     id: 'nfa/guess',
     instruction: () => 'Press [→] to read the second `0`.',
     explain: (l) =>
       `It guessed this \`0\` starts the final \`01\`, so it follows both ${l.q0} and ${l.q1}.`,
-    pauseAt: pauseAfter(2),
+    ...atMoment('001', 1),
     latch: reached(2),
-    first: back(1),
   },
   {
     id: 'nfa/dies',
     instruction: () => 'Press [→] to read the `1`.',
     explain: (l) =>
       `${l.q1} had no arrow on \`0\`, so that guess died; ${l.q0} made the same guess again.`,
-    pauseAt: pauseAfter(3),
+    ...atMoment('001', 2),
     latch: reached(3),
-    first: back(2),
   },
   {
     id: 'nfa/reach',
     instruction: () => 'Press [→] for the verdict.',
     explain: () => 'The guess in «q_1» read `1` and reached «q_2».',
+    ...atMoment('001', 3, true),
     latch: reached(4),
-    first: back(3),
   },
 ];
 

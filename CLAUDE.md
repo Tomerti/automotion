@@ -107,11 +107,14 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   belong to the lesson (Quit removes them, Finish keeps them). A step with `idea: true` is
   read, not done, and goes on with Next (`tutorial-next`). A step's `explain` shows first on the card, then
   its instruction. `pausedRuns` lists words whose runs open paused, stepped by hand with → (NFAs on `001`,
-  ε-moves on `b`; `lessons/handStep.ts`); a step's `pauseAt` pauses the player (`stopAt`, via
-  `lessonStopAt`) where the next step explains (Convert, Minimize). Only Basics has goal pictures and
-  frames the word box and dock.
+  ε-moves on `b`; `lessons/handStep.ts`). A step's `pauseAt` pauses the player (`stopAt`, via
+  `lessonStopAt`) at the moment the card explains while the run is before it, else at the next one
+  (every hand-stepped, Convert and Minimize step). During an idea step the pacing step is the one
+  Next would land on (`pacingStep`), so a run opened early is paced too. Only Basics has goal
+  pictures and frames the word box and dock.
 - Lesson texts mark keys `[Shift]`, states `«even»` and words to type in backticks. `lessons/index.test.ts`
-  caps them: instructions 100 chars, why lines 110 (70 for Basics, so its wording stays as it was).
+  caps them: instructions 100 chars (idea steps 240), why lines 110 (70 for Basics, so its wording
+  stays as it was), `explain` 140.
 - `TutorialPointer.tsx` draws over the top bar for toolbar buttons, with a tight frame on buttons. Finished
   lessons are saved under `automotion:lessons-done` (`lessonsDone.ts`); the Controls Lessons tab shows ✓.
 

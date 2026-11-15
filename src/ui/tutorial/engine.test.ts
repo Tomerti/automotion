@@ -10,6 +10,7 @@ import { answerConfirm, confirmStore } from '../shell/confirmStore';
 import { advance, lessonSteps, pacingStep } from './engine';
 import type { LessonId, TutorialContext } from './engine';
 import { BASICS } from './lessons/basics';
+import { NFA_LESSON } from './lessons/nfa';
 import {
   CONTAINS_01,
   IDEA_LESSON as IDEA,
@@ -273,9 +274,23 @@ describe('the engine', () => {
   });
 
   it('an idea step looks ahead to the next step for pacing', () => {
-    expect(pacingStep(IDEA, 0)!.id).toBe('idea/open');
-    expect(pacingStep(IDEA, 1)!.id).toBe('idea/open');
-    expect(pacingStep(PAUSING, 0)!.id).toBe('pause/open');
+    const at = (current: number) => ({ progress: current, current, latched: none });
+    const c = ctx({ automaton: CONTAINS_01, owned: [CONTAINS_01.id] });
+    expect(pacingStep(IDEA, at(0), c)!.id).toBe('idea/open');
+    expect(pacingStep(IDEA, at(1), c)!.id).toBe('idea/open');
+    expect(pacingStep(PAUSING, at(0), c)!.id).toBe('pause/open');
+  });
+
+  it('the look-ahead of an idea step lands on the step after what is on screen', () => {
+    // The NFA lesson: a run of 001 opened during the idea has the first moment's pause.
+    startLesson(NFA_LESSON);
+    const run = runWord(active(), '001');
+    app().openTrace(run);
+    expect(tut().current).toBe(0);
+    expect(lessonStopAt(run)).toBe(1);
+    pressNext();
+    expect(lessonSteps(NFA_LESSON)[tut().current]!.id).toBe('nfa/read-0');
+    expect(lessonStopAt(run)).toBe(1);
   });
 
   it('passes explain through, null when unset', () => {

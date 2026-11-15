@@ -69,12 +69,21 @@ describe('the ε-moves lesson', () => {
   });
 
   it('pauses at indices 1 and 2, only for an owned run of b', () => {
-    expect([2, 3].map((i) => steps[i]!.pauseAt!(at('b', 0)))).toEqual([1, 2]);
+    expect([2, 3].map((i) => steps[i]!.pauseAt!(at('b', 0)))).toEqual([1, 1]);
+    expect(steps[3]!.pauseAt!(at('b', 1))).toBe(2);
     for (const i of [2, 3]) {
       expect(steps[i]!.pauseAt!(ctx(null))).toBeNull();
       expect(steps[i]!.pauseAt!(at('ba', 0))).toBeNull();
     }
-    for (const i of [0, 1, 4, 5]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+    for (const i of [0, 1, 5]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+  });
+
+  it('stops at the explained moment, not past it, after stepping back or rerunning', () => {
+    expect(steps[3]!.pauseAt!(at('b', 0))).toBe(1);
+    expect(steps[4]!.pauseAt!(at('b', 0))).toBe(2);
+    expect(steps[4]!.pauseAt!(at('b', 1))).toBe(2);
+    expect(steps[4]!.pauseAt!(at('b', 2))).toBeNull();
+    expect(steps[4]!.pauseAt!(ctx(null))).toBeNull();
   });
 
   it('hints how to get back to the explained moment', () => {
@@ -114,7 +123,10 @@ describe('the ε-moves lesson', () => {
     expect(steps[4]!.explain(c)).toBe(
       '«q_0» has no arrow on `b`, but «q_1» does: no `a` was needed.',
     );
-    expect(steps[5]!.explain(c)).toBe('It ended in «q_1», which accepts.');
+    expect(steps[5]!.explain(c)).toBeNull();
+    expect(steps[5]!.explain(at('b', 2))).toBeNull();
+    expect(steps[5]!.explain(last('ba'))).toBeNull();
+    expect(steps[5]!.explain(last('b'))).toBe('It ended in «q_1», which accepts.');
     for (const s of steps) {
       expect(s.target(c), s.id).toBeNull();
       expect(s.why(c), s.id).toBeNull();

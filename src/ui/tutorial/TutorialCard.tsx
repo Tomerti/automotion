@@ -64,8 +64,8 @@ function Markup({ part }: { part: string }): React.JSX.Element {
 }
 
 /**
- * What the part builds, at the top of the card: a picture of the finished automaton, the goal in
- * a few words, and words it accepts (✓) and rejects (✗).
+ * What the part builds, at the top of the card: the goal in a few words, words it accepts (✓) and
+ * rejects (✗), and, where the goal has one (Basics), a picture of the finished automaton.
  */
 function GoalRow({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.Element | null {
   const goal = lesson.parts[part - 1]?.goal;
@@ -230,7 +230,9 @@ export function TutorialCard(): React.JSX.Element | null {
   // The run that ended a part is still open: the card says so until Esc starts the next part.
   const partDone = hint?.kind === 'part-done' ? hint.part : null;
   const shownPart = partDone ?? step.part;
-  const explain = partDone ? null : step.explain(ctx);
+  // The moment it explains isn't on screen while the card asks to get back to it first.
+  const awayFromMoment = hint?.kind === 'first' || hint?.kind === 'elsewhere';
+  const explain = partDone || awayFromMoment ? null : step.explain(ctx);
   // An explanation replaces the why; an idea step has neither.
   const why = partDone || step.idea || explain ? null : step.why(ctx);
   // Steps are numbered within their part.
@@ -338,18 +340,6 @@ export function TutorialCard(): React.JSX.Element | null {
                 }
               />
             </p>
-            {step.idea && !partDone && hint?.kind !== 'elsewhere' && (
-              <div className="av-tutorial-actions">
-                <button
-                  type="button"
-                  className="av-go"
-                  data-testid="tutorial-next"
-                  onClick={pressNext}
-                >
-                  Next
-                </button>
-              </div>
-            )}
             {why && (
               <p className="av-tutorial-why" data-testid="tutorial-why">
                 <RichText text={why} />
@@ -376,6 +366,18 @@ export function TutorialCard(): React.JSX.Element | null {
               )
             )}
           </div>
+          {step.idea && !partDone && hint?.kind !== 'elsewhere' && (
+            <div className="av-tutorial-actions">
+              <button
+                type="button"
+                className="av-go"
+                data-testid="tutorial-next"
+                onClick={pressNext}
+              >
+                Next
+              </button>
+            </div>
+          )}
           {last && (
             <div className="av-tutorial-actions">
               <button type="button" className="av-go" onClick={finishLesson}>

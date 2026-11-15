@@ -76,7 +76,11 @@ const STEPS: StepSpec[] = [
     instruction: () => 'Press Play.',
     explain: (l) =>
       `After a \`0\` the NFA could be in ${l.q0} or ${l.q1}, so the DFA gets the state «${PAIR}».`,
-    pauseAt: (ctx) => stateAt(ctx, ACCEPTING_PAIR),
+    // Before the pair's moment (stepped back, or reopened there): stop on it first.
+    pauseAt: (ctx) => {
+      const pair = stateAt(ctx, PAIR);
+      return pair !== null && ctx.stepIndex < pair ? pair : stateAt(ctx, ACCEPTING_PAIR);
+    },
     latch: shown(ACCEPTING_PAIR),
     first: needConvert,
   },
@@ -84,6 +88,11 @@ const STEPS: StepSpec[] = [
     id: 'convert/accepting',
     instruction: () => 'Press Play to finish.',
     explain: () => `«${ACCEPTING_PAIR}» holds «q_2», which accepts, so this DFA state accepts too.`,
+    // Playback runs on to the end, but stops at this moment while it is still ahead.
+    pauseAt: (ctx) => {
+      const at = stateAt(ctx, ACCEPTING_PAIR);
+      return at !== null && ctx.stepIndex < at ? at : null;
+    },
     latch: atEnd,
     first: needConvert,
   },

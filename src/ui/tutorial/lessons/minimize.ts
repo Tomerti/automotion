@@ -87,6 +87,11 @@ const STEPS: StepSpec[] = [
     id: 'minimize/split',
     instruction: () => 'Press Play to finish.',
     explain: () => 'On `1`, «{q_0}» stays out of accepting but «{q_0,q_1}» gets in, so they split.',
+    // Playback runs on to the end, but stops at the split while it is still ahead.
+    pauseAt: (ctx) => {
+      const at = splitAt(ctx);
+      return at !== null && ctx.stepIndex < at ? at : null;
+    },
     latch: (ctx) => {
       const t = minimizeOf(ctx);
       return t !== null && ctx.stepIndex === t.steps.length - 1;

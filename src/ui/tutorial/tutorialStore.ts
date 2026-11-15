@@ -262,9 +262,9 @@ export function lessonStopAt(
   t: TutorialState = tutorialStore.getState(),
 ): number | null {
   if (!t.active || !t.lesson || !t.owned.includes(trace.source.id)) return null;
-  const pauseAt = pacingStep(t.lesson, t.current)?.pauseAt;
-  if (!pauseAt) return null;
-  return pauseAt({ ...tutorialContext(appStore.getState(), t.automatonId, t), trace });
+  const ctx = { ...tutorialContext(appStore.getState(), t.automatonId, t), trace };
+  const pauseAt = pacingStep(t.lesson, t, ctx)?.pauseAt;
+  return pauseAt ? pauseAt(ctx) : null;
 }
 
 /**
