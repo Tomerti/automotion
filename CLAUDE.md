@@ -76,7 +76,10 @@ Layers, with dependencies pointing downward only:
   (`aesthetics.ts` `assignBends` / `assignStartAngles`), and the cheapest by `layoutCost` wins:
   crossings, arrows through states, labels on states / labels / arrows, bunched arrows, arrows
   forward in reading order not pointing right, skewed angles, length, bends and area, all on the
-  curves the canvas draws. The weights were tuned on `samples.ts` (typical course automata;
+  curves the canvas draws. Parts of up to 10 states also get a grid candidate (`grid.ts`
+  `refineOnGrid`: the best candidate snapped to a SPACING grid, then hill-climbed by moving or
+  swapping states while the cost drops); it wins only when it beats the rest by `GRID_MARGIN`
+  (10%), so a near tie keeps the classic row or circle. The weights were tuned on `samples.ts` (typical course automata;
   `layout.test.ts` checks them). Tidy replaces positions, bends, loop and start arrow directions
   and label sides. It runs in a Web Worker (`layoutClient.ts` `layoutInWorker`, one worker kept
   for later layouts; `layout.worker.ts` assigns `self.onmessage` after its imports, since

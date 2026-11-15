@@ -9,21 +9,23 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Tutorial part 3: convert an NFA to a DFA and minimize it (the tutorial never shows the walkthroughs)
-- [ ] Format: decide on line endings (`.gitattributes` / Prettier `endOfLine`) so `prettier --check .` passes, then add it to CI
+- [ ] Tidy's grid refinement can spread an 8-state layout along a long diagonal (`3rd from end → DFA`): the cost barely minds the area; a compact 4 × 2 grid reads better. A compactness term in the search alone didn't change the pick
 - [ ] The run tape and edge labels still set 0 in Geist, where it reads as O: consider the tutorial's dotted-zero symbol font (`--av-font-symbol`) there too
-- [ ] The issues chip shows red "2 issues" while the tutorial is halfway through building (an
-      incomplete DFA): consider muting it, or saying in the card that it is expected
-- [ ] Phones: the toast (under the top bar) covers the DFA/NFA switch; hover and tap highlights stick on touch (wrap hover styles in `@media (hover: hover)`); `isTouchOnly` is not reactive (a keyboard attached later doesn't change the welcome)
-
-- [ ] Cut and paste loses the arrows into the cut states from states left behind (the clipboard keeps only arrows out, as for copy): consider keeping them for a paste back into the same automaton
-
-- [ ] Tidy: run the layout in a Web Worker so a 64-state layout (~1 s) doesn't block the page; `To minimize`-style DFAs (6 states, many cross arrows) still come out busier than a hand layout
 
 ## Ideas (later)
 
 - [ ] Regex → NFA
 
 ## Done
+
+### Polish batch (2026-11-15)
+
+- [x] Line endings: `.gitattributes` pins LF (`* text=auto eol=lf`), Prettier's `endOfLine` is `lf`, and CI runs `npm run format:check` (`prettier --check .`); a Windows checkout with `core.autocrlf` now checks clean. An existing checkout renormalizes once with `git rm -rq --cached . && git reset --hard`
+- [x] The issues chip is grey, not red, on the tutorial's automaton while the tutorial runs: halfway through building, the incomplete DFA is expected
+- [x] Phones: toasts sit under the DFA/NFA switch instead of over it (placed from the body under the top bar, so a wrapped top bar doesn't matter; e2e checks the boxes); every `:hover` style is inside `@media (hover: hover)`, so taps don't leave highlights stuck; `useTouchOnly()` follows the pointer media queries, so attaching a mouse while the welcome is open switches it to the tutorial offer
+- [x] Cut then paste is a move: the first paste of a cut into the automaton it came from restores the arrows into the cut states from the states left behind (on a DFA without the symbols their source reads elsewhere by then); later pastes are copies
+- [x] Tidy and the subset walkthrough's layout run in a Web Worker (`layout/layoutClient.ts`), so a 64-state layout no longer freezes the page; it falls back to the page where workers fail
+- [x] Tidy also tries a grid for parts of up to 10 states (`layout/grid.ts`: the best candidate snapped to a grid, then improved by moving or swapping states), used when it beats the other candidates by 10%: `To minimize` now comes out as a crossing-free grid with straight arrows (33.4 → 24.8), `3rd from end → DFA` loses its crossings and arrows through states (84 → 46.7); `Contains 101` and the other near ties keep their rows and circles
 
 ### Cut and select all (2026-11-15)
 
