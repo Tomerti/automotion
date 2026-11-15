@@ -1,6 +1,6 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { addState, renameState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
 import { subsetConstruction } from '../../core/subset';
@@ -12,6 +12,7 @@ import { lessonSteps } from './engine';
 import type { Lesson } from './engine';
 import { FinishedCard } from './FinishedCard';
 import { BASICS } from './lessons/basics';
+import { LESSONS_DONE_KEY, markLessonFinished } from './lessonsDone';
 import { TEST_LESSON } from './testing/testLesson';
 import { endLesson, startLesson, tutorialContext, tutorialStore } from './tutorialStore';
 
@@ -457,5 +458,26 @@ describe('a lesson other than Basics', () => {
     const popup = screen.getByRole('dialog', { name: 'Lesson complete' });
     expect(within(popup).getByRole('heading')).toHaveTextContent('Lesson complete!');
     expect(popup).toHaveTextContent('Its automata stay in your history.');
+  });
+
+  it('offers the first unfinished lesson as Next, and starts it', async () => {
+    localStorage.removeItem(LESSONS_DONE_KEY);
+    const onClose = vi.fn();
+    render(<FinishedCard lesson={TEST_LESSON} onClose={onClose} />);
+    const next = screen.getByTestId('next-lesson');
+    expect(next).toHaveTextContent('Next: Basics');
+    expect(screen.getByRole('button', { name: 'Back to building' })).not.toHaveClass('av-go');
+    await userEvent.setup().click(next);
+    expect(onClose).toHaveBeenCalled();
+    expect(tutorialStore.getState().lessonId).toBe('basics');
+    act(() => endLesson());
+  });
+
+  it('has no Next once every lesson is finished', () => {
+    markLessonFinished('basics');
+    render(<FinishedCard lesson={TEST_LESSON} onClose={() => {}} />);
+    expect(screen.queryByTestId('next-lesson')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Back to building' })).toHaveClass('av-go');
+    localStorage.removeItem(LESSONS_DONE_KEY);
   });
 });

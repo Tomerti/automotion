@@ -236,7 +236,7 @@ const PART2_STEPS: StepSpec[] = [
 ];
 
 /** The tutorial: build a DFA from a blank one, run it, then change what it accepts. */
-export const BASICS: Lesson = {
+export const BASICS: Lesson & { id: 'basics' } = {
   id: 'basics',
   noun: 'tutorial',
   title: 'Basics',

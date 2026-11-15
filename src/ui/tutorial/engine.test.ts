@@ -50,7 +50,7 @@ describe('a lesson with a start automaton', () => {
     expect(active().id).not.toBe(CONTAINS_01.id);
     expect(active().id).not.toBe('taken');
     expect(active().states).toEqual(CONTAINS_01.states);
-    expect(tut()).toMatchObject({ active: true, lessonId: 'nfa', automatonId: active().id });
+    expect(tut()).toMatchObject({ active: true, lessonId: 'test', automatonId: active().id });
     expect(tut().owned).toEqual([active().id]);
   });
 
@@ -164,7 +164,7 @@ describe('a lesson with a start automaton', () => {
     });
     answerConfirm(false);
     await cancelled;
-    expect(tut()).toMatchObject({ lessonId: 'nfa', automatonId: id });
+    expect(tut()).toMatchObject({ lessonId: 'test', automatonId: id });
 
     const confirmed = requestLesson('basics');
     answerConfirm(true);

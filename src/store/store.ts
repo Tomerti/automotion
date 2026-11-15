@@ -72,12 +72,12 @@ export interface AppState {
   undo(): void;
   redo(): void;
   select(sel: Selection): void;
-  /** Copy the selected states of the active automaton (Ctrl+C); false if none is selected. */
+  /** Copy the selected states of the active automaton (Ctrl+C); false if none is selected. Allowed on a read-only automaton. */
   copySelection(): boolean;
   /**
    * Cut (Ctrl+X): copy the selected states, then delete them and the selected arrows as one undo
    * step. The first paste without a place puts them back where they were. False (and nothing
-   * changes) when no state is selected or a trace is open.
+   * changes) when no state is selected, a trace is open or the automaton is read-only.
    */
   cutSelection(): boolean;
   /** Copy automaton `id` as a whole (Ctrl+C in the history bar); false if there is none. */
@@ -91,7 +91,7 @@ export interface AppState {
    * Paste what was copied into the active automaton as one undo step, centred on `at` (world
    * coordinates), or a step down and right of where it was copied from; the pasted states and
    * the arrows between them become the selection. `promoted`: an ε-arrow turned a DFA into an
-   * NFA. `null` when no states were copied or a trace is open.
+   * NFA. `null` when no states were copied, a trace is open or the automaton is read-only.
    */
   paste(at?: { x: number; y: number }): { promoted: boolean } | null;
   setViewport(id: string, vp: Viewport): void;

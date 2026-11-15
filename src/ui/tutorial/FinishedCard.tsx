@@ -3,6 +3,9 @@ import { CloseIcon } from '../shell/icons';
 import { useModalDialog } from '../shell/useModalDialog';
 import { CHEERS } from './cheers';
 import type { Lesson } from './engine';
+import { nextLesson } from './lessons';
+import { finishedLessons } from './lessonsDone';
+import { requestLesson } from './tutorialStore';
 import './tutorial.css';
 
 /** Confetti pieces: horizontal position (%), delay (s), colour token. */
@@ -26,6 +29,7 @@ export function FinishedCard({
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalDialog(dialogRef, onClose);
   const [cheer] = useState(() => CHEERS[Math.floor(Math.random() * CHEERS.length)]!);
+  const [next] = useState(() => nextLesson(finishedLessons()));
   const tutorial = lesson.noun === 'tutorial';
   const title = tutorial ? 'Tutorial complete' : 'Lesson complete';
 
@@ -79,7 +83,26 @@ export function FinishedCard({
             : 'Its automata stay in your history.'}
         </p>
         <div className="av-welcome-actions">
-          <button type="button" className="av-go" data-focus-stop onClick={onClose}>
+          {next && (
+            <button
+              type="button"
+              className="av-go"
+              data-testid="next-lesson"
+              data-focus-stop
+              onClick={() => {
+                onClose();
+                void requestLesson(next.id);
+              }}
+            >
+              Next: {next.title}
+            </button>
+          )}
+          <button
+            type="button"
+            className={next ? undefined : 'av-go'}
+            data-focus-stop
+            onClick={onClose}
+          >
             Back to building
           </button>
         </div>

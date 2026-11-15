@@ -1,8 +1,16 @@
 import type { Lesson, LessonId } from '../engine';
 import { BASICS } from './basics';
 
+/** A lesson that is listed: it has a real id, unlike the tests' own lessons. */
+export type ListedLesson = Lesson & { id: LessonId };
+
 /** Every lesson, in the order the list shows them. */
-export const LESSONS: readonly Lesson[] = [BASICS];
+export const LESSONS: readonly ListedLesson[] = [BASICS];
+
+/** The first lesson not in `done`, or null when every one is finished. */
+export function nextLesson(done: readonly LessonId[]): ListedLesson | null {
+  return LESSONS.find((l) => !done.includes(l.id)) ?? null;
+}
 
 export function lessonById(id: LessonId): Lesson {
   const lesson = LESSONS.find((l) => l.id === id);

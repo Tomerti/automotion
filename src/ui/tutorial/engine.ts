@@ -2,7 +2,8 @@ import { startStates } from '../../core/model';
 import type { Automaton, State, StateId, Sym } from '../../core/model';
 import type { AnyTrace } from '../../core/trace';
 
-export type LessonId = 'basics' | 'nfa' | 'convert' | 'minimize' | 'share';
+export const LESSON_IDS = ['basics', 'nfa', 'convert', 'minimize', 'share'] as const;
+export type LessonId = (typeof LESSON_IDS)[number];
 
 /** Something done in the shell that leaves no trace in the state (see the spec's *Actions*). */
 export type LessonAction =
@@ -120,7 +121,8 @@ export interface LessonPart {
 }
 
 export interface Lesson {
-  id: LessonId;
+  /** `'test'` is for the tests' own lessons: never listed, never recorded as finished. */
+  id: LessonId | 'test';
   /** What the card and the popup call it. */
   noun: 'tutorial' | 'lesson';
   /** In the list and the card's header. */

@@ -14,11 +14,12 @@ import { askConfirm } from '../shell/confirmStore';
 import { advance, lessonSteps } from './engine';
 import type { Lesson, LessonAction, LessonId, TutorialContext } from './engine';
 import { lessonById } from './lessons';
+import { isLessonId, markLessonFinished } from './lessonsDone';
 
 export interface TutorialState {
   active: boolean;
   /** The lesson running. */
-  lessonId: LessonId | null;
+  lessonId: Lesson['id'] | null;
   /** The lesson running, as passed to `startLesson` (tests run lessons that aren't listed). */
   lesson: Lesson | null;
   /** The lesson's own automaton: the lesson ends if it is deleted. */
@@ -42,7 +43,7 @@ export interface TutorialState {
    */
   blockedSeen: number;
   /** The lesson finished just now: the congratulations popup is open. */
-  celebrating: LessonId | null;
+  celebrating: Lesson | null;
 }
 
 const NOTHING: ReadonlySet<string> = new Set();
@@ -88,12 +89,13 @@ let unsubscribe: (() => void) | null = null;
 
 /**
  * `owned` after the change from `prev` to `app`: plus what was saved from a walkthrough of an
- * owned automaton (the walkthrough's result, added as it closes), less what is gone.
+ * owned automaton (the walkthrough's result, added as it closes) when `grows`, less what is gone.
+ * Only a lesson that opens on a `start` automaton grows: Basics owns just its own.
  */
-function nextOwned(owned: string[], app: AppState, prev: AppState): string[] {
+function nextOwned(owned: string[], app: AppState, prev: AppState, grows: boolean): string[] {
   const t = prev.trace;
   let next = owned;
-  if (t && t.kind !== 'run' && owned.includes(t.source.id)) {
+  if (grows && t && t.kind !== 'run' && owned.includes(t.source.id)) {
     const saved = t.result.id;
     const isNew = !prev.automata.some((a) => a.id === saved);
     if (isNew && !owned.includes(saved) && app.automata.some((a) => a.id === saved)) {
@@ -117,7 +119,7 @@ function follow(app: AppState, prev: AppState): void {
     endLesson();
     return;
   }
-  const owned = nextOwned(t.owned, app, prev);
+  const owned = nextOwned(t.owned, app, prev, t.lesson.start !== null);
   // Locking them calls back in here first, with `owned` up to date; moving on again is a no-op.
   if (owned !== t.owned) setOwned(owned);
   moveOn(appStore.getState());
@@ -205,9 +207,10 @@ export function startLesson(which: LessonId | Lesson): void {
     lessonId: lesson.id,
     lesson,
     automatonId,
+    owned: [automatonId],
     blockedSeen: appStore.getState().blockedEdits,
   });
-  setOwned([automatonId]);
+  if (lesson.editable === false) appStore.getState().setReadOnly([automatonId]);
   unsubscribe = appStore.subscribe(follow);
   moveOn(appStore.getState());
 }
@@ -271,11 +274,12 @@ export function quitLesson(): void {
  * lesson closes, back to editing, the view fits what is open, and the congratulations popup opens.
  */
 export function finishLesson(): void {
-  const { owned, lessonId } = tutorialStore.getState();
+  const { owned, lesson } = tutorialStore.getState();
   endLesson();
+  if (lesson && isLessonId(lesson.id)) markLessonFinished(lesson.id);
   const app = appStore.getState();
   if (app.trace && owned.includes(app.trace.source.id)) app.closeTrace();
-  tutorialStore.setState({ celebrating: lessonId });
+  tutorialStore.setState({ celebrating: lesson });
   playFanfareSound();
   // Once the editing canvas is back on screen, so the fit has its size.
   requestAnimationFrame(() => {

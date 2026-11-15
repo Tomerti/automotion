@@ -23,7 +23,7 @@ export const CONTAINS_01 = fixture({
  * `CONTAINS_01` whose walkthroughs open paused, with a latch, an action and a latch on a saved DFA.
  */
 export const TEST_LESSON: Lesson = {
-  id: 'nfa',
+  id: 'test',
   noun: 'lesson',
   title: 'Test lesson',
   summary: 'For the tests',

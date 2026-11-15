@@ -9,7 +9,6 @@ import { TracePlayer } from '../player/TracePlayer';
 import { TraceView } from '../player/TraceView';
 import { TutorialCard } from '../tutorial/TutorialCard';
 import { FinishedCard } from '../tutorial/FinishedCard';
-import { lessonById } from '../tutorial/lessons';
 import {
   closeCelebration,
   lessonAutoPlay,
@@ -138,9 +137,9 @@ export default function App(): React.JSX.Element {
       {helpOpen && (
         <ControlsDialog
           onClose={() => setHelpOpen(false)}
-          onStartTutorial={() => {
+          onStartLesson={(id) => {
             setHelpOpen(false);
-            void requestLesson('basics');
+            void requestLesson(id);
           }}
         />
       )}
@@ -153,7 +152,7 @@ export default function App(): React.JSX.Element {
           }}
         />
       )}
-      {celebrating && <FinishedCard lesson={lessonById(celebrating)} onClose={closeCelebration} />}
+      {celebrating && <FinishedCard lesson={celebrating} onClose={closeCelebration} />}
     </div>
   );
 }

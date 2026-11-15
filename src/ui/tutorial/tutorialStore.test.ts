@@ -10,10 +10,13 @@ import {
 import { emptyAutomaton } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
+import { minimize } from '../../core/minimize';
 import { startRun } from '../../store/traceActions';
 import { endLesson, finishLesson, quitLesson, startLesson, tutorialStore } from './tutorialStore';
 import { lessonSteps } from './engine';
 import { BASICS } from './lessons/basics';
+import { finishedLessons, LESSONS_DONE_KEY } from './lessonsDone';
+import { TEST_LESSON } from './testing/testLesson';
 
 const app = () => appStore.getState();
 const tut = () => tutorialStore.getState();
@@ -30,10 +33,48 @@ const loop = () =>
     name: 'mine',
   });
 
-beforeEach(() => resetAppStore());
+beforeEach(() => {
+  resetAppStore();
+  localStorage.removeItem(LESSONS_DONE_KEY);
+});
 afterEach(() => endLesson());
 
+describe('finished lessons', () => {
+  it('finishing Basics records it; quitting records nothing', () => {
+    startLesson('basics');
+    quitLesson();
+    expect(finishedLessons()).toEqual([]);
+    startLesson('basics');
+    finishLesson();
+    expect(finishedLessons()).toEqual(['basics']);
+    expect(tut().celebrating).toBe(BASICS);
+  });
+
+  it('a test lesson is never recorded', () => {
+    startLesson(TEST_LESSON);
+    finishLesson();
+    expect(finishedLessons()).toEqual([]);
+    expect(tut().celebrating).toBe(TEST_LESSON);
+  });
+});
+
 describe('startLesson', () => {
+  it('owns its automaton from the first moment, and Basics owns no more than that', () => {
+    startLesson('basics');
+    const id = tut().automatonId!;
+    expect(tut().owned).toEqual([id]);
+  });
+
+  it('saving a conversion of the Tutorial automaton does not add to owned', () => {
+    startLesson('basics');
+    const id = tut().automatonId!;
+    app().edit((a) => ({ ...loop(), id: a.id, name: a.name }));
+    const trace = minimize(active()!);
+    app().openTrace(trace);
+    app().addAutomaton(trace.result);
+    expect(tut().owned).toEqual([id]);
+  });
+
   it('reuses an empty active automaton, renamed Tutorial', () => {
     const blank = emptyAutomaton('Untitled', 'NFA');
     resetAppStore({ automata: [blank] });
