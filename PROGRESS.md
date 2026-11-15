@@ -203,6 +203,10 @@ Nothing in progress: pick the next task from the list below.
 - [x] A rejected word's cue is one falling note (the two-note version sounded like it played twice)
 - [x] Opening a run or walkthrough no longer flashes the diagram fitted to a placeholder size
       (shifted left) or to the old dock height: both are measured before the first paint
+- [x] Double-clicking a state to rename it dropped a name with no tall letter (`even`, the
+      tutorial's part 2 rename) ~1 px (2 px zoomed in): the input centred its line box, while the
+      drawn label centres its letters (`labelBaselineOffset`). The rename input now measures its
+      baseline and puts it where the drawn label's is (e2e `rename-input.spec.ts`)
 
 ### History bar
 
