@@ -135,7 +135,7 @@ Layers, with dependencies pointing downward only:
     named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in
     `historyPrefs.ts`), the DFA/NFA switch floating at the top of the canvas (`KindPill.tsx`, hidden
     while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,
-    import/export plumbing (Import is a menu: a file, or `PasteLatexDialog.tsx`; "Copy link" in the export menu and each
+    import/export plumbing (Import is a menu: a file, or `PasteLatexDialog.tsx`; "Share link" in the toolbar's share menu (Share link | Copy image, Copy LaTeX | Export SVG, PNG, LaTeX) and each
     history entry's ⋯ menu is `copyLink.ts`; `useSharedLink.ts` opens a `#a=` share link on load and on `hashchange`:
     opens the saved copy (`sameAutomaton`) or adds the automaton (replacing a lone blank automaton, a fresh visitor's
     "Untitled"), fits it, toasts and clears the hash, and the welcome stays away on such a visit; `touch.ts`

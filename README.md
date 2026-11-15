@@ -98,7 +98,7 @@ Press **?** in the app to see every control.
 
 - **History.** Everything autosaves. The sidebar lists your automata, newest edit first. Import
   and export them as JSON, one at a time or all at once.
-- **Share links.** Put an automaton in a link with **Copy link**. Whoever opens it gets their own
+- **Share links.** Put an automaton in a link with **Share link**. Whoever opens it gets their own
   copy, carried inside the link itself.
 - **Pictures.** Copy the diagram as an image (**Ctrl+C** with nothing selected), or download it as
   SVG or PNG.

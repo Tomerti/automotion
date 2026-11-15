@@ -26,6 +26,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Share menu (2026-11-15)
+
+- [x] The top bar's share-icon menu ("Share, copy or export") is grouped by what each item does: **Share link** (renamed from Copy link, with a link icon) on its own at the top, then Copy image and Copy LaTeX, then Export SVG, Export PNG and Export LaTeX; copies and downloads used to be mixed in two groups split by format. Each history entry's ⋯ menu says Share link too, set apart from Rename / Duplicate by a separator
+
 ### Minimize labels (2026-11-15)
 
 - [x] A minimized automaton names each merged state by its block (A, B, …, as in the walkthrough's legend and explanations; `resultLabels` in `core/minimize.ts`) instead of its joined member labels, which spilled out of the circle over the arrows after a subset construction (`{{q_0,q_2},{q_0,q_1,q_2}}`). Both the done step and Save as new automaton use these names; the legend says what each block merged. States that weren't merged keep their name, unless one reads as a block name, then every state takes its block's name
