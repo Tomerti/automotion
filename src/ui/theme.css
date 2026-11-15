@@ -295,6 +295,14 @@ textarea::selection {
   color: var(--av-red);
 }
 
+/* Set by applyTheme (shell/theme.ts) while the theme flips, so colours change at once instead of
+   fading from the old theme. */
+.av-theme-switching *,
+.av-theme-switching *::before,
+.av-theme-switching *::after {
+  transition: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
