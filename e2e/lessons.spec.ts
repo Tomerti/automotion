@@ -50,7 +50,9 @@ test('the NFAs lesson runs aab step by step, plays it, runs aba and finishes', a
   await page.keyboard.press('Escape');
   await word.fill('aba');
   await word.press('Enter');
-  await page.getByRole('button', { name: 'Last' }).click();
+  // Opened paused: the card asks for Play, as for aab.
+  await expect(card).toContainText('press Play');
+  await page.getByRole('button', { name: 'Play' }).click();
   await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'false');
   await at(5);
 

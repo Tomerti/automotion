@@ -97,4 +97,15 @@ describe('the NFAs lesson', () => {
     expect(steps[2]!.target(ctx(null))).toBe('[data-testid="dock"]');
     expect(steps[3]!.target(ctx(null))).toContain('Word');
   });
+
+  it('asks to press Play while the aba run is open short of its verdict', () => {
+    const text = 'Press Play, or [Space], to see the verdict.';
+    expect(steps[3]!.hint(at('aba', 0))).toEqual({ kind: 'first', text });
+    expect(steps[3]!.hint(at('aba'))).toBeNull();
+    expect(steps[3]!.hint(ctx(null))).toBeNull();
+  });
+
+  it('tells to press Play in the aba instruction too', () => {
+    expect(steps[3]!.instruction(ctx(null))).toBe('Press [Esc], run `aba`, then press Play.');
+  });
 });

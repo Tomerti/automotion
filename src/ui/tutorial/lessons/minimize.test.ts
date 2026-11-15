@@ -117,4 +117,11 @@ describe('the Minimize a DFA lesson', () => {
     expect(steps[1]!.target(ctx(null))).toBe('.av-player-explanation');
     expect(steps[2]!.target(ctx(null))).toBe('[data-testid="dock"]');
   });
+
+  it('asks to press Play on the save step while the reopened walkthrough is short of its end', () => {
+    const text = 'First, press Play to reach the end.';
+    expect(steps[3]!.hint(ctx(trace, 0))).toEqual({ kind: 'first', text });
+    expect(steps[3]!.hint(ctx(trace, last))).toBeNull();
+    expect(steps[3]!.hint(ctx(trace, 0, SAVED))).toBeNull();
+  });
 });

@@ -116,4 +116,11 @@ describe('the Convert NFA → DFA lesson', () => {
   it('explains why a DFA state is a set', () => {
     expect(steps[1]!.why(ctx(null))).toContain('A DFA can’t guess');
   });
+
+  it('asks to press Play on the save step while the reopened walkthrough is short of its end', () => {
+    const text = 'First, press Play to reach the end.';
+    expect(steps[4]!.hint(ctx(trace, 0))).toEqual({ kind: 'first', text });
+    expect(steps[4]!.hint(ctx(trace, last))).toBeNull();
+    expect(steps[4]!.hint(ctx(trace, 0, SAVED))).toBeNull();
+  });
 });

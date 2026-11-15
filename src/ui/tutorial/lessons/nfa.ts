@@ -87,9 +87,16 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'nfa/aba',
-    instruction: () => 'Press [Esc], then run `aba`.',
+    instruction: () => 'Press [Esc], run `aba`, then press Play.',
     why: () => 'Every branch dies on the last `a`, so no branch accepts and the word is rejected.',
     run: { word: 'aba', accepted: false },
+    // The run opens paused, and the verdict comes only at its last step.
+    first: (ctx) => {
+      const t = runOf(ctx, 'aba');
+      return t && ctx.stepIndex < t.steps.length - 1
+        ? 'Press Play, or [Space], to see the verdict.'
+        : null;
+    },
     target: () => RUN_PILL,
   },
 ];

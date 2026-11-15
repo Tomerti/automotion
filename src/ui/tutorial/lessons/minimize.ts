@@ -95,7 +95,13 @@ const STEPS: StepSpec[] = [
     instruction: () => 'Press Save as new automaton to keep the smaller DFA.',
     why: () => 'Saved, it’s an automaton of its own: you can run words on it, or share it.',
     latch: (ctx) => ctx.owned.length > 1,
-    first: (ctx) => (ctx.owned.length > 1 ? null : needMinimize(ctx)),
+    first: (ctx) => {
+      if (ctx.owned.length > 1) return null;
+      const t = minimizeOf(ctx);
+      if (!t) return needMinimize(ctx);
+      // The walkthrough reopens paused, and saving shows only at its last step.
+      return ctx.stepIndex < t.steps.length - 1 ? 'First, press Play to reach the end.' : null;
+    },
     target: () => DOCK,
   },
 ];
