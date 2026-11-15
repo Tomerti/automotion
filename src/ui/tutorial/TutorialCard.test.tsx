@@ -494,29 +494,11 @@ describe('a lesson other than Basics', () => {
     expect(goal).toHaveTextContent('01✓');
   });
 
-  it('shows only the target, in a full-width row, when the goal has an `after` picture', () => {
-    render(<App />);
-    act(() => startLesson(TEST_LESSON));
-    expect(within(card()).getAllByTestId('tutorial-goal-picture')).toHaveLength(1);
-    expect(within(card()).queryByTestId('tutorial-goal-wide')).toBeNull();
-    expect(within(card()).getByTestId('tutorial-goal-picture')).toHaveAccessibleName(
-      TEST_LESSON.parts[0]!.goal.description,
-    );
-    act(() => endLesson());
-
-    act(() => startLesson(CONVERT_LESSON));
-    const goal = within(card()).getByTestId('tutorial-goal');
-    const goalSpec = CONVERT_LESSON.parts[0]!.goal;
-    const row = within(goal).getByTestId('tutorial-goal-wide');
-    const picture = within(row).getByTestId('tutorial-goal-picture');
-    expect(picture).toHaveAccessibleName(goalSpec.after!.description);
-    // The only picture: the NFA being converted is already on the canvas.
-    expect(within(goal).getAllByTestId('tutorial-goal-picture')).toHaveLength(1);
-  });
-
-  it('lifts the pointer over the top bar and frames a toolbar button tightly', () => {
+  it('lifts the pointer over the top bar and frames a toolbar button tightly', async () => {
+    const user = userEvent.setup();
     render(<App />);
     act(() => startLesson(CONVERT_LESSON));
+    await user.click(within(card()).getByTestId('tutorial-next'));
     const button = screen.getByRole('button', { name: 'Convert to DFA' });
     vi.spyOn(button, 'getBoundingClientRect').mockReturnValue(
       DOMRect.fromRect({ x: 100, y: 10, width: 120, height: 28 }),

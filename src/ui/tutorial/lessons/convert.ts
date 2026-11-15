@@ -1,4 +1,3 @@
-import { subsetConstruction } from '../../../core/subset';
 import type { Automaton } from '../../../core/model';
 import type { SubsetTrace } from '../../../core/trace';
 import { ownsTrace } from '../engine';
@@ -25,29 +24,6 @@ export const CONTAINS_01: Automaton = {
   ],
 };
 
-/** Where the picture of the DFA puts its states (by label): one flat row, wide like its box. */
-export const AFTER_SPOTS: Record<string, { x: number; y: number }> = {
-  '{q_0}': { x: 0, y: 0 },
-  '{q_0,q_1}': { x: 94, y: 0 },
-  '{q_0,q_2}': { x: 188, y: 0 },
-  '{q_0,q_1,q_2}': { x: 290, y: 0 },
-};
-
-/**
- * The DFA the subset construction builds, laid out by hand so it reads at the picture's size.
- * `lessons/minimize.ts` hand-writes the same DFA (a test keeps them equal): edits change both.
- */
-const CONTAINS_01_DFA: Automaton = (() => {
-  const dfa = subsetConstruction(CONTAINS_01).result;
-  return {
-    ...dfa,
-    states: dfa.states.map((s) => ({ ...s, ...AFTER_SPOTS[s.label] })),
-    transitions: dfa.transitions.map((t) =>
-      t.from === t.to ? { ...t, loopAngle: -Math.PI / 2 } : t,
-    ),
-  };
-})();
-
 const DOCK = '[data-testid="dock"]';
 
 /** The open trace is a subset walkthrough of an automaton the lesson owns. */
@@ -59,63 +35,75 @@ function subsetOf(ctx: TutorialContext): SubsetTrace | null {
 const needConvert = (ctx: TutorialContext): string | null =>
   subsetOf(ctx) ? null : 'First, press Convert to DFA again.';
 
-/** Where the open walkthrough first shows the DFA state «{q_0,q_1}», if one is open. */
-function pairAt(ctx: TutorialContext): number | null {
+/** Where the open walkthrough first shows the DFA state labelled `label`, if one is open. */
+function stateAt(ctx: TutorialContext, label: string): number | null {
   const t = subsetOf(ctx);
-  const pair = t?.result.states.find((s) => s.label === '{q_0,q_1}')?.id;
-  if (!t || pair === undefined) return null;
-  const at = t.steps.findIndex((s) => s.revealedStates.includes(pair));
+  const id = t?.result.states.find((s) => s.label === label)?.id;
+  if (!t || id === undefined) return null;
+  const at = t.steps.findIndex((s) => s.revealedStates.includes(id));
   return at >= 0 ? at : null;
 }
 
+const PAIR = '{q_0,q_1}';
+const ACCEPTING_PAIR = '{q_0,q_2}';
+
+/** The open walkthrough has shown the state labelled `label`. */
+const shown = (label: string) => (ctx: TutorialContext) => {
+  const at = stateAt(ctx, label);
+  return at !== null && ctx.stepIndex >= at;
+};
+
+const atEnd = (ctx: TutorialContext): boolean => {
+  const t = subsetOf(ctx);
+  return t !== null && ctx.stepIndex === t.steps.length - 1;
+};
+
 const STEPS: StepSpec[] = [
+  {
+    id: 'convert/idea',
+    idea: true,
+    instruction: () =>
+      'A DFA can’t guess. So each DFA state stands for a set of NFA states: every state the NFA could be in at that point.',
+  },
   {
     id: 'convert/open',
     instruction: () => 'Press Convert to DFA at the top.',
-    why: () =>
-      'A DFA can’t guess, so each of its states stands for every NFA state you could be in.',
-    latch: (ctx) => subsetOf(ctx) !== null,
+    // Playback pauses as «{q_0,q_1}» appears; the walkthrough may be opened during the idea step.
+    pauseAt: (ctx) => stateAt(ctx, PAIR),
+    latch: shown(PAIR),
     target: () => 'button[aria-label="Convert to DFA"]',
   },
   {
     id: 'convert/pair',
-    instruction: () => 'Watch it build the DFA: it pauses at a new state.',
-    why: () =>
-      'It follows each symbol from each set, so every set the NFA can reach becomes a state.',
-    // Playback pauses as «{q_0,q_1}» appears, which latches this step: the next one explains it.
-    pauseAt: pairAt,
-    latch: (ctx) => {
-      const at = pairAt(ctx);
-      return at !== null && ctx.stepIndex >= at;
-    },
+    instruction: () => 'Press Play.',
+    explain: (l) =>
+      `After a \`0\` the NFA could be in ${l.q0} or ${l.q1}, so the DFA gets the state «${PAIR}».`,
+    pauseAt: (ctx) => stateAt(ctx, ACCEPTING_PAIR),
+    latch: shown(ACCEPTING_PAIR),
     first: needConvert,
     target: () => DOCK,
   },
   {
-    id: 'convert/end',
-    instruction: () => 'Press Play to finish building it.',
-    why: (l) =>
-      `After a \`0\` the NFA could still be in ${l.q0} or have moved to ${l.q1}, so the DFA state is both.`,
-    latch: (ctx) => {
-      const t = subsetOf(ctx);
-      return t !== null && ctx.stepIndex === t.steps.length - 1;
-    },
+    id: 'convert/accepting',
+    instruction: () => 'Press Play to finish.',
+    explain: () => `«${ACCEPTING_PAIR}» holds «q_2», which accepts, so this DFA state accepts too.`,
+    latch: atEnd,
     first: needConvert,
     target: () => DOCK,
   },
   {
     id: 'convert/save',
     instruction: () => 'Press Save as new automaton to keep the DFA.',
-    why: () => 'Saved, it’s an automaton of its own: you can run words on it, or minimize it next.',
+    explain: () => 'Every set the NFA can reach is now a state: four in all.',
     latch: (ctx) => ctx.owned.length > 1,
     first: (ctx) => {
       if (ctx.owned.length > 1) return null;
       const t = subsetOf(ctx);
       if (!t) return needConvert(ctx);
       // Saving shows only at the last step; a reopened walkthrough plays there by itself.
-      return ctx.stepIndex < t.steps.length - 1 ? 'First, let it play to the end.' : null;
+      return ctx.stepIndex < t.steps.length - 1 ? 'First, press Play to reach the end.' : null;
     },
-    target: () => DOCK,
+    target: () => '[data-testid="save-trace-result"]',
   },
 ];
 
@@ -130,21 +118,7 @@ export const CONVERT_LESSON: Lesson & { id: 'convert' } = {
   parts: [
     {
       title: 'Convert an NFA',
-      goal: {
-        text: 'Turn this NFA into a DFA',
-        examples: [
-          { word: '1011', accepted: true },
-          { word: '110', accepted: false },
-        ],
-        automaton: CONTAINS_01,
-        description:
-          'An NFA for the words that contain 01: «q_0» loops on 0 and 1, then 0 leads to «q_1», 1 to «q_2», which loops on 0 and 1.',
-        after: {
-          automaton: CONTAINS_01_DFA,
-          description:
-            'The DFA it becomes, with four states: each is a set of NFA states, and those holding «q_2» accept.',
-        },
-      },
+      goal: { text: 'Turn this NFA into a DFA', examples: [] },
       steps: STEPS,
     },
   ],

@@ -75,14 +75,9 @@ function GoalRow({ lesson, part }: { lesson: Lesson; part: number }): React.JSX.
       className="av-tutorial-goal"
       data-testid="tutorial-goal"
       data-part={part}
-      data-wide-picture={goal.after ? '' : undefined}
-      data-no-picture={!goal.after && !goal.automaton ? '' : undefined}
+      data-no-picture={!goal.automaton ? '' : undefined}
     >
-      {goal.after ? (
-        <div className="av-tutorial-goal-wide" data-testid="tutorial-goal-wide">
-          <GoalPicture automaton={goal.after.automaton} description={goal.after.description} />
-        </div>
-      ) : goal.automaton ? (
+      {goal.automaton ? (
         <GoalPicture automaton={goal.automaton} description={goal.description ?? ''} />
       ) : null}
       <div className="av-tutorial-goal-body">

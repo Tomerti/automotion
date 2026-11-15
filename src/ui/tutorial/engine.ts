@@ -41,16 +41,13 @@ function onOwned(ctx: TutorialContext): boolean {
 /**
  * What a part builds, shown at the top of the card for the whole part so the steps have a point:
  * a few words (same markup as the steps), words it accepts and rejects, and a picture of the
- * finished automaton, with `description` as the picture's text alternative. `after`: the picture
- * shown instead of `automaton`, in a wide row of its own: for a part that turns the automaton on
- * the canvas into another one, which is the target to show.
+ * finished automaton, with `description` as the picture's text alternative.
  */
 export interface Goal {
   text: string;
   examples: { word: string; accepted: boolean }[];
   automaton?: Automaton;
   description?: string;
-  after?: { automaton: Automaton; description: string };
 }
 
 /**
