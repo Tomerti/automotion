@@ -188,14 +188,6 @@ export function ControlsDialog({
           <h2>Controls</h2>
           <button
             type="button"
-            className="av-guide-tutorial"
-            data-focus-stop
-            onClick={() => setTab(LESSONS_TAB)}
-          >
-            Lessons
-          </button>
-          <button
-            type="button"
             className="av-icon-button"
             aria-label="Close controls"
             title="Close (Esc)"

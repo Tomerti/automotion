@@ -66,9 +66,6 @@ export const SHARE_LESSON: Lesson & { id: 'share' } = {
       goal: {
         text: 'Share your automaton',
         examples: [],
-        automaton: EVEN_ZEROS,
-        description:
-          'A DFA for an even number of zeros: «even» (start, accepting) and «odd», a 0 switching between them.',
       },
       steps: STEPS,
     },

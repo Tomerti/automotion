@@ -42,8 +42,6 @@ const CONTAINS_01_DFA: Automaton = {
   })),
 };
 
-const DOCK = '[data-testid="dock"]';
-
 /** The open trace is a minimize walkthrough of an automaton the lesson owns. */
 function minimizeOf(ctx: TutorialContext): MinimizeTrace | null {
   const t = ctx.trace;
@@ -84,7 +82,6 @@ const STEPS: StepSpec[] = [
       return at !== null && ctx.stepIndex >= at;
     },
     first: needMinimize,
-    target: () => DOCK,
   },
   {
     id: 'minimize/split',
@@ -95,7 +92,6 @@ const STEPS: StepSpec[] = [
       return t !== null && ctx.stepIndex === t.steps.length - 1;
     },
     first: needMinimize,
-    target: () => DOCK,
   },
   {
     id: 'minimize/save',

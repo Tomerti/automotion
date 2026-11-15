@@ -914,11 +914,6 @@ input.av-switcher-input {
   }
 }
 
-/* The tutorial button sits beside the close button, pushed to the right with it. */
-.av-guide-tutorial {
-  margin-left: auto;
-  margin-right: 6px;
-}
 /* The Lessons tab: each lesson a row that is a button, laid out like the guide's rows. */
 .av-lessons-note {
   margin: 4px 2px 8px;

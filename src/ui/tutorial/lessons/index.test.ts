@@ -20,10 +20,11 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
     for (const s of lessonSteps(lesson)) {
       expect(s.instruction(ctx).length, s.id).toBeLessThanOrEqual(s.idea ? 240 : 100);
       expect(s.why(ctx)?.length ?? 0, s.id).toBeLessThanOrEqual(whyCap);
+      expect(s.explain?.(ctx)?.length ?? 0, s.id).toBeLessThanOrEqual(140);
     }
   });
 
-  it('follows a step that pauses playback with one that says to press Play', () => {
+  it('follows a step that pauses playback with one whose instruction says what to press', () => {
     const steps = lessonSteps(lesson);
     steps.forEach((s, i) => {
       if (s.pauseAt) expect(steps[i + 1]?.instruction(ctx), s.id).toMatch(/^Press /);
@@ -32,6 +33,35 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
 
   it('has at most six counted steps, unless it is Basics', () => {
     if (id !== 'basics') expect(countedSteps(lesson)).toBeLessThanOrEqual(6);
+  });
+
+  it('opens every lesson but Basics and Share with an idea step, and no other step is one', () => {
+    const steps = lessonSteps(lesson);
+    const opens = id !== 'basics' && id !== 'share';
+    steps.forEach((s, i) => {
+      expect(Boolean(s.idea), s.id).toBe(opens && i === 0);
+    });
+  });
+
+  it('gives idea steps no why line and no target', () => {
+    for (const s of lessonSteps(lesson).filter((x) => x.idea)) {
+      expect(s.why(ctx), s.id).toBeNull();
+      expect(s.target(ctx), s.id).toBeNull();
+    }
+  });
+
+  it('shows no goal picture outside Basics', () => {
+    if (id === 'basics') return;
+    for (const part of lesson.parts) expect(part.goal.automaton).toBeUndefined();
+  });
+
+  it('points at nothing on the word box or the dock outside Basics', () => {
+    if (id === 'basics') return;
+    for (const s of lessonSteps(lesson)) {
+      const t = s.target(ctx) ?? '';
+      expect(t, s.id).not.toContain('Word');
+      expect(t, s.id).not.toContain('data-testid="dock"');
+    }
   });
 
   it('shows goal examples its goal automaton agrees with', () => {
@@ -43,4 +73,15 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
       }
     }
   });
+});
+
+it('lists the lessons in order', () => {
+  expect(LESSONS.map((l) => l.id)).toEqual([
+    'basics',
+    'nfa',
+    'epsilon',
+    'convert',
+    'minimize',
+    'share',
+  ]);
 });

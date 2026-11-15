@@ -3,7 +3,7 @@ import type { SubsetTrace } from '../../../core/trace';
 import { ownsTrace } from '../engine';
 import type { Lesson, StepSpec, TutorialContext } from '../engine';
 
-/** NFA for the words that contain 01: the lesson opens on it, and the minimize lesson's DFA comes from it. */
+/** NFA for the words that contain 01: the lesson opens on it, and the minimize lesson's DFA is checked against its subset construction. */
 export const CONTAINS_01: Automaton = {
   id: 'convert-lesson',
   name: 'Contains 01',
@@ -23,8 +23,6 @@ export const CONTAINS_01: Automaton = {
     { id: 'q_2->q_2', from: 'q_2', to: 'q_2', symbols: ['0', '1'], loopAngle: -Math.PI / 2 },
   ],
 };
-
-const DOCK = '[data-testid="dock"]';
 
 /** The open trace is a subset walkthrough of an automaton the lesson owns. */
 function subsetOf(ctx: TutorialContext): SubsetTrace | null {
@@ -81,7 +79,6 @@ const STEPS: StepSpec[] = [
     pauseAt: (ctx) => stateAt(ctx, ACCEPTING_PAIR),
     latch: shown(ACCEPTING_PAIR),
     first: needConvert,
-    target: () => DOCK,
   },
   {
     id: 'convert/accepting',
@@ -89,7 +86,6 @@ const STEPS: StepSpec[] = [
     explain: () => `«${ACCEPTING_PAIR}» holds «q_2», which accepts, so this DFA state accepts too.`,
     latch: atEnd,
     first: needConvert,
-    target: () => DOCK,
   },
   {
     id: 'convert/save',

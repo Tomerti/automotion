@@ -85,9 +85,8 @@ describe('Controls popup', () => {
     const tab = (name: string) => within(d).getByRole('tab', { name });
     expect(d).toHaveFocus();
     await user.tab();
-    expect(within(d).getByRole('button', { name: 'Lessons' })).toHaveFocus();
-    await user.tab();
     expect(within(d).getByRole('button', { name: 'Close controls' })).toHaveFocus();
+    expect(within(d).queryByRole('button', { name: 'Lessons' })).toBeNull();
     await user.tab();
     expect(tab('Build')).toHaveFocus();
     await user.keyboard('{ArrowRight}');
@@ -95,8 +94,6 @@ describe('Controls popup', () => {
     expect(tab('Arrange')).toHaveAttribute('aria-selected', 'true');
     await user.keyboard('{ArrowLeft}{ArrowLeft}');
     expect(tab('Lessons')).toHaveAttribute('aria-selected', 'true');
-    await user.tab();
-    expect(within(d).getByRole('button', { name: 'Lessons' })).toHaveFocus();
   });
 
   it('closes with Escape, the close button and the backdrop', async () => {
@@ -138,11 +135,11 @@ describe('Controls popup', () => {
     expect(dialog()).toBeNull();
   });
 
-  it("the header's Lessons button opens the Lessons tab, a row starts its lesson", async () => {
+  it('the Lessons tab lists the lessons, a row starts its lesson', async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Controls' }));
-    await user.click(within(dialog()!).getByRole('button', { name: 'Lessons' }));
+    await user.click(within(dialog()!).getByRole('tab', { name: 'Lessons' }));
     expect(within(dialog()!).getByRole('tab', { name: 'Lessons' })).toHaveAttribute(
       'aria-selected',
       'true',
@@ -155,7 +152,7 @@ describe('Controls popup', () => {
     expect(dialog()).toBeNull();
     expect(screen.getByTestId('tutorial-card')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Controls' }));
-    await user.click(within(dialog()!).getByRole('button', { name: 'Lessons' }));
+    await user.click(within(dialog()!).getByRole('tab', { name: 'Lessons' }));
     expect(within(dialog()!).getByTestId('lesson-basics')).toHaveTextContent('Restart');
     act(() => endLesson());
   });

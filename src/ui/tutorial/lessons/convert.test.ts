@@ -148,10 +148,10 @@ describe('the Convert NFA → DFA lesson', () => {
     expect(advance(L, 0, idea, ctx(other, 0)).current).toBe(1);
   });
 
-  it('points at the Convert button, the dock, then the save button', () => {
+  it('points at the Convert button, nothing while playing, then the save button', () => {
     expect(steps[0]!.target(ctx(null))).toBeNull();
     expect(steps[1]!.target(ctx(null))).toBe('button[aria-label="Convert to DFA"]');
-    for (const i of [2, 3]) expect(steps[i]!.target(ctx(null))).toBe('[data-testid="dock"]');
+    for (const i of [2, 3]) expect(steps[i]!.target(ctx(null))).toBeNull();
     expect(steps[4]!.target(ctx(null))).toBe('[data-testid="save-trace-result"]');
   });
 
