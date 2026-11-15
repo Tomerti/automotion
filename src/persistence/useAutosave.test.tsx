@@ -19,9 +19,7 @@ afterEach(() => {
 
 const add = (name: string): void =>
   act(() =>
-    appStore
-      .getState()
-      .addAutomaton(fixture({ kind: 'DFA', alphabet: '', name, states: ['q0'] })),
+    appStore.getState().addAutomaton(fixture({ kind: 'DFA', alphabet: '', name, states: ['q0'] })),
   );
 
 describe('useAutosave', () => {

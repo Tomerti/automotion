@@ -23,11 +23,11 @@ https://tomerti.github.io/automotion/.
 - `npm run typecheck`, `npm run lint`, `npm run build`
 - `npm run e2e`: Playwright (Chromium) against a production build served by `vite preview` on port 4173.
   First time: `npx playwright install chromium`. One spec: `npx playwright test e2e/convert.spec.ts`.
-- CI (`.github/workflows/ci.yml`) runs typecheck, lint, unit tests and e2e on every push/PR, then
+- CI (`.github/workflows/ci.yml`) runs typecheck, lint, the Prettier check, unit tests and e2e on every push/PR, then
   compiles the LaTeX that e2e `latex-samples.spec.ts` exported (`LATEX_SAMPLES_DIR`) with pdflatex
   (job `latex`; there is no TeX locally), and deploys to GitHub Pages from `master` only after all pass.
-- Don't run `npm run format` (`prettier --write .`) on this Windows checkout: it rewrites line endings
-  repo-wide. Format only the files you touch.
+- `npm run format:check` (`prettier --check .`) runs in CI; `npm run format` fixes. `.gitattributes` pins LF
+  line endings (`eol=lf`), so a Windows checkout with `core.autocrlf` still checks clean.
 
 ## Architecture
 
