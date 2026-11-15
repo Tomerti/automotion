@@ -30,6 +30,7 @@ Nothing in progress: pick the next task from the list below.
 
 - [x] A minimized automaton names each merged state by its block (A, B, …, as in the walkthrough's legend and explanations; `resultLabels` in `core/minimize.ts`) instead of its joined member labels, which spilled out of the circle over the arrows after a subset construction (`{{q_0,q_2},{q_0,q_1,q_2}}`). Both the done step and Save as new automaton use these names; the legend says what each block merged. States that weren't merged keep their name, unless one reads as a block name, then every state takes its block's name
 - [x] Block names go on past Z as AA, AB, …, like spreadsheet columns (`blockName`); the 27th block was `[`
+- [x] A merged state remembers what it stands for (`State.mergedFrom`, the member labels; optional in the file schema, so no version bump): hovering it shows `A = {q₀, q₁, q₂}` (a native tooltip, Unicode subscripts, left out of SVG/PNG exports), on the walkthrough's done step and on the saved automaton. Kept through renames, copy and paste, share links, JSON and minimizing again; a state renamed only to dodge a clash says its old label. Export LaTeX writes `% AutoMotion merged: A = {q_0, q_1, q_2}` before the node, and import reads it back
 
 ### v1.0.0 (2026-11-14)
 

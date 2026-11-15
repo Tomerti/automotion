@@ -124,4 +124,17 @@ describe('svgToPng', () => {
     expect(Number(box?.[1])).toBeGreaterThan(0);
     expect(Number(box?.[2])).toBeGreaterThan(0);
   });
+
+  it('leaves out a minimized state’s hover note', () => {
+    const merged = {
+      ...abDfa,
+      states: abDfa.states.map((s) => ({ ...s, mergedFrom: ['p', 'r'] })),
+    };
+    const { getByTestId } = render(
+      createElement(Diagram, { automaton: merged, viewport: { x: 0, y: 0, zoom: 1 } }),
+    );
+    const svg = getByTestId('diagram') as unknown as SVGSVGElement;
+    expect(svg.querySelector('title')).not.toBeNull();
+    expect(diagramToSvgString(svg, merged)).not.toContain('<title');
+  });
 });

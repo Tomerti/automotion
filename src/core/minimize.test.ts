@@ -307,6 +307,20 @@ describe('result labels', () => {
     expect(minimize(nested).result.states.map((s) => s.label)).toEqual(['A', '{q_0}']);
   });
 
+  it('records what a merged state stands for (mergedFrom), and only there', () => {
+    const [a, q0] = minimize(nested).result.states;
+    expect(a?.mergedFrom).toEqual(['{q_0,q_2}', '{q_0,q_1,q_2}']);
+    expect(q0).not.toHaveProperty('mergedFrom');
+  });
+
+  it('keeps a state’s note when minimizing again, and gives a renamed one its old label', () => {
+    const once = minimize(redundant).result;
+    expect(minimize(once).result.states.map((s) => s.mergedFrom)).toEqual([
+      ['q1', 'q2'],
+      undefined,
+    ]);
+  });
+
   it('letters every state when a kept label would read as a block letter', () => {
     const lettered = fixture({
       kind: 'DFA',
@@ -321,7 +335,10 @@ describe('result labels', () => {
       ],
     });
     // Blocks: A = {B, C} (merged), B = {A}. Keeping "A" would clash with block A.
-    expect(minimize(lettered).result.states.map((s) => s.label)).toEqual(['A', 'B']);
+    const { states } = minimize(lettered).result;
+    expect(states.map((s) => s.label)).toEqual(['A', 'B']);
+    // The renamed one says it was A.
+    expect(states.map((s) => s.mergedFrom)).toEqual([['B', 'C'], ['A']]);
   });
 
   it('keeps every label when nothing merges', () => {

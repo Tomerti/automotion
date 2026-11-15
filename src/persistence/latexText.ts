@@ -24,6 +24,35 @@ export function metaComment(kind: string, name: string): string {
   return `% AutoMotion ${kind}: ${name.replace(/[\r\n]+/g, ' ')}`;
 }
 
+/**
+ * The comment before a minimized state's node, saying what it stands for (`mergedFrom`) in
+ * labels as typed: `% AutoMotion merged: A = {q_0, q_1, q_2}`. Read back on import.
+ */
+export const MERGED_COMMENT = /^[ \t]*%[ \t]*AutoMotion merged:[ \t]*(.*?) = \{(.*)\}[ \t]*$/gm;
+
+export function mergedComment(label: string, members: readonly string[]): string {
+  const oneLine = (s: string): string => s.replace(/[\r\n]+/g, ' ');
+  return `% AutoMotion merged: ${oneLine(label)} = {${members.map(oneLine).join(', ')}}`;
+}
+
+/** `mergedComment`'s members back: split at ", " outside braces (`{q_0,q_2}` stays whole). */
+export function splitMembers(text: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') depth = Math.max(0, depth - 1);
+    else if (ch === ',' && text[i + 1] === ' ' && depth === 0) {
+      out.push(text.slice(start, i));
+      start = i + 2;
+    }
+  }
+  out.push(text.slice(start));
+  return out.map((m) => m.trim()).filter((m) => m !== '');
+}
+
 const GREEK: Record<string, string> = {
   α: 'alpha',
   β: 'beta',

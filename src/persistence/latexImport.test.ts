@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Automaton } from '../core/model';
 import { EPSILON } from '../core/model';
 import { looksLikeLatex, nameFromFile, parseLatex } from './latexImport';
+import { splitMembers } from './latexText';
 
 function one(text: string, name = 'Imported'): Automaton {
   const result = parseLatex(text, name);
@@ -306,5 +307,25 @@ describe('helpers', () => {
   it('looksLikeLatex spots a tikzpicture', () => {
     expect(looksLikeLatex('x \\begin{tikzpicture} y')).toBe(true);
     expect(looksLikeLatex('{"format": "automotion"}')).toBe(false);
+  });
+
+  it('reads a merged comment into the state it names', () => {
+    const a = one(String.raw`
+\begin{tikzpicture}
+  % AutoMotion merged: A = {q_0, {q_1,q_2}}
+  \node[state, initial] (A) at (0, 0) {$A$};
+  \node[state] (b) at (2, 0) {$b$};
+  % AutoMotion merged: nobody = {x, y}
+\end{tikzpicture}`);
+    expect(byLabel(a, 'A').mergedFrom).toEqual(['q_0', '{q_1,q_2}']);
+    expect(byLabel(a, 'b').mergedFrom).toBeUndefined();
+  });
+});
+
+describe('splitMembers', () => {
+  it('splits at ", " outside braces only', () => {
+    expect(splitMembers('q_0, {q_0,q_2}, {q_1, q_3}')).toEqual(['q_0', '{q_0,q_2}', '{q_1, q_3}']);
+    expect(splitMembers('a')).toEqual(['a']);
+    expect(splitMembers('')).toEqual([]);
   });
 });

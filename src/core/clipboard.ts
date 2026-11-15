@@ -76,7 +76,13 @@ export function pasteClip(
     const label = uniqueLabel(s.label, taken);
     taken.add(label);
     // Not a start state, so no start arrow direction.
-    return { id, label, x: s.x + offset.x, y: s.y + offset.y };
+    return {
+      id,
+      label,
+      x: s.x + offset.x,
+      y: s.y + offset.y,
+      ...(s.mergedFrom ? { mergedFrom: s.mergedFrom } : {}),
+    };
   });
   const existing = new Set(a.states.map((s) => s.id));
   const transitions: Transition[] = [];

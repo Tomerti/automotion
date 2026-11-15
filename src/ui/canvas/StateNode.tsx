@@ -1,3 +1,4 @@
+import { mergedNote } from '../../core/format';
 import { labelBaselineOffset, parseLabel, SUB_SCALE, SUB_SHIFT } from '../../core/label';
 import type { State } from '../../core/model';
 import { ACCEPT_INSET, HIT_MARGIN, labelFontSize, STATE_RADIUS } from '../../core/geometry';
@@ -65,6 +66,7 @@ function LabelText(props: { label: string; fontSize: number }): React.JSX.Elemen
 
 export function StateNode(props: StateNodeProps): React.JSX.Element {
   const { state, accepting, start, active, selected, error, faded, tint, issue, editing } = props;
+  const note = mergedNote(state);
   return (
     <g
       className="av-state"
@@ -81,6 +83,8 @@ export function StateNode(props: StateNodeProps): React.JSX.Element {
       data-editing={editing ? 'true' : undefined}
       transform={`translate(${state.x} ${state.y})`}
     >
+      {/* A minimized state's block, on hover: "A = {q₀, q₁, q₂}". */}
+      {note !== null && <title className="av-state-note">{note}</title>}
       {/* Invisible hit area a little larger than the circle. */}
       <circle className="av-state-hit" r={STATE_RADIUS + HIT_MARGIN} />
       {issue && <circle className="av-state-issue" r={STATE_RADIUS + ISSUE_GAP} />}

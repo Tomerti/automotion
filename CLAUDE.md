@@ -36,7 +36,8 @@ Layers, with dependencies pointing downward only:
 - `src/core/`: pure TypeScript, no React. Must not import from `layout/`, `store/`, `persistence/` or `ui/`.
   - `model.ts`: one `Automaton` type for DFAs and NFAs (`kind` selects the rules). States carry their own
     `x`/`y` (and an optional `startAngle`, the direction their start arrow comes from; default the
-    left); at most one `Transition` per (from, to) pair, holding all its `symbols` (and an optional
+    left; and `mergedFrom`, set by minimizing: the labels of the states a merged one stands for,
+    shown on hover as `A = {q₀, q₁}` (`format.ts` `mergedNote`, a `<title>` left out of exports)); at most one `Transition` per (from, to) pair, holding all its `symbols` (and an optional
     `bend`, `loopAngle`, and `labelSide`: the side of from→to its symbols are drawn on, absent
     meaning outside the curve; `core/geometry.ts` `labelSideOf`). `EPSILON = 'ε'`
     never appears in `alphabet`; the symbol type is `Sym` (not `Symbol`). `starts` lists the start
@@ -102,7 +103,7 @@ Layers, with dependencies pointing downward only:
   or `node[below]`, `initial` or a drawn start arrow) and
   validates it with the zod schema; `latexText.ts` holds the shared conventions (`PX_PER_CM` = 50,
   label/symbol escaping both ways, the `% AutoMotion NFA: name` comment that round-trips kind and
-  name). The writer is `ui/canvas/exportLatex.ts` (it needs the canvas geometry: automatic bends and
+  name, and `% AutoMotion merged: A = {q_0, q_1}` before a node, which round-trips `mergedFrom`). The writer is `ui/canvas/exportLatex.ts` (it needs the canvas geometry: automatic bends and
   loop directions; `latexDocumentAll` is Export all, a page per automaton); `importFile.ts` picks
   LaTeX by the `.tex` extension or a `\begin{tikzpicture}`. Ctrl+V with TikZ on the system clipboard
   imports it too (`ui/shell/pasteLatex.ts`, the window's `paste` event): the canvas's Ctrl+V pastes
@@ -117,7 +118,8 @@ Layers, with dependencies pointing downward only:
   - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`);
     `traceExtraActions.tsx` adds the "Save as new automaton" button. A minimized result names each
     merged state by its block (`blockName`: A … Z, AA, …, as in `MinimizeTraceView`'s legend; see
-    `resultLabels` in `core/minimize.ts`), not by its members' labels joined. The views are movable:
+    `resultLabels` in `core/minimize.ts`), not by its members' labels joined; its `mergedFrom`
+    keeps those labels. The views are movable:
     `useFittedViewport` fits the diagram and, unless `interactive: false` (`RunTraceView`'s `ambient`: the welcome
     demo stays inert), the wheel zooms around the pointer (non-passive listener, every step compounds), dragging pans
     and `FitButton.tsx` (`trace-fit`) appears once moved. The user's view is fitted again when the states' extent or the

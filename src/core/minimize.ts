@@ -2,7 +2,7 @@ import { completeWithDeadState, removeUnreachable } from './analysis';
 import { formatSet, withSuffix } from './format';
 import { newId } from './id';
 import { startStates } from './model';
-import type { Automaton, StateId, Sym, Transition } from './model';
+import type { Automaton, State, StateId, Sym, Transition } from './model';
 import type { MinimizeStep, MinimizeTrace } from './trace';
 import { hasErrors, ignoringIncomplete, validate } from './validate';
 
@@ -165,12 +165,17 @@ function buildResult(dfa: Automaton, work: Automaton, blocks: StateId[][]): Auto
   const indexOf = (q: StateId): number => blocks.findIndex((b) => b.includes(q));
   const memberStates = blocks.map((block) => work.states.filter((s) => block.includes(s.id)));
   const labels = resultLabels(memberStates.map((members) => members.map((m) => m.label)));
-  const states = memberStates.map((members, i) => {
+  const states: State[] = memberStates.map((members, i) => {
+    const label = labels[i] as string;
+    const only = members.length === 1 ? members[0] : undefined;
+    // Renamed states say what they stand for; one that kept its name keeps its own note.
+    const mergedFrom = only?.label === label ? only.mergedFrom : members.map((m) => m.label);
     return {
       id: ids[i] as string,
-      label: labels[i] as string,
+      label,
       x: members.reduce((sum, m) => sum + m.x, 0) / members.length,
       y: members.reduce((sum, m) => sum + m.y, 0) / members.length,
+      ...(mergedFrom ? { mergedFrom } : {}),
     };
   });
 

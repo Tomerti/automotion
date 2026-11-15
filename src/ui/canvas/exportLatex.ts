@@ -3,6 +3,7 @@ import {
   BEND_APEX,
   PX_PER_CM,
   labelToTex,
+  mergedComment,
   metaComment,
   symbolsToTex,
 } from '../../persistence/latexText';
@@ -119,6 +120,9 @@ export function latexPicture(a: Automaton): string {
     if (a.accepting.includes(s.id)) opts.push('accepting');
     const x = num((s.x - minX) / PX_PER_CM);
     const y = num((maxY - s.y) / PX_PER_CM);
+    if (s.mergedFrom && s.mergedFrom.length > 0) {
+      lines.push(`  ${mergedComment(s.label, s.mergedFrom)}`);
+    }
     lines.push(
       `  \\node[${opts.join(', ')}] (${name(s.id)}) at (${x}, ${y}) {${labelToTex(s.label)}};`,
     );

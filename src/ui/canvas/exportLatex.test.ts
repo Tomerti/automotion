@@ -323,3 +323,29 @@ describe('round trip', () => {
     );
   });
 });
+
+describe('minimized states in LaTeX', () => {
+  const minimized: Automaton = {
+    ...parity,
+    states: parity.states.map((s, i) =>
+      i === 0 ? { ...s, label: 'A', mergedFrom: ['q_0', '{q_0,q_2}'] } : s,
+    ),
+  };
+
+  it('says what a merged state stands for in a comment before its node', () => {
+    const lines = latexPicture(minimized).split('\n');
+    const at = lines.findIndex((l) => l.includes('AutoMotion merged'));
+    expect(lines[at]).toBe('  % AutoMotion merged: A = {q_0, {q_0,q_2}}');
+    expect(lines[at + 1]).toMatch(/^ {2}\\node\[.*\{\$A\$\};$/);
+    expect(latexPicture(parity)).not.toContain('AutoMotion merged');
+  });
+
+  it('round-trips mergedFrom through import', () => {
+    const r = parseLatex(latexDocument(minimized), 'x');
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const back = r.automata[0]!;
+    expect(back.states.find((s) => s.label === 'A')?.mergedFrom).toEqual(['q_0', '{q_0,q_2}']);
+    expect(back.states.filter((s) => s.mergedFrom !== undefined)).toHaveLength(1);
+  });
+});

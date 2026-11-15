@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { labelBaselineOffset, labelDisplayText, parseLabel } from './label';
+import { labelBaselineOffset, labelDisplayText, labelPlainText, parseLabel } from './label';
 
 describe('parseLabel', () => {
   it('keeps plain labels as one segment', () => {
@@ -60,5 +60,18 @@ describe('labelBaselineOffset', () => {
     expect(labelBaselineOffset('Ж')).toBe(labelBaselineOffset('H'));
     expect(labelBaselineOffset('')).toBe(0);
     expect(labelBaselineOffset(' ')).toBe(0);
+  });
+});
+
+describe('labelPlainText', () => {
+  it('writes subscripts in Unicode', () => {
+    expect(labelPlainText('q_0')).toBe('q₀');
+    expect(labelPlainText('q_{12}')).toBe('q₁₂');
+    expect(labelPlainText('{q_0,q_2}')).toBe('{q₀,q₂}');
+    expect(labelPlainText('even')).toBe('even');
+  });
+  it('keeps a subscript as written when a character has no subscript form', () => {
+    expect(labelPlainText('q_b')).toBe('q_b');
+    expect(labelPlainText('q_{yz}')).toBe('q_{yz}');
   });
 });

@@ -7,6 +7,7 @@ const stateSchema = z.object({
   x: z.number(),
   y: z.number(),
   startAngle: z.number().optional(),
+  mergedFrom: z.array(z.string()).optional(),
 });
 
 const transitionSchema = z.object({

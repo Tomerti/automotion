@@ -15,6 +15,11 @@ export interface State {
    * state's center toward the arrow's tail). Absent: from the left.
    */
   startAngle?: number;
+  /**
+   * Minimization only: the labels of the states this one stands for (its block), shown on hover
+   * as `A = {q_0, q_1, q_2}`, since a merged state is named by its block. Kept when it is renamed.
+   */
+  mergedFrom?: string[];
 }
 
 export interface Transition {
