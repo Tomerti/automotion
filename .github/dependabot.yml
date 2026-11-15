@@ -1,0 +1,31 @@
+# Dependabot opens PRs for dependency updates; CI checks each one before it can merge.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # ESLint and its plugins move together, so a bump never splits them.
+      lint:
+        patterns:
+          - 'eslint'
+          - 'eslint-*'
+          - '@eslint/*'
+          - 'typescript-eslint'
+          - '@typescript-eslint/*'
+      # Everything else that shouldn't break anything: one PR a week.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    # Major versions still come as one PR each, since they may need code changes.
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns:
+          - '*'
