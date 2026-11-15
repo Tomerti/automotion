@@ -19,10 +19,13 @@ describe('finished lessons', () => {
     expect(JSON.parse(localStorage.getItem(LESSONS_DONE_KEY)!)).toEqual(['basics', 'nfa']);
   });
 
-  it.each(['nope', '{}', '[1]', 'null', '"basics"'])('reads %s as nothing', (raw) => {
-    localStorage.setItem(LESSONS_DONE_KEY, raw);
-    expect(finishedLessons()).toEqual([]);
-  });
+  it.each(['nope', '{}', '[1]', 'null', '"basics"', '{"length":1}'])(
+    'reads %s as nothing',
+    (raw) => {
+      localStorage.setItem(LESSONS_DONE_KEY, raw);
+      expect(finishedLessons()).toEqual([]);
+    },
+  );
 
   it('drops unknown ids', () => {
     localStorage.setItem(LESSONS_DONE_KEY, JSON.stringify(['basics', 'test', 'zzz', 3]));

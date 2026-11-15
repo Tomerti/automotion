@@ -202,6 +202,8 @@ export function TutorialCard(): React.JSX.Element | null {
   const owned = useTutorial((s) => s.owned);
   const current = useTutorial((s) => s.current);
   const blockedSeen = useTutorial((s) => s.blockedSeen);
+  // Subscribed (a stable Set, replaced on each report) so a reported action moves the card on.
+  useTutorial((s) => s.actions);
   // The tutorial automaton X was clicked for, so a restart never opens on the question.
   const [quitFor, setQuitFor] = useState<string | null>(null);
   const cardRef = useRef<HTMLElement>(null);

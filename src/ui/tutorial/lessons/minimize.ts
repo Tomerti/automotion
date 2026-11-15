@@ -36,6 +36,17 @@ const CONTAINS_01_DFA: Automaton = {
   })),
 };
 
+/** What minimizing gives, its loops pointing up like the others'. */
+const MINIMIZED: Automaton = (() => {
+  const result = minimize(CONTAINS_01_DFA).result;
+  return {
+    ...result,
+    transitions: result.transitions.map((t) =>
+      t.from === t.to ? { ...t, loopAngle: -Math.PI / 2 } : t,
+    ),
+  };
+})();
+
 const DOCK = '[data-testid="dock"]';
 
 /** The open trace is a minimize walkthrough of an automaton the lesson owns. */
@@ -111,7 +122,7 @@ export const MINIMIZE_LESSON: Lesson & { id: 'minimize' } = {
         description:
           'A DFA for the words that contain 01, with four states, each named by the NFA states it holds; the last two accept.',
         after: {
-          automaton: minimize(CONTAINS_01_DFA).result,
+          automaton: MINIMIZED,
           description:
             'The smallest DFA for the same words: three states, the last two merged into one.',
         },

@@ -16,7 +16,7 @@ export const LESSONS: readonly ListedLesson[] = [
 ];
 
 /** The first lesson not in `done`, or null when every one is finished. */
-export function nextLesson(done: readonly LessonId[]): ListedLesson | null {
+export function nextLesson(done: readonly string[]): ListedLesson | null {
   return LESSONS.find((l) => !done.includes(l.id)) ?? null;
 }
 

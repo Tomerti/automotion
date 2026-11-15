@@ -33,7 +33,10 @@ export const AFTER_SPOTS: Record<string, { x: number; y: number }> = {
   '{q_0,q_1,q_2}': { x: 280, y: 120 },
 };
 
-/** The DFA the subset construction builds, laid out by hand so it reads at the picture's size. */
+/**
+ * The DFA the subset construction builds, laid out by hand so it reads at the picture's size.
+ * `lessons/minimize.ts` hand-writes the same DFA (a test keeps them equal): edits change both.
+ */
 const CONTAINS_01_DFA: Automaton = (() => {
   const dfa = subsetConstruction(CONTAINS_01).result;
   return {

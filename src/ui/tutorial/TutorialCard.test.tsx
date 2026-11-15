@@ -16,7 +16,13 @@ import { LESSONS } from './lessons';
 import { CONVERT_LESSON } from './lessons/convert';
 import { LESSONS_DONE_KEY, markLessonFinished } from './lessonsDone';
 import { TEST_LESSON } from './testing/testLesson';
-import { endLesson, startLesson, tutorialContext, tutorialStore } from './tutorialStore';
+import {
+  endLesson,
+  noteLessonAction,
+  startLesson,
+  tutorialContext,
+  tutorialStore,
+} from './tutorialStore';
 
 const card = () => screen.getByTestId('tutorial-card');
 const app = () => appStore.getState();
@@ -471,6 +477,27 @@ describe('a lesson other than Basics', () => {
     expect(done.querySelector('.av-tutorial-part-done-text')).toBeNull();
   });
 
+  it('moves on when its action is reported, with no change in the app', () => {
+    const part = TEST_LESSON.parts[0]!;
+    const withAction: Lesson = {
+      ...TEST_LESSON,
+      parts: [
+        {
+          ...part,
+          steps: [
+            { id: 'act/share', instruction: () => 'Share it.', action: ['share-link'] },
+            { id: 'act/other', instruction: () => 'Edit it.', done: () => false },
+          ],
+        },
+      ],
+    };
+    render(<App />);
+    act(() => startLesson(withAction));
+    expect(card()).toHaveAttribute('data-step', '1');
+    act(() => noteLessonAction('share-link'));
+    expect(card()).toHaveAttribute('data-step', '2');
+  });
+
   it('finishes with lesson wording', () => {
     render(<FinishedCard lesson={TEST_LESSON} onClose={() => {}} />);
     const popup = screen.getByRole('dialog', { name: 'Lesson complete' });
@@ -489,6 +516,15 @@ describe('a lesson other than Basics', () => {
     expect(onClose).toHaveBeenCalled();
     expect(tutorialStore.getState().lessonId).toBe('basics');
     act(() => endLesson());
+  });
+
+  it('never offers the lesson just finished, even when storage is blocked', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('denied');
+    });
+    render(<FinishedCard lesson={BASICS} onClose={() => {}} />);
+    expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: NFAs');
+    vi.restoreAllMocks();
   });
 
   it('has no Next once every lesson is finished', () => {

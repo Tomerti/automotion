@@ -29,7 +29,7 @@ export function FinishedCard({
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalDialog(dialogRef, onClose);
   const [cheer] = useState(() => CHEERS[Math.floor(Math.random() * CHEERS.length)]!);
-  const [next] = useState(() => nextLesson(finishedLessons()));
+  const [next] = useState(() => nextLesson([...finishedLessons(), lesson.id]));
   const tutorial = lesson.noun === 'tutorial';
   const title = tutorial ? 'Tutorial complete' : 'Lesson complete';
 
