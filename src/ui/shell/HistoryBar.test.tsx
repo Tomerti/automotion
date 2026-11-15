@@ -262,6 +262,79 @@ describe('HistoryBar actions', () => {
     expect(names()).toEqual(['Parity']);
   });
 
+  it('Ctrl+click picks several entries, with the open one, and Delete deletes them all after asking', async () => {
+    const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
+    resetAppStore({ automata: [parity, blank, third], activeId: parity.id });
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<HistoryBar />);
+    await user.keyboard('{Control>}');
+    await user.click(items()[2]!);
+    await user.keyboard('{/Control}');
+    // Ctrl+click doesn't open the entry; the open one joins the selection.
+    expect(st().activeId).toBe(parity.id);
+    expect(items()[2]).toHaveFocus();
+    expect(items().map((el) => el.dataset.selected)).toEqual(['true', undefined, 'true']);
+
+    await user.keyboard('{Delete}');
+    expect(confirm).toHaveBeenCalledWith('Delete 2 automata ("Parity" and "Third")?');
+    expect(names()).toEqual(['Parity', 'Blank', 'Third']);
+    expect(items().filter((el) => el.dataset.selected)).toHaveLength(2);
+
+    confirm.mockReturnValue(true);
+    await user.keyboard('{Backspace}');
+    expect(names()).toEqual(['Blank']);
+    expect(st().activeId).toBe(blank.id);
+    expect(items()[0]!.dataset.selected).toBeUndefined();
+  });
+
+  it('Ctrl+click on a picked entry takes it out; a plain click, Escape or a click outside clears', async () => {
+    const third = { ...emptyAutomaton('Third', 'DFA'), id: 'third' };
+    resetAppStore({ automata: [parity, blank, third], activeId: parity.id });
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(
+      <>
+        <HistoryBar />
+        <button type="button">Outside</button>
+      </>,
+    );
+    const picked = (): (string | undefined)[] => items().map((el) => el.dataset.selected);
+    const ctrlClick = async (el: HTMLElement): Promise<void> => {
+      await user.keyboard('{Control>}');
+      await user.click(el);
+      await user.keyboard('{/Control}');
+    };
+
+    await ctrlClick(items()[1]!);
+    await ctrlClick(items()[2]!);
+    await ctrlClick(items()[0]!);
+    expect(picked()).toEqual([undefined, 'true', 'true']);
+    // Ctrl+double-click doesn't rename.
+    await user.keyboard('{Control>}');
+    await user.dblClick(items()[1]!);
+    await user.keyboard('{/Control}');
+    expect(screen.queryByRole('textbox', { name: 'Automaton name' })).toBeNull();
+    expect(picked()).toEqual([undefined, 'true', 'true']);
+
+    await user.keyboard('{Escape}');
+    expect(picked()).toEqual([undefined, undefined, undefined]);
+
+    await ctrlClick(items()[1]!);
+    expect(picked()).toEqual(['true', 'true', undefined]);
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    expect(picked()).toEqual([undefined, undefined, undefined]);
+
+    await ctrlClick(items()[1]!);
+    await user.click(items()[2]!);
+    expect(picked()).toEqual([undefined, undefined, undefined]);
+    expect(st().activeId).toBe(third.id);
+    // With nothing picked, Delete takes only the focused entry.
+    await user.keyboard('{Delete}');
+    expect(confirm).toHaveBeenLastCalledWith('Delete "Third"?');
+    expect(names()).toEqual(['Parity', 'Blank']);
+  });
+
   it('Export JSON downloads that automaton; Export all downloads every one', async () => {
     const user = userEvent.setup();
     URL.createObjectURL = vi.fn(() => 'blob:x');

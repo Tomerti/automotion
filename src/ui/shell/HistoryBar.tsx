@@ -20,12 +20,38 @@ const MIME = 'application/json';
 /** Room the ⋯ menu needs below its button before it opens upward instead. */
 const MENU_ROOM = 215;
 
-/** Delete `a` after confirming; the canvas is never left without an automaton. */
-function deleteWithConfirm(a: Automaton): void {
-  if (!window.confirm(`Delete "${a.name}"?`)) return;
+/** Names quoted and joined for a sentence: `"A"`, `"A" and "B"`, `"A", "B", "C" and 2 more`. */
+function quotedNames(list: readonly Automaton[], max = 4): string {
+  const shown = list.length > max ? list.slice(0, max - 1) : list;
+  const quoted = shown.map((a) => `"${a.name}"`);
+  const rest = list.length - shown.length;
+  if (rest > 0) return `${quoted.join(', ')} and ${rest} more`;
+  return quoted.length < 2
+    ? (quoted[0] ?? '')
+    : `${quoted.slice(0, -1).join(', ')} and ${quoted[quoted.length - 1]}`;
+}
+
+/**
+ * Delete `list` after one confirm; false if the user said no. The canvas is never left
+ * without an automaton.
+ */
+function deleteWithConfirm(list: readonly Automaton[]): boolean {
+  const [only] = list;
+  if (!only) return false;
+  const question =
+    list.length === 1
+      ? `Delete "${only.name}"?`
+      : `Delete ${list.length} automata (${quotedNames(list)})?`;
+  if (!window.confirm(question)) return false;
   const st = appStore.getState();
-  st.deleteAutomaton(a.id);
+  for (const a of list) st.deleteAutomaton(a.id);
   if (appStore.getState().automata.length === 0) st.addAutomaton(emptyAutomaton('Untitled', 'DFA'));
+  return true;
+}
+
+/** Ctrl+click (⌘-click) adds an entry to the multi-selection or takes it out. */
+function isPickClick(e: React.MouseEvent): boolean {
+  return e.ctrlKey || e.metaKey;
 }
 
 /** Ctrl+C (⌘C), without Shift or Alt. */
@@ -267,7 +293,7 @@ function EntryMenu(props: {
           {item('Export JSON', () => exportOne(automaton))}
           {item('Export LaTeX', () => exportLatex(automaton))}
           <div role="separator" className="av-menu-sep" />
-          {item('Delete', () => deleteWithConfirm(automaton), { danger: true })}
+          {item('Delete', () => deleteWithConfirm([automaton]), { danger: true })}
         </div>
       )}
     </div>
@@ -277,7 +303,9 @@ function EntryMenu(props: {
 /**
  * The left bar: every automaton, most recently edited first, with a picture of its diagram.
  * Clicking one opens it; Delete on it, or its ⋯ menu, deletes it after asking; the menu also
- * renames, duplicates and exports (JSON or LaTeX). Ctrl+C on one copies it, and Ctrl+V (anywhere) adds a copy. Create sits at the top, Import and Export all at the bottom.
+ * renames, duplicates and exports (JSON or LaTeX). Ctrl+click (⌘-click) picks several entries,
+ * starting from the open one, without opening them; Delete then deletes them all after one
+ * confirm, and a plain click, Escape or a click outside the list drops the selection. Ctrl+C on one copies it, and Ctrl+V (anywhere) adds a copy. Create sits at the top, Import and Export all at the bottom.
  */
 export function HistoryBar(): React.JSX.Element {
   const automata = useAppStore((s) => s.automata);
@@ -286,6 +314,32 @@ export function HistoryBar(): React.JSX.Element {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [pastingLatex, setPastingLatex] = useState(false);
+  /** The Ctrl+click multi-selection; may hold ids deleted since, so read `picked`. */
+  const [pickedIds, setPickedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const listRef = useRef<HTMLUListElement>(null);
+  const picked = automata.filter((a) => pickedIds.has(a.id));
+  const picking = picked.length > 0;
+
+  const clearPicked = (): void => setPickedIds((prev) => (prev.size === 0 ? prev : new Set()));
+
+  /** Add `id` to the selection or take it out; a new selection starts from the open automaton. */
+  const togglePicked = (id: string): void => {
+    const next = new Set(picking ? picked.map((a) => a.id) : activeId ? [activeId] : []);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setPickedIds(next);
+  };
+
+  // A click anywhere outside the list drops the selection.
+  useEffect(() => {
+    if (!picking) return;
+    const onPointerDown = (e: PointerEvent): void => {
+      if (e.target instanceof Node && listRef.current?.contains(e.target)) return;
+      setPickedIds(new Set());
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [picking]);
 
   /** Rename edits the open automaton, so open it first (never while a trace is open). */
   const startRename = (id: string): void => {
@@ -314,7 +368,7 @@ export function HistoryBar(): React.JSX.Element {
           Create
         </button>
       </div>
-      <ul className="av-history-list">
+      <ul ref={listRef} className="av-history-list" data-picking={picking ? 'true' : undefined}>
         {automata.map((a) => {
           const n = a.states.length;
           const current = a.id === activeId;
@@ -347,13 +401,21 @@ export function HistoryBar(): React.JSX.Element {
                   type="button"
                   className="av-history-item"
                   data-testid="history-item"
+                  data-selected={pickedIds.has(a.id) ? 'true' : undefined}
                   aria-current={current ? 'page' : undefined}
                   onClick={(e) => {
                     // Safari doesn't focus a clicked button; Delete needs it focused.
                     e.currentTarget.focus();
+                    if (isPickClick(e)) {
+                      togglePicked(a.id);
+                      return;
+                    }
+                    clearPicked();
                     appStore.getState().setActive(a.id);
                   }}
-                  onDoubleClick={() => startRename(a.id)}
+                  onDoubleClick={(e) => {
+                    if (!isPickClick(e)) startRename(a.id);
+                  }}
                   onKeyDown={(e) => {
                     if (isCopyKey(e)) {
                       // Handled here: the canvas would copy its selection, the toolbar a picture.
@@ -361,7 +423,11 @@ export function HistoryBar(): React.JSX.Element {
                       copyWithToast(a);
                     } else if (e.key === 'Delete' || e.key === 'Backspace') {
                       e.preventDefault();
-                      deleteWithConfirm(a);
+                      if (deleteWithConfirm(picking ? picked : [a])) clearPicked();
+                    } else if (e.key === 'Escape' && picking) {
+                      // Only drops the selection, not an open trace too.
+                      e.stopPropagation();
+                      clearPicked();
                     }
                   }}
                 >

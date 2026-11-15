@@ -102,7 +102,7 @@ const TABS: Tab[] = [
       {
         gesture: { keys: ['Delete'], on: 'selection or history entry' },
         action: 'Delete it',
-        hint: 'A history entry asks first',
+        hint: 'A history entry asks first. Ctrl+click history entries to delete several at once',
       },
       {
         gesture: { keys: ['Ctrl', 'C'], on: 'selection or history entry' },

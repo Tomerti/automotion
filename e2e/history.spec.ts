@@ -136,3 +136,31 @@ test('the Delete key deletes a clicked history entry after asking', async ({ pag
   await expect(entries).toHaveCount(1);
   await expect(entries.first()).toContainText('Untitled 2');
 });
+
+test('Ctrl+click picks several history entries and Delete deletes them together', async ({
+  page,
+}) => {
+  await openApp(page, { clear: true });
+  const bar = page.getByRole('navigation', { name: 'History' });
+  const entries = bar.getByTestId('history-item');
+  await bar.getByRole('button', { name: 'Create' }).click();
+  await bar.getByRole('button', { name: 'Create' }).click();
+  await expect(entries).toHaveCount(3);
+
+  // The open automaton ("Untitled 3", on top) starts the selection.
+  await entries.nth(2).click({ modifiers: ['ControlOrMeta'] });
+  await expect(entries.nth(0)).toHaveAttribute('data-selected', 'true');
+  await expect(entries.nth(1)).not.toHaveAttribute('data-selected');
+  await expect(entries.nth(2)).toHaveAttribute('data-selected', 'true');
+  await expect(page.locator('.av-switcher-name')).toHaveText('Untitled 3');
+
+  page.once('dialog', (d) => {
+    expect(d.message()).toBe('Delete 2 automata ("Untitled 3" and "Untitled")?');
+    void d.accept();
+  });
+  await page.keyboard.press('Delete');
+  await expect(entries).toHaveCount(1);
+  await expect(entries.first()).toContainText('Untitled 2');
+  await expect(entries.first()).not.toHaveAttribute('data-selected');
+  await expect(entries.first()).toHaveAttribute('aria-current', 'page');
+});

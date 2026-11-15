@@ -26,6 +26,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Delete several automata (2026-11-15)
+
+- [x] Ctrl+click (⌘-click) in the history bar picks several entries without opening them, starting from the open automaton as in a file explorer (Ctrl+click a picked one to take it out); picked entries are tinted orange. Delete or Backspace then deletes them all after one confirm (`Delete 3 automata ("A", "B" and "C")?`). A plain click, Escape or a click outside the list drops the selection; Ctrl+double-click doesn't rename. The Controls guide's Delete row says so
+
 ### Minimize labels (2026-11-15)
 
 - [x] A minimized automaton names each merged state by its block (A, B, …, as in the walkthrough's legend and explanations; `resultLabels` in `core/minimize.ts`) instead of its joined member labels, which spilled out of the circle over the arrows after a subset construction (`{{q_0,q_2},{q_0,q_1,q_2}}`). Both the done step and Save as new automaton use these names; the legend says what each block merged. States that weren't merged keep their name, unless one reads as a block name, then every state takes its block's name
