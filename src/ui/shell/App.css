@@ -45,11 +45,17 @@ a.av-icon-button {
   justify-content: center;
   border: 1px solid transparent;
 }
-.av-icon-button:hover:not(:disabled),
 .av-icon-button[aria-expanded='true'] {
   color: var(--av-ink);
   background: var(--av-hover);
   border-color: transparent;
+}
+@media (hover: hover) {
+  .av-icon-button:hover:not(:disabled) {
+    color: var(--av-ink);
+    background: var(--av-hover);
+    border-color: transparent;
+  }
 }
 .av-icon-button.av-has-text {
   padding: 0 10px 0 8px;
@@ -96,10 +102,15 @@ a.av-icon-button {
   border: 0;
   border-radius: 6px;
 }
-.av-menu [role^='menuitem']:hover:not(:disabled),
 .av-menu [role^='menuitem']:focus-visible {
   background: var(--av-hover);
   outline: none;
+}
+@media (hover: hover) {
+  .av-menu [role^='menuitem']:hover:not(:disabled) {
+    background: var(--av-hover);
+    outline: none;
+  }
 }
 .av-menu-sep {
   height: 1px;
@@ -222,9 +233,11 @@ a.av-icon-button {
   border-color: transparent;
   cursor: text;
 }
-.av-switcher-name:hover:not(:disabled) {
-  background: var(--av-hover);
-  border-color: transparent;
+@media (hover: hover) {
+  .av-switcher-name:hover:not(:disabled) {
+    background: var(--av-hover);
+    border-color: transparent;
+  }
 }
 .av-switcher-name:disabled {
   cursor: default;
@@ -263,9 +276,11 @@ input.av-switcher-input {
   background: transparent;
   border-color: var(--av-rule-strong);
 }
-.av-chip:hover:not(:disabled) {
-  background: color-mix(in srgb, currentColor 16%, transparent);
-  border-color: currentColor;
+@media (hover: hover) {
+  .av-chip:hover:not(:disabled) {
+    background: color-mix(in srgb, currentColor 16%, transparent);
+    border-color: currentColor;
+  }
 }
 .av-chip .av-icon {
   width: 15px;
@@ -309,8 +324,10 @@ input.av-switcher-input {
 .av-issues button[data-severity='error']::before {
   background: var(--av-red);
 }
-.av-issues button:hover {
-  background: var(--av-hover);
+@media (hover: hover) {
+  .av-issues button:hover {
+    background: var(--av-hover);
+  }
 }
 .av-issues-empty {
   margin: 0;
@@ -414,25 +431,39 @@ input.av-switcher-input {
   border-color: transparent;
   border-radius: 10px;
 }
-.av-history-item:hover:not(:disabled) {
-  border-color: transparent;
+@media (hover: hover) {
+  .av-history-item:hover:not(:disabled) {
+    border-color: transparent;
+  }
 }
-.av-history-item[aria-current='page'],
-.av-history-item[aria-current='page']:hover {
+.av-history-item[aria-current='page'] {
   background: var(--av-surface-raised);
   /* The selection's orange, like a selected state on the canvas. */
   border-color: var(--av-selected);
   box-shadow: 0 1px 2px var(--av-shadow);
 }
+@media (hover: hover) {
+  .av-history-item[aria-current='page']:hover {
+    background: var(--av-surface-raised);
+    border-color: var(--av-selected);
+    box-shadow: 0 1px 2px var(--av-shadow);
+  }
+}
 /* Ctrl+click picks several entries (to delete them): each gets the selection's orange, tinted. */
 .av-history-list[data-picking] .av-history-item[aria-current='page']:not([data-selected]) {
   border-color: transparent;
 }
-.av-history-item[data-selected],
-.av-history-item[data-selected]:hover {
+.av-history-item[data-selected] {
   background: color-mix(in srgb, var(--av-selected) 10%, var(--av-surface-raised));
   border-color: var(--av-selected);
   box-shadow: 0 1px 2px var(--av-shadow);
+}
+@media (hover: hover) {
+  .av-history-item[data-selected]:hover {
+    background: color-mix(in srgb, var(--av-selected) 10%, var(--av-surface-raised));
+    border-color: var(--av-selected);
+    box-shadow: 0 1px 2px var(--av-shadow);
+  }
 }
 /* The picture leads visually; the name stays first in the DOM, so it leads the button's name. */
 .av-history-thumb {
@@ -480,11 +511,15 @@ input.av-switcher-input {
   min-height: 26px;
   padding: 0 4px;
 }
-.av-history-entry:hover .av-history-more,
 .av-history-entry:focus-within .av-history-more,
 .av-history-more[data-open='true'],
 .av-history-item[aria-current='page'] + .av-history-more {
   opacity: 1;
+}
+@media (hover: hover) {
+  .av-history-entry:hover .av-history-more {
+    opacity: 1;
+  }
 }
 @media (hover: none) {
   .av-history-more {
@@ -688,14 +723,21 @@ input.av-switcher-input {
   border: 0;
   border-radius: 999px;
 }
-.av-kindpill button:hover:not(:disabled) {
-  color: var(--av-ink);
-  background: transparent;
+@media (hover: hover) {
+  .av-kindpill button:hover:not(:disabled) {
+    color: var(--av-ink);
+    background: transparent;
+  }
 }
-.av-kindpill button[aria-pressed='true'],
-.av-kindpill button[aria-pressed='true']:hover:not(:disabled) {
+.av-kindpill button[aria-pressed='true'] {
   color: var(--av-ink);
   background: var(--av-hover);
+}
+@media (hover: hover) {
+  .av-kindpill button[aria-pressed='true']:hover:not(:disabled) {
+    color: var(--av-ink);
+    background: var(--av-hover);
+  }
 }
 
 /* The welcome's System / Light / Dark switch, a smaller DFA/NFA pill with icons. */
@@ -723,14 +765,21 @@ input.av-switcher-input {
   width: 15px;
   height: 15px;
 }
-.av-theme-switch button:hover:not(:disabled) {
-  color: var(--av-ink);
-  background: transparent;
+@media (hover: hover) {
+  .av-theme-switch button:hover:not(:disabled) {
+    color: var(--av-ink);
+    background: transparent;
+  }
 }
-.av-theme-switch button[aria-pressed='true'],
-.av-theme-switch button[aria-pressed='true']:hover:not(:disabled) {
+.av-theme-switch button[aria-pressed='true'] {
   color: var(--av-ink);
   background: var(--av-hover);
+}
+@media (hover: hover) {
+  .av-theme-switch button[aria-pressed='true']:hover:not(:disabled) {
+    color: var(--av-ink);
+    background: var(--av-hover);
+  }
 }
 
 /* Empty state (no automaton) */
@@ -848,15 +897,20 @@ input.av-switcher-input {
   justify-content: flex-end;
   margin-top: 18px;
 }
-.av-danger,
-button.av-danger:hover:not(:disabled) {
+.av-danger {
   font-weight: 600;
   color: var(--av-on-accent);
   background: var(--av-red);
   border-color: var(--av-red);
 }
-button.av-danger:hover:not(:disabled) {
-  filter: brightness(1.08);
+@media (hover: hover) {
+  button.av-danger:hover:not(:disabled) {
+    font-weight: 600;
+    color: var(--av-on-accent);
+    background: var(--av-red);
+    border-color: var(--av-red);
+    filter: brightness(1.08);
+  }
 }
 
 /* The tutorial button sits beside the close button, pushed to the right with it. */
@@ -887,9 +941,11 @@ button.av-danger:hover:not(:disabled) {
   border: 0;
   border-radius: 7px;
 }
-.av-guide-tabs [role='tab']:hover:not(:disabled) {
-  color: var(--av-ink);
-  background: transparent;
+@media (hover: hover) {
+  .av-guide-tabs [role='tab']:hover:not(:disabled) {
+    color: var(--av-ink);
+    background: transparent;
+  }
 }
 .av-guide-tabs [role='tab'][aria-selected='true'] {
   font-weight: 600;
@@ -1117,10 +1173,12 @@ kbd {
 }
 
 @media (max-width: 480px) {
-  /* The phone's player is taller than the toast's spot above the dock: show toasts under the
-     top bar instead of over the player's caption. */
+  /* The phone's player is taller than the toast's spot above the dock: show toasts at the top
+     instead, under the DFA/NFA switch (its 12px gap and 37px height, then 8px), measured from the
+     top of .av-body, so a top bar wrapped to two rows doesn't matter. */
   .av-toasts {
-    top: 88px;
+    position: absolute;
+    top: 57px;
     bottom: auto;
   }
 }

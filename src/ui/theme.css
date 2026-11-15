@@ -191,9 +191,11 @@ button {
     border-color 120ms,
     color 120ms;
 }
-button:hover:not(:disabled) {
-  background: var(--av-hover);
-  border-color: var(--av-ink-muted);
+@media (hover: hover) {
+  button:hover:not(:disabled) {
+    background: var(--av-hover);
+    border-color: var(--av-ink-muted);
+  }
 }
 button:active:not(:disabled) {
   transform: translateY(1px);
@@ -202,34 +204,50 @@ button:disabled {
   cursor: default;
   opacity: 0.42;
 }
-button[aria-pressed='true'],
-button[aria-pressed='true']:hover:not(:disabled) {
+button[aria-pressed='true'] {
   color: var(--av-surface-raised);
   background: var(--av-ink);
   border-color: var(--av-ink);
 }
+@media (hover: hover) {
+  button[aria-pressed='true']:hover:not(:disabled) {
+    color: var(--av-surface-raised);
+    background: var(--av-ink);
+    border-color: var(--av-ink);
+  }
+}
 
-.av-primary,
-button.av-primary:hover:not(:disabled) {
+.av-primary {
   color: var(--av-on-accent);
   background: var(--av-accent);
   border-color: var(--av-accent);
 }
-button.av-primary:hover:not(:disabled) {
-  filter: brightness(1.08);
+@media (hover: hover) {
+  button.av-primary:hover:not(:disabled) {
+    color: var(--av-on-accent);
+    background: var(--av-accent);
+    border-color: var(--av-accent);
+    filter: brightness(1.08);
+  }
 }
 
 /* A pill in the run's own colour: Run, and the buttons that start and finish the tutorial. */
-.av-go,
-button.av-go:hover:not(:disabled) {
+.av-go {
   font-weight: 600;
   color: var(--av-on-run);
   background: var(--av-run);
   border-color: var(--av-run);
   border-radius: 999px;
 }
-button.av-go:hover:not(:disabled) {
-  filter: brightness(1.08);
+@media (hover: hover) {
+  button.av-go:hover:not(:disabled) {
+    font-weight: 600;
+    color: var(--av-on-run);
+    background: var(--av-run);
+    border-color: var(--av-run);
+    border-radius: 999px;
+    filter: brightness(1.08);
+  }
 }
 
 input:not([type]),

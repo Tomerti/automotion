@@ -84,9 +84,13 @@
   border: none;
   border-radius: 5px;
 }
-.av-menu button:hover:not(:disabled),
 .av-menu button:focus-visible {
   background: var(--av-hover);
+}
+@media (hover: hover) {
+  .av-menu button:hover:not(:disabled) {
+    background: var(--av-hover);
+  }
 }
 .av-menu button:focus-visible {
   outline: 2px solid var(--av-accent);

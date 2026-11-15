@@ -149,8 +149,10 @@ Layers, with dependencies pointing downward only:
     history entry's ⋯ menu is `copyLink.ts`; `useSharedLink.ts` opens a `#a=` share link on load and on `hashchange`:
     opens the saved copy (`sameAutomaton`) or adds the automaton (replacing a lone blank automaton, a fresh visitor's
     "Untitled"), fits it, toasts and clears the hash, and the welcome stays away on such a visit; `touch.ts`
-    `isTouchOnly()`: coarse main pointer and no fine one, a plain media query check (not reactive), makes the welcome the
-    phone variant; on phones (≤ 480 px, `App.css`) toasts sit under the top bar). Thumbnails are their own
+    `isTouchOnly()`: coarse main pointer and no fine one (`useTouchOnly()` follows the media queries, so attaching a mouse
+    changes the welcome), makes the welcome the phone variant; on phones (≤ 480 px, `App.css`) toasts sit under the
+    DFA/NFA switch, placed from `.av-body`; hover styles are all inside `@media (hover: hover)`, so taps don't leave them
+    stuck). Thumbnails are their own
     small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
   - `tutorial/`: the interactive tutorial. `steps.ts` is a pure step table (each step's `done`,

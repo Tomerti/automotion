@@ -188,3 +188,26 @@ it('with a fine pointer too (a laptop with a touch screen) keeps the tutorial of
     vi.unstubAllGlobals();
   }
 });
+
+it('switches to the tutorial offer when a mouse or keyboard is attached later', () => {
+  let fine = false;
+  const listeners = new Set<() => void>();
+  vi.stubGlobal('matchMedia', (q: string) => ({
+    get matches() {
+      return q.includes('any-pointer') ? fine : q.includes('pointer: coarse');
+    },
+    media: q,
+    addEventListener: (_: string, l: () => void) => listeners.add(l),
+    removeEventListener: (_: string, l: () => void) => listeners.delete(l),
+  }));
+  try {
+    render(<App />);
+    expect(within(welcome()!).getByRole('button', { name: 'Got it' })).toBeInTheDocument();
+    fine = true;
+    act(() => listeners.forEach((l) => l()));
+    expect(within(welcome()!).getByRole('button', { name: 'Start tutorial' })).toBeInTheDocument();
+    expect(within(welcome()!).queryByRole('note')).toBeNull();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
