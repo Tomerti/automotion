@@ -29,8 +29,9 @@ export function FinishedCard({
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalDialog(dialogRef, onClose);
   const [cheer] = useState(() => CHEERS[Math.floor(Math.random() * CHEERS.length)]!);
-  const [next] = useState(() => nextLesson([...finishedLessons(), lesson.id]));
   const tutorial = lesson.noun === 'tutorial';
+  // After the tutorial the lessons are pointed to, not started: they're there when wanted.
+  const [next] = useState(() => (tutorial ? null : nextLesson([...finishedLessons(), lesson.id])));
   const title = tutorial ? 'Tutorial complete' : 'Lesson complete';
 
   return (
@@ -82,6 +83,12 @@ export function FinishedCard({
             ? 'Your Tutorial automaton stays in the history.'
             : 'Its automata stay in your history.'}
         </p>
+        {tutorial && (
+          <p className="av-welcome-note av-finished-note" data-testid="more-lessons">
+            More lessons, on NFAs, converting and minimizing, are in the Lessons tab: press{' '}
+            <kbd>?</kbd>.
+          </p>
+        )}
         <div className="av-welcome-actions">
           {next && (
             <button

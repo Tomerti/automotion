@@ -53,10 +53,28 @@ describe('the Share and export lesson', () => {
     },
   );
 
-  it.each(['copy-latex', 'export-latex'] as const)('%s completes the LaTeX step', (a) => {
+  it('takes Copy LaTeX for the LaTeX step, and asks for that one only', () => {
     const l = linked();
     const b = advance(L, l.progress, l.latched, ctx('share-link', 'copy-image'));
-    expect(advance(L, b.progress, b.latched, ctx('share-link', 'copy-image', a)).current).toBe(3);
+    const latex = ctx('share-link', 'copy-image', 'copy-latex');
+    expect(advance(L, b.progress, b.latched, latex).current).toBe(3);
+    const exported = ctx('share-link', 'copy-image', 'export-latex');
+    expect(advance(L, b.progress, b.latched, exported).current).toBe(2);
+    expect(steps[2]!.instruction(ctx())).toBe(
+      'Open Share, copy or export again and choose Copy LaTeX.',
+    );
+  });
+
+  it('frames the menu only on the first step', () => {
+    expect(steps[0]!.target(ctx())).toBe('button[aria-label="Share, copy or export"]');
+    expect(steps[1]!.target(ctx())).toBeNull();
+    expect(steps[2]!.target(ctx())).toBeNull();
+  });
+
+  it('says what the copied picture is for once it is copied', () => {
+    expect(steps[2]!.explain(ctx('share-link', 'copy-image'))).toBe(
+      'Copied: paste it into notes, slides or a chat and you get a picture of the automaton.',
+    );
   });
 
   it('does not take the image for the link', () => {

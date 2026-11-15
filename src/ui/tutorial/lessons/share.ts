@@ -41,14 +41,14 @@ const STEPS: StepSpec[] = [
     // With states selected, Ctrl+C copies the states and nothing counts.
     first: (ctx) =>
       ctx.selected.length > 0 ? 'First, click the empty canvas to clear the selection.' : null,
-    target: () => MENU,
+    // No frame from here on: the menu was found on the first step.
   },
   {
     id: 'share/latex',
-    instruction: () => 'Choose Copy LaTeX or Export LaTeX from the same menu.',
-    why: () => 'It is TikZ, laid out as on the canvas, to paste into a LaTeX document.',
-    action: ['copy-latex', 'export-latex'],
-    target: () => MENU,
+    instruction: () => 'Open Share, copy or export again and choose Copy LaTeX.',
+    explain: () =>
+      'Copied: paste it into notes, slides or a chat and you get a picture of the automaton.',
+    action: ['copy-latex'],
   },
 ];
 
@@ -70,5 +70,6 @@ export const SHARE_LESSON: Lesson & { id: 'share' } = {
       steps: STEPS,
     },
   ],
-  closing: 'A link, a picture and TikZ: share the automaton, or paste it into your notes.',
+  closing:
+    'Copied as TikZ: paste it into a LaTeX document and it draws the automaton as on the canvas.',
 };

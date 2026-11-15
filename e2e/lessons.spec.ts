@@ -51,6 +51,17 @@ async function finish(page: Page, guide: Locator, card: Locator, id: string) {
   };
 }
 
+test('the card hides on a new canvas and comes back on the lesson’s automaton', async ({
+  page,
+}) => {
+  await openApp(page, { clear: true });
+  const { card } = await startLesson(page, 'lesson-nfa');
+  await page.getByRole('button', { name: 'Create' }).click();
+  await expect(card).toHaveCount(0);
+  await page.getByRole('navigation', { name: 'History' }).getByText('Ends in 01').click();
+  await expect(card).toBeVisible();
+});
+
 test('the NFAs lesson steps 001 by hand, each stop explained, and finishes', async ({ page }) => {
   await openApp(page, { clear: true });
   const { guide, card } = await startLesson(page, 'lesson-nfa');
@@ -224,7 +235,7 @@ test('the Minimize lesson opens paused, splits, merges, saves the DFA and finish
   await check();
 });
 
-test('the Share lesson shares a link, copies the picture, exports LaTeX and finishes', async ({
+test('the Share lesson shares a link, copies the picture, copies LaTeX and finishes', async ({
   page,
 }) => {
   await openApp(page, { clear: true });
@@ -244,11 +255,15 @@ test('the Share lesson shares a link, copies the picture, exports LaTeX and fini
   await page.getByRole('menuitem', { name: 'Share link' }).click();
   await at(2);
 
+  // The menu is found: no frame on it from here on.
+  await expect(page.getByTestId('tutorial-pointer')).toHaveCount(0);
+
   await page.keyboard.press('Control+c');
   await at(3);
+  await expect(card).toContainText('you get a picture of the automaton');
 
   await page.getByRole('button', { name: 'Share, copy or export' }).click();
-  await page.getByRole('menuitem', { name: 'Export LaTeX' }).click();
+  await page.getByRole('menuitem', { name: 'Copy LaTeX' }).click();
   await at(4);
 
   await card.getByRole('button', { name: 'Finish' }).click();

@@ -112,7 +112,9 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   (every hand-stepped, Convert and Minimize step). During an idea step the pacing step is the one
   Next would land on (`pacingStep`), so a run opened early is paced too. A step done on reaching a
   point of a run or walkthrough has `steppedBack`: stepped back (←) before that point, it shows again,
-  so the card follows the trace back. Only Basics has goal pictures and frames the word box and dock.
+  so the card follows the trace back. While another automaton is open the card hides (it comes back on
+  the lesson's own); the popup after Basics points to the Lessons tab, other lessons offer Next. Only
+  Basics has goal pictures and frames the word box and dock.
 - Lesson texts mark keys `[Shift]`, states `«even»` and words to type in backticks. `lessons/index.test.ts`
   caps them: instructions 100 chars (idea steps 240), why lines 110 (70 for Basics, so its wording
   stays as it was), `explain` 140.

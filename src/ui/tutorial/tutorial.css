@@ -313,28 +313,6 @@
   line-height: 1.4;
   color: var(--av-red);
 }
-.av-tutorial-link {
-  min-height: 0;
-  padding: 0;
-  font-weight: 600;
-  color: var(--av-accent);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  background: transparent;
-  border: 0;
-}
-@media (hover: hover) {
-  .av-tutorial-link:hover:not(:disabled) {
-    min-height: 0;
-    padding: 0;
-    font-weight: 600;
-    color: var(--av-accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    background: transparent;
-    border: 0;
-  }
-}
 
 .av-tutorial-actions {
   display: flex;

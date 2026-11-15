@@ -239,15 +239,18 @@ it('tells the canvas area how far down it reaches, so a run starts below it', ()
   expect(area.style.getPropertyValue('--av-tutorial-pad')).toBe('');
 });
 
-it('says when another automaton is open and goes back to the tutorial', async () => {
-  const user = userEvent.setup();
+it('hides while another automaton is open, and comes back on the tutorial’s', () => {
   render(<App />);
   act(() => startLesson('basics'));
-  const id = tutorialStore.getState().automatonId;
+  const id = tutorialStore.getState().automatonId!;
+  const area = document.querySelector<HTMLElement>('.av-canvas-area')!;
   act(() => app().setActive('Mine'));
-  expect(within(card()).getByText(/You’re on/)).toHaveTextContent('You’re on Mine.');
-  await user.click(within(card()).getByRole('button', { name: 'Back to Tutorial' }));
-  expect(app().activeId).toBe(id);
+  expect(screen.queryByTestId('tutorial-card')).toBeNull();
+  expect(screen.queryByTestId('tutorial-pointer')).toBeNull();
+  expect(area.style.getPropertyValue('--av-tutorial-pad')).toBe('');
+  expect(tutorialStore.getState().active).toBe(true);
+  act(() => app().setActive(id));
+  expect(card()).toBeInTheDocument();
 });
 
 it('the close button asks first; Keep going carries on', async () => {
@@ -390,8 +393,6 @@ it('announces each step from one live region that stays mounted', () => {
 
 describe('a lesson other than Basics', () => {
   const active = () => app().automata.find((a) => a.id === app().activeId)!;
-  const ownName = () =>
-    app().automata.find((a) => a.id === tutorialStore.getState().automatonId)!.name;
 
   it('uses lesson wording', async () => {
     const user = userEvent.setup();
@@ -404,8 +405,10 @@ describe('a lesson other than Basics', () => {
     // No words to show: no list.
     expect(within(goal).queryByRole('list')).toBeNull();
 
+    const own = app().activeId!;
     act(() => app().setActive('Mine'));
-    await user.click(within(card()).getByRole('button', { name: `Back to ${ownName()}` }));
+    expect(screen.queryByTestId('tutorial-card')).toBeNull();
+    act(() => app().setActive(own));
     expect(active().name).toBe('Contains 01');
 
     const trace = subsetConstruction(active());
@@ -439,13 +442,12 @@ describe('a lesson other than Basics', () => {
     expect(card().contains(document.activeElement)).toBe(false);
   });
 
-  it('hides Next while another automaton is open', () => {
+  it('hides the whole card, Next and all, while another automaton is open', () => {
     render(<App />);
     act(() => startLesson(IDEA_LESSON));
     expect(within(card()).getByTestId('tutorial-next')).toBeInTheDocument();
     act(() => app().setActive('Mine'));
-    expect(within(card()).getByText(/You’re on/)).toBeInTheDocument();
-    expect(within(card()).queryByTestId('tutorial-next')).toBeNull();
+    expect(screen.queryByTestId('tutorial-card')).toBeNull();
   });
 
   it('leads with the explanation, then the instruction', () => {
@@ -678,8 +680,18 @@ describe('a lesson other than Basics', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('denied');
     });
+    render(<FinishedCard lesson={NFA_LESSON} onClose={() => {}} />);
+    expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: Basics');
+  });
+
+  it('after the tutorial, points to the Lessons tab instead of starting one', () => {
+    localStorage.removeItem(LESSONS_DONE_KEY);
     render(<FinishedCard lesson={BASICS} onClose={() => {}} />);
-    expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: NFAs');
+    expect(screen.queryByTestId('next-lesson')).toBeNull();
+    expect(screen.getByTestId('more-lessons')).toHaveTextContent(
+      'More lessons, on NFAs, converting and minimizing, are in the Lessons tab: press ?.',
+    );
+    expect(screen.getByRole('button', { name: 'Back to building' })).toHaveClass('av-go');
   });
 
   it('has no Next once every lesson is finished', () => {

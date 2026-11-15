@@ -221,20 +221,22 @@ export function TutorialCard(): React.JSX.Element | null {
   const trace = useAppStore((s) => s.trace);
   useAppStore((s) => s.stepIndex);
   useAppStore((s) => s.selection);
+  // Switching automata hides or brings back the card.
+  useAppStore((s) => s.activeId);
   const blockedEdits = useAppStore((s) => s.blockedEdits);
-  const openName = useAppStore((s) => s.automata.find((a) => a.id === s.activeId)?.name);
   const tutorialName = useAppStore((s) => s.automata.find((a) => a.id === automatonId)?.name);
   const steps = lesson ? lessonSteps(lesson) : [];
   // A lesson with a run or walkthrough open: the card keeps one height (tutorial.css) and the
   // trace below it doesn't move as the text changes. Basics is left as it was.
   const tracing = lesson?.noun === 'lesson' && trace !== null;
-  useCardPad(cardRef, active && steps[current] !== undefined, tracing ? trace : null);
-
-  if (!active || !lesson) return null;
-  const step = steps[current];
-  if (!step) return null;
+  const step = active && lesson ? steps[current] : undefined;
   const ctx = tutorialContext(appStore.getState(), automatonId);
-  const hint = step.hint(ctx);
+  const hint = step?.hint(ctx) ?? null;
+  // Another automaton is open: the card stays out of its way and comes back on the lesson's own.
+  const away = hint?.kind === 'elsewhere';
+  useCardPad(cardRef, step !== undefined && !away, tracing ? trace : null);
+
+  if (!lesson || !step || away) return null;
   const parts = lesson.parts.length;
   const last = step.part > parts;
   const noun = lesson.noun;
@@ -249,7 +251,7 @@ export function TutorialCard(): React.JSX.Element | null {
   const partDone = hint?.kind === 'part-done' ? hint.part : null;
   const shownPart = partDone ?? step.part;
   // The moment it explains isn't on screen while the card asks to get back to it first.
-  const awayFromMoment = hint?.kind === 'first' || hint?.kind === 'elsewhere';
+  const awayFromMoment = hint?.kind === 'first';
   const explain = partDone || awayFromMoment ? null : step.explain(ctx);
   // An explanation replaces the why; an idea step has neither.
   const why = partDone || step.idea || explain ? null : step.why(ctx);
@@ -364,28 +366,13 @@ export function TutorialCard(): React.JSX.Element | null {
                 <RichText text={why} />
               </p>
             )}
-            {hint?.kind === 'elsewhere' ? (
+            {hint?.kind === 'text' && (
               <p className="av-tutorial-hint">
-                You’re on {openName ?? 'another automaton'}.{' '}
-                <button
-                  type="button"
-                  className="av-tutorial-link"
-                  onClick={() => automatonId && appStore.getState().setActive(automatonId)}
-                >
-                  {noun === 'tutorial'
-                    ? 'Back to Tutorial'
-                    : `Back to ${tutorialName ?? 'the lesson'}`}
-                </button>
+                <RichText text={hint.text} />
               </p>
-            ) : (
-              hint?.kind === 'text' && (
-                <p className="av-tutorial-hint">
-                  <RichText text={hint.text} />
-                </p>
-              )
             )}
           </div>
-          {step.idea && !partDone && hint?.kind !== 'elsewhere' && (
+          {step.idea && !partDone && (
             <div className="av-tutorial-actions">
               <button
                 type="button"
@@ -406,9 +393,7 @@ export function TutorialCard(): React.JSX.Element | null {
           )}
         </>
       )}
-      {!quitting && hint?.kind !== 'elsewhere' && (
-        <TutorialPointer selector={partDone ? null : step.target(ctx)} />
-      )}
+      {!quitting && <TutorialPointer selector={partDone ? null : step.target(ctx)} />}
     </section>
   );
 }
