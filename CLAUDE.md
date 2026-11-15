@@ -135,7 +135,7 @@ Layers, with dependencies pointing downward only:
     named "Untitled", "Untitled 2", …) on top and Import / Export all below; open/closed remembered in
     `historyPrefs.ts`), the DFA/NFA switch floating at the top of the canvas (`KindPill.tsx`, hidden
     while a trace is open), the bottom dock (run pill / trace player), toasts, error boundary,
-    import/export plumbing (Import is a menu: a file, or `PasteLatexDialog.tsx`; "Copy link" in the export menu and each
+    import/export plumbing (Import is a menu: a file, or `PasteLatexDialog.tsx`; "Share link" in the toolbar's share menu (Share link | Copy image, Copy LaTeX | Export SVG, PNG, LaTeX) and each
     history entry's ⋯ menu is `copyLink.ts`; `useSharedLink.ts` opens a `#a=` share link on load and on `hashchange`:
     opens the saved copy (`sameAutomaton`) or adds the automaton (replacing a lone blank automaton, a fresh visitor's
     "Untitled"), fits it, toasts and clears the hash, and the welcome stays away on such a visit; `touch.ts`
@@ -174,7 +174,10 @@ Layers, with dependencies pointing downward only:
     top down to the baseline) from per-glyph Geist 500 ink metrics; descenders (`y`'s tail) and
     subscripts hang below, so every label's letters sit at the same height.
     `dominant-baseline: central` centred the em box and left `q₀` ~3 px low. Edge labels still use
-    `central` (digits come out centred that way).
+    `central` (digits come out centred that way). The rename input follows suit: `InlineInput`'s
+    `baseline` measures where its text's baseline sits (an empty inline-block in its sizer) and
+    moves it to `labelBaselineOffset`, so the name doesn't jump when the input opens; the symbol
+    input stays centred, like `central`.
   - Theme tokens are in `ui/theme.css`. Diagram colors must go through CSS custom properties with plain
     fallbacks: SVG/PNG export resolves `var()` against a hidden `.av-theme-light` probe, so exports always
     use the light palette.

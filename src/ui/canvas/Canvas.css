@@ -26,6 +26,13 @@
 .av-inline-sizer {
   visibility: hidden;
 }
+/* An empty inline-block sits on the baseline: its top is where the text's baseline is. */
+.av-inline-baseline {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: baseline;
+}
 .av-inline input,
 .av-inline input:focus,
 .av-inline input:focus-visible {
