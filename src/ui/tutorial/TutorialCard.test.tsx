@@ -423,6 +423,7 @@ describe('a lesson other than Basics', () => {
     act(() => startLesson(TEST_LESSON));
     expect(within(card()).getAllByTestId('tutorial-goal-picture')).toHaveLength(1);
     expect(within(card()).queryByTestId('tutorial-goal-arrow')).toBeNull();
+    expect(within(card()).queryByTestId('tutorial-goal-pictures')).toBeNull();
     act(() => endLesson());
 
     act(() => startLesson(CONVERT_LESSON));
@@ -432,6 +433,32 @@ describe('a lesson other than Basics', () => {
     const after = CONVERT_LESSON.parts[0]!.goal.after!;
     expect(pictures[1]).toHaveAccessibleName(after.description);
     expect(within(goal).getByTestId('tutorial-goal-arrow')).toHaveAttribute('aria-hidden', 'true');
+    // Both pictures and the arrow share the goal's full-width row of their own.
+    const row = within(goal).getByTestId('tutorial-goal-pictures');
+    expect(within(row).getAllByTestId('tutorial-goal-picture')).toHaveLength(2);
+    expect(row).toContainElement(within(goal).getByTestId('tutorial-goal-arrow'));
+  });
+
+  it('lifts the pointer over the top bar and frames a toolbar button tightly', () => {
+    render(<App />);
+    act(() => startLesson(CONVERT_LESSON));
+    const button = screen.getByRole('button', { name: 'Convert to DFA' });
+    vi.spyOn(button, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({ x: 100, y: 10, width: 120, height: 28 }),
+    );
+    // The pointer follows its target on the next frame; wait for it.
+    return vi.waitFor(() => {
+      const pointer = screen.getByTestId('tutorial-pointer');
+      expect(pointer).toHaveAttribute('data-over-bar');
+      expect(pointer).toHaveAttribute('data-tight');
+      // Nudged 2 px right: the icon's thin left end reads as extra space.
+      expect(pointer.style).toMatchObject({
+        left: '99px',
+        top: '7px',
+        width: '126px',
+        height: '34px',
+      });
+    });
   });
 
   it('says the automaton is read-only after a refused edit', () => {

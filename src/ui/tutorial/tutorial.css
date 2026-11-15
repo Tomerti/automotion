@@ -27,6 +27,11 @@
   animation: av-pop-in 160ms ease-out;
 }
 
+/* A before-and-after goal needs room for two pictures side by side. */
+.av-tutorial:has([data-before-after]) {
+  width: min(620px, calc(100% - 2 * var(--av-history-inset, 0px) - 32px));
+}
+
 .av-tutorial-head {
   display: flex;
   align-items: center;
@@ -93,19 +98,23 @@
   width: 250px;
   height: 122px;
 }
-/* Before and after: two smaller pictures with an arrow between them, which may shrink further. */
+/* Before and after: the two pictures get a full-width row of their own above the words. */
+.av-tutorial-goal[data-before-after] {
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
 .av-tutorial-goal-pictures {
   display: flex;
-  flex: 0 1 auto;
+  flex: 1 1 100%;
   gap: 4px;
   align-items: center;
   min-width: 0;
 }
 .av-tutorial-goal-pictures .av-tutorial-goal-picture {
-  flex: 0 1 150px;
-  width: 150px;
+  flex: 1 1 0;
+  width: auto;
   min-width: 0;
-  height: auto;
+  height: 112px;
 }
 .av-tutorial-goal-arrow {
   flex: none;
@@ -358,6 +367,17 @@
   pointer-events: none;
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--av-run) 45%, transparent));
 }
+/* Framing a toolbar button: over the top bar (20) too. */
+.av-tutorial-pointer[data-over-bar] {
+  z-index: 21;
+}
+/* Framing a button: it hugs the button and breathes less (it may sit by the window's edge or
+   next to another button). */
+.av-tutorial-pointer[data-tight] .av-tutorial-corner {
+  --reach: 2px;
+  width: 9px;
+  height: 9px;
+}
 .av-tutorial-corner {
   position: absolute;
   width: 11px;
@@ -411,7 +431,7 @@
 
 @keyframes av-tutorial-breathe {
   50% {
-    transform: translate(calc(var(--dx) * 3px), calc(var(--dy) * 3px));
+    transform: translate(calc(var(--dx) * var(--reach, 3px)), calc(var(--dy) * var(--reach, 3px)));
   }
 }
 
