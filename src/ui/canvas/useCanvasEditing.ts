@@ -210,9 +210,9 @@ export async function tidyActive(): Promise<void> {
   if (!a || appStore.getState().trace) return;
   let laidOut: Automaton;
   try {
-    // elkjs is large: load it on first use so it stays out of the main bundle.
-    const { layoutAutomaton } = await import('../../layout/layout');
-    laidOut = await layoutAutomaton(a);
+    // In a worker (elk is large, and a big layout takes a second), loaded on first use.
+    const { layoutInWorker } = await import('../../layout/layoutClient');
+    laidOut = await layoutInWorker(a);
   } catch {
     toast('Could not lay out the automaton', 'error');
     return;

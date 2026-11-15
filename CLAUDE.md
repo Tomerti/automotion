@@ -78,8 +78,11 @@ Layers, with dependencies pointing downward only:
   forward in reading order not pointing right, skewed angles, length, bends and area, all on the
   curves the canvas draws. The weights were tuned on `samples.ts` (typical course automata;
   `layout.test.ts` checks them). Tidy replaces positions, bends, loop and start arrow directions
-  and label sides. It is always loaded with a dynamic `import()` so elk (~1.5 MB) stays out of the
-  main bundle.
+  and label sides. It runs in a Web Worker (`layoutClient.ts` `layoutInWorker`, one worker kept
+  for later layouts; `layout.worker.ts` assigns `self.onmessage` after its imports, since
+  `elk.bundled.js` claims it inside a worker), loaded with a dynamic `import()`, so elk (~1.5 MB)
+  stays out of the main bundle and a 64-state layout (~1 s) doesn't freeze the page. Without
+  workers (jsdom tests), or if the worker fails to start, it runs on the page.
 - `src/store/`: one Zustand store (`store.ts`) holding the automata, active id, selection, per-automaton
   viewports, the open trace, per-automaton undo/redo (capped at 100) and the clipboard
   (`copySelection` / `cutSelection` / `paste` for states, `copyAutomaton` / `pasteAutomaton` for a whole automaton:
