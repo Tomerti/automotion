@@ -178,8 +178,15 @@ function openBlank(): string {
 /** A copy of `start` under a free name made from its own, opened and fitted below the card. */
 function openCopy(start: Automaton): string {
   const app = appStore.getState();
-  const copy: Automaton = { ...start, id: newId(), name: freeName(app.automata, start.name) };
-  app.addAutomaton(copy);
+  // An untouched "Untitled" is replaced, as Basics reuses it, so none is left behind.
+  const current = app.automata.find((a) => a.id === app.activeId);
+  if (current !== undefined && untouched(app, current)) app.deleteAutomaton(current.id);
+  const copy: Automaton = {
+    ...start,
+    id: newId(),
+    name: freeName(appStore.getState().automata, start.name),
+  };
+  appStore.getState().addAutomaton(copy);
   // Once the card is on screen, so the fit keeps clear of it.
   requestAnimationFrame(() => {
     if (appStore.getState().activeId === copy.id) fitActive();
@@ -191,7 +198,7 @@ function openCopy(start: Automaton): string {
  * Start (or restart) a lesson: by id from the UI, or a lesson object (the tests' own lessons).
  * Basics opens on a DFA named "Tutorial": the active automaton if it is untouched (so a first
  * visit leaves no empty "Untitled" behind), else a new one. A lesson with a `start` automaton
- * opens a copy of it. Starting removes an unfinished lesson's automata, as quitting does.
+ * opens a copy of it (replacing an untouched active automaton). Starting removes an unfinished lesson's automata, as quitting does.
  */
 export function startLesson(which: LessonId | Lesson): void {
   // Before anything changes: an unknown id throws here.

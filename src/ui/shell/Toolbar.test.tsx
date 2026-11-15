@@ -325,12 +325,17 @@ describe('Toolbar', () => {
         </>,
       );
     };
+    const urlFns = { create: URL.createObjectURL, revoke: URL.revokeObjectURL };
     beforeEach(() => {
       URL.createObjectURL = vi.fn(() => 'blob:x');
       URL.revokeObjectURL = vi.fn();
       vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     });
-    afterEach(() => act(() => endLesson()));
+    afterEach(() => {
+      URL.createObjectURL = urlFns.create;
+      URL.revokeObjectURL = urlFns.revoke;
+      act(() => endLesson());
+    });
 
     /** A lesson running on the open automaton (the TEST_LESSON's own copy is the active one). */
     const runLesson = (): void => {
@@ -361,6 +366,17 @@ describe('Toolbar', () => {
       renderWithDiagram();
       await user.keyboard('{Control>}c{/Control}');
       expect(reported()).toEqual(['copy-image']);
+    });
+
+    it('Ctrl+C with states selected reports nothing: the canvas copies the states', async () => {
+      const user = userEvent.setup();
+      runLesson();
+      renderWithDiagram();
+      const id = appStore.getState().activeId!;
+      const state = appStore.getState().automata.find((x) => x.id === id)!.states[0]!;
+      act(() => appStore.getState().select({ states: [state.id], transitions: [] }));
+      await user.keyboard('{Control>}c{/Control}');
+      expect(reported()).toEqual([]);
     });
 
     it('records nothing without a lesson', async () => {

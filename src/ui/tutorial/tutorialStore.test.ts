@@ -84,6 +84,26 @@ describe('startLesson', () => {
     expect(tut()).toMatchObject({ active: true, automatonId: blank.id, progress: 0, current: 0 });
   });
 
+  it('replaces an untouched Untitled with a lesson copy, leaving no empty one behind', () => {
+    const blank = emptyAutomaton('Untitled', 'DFA');
+    resetAppStore({ automata: [blank] });
+    startLesson('nfa');
+    expect(app().automata).toHaveLength(1);
+    expect(app().automata.some((a) => a.id === blank.id)).toBe(false);
+    expect(active()?.id).toBe(tut().automatonId);
+    quitLesson();
+    // Quitting never leaves the canvas without an automaton.
+    expect(app().automata).toHaveLength(1);
+    expect(active()?.name).toBe('Untitled');
+  });
+
+  it('keeps work beside a lesson copy', () => {
+    resetAppStore({ automata: [loop()] });
+    startLesson('nfa');
+    expect(app().automata).toHaveLength(2);
+    expect(app().automata.some((a) => a.name === 'mine')).toBe(true);
+  });
+
   it('keeps the rename out of undo', () => {
     resetAppStore({ automata: [emptyAutomaton('Untitled', 'DFA')] });
     startLesson('basics');

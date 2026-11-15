@@ -62,4 +62,13 @@ describe('the Share and export lesson', () => {
   it('does not take the image for the link', () => {
     expect(advance(L, 0, new Set(), ctx('copy-image')).current).toBe(0);
   });
+
+  it('asks to clear the selection first on the image step, since Ctrl+C would copy the states', () => {
+    const picked: TutorialContext = { ...ctx('share-link'), selected: ['even'] };
+    expect(steps[1]!.hint(picked)).toEqual({
+      kind: 'first',
+      text: 'First, click the empty canvas to clear the selection.',
+    });
+    expect(steps[1]!.hint(ctx('share-link'))).toBeNull();
+  });
 });

@@ -38,6 +38,9 @@ const STEPS: StepSpec[] = [
     why: () => 'That copies the picture, ready to paste into notes or slides.',
     // Export PNG and SVG count too: the copy fails where the clipboard is blocked.
     action: ['copy-image', 'export-png', 'export-svg'],
+    // With states selected, Ctrl+C copies the states and nothing counts.
+    first: (ctx) =>
+      ctx.selected.length > 0 ? 'First, click the empty canvas to clear the selection.' : null,
     target: () => MENU,
   },
   {
