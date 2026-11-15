@@ -1,7 +1,12 @@
 import type { Automaton } from '../../../core/model';
-import type { RunTrace } from '../../../core/trace';
-import { ownsTrace } from '../engine';
-import type { Lesson, StepSpec, TutorialContext } from '../engine';
+import type { Lesson, StepSpec } from '../engine';
+import {
+  getBack,
+  otherWordHint,
+  pauseAfter as pauseAfterWord,
+  reached as reachedWord,
+  runOf,
+} from './handStep';
 
 /** The lesson opens on this NFA for words ending in `01`: `q_0` guesses where the `01` starts. */
 const ENDS_01: Automaton = {
@@ -23,31 +28,9 @@ const ENDS_01: Automaton = {
   ],
 };
 
-/** The open run is an owned run of `word`. */
-function runOf(ctx: TutorialContext, word: string): RunTrace | null {
-  const t = ctx.trace;
-  return t?.kind === 'run' && t.word === word && ownsTrace(ctx) ? t : null;
-}
-
-/** Where playback pauses next: the card explains the moment one index on. */
-const pauseAfter =
-  (next: number) =>
-  (ctx: TutorialContext): number | null =>
-    runOf(ctx, '001') ? next : null;
-
-/**
- * Before a paused step: run `001` again if it isn't open, or step back to the moment the card
- * explains (index `moment`) if the run is before it.
- */
-const getBack =
-  (moment: number) =>
-  (ctx: TutorialContext): string | null => {
-    if (!runOf(ctx, '001')) return 'First, run `001` again.';
-    return ctx.stepIndex < moment ? 'First, press [→] to get back to this point.' : null;
-  };
-
-const reached = (index: number) => (ctx: TutorialContext) =>
-  runOf(ctx, '001') !== null && ctx.stepIndex >= index;
+const pauseAfter = (next: number) => pauseAfterWord('001', next);
+const reached = (index: number) => reachedWord('001', index);
+const back = (moment: number) => getBack('001', moment);
 
 const STEPS: StepSpec[] = [
   {
@@ -60,12 +43,7 @@ const STEPS: StepSpec[] = [
     id: 'nfa/run',
     instruction: () => 'Run `001`.',
     latch: (ctx) => runOf(ctx, '001') !== null,
-    // A latch step, so the engine's wrong-word hint doesn't apply: same wording here.
-    hint: (ctx) => {
-      const t = ctx.trace;
-      if (t?.kind !== 'run' || t.word === '001' || !ownsTrace(ctx)) return null;
-      return `That was \`${t.word === '' ? 'ε' : t.word}\`. Press [Esc] and run \`001\`.`;
-    },
+    hint: otherWordHint('001'),
   },
   {
     id: 'nfa/read-0',
@@ -73,7 +51,7 @@ const STEPS: StepSpec[] = [
     explain: (l) => `It starts in ${l.q0}, with nothing guessed yet.`,
     pauseAt: pauseAfter(1),
     latch: reached(1),
-    first: getBack(0),
+    first: back(0),
   },
   {
     id: 'nfa/guess',
@@ -82,7 +60,7 @@ const STEPS: StepSpec[] = [
       `It guessed this \`0\` starts the final \`01\`, so it follows both ${l.q0} and ${l.q1}.`,
     pauseAt: pauseAfter(2),
     latch: reached(2),
-    first: getBack(1),
+    first: back(1),
   },
   {
     id: 'nfa/dies',
@@ -91,14 +69,14 @@ const STEPS: StepSpec[] = [
       `${l.q1} had no arrow on \`0\`, so that guess died; ${l.q0} made the same guess again.`,
     pauseAt: pauseAfter(3),
     latch: reached(3),
-    first: getBack(2),
+    first: back(2),
   },
   {
     id: 'nfa/reach',
     instruction: () => 'Press [→] for the verdict.',
     explain: () => 'The guess in «q_1» read `1` and reached «q_2».',
     latch: reached(4),
-    first: getBack(3),
+    first: back(3),
   },
 ];
 

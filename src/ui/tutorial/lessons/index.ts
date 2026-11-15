@@ -1,6 +1,7 @@
 import type { Lesson, LessonId } from '../engine';
 import { BASICS } from './basics';
 import { CONVERT_LESSON } from './convert';
+import { EPSILON_LESSON } from './epsilon';
 import { MINIMIZE_LESSON } from './minimize';
 import { NFA_LESSON } from './nfa';
 import { SHARE_LESSON } from './share';
@@ -12,6 +13,7 @@ export type ListedLesson = Lesson & { id: LessonId };
 export const LESSONS: readonly ListedLesson[] = [
   BASICS,
   NFA_LESSON,
+  EPSILON_LESSON,
   CONVERT_LESSON,
   MINIMIZE_LESSON,
   SHARE_LESSON,
