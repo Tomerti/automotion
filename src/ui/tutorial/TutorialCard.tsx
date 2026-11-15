@@ -310,7 +310,7 @@ export function TutorialCard(): React.JSX.Element | null {
           <div className="av-tutorial-now" data-testid="tutorial-step" aria-live="polite">
             {blockedEdits > blockedSeen && (
               <p className="av-tutorial-first" data-testid="tutorial-read-only">
-                This lesson's automaton is read-only: quit the lesson to change it.
+                This lesson’s automaton is read-only: quit the lesson to change it.
               </p>
             )}
             {hint?.kind === 'first' && (

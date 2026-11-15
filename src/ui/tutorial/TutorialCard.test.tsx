@@ -67,6 +67,8 @@ beforeEach(() => resetAppStore({ automata: [mine()] }));
 afterEach(() => {
   act(() => endLesson());
   cleanup();
+  vi.restoreAllMocks();
+  localStorage.removeItem(LESSONS_DONE_KEY);
 });
 
 it('is not there without a tutorial', () => {
@@ -467,7 +469,7 @@ describe('a lesson other than Basics', () => {
     addAt(100);
     expect(active().states).toHaveLength(3);
     expect(within(card()).getByTestId('tutorial-read-only')).toHaveTextContent(
-      "This lesson's automaton is read-only: quit the lesson to change it.",
+      'This lesson’s automaton is read-only: quit the lesson to change it.',
     );
     // The step changes: the line goes.
     act(() => app().openTrace(subsetConstruction(active())));
@@ -541,7 +543,6 @@ describe('a lesson other than Basics', () => {
     await userEvent.setup().click(next);
     expect(onClose).toHaveBeenCalled();
     expect(tutorialStore.getState().lessonId).toBe('basics');
-    act(() => endLesson());
   });
 
   it('never offers the lesson just finished, even when storage is blocked', () => {
@@ -550,7 +551,6 @@ describe('a lesson other than Basics', () => {
     });
     render(<FinishedCard lesson={BASICS} onClose={() => {}} />);
     expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: NFAs');
-    vi.restoreAllMocks();
   });
 
   it('has no Next once every lesson is finished', () => {
@@ -558,6 +558,5 @@ describe('a lesson other than Basics', () => {
     render(<FinishedCard lesson={TEST_LESSON} onClose={() => {}} />);
     expect(screen.queryByTestId('next-lesson')).toBeNull();
     expect(screen.getByRole('button', { name: 'Back to building' })).toHaveClass('av-go');
-    localStorage.removeItem(LESSONS_DONE_KEY);
   });
 });
