@@ -69,6 +69,10 @@ test('the phone welcome says what a phone is for, then a shared link opens and r
     expect(b!.x + b!.width).toBeLessThanOrEqual(size.width);
     expect(b!.y + b!.height).toBeLessThanOrEqual(size.height);
   }
+  // The toast sits under the DFA/NFA switch, not over it.
+  const toastBox = (await page.getByRole('status').filter({ hasText: 'Opened' }).boundingBox())!;
+  const pillBox = (await page.getByTestId('kind-pill').boundingBox())!;
+  expect(toastBox.y).toBeGreaterThanOrEqual(pillBox.y + pillBox.height);
   await page.screenshot({ path: 'test-results/phone-opened.png' });
 
   await page.getByLabel('Word').fill('ba');

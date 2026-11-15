@@ -1,6 +1,14 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { clipCenter, copyStates, internalTransitions, pasteClip, uniqueLabel } from './clipboard';
+import {
+  clipCenter,
+  copyStates,
+  incomingArrows,
+  internalTransitions,
+  pasteClip,
+  uniqueLabel,
+} from './clipboard';
+import { removeState } from './edit';
 import type { Automaton } from './model';
 import { arbDfa, arbNfa } from './testing/arbitraries';
 import { fixture } from './testing/fixtures';
@@ -168,6 +176,58 @@ describe('pasteClip', () => {
         },
       ),
     );
+  });
+});
+
+describe('incomingArrows', () => {
+  it('lists the arrows into the states from states outside them', () => {
+    expect(incomingArrows(chain(), ['q1', 'q2']).map((t) => t.id)).toEqual(['q0->q1']);
+    expect(
+      incomingArrows(chain(), ['q0'])
+        .map((t) => t.id)
+        .sort(),
+    ).toEqual(['q1->q0', 'q2->q0']);
+  });
+});
+
+describe('pasteClip with incoming arrows (a cut pasted back)', () => {
+  const cut = (a: Automaton, ids: string[]) => {
+    const clip = copyStates(a, ids)!;
+    const incoming = incomingArrows(a, ids);
+    return { clip, incoming, rest: ids.reduce(removeState, a) };
+  };
+
+  it('restores the arrows into the pasted states from the states left behind', () => {
+    const { clip, incoming, rest } = cut(chain(), ['q1', 'q2']);
+    const { automaton: b, transitionIds } = pasteClip(rest, clip, { x: 0, y: 0 }, incoming);
+    expect(edgeBetween(b, 'q0', 'q1')?.symbols).toEqual(['a']);
+    expect(b.transitions).toHaveLength(chain().transitions.length);
+    expect(transitionIds).toContain(edgeBetween(b, 'q0', 'q1')!.id);
+  });
+
+  it('drops arrows from states that are gone', () => {
+    const { clip, incoming } = cut(chain(), ['q1', 'q2']);
+    const other = fixture({ kind: 'DFA', alphabet: '', states: ['p'], name: 'other' });
+    const { automaton: b } = pasteClip(other, clip, { x: 0, y: 0 }, incoming);
+    expect(b.transitions.some((t) => t.from === 'p')).toBe(false);
+  });
+
+  it('keeps a DFA deterministic: symbols the outside state used meanwhile are dropped', () => {
+    const a = fixture({
+      kind: 'DFA',
+      alphabet: 'ab',
+      states: ['p', 'q', 'r'],
+      edges: [['p', 'a,b', 'q']],
+    });
+    const { clip, incoming, rest } = cut(a, ['q']);
+    // Meanwhile p reads a into r.
+    const later = { ...rest, transitions: [{ id: 'pr', from: 'p', to: 'r', symbols: ['a'] }] };
+    const { automaton: b } = pasteClip(later, clip, { x: 0, y: 0 }, incoming);
+    expect(edgeBetween(b, 'p', 'q')?.symbols).toEqual(['b']);
+    const all = { ...later, transitions: [{ id: 'pr', from: 'p', to: 'r', symbols: ['a', 'b'] }] };
+    expect(
+      edgeBetween(pasteClip(all, clip, { x: 0, y: 0 }, incoming).automaton, 'p', 'q'),
+    ).toBeUndefined();
   });
 });
 

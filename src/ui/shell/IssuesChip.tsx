@@ -3,11 +3,12 @@ import type { Issue } from '../../core/validate';
 import { validate } from '../../core/validate';
 import { appStore, useAppStore } from '../../store/store';
 import { clearIssueMarks, showIssueMarks } from '../canvas/issueMarks';
+import { useTutorial } from '../tutorial/tutorialStore';
 import { WarningIcon } from './icons';
 import { IssuesList } from './IssuesList';
 import { usePopover } from './usePopover';
 
-function IssuesPopover({ issues }: { issues: Issue[] }): React.JSX.Element {
+function IssuesPopover({ issues, muted }: { issues: Issue[]; muted: boolean }): React.JSX.Element {
   const { open, setOpen, rootRef, triggerRef } = usePopover();
   const n = issues.length;
   const hasError = issues.some((i) => i.severity === 'error');
@@ -23,7 +24,7 @@ function IssuesPopover({ issues }: { issues: Issue[] }): React.JSX.Element {
         ref={triggerRef}
         type="button"
         className="av-chip"
-        data-severity={hasError ? 'error' : 'warning'}
+        data-severity={muted ? 'muted' : hasError ? 'error' : 'warning'}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
@@ -49,12 +50,15 @@ function IssuesPopover({ issues }: { issues: Issue[] }): React.JSX.Element {
 /**
  * "⚠ N issues" for the active automaton. Hidden when it has none, while a trace is open, and
  * on a blank automaton (its missing start and accepting states are obvious and only noise).
+ * Grey (`data-severity="muted"`) on the tutorial's automaton while the tutorial runs: halfway
+ * through building it is an incomplete DFA, which is expected, not an error to fix.
  */
 export function IssuesChip(): React.JSX.Element | null {
   const automaton = useAppStore((s) => s.automata.find((a) => a.id === s.activeId));
   const tracing = useAppStore((s) => s.trace !== null);
+  const muted = useTutorial((t) => t.active && t.automatonId === automaton?.id);
   const issues = useMemo(() => (automaton ? validate(automaton) : []), [automaton]);
   if (tracing || issues.length === 0 || automaton?.states.length === 0) return null;
   // Unmounted while there are no issues, so the popover starts closed when some appear.
-  return <IssuesPopover issues={issues} />;
+  return <IssuesPopover issues={issues} muted={muted} />;
 }

@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { CheckIcon, CloseIcon, LaptopIcon } from '../shell/icons';
 import { ThemeSwitch } from '../shell/ThemeSwitch';
-import { isTouchOnly } from '../shell/touch';
+import { useTouchOnly } from '../shell/touch';
 import { useModalDialog } from '../shell/useModalDialog';
 import { WelcomeDemo } from './WelcomeDemo';
 import './tutorial.css';
@@ -35,7 +35,7 @@ export function WelcomeCard({
 }): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalDialog(dialogRef, onClose);
-  const touchOnly = isTouchOnly();
+  const touchOnly = useTouchOnly();
 
   return (
     <div

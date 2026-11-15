@@ -5,6 +5,8 @@ import type { Automaton, State } from '../core/model';
 import { subsetConstruction } from '../core/subset';
 import { arbNfa } from '../core/testing/arbitraries';
 import { fixture, nthFromEnd } from '../core/testing/fixtures';
+import { SPACING, layoutCostTerms } from './aesthetics';
+import { refineOnGrid } from './grid';
 import { layoutAutomaton } from './layout';
 import { layoutSamples } from './samples';
 
@@ -169,6 +171,19 @@ describe('layoutAutomaton', () => {
     expect(x('a1')).toBe(x('b1'));
   });
 
+  it('lays a DFA with many cross arrows on a grid, nothing crossing (To minimize)', async () => {
+    const out = await layoutAutomaton(sample('To minimize'));
+    const x0 = Math.min(...out.states.map((s) => s.x));
+    const y0 = Math.min(...out.states.map((s) => s.y));
+    for (const s of out.states) {
+      expect((s.x - x0) % SPACING, s.label).toBe(0);
+      expect((s.y - y0) % SPACING, s.label).toBe(0);
+    }
+    // No crossings, arrows through states or labels on anything; no skewed straight arrows.
+    expect(layoutCostTerms(out)).not.toHaveProperty('arrows');
+    expect(layoutCostTerms(out)).not.toHaveProperty('skew');
+  });
+
   it('stacks unconnected parts, the start state’s first', async () => {
     const a = fixture({
       kind: 'NFA',
@@ -201,5 +216,31 @@ describe('layoutAutomaton', () => {
       expect(out.states.every((s) => Number.isFinite(s.x) && Number.isFinite(s.y))).toBe(true);
       expect(new Set(out.states.map((s) => `${s.x},${s.y}`)).size).toBe(a.states.length);
     }
+  });
+});
+
+describe('refineOnGrid', () => {
+  it('snaps states to distinct grid cells, and only moves them while the cost drops', () => {
+    const ids = ['a', 'b', 'c'];
+    // b and c round to the same cell: c takes the nearest free one.
+    const pos = new Map([
+      ['a', { x: 3, y: -4 }],
+      ['b', { x: 150, y: 10 }],
+      ['c', { x: 130, y: 20 }],
+    ]);
+    const out = refineOnGrid(ids, pos, () => 0);
+    expect([...out.values()].every((p) => p.x % SPACING === 0 && p.y % SPACING === 0)).toBe(true);
+    expect(new Set([...out.values()].map((p) => `${p.x},${p.y}`)).size).toBe(3);
+    expect(out.get('a')).toEqual({ x: 0, y: 0 });
+    expect(out.get('b')).toEqual({ x: SPACING, y: 0 });
+    // A cost that wants a and c far apart: c moves away from a.
+    const apart = refineOnGrid(
+      ids,
+      pos,
+      (p) => -Math.hypot(p.get('a')!.x - p.get('c')!.x, p.get('a')!.y - p.get('c')!.y),
+    );
+    const d = (p: Map<string, { x: number; y: number }>) =>
+      Math.hypot(p.get('a')!.x - p.get('c')!.x, p.get('a')!.y - p.get('c')!.y);
+    expect(d(apart)).toBeGreaterThan(d(out));
   });
 });

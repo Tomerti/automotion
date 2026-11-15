@@ -34,9 +34,9 @@ export async function startSubset(onError?: (message: string) => void): Promise<
   converting = true;
   let result;
   try {
-    // Dynamic import keeps elk out of the main bundle.
-    const { layoutAutomaton } = await import('../layout/layout');
-    result = await layoutAutomaton(trace.result);
+    // In a worker, loaded on first use: elk stays out of the main bundle and off the main thread.
+    const { layoutInWorker } = await import('../layout/layoutClient');
+    result = await layoutInWorker(trace.result);
   } catch {
     onError?.('Could not lay out the automaton');
     return;

@@ -123,8 +123,9 @@ export default function App(): React.JSX.Element {
             )}
           </div>
         </main>
+        {/* In the body, not the app: on phones toasts are placed under the top bar from here. */}
+        <Toasts />
       </div>
-      <Toasts />
       <ConfirmDialog />
       {helpOpen && (
         <ControlsDialog

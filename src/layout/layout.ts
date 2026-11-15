@@ -8,11 +8,17 @@ import {
   stressLayout,
   type Positions,
 } from './candidates';
+import { refineOnGrid } from './grid';
 import { readingOrders } from './order';
 
 /** Largest connected part laid out on a single row, or around a circle, as a candidate. */
 const MAX_ROW = 8;
 const MAX_CIRCLE = 12;
+/** Largest connected part also refined on a grid (`refineOnGrid`), from its best candidates. */
+const MAX_GRID = 10;
+const GRID_FROM = 1;
+/** How much better (a fraction of its cost) a grid must be than the other candidates to win. */
+const GRID_MARGIN = 0.1;
 /** Parts larger than this choose bends for their two best candidates only. */
 const SHORTLIST_ABOVE = 16;
 /** Room between connected parts stacked under each other. */
@@ -68,6 +74,17 @@ async function bestLayout(part: Automaton): Promise<Automaton> {
     }
   }
   candidates.push(stressLayout(part, order!));
+  const grids: Positions[] = [];
+  if (part.states.length <= MAX_GRID) {
+    // With automatic bends: quick to score, and a grid should read well without bending around.
+    const quick = (p: Positions): number => layoutCost(place(part, p));
+    const ids = part.states.map((s) => s.id);
+    const seeds = candidates
+      .map((c) => ({ c, cost: quick(c) }))
+      .sort((p, q) => p.cost - q.cost)
+      .slice(0, GRID_FROM);
+    for (const { c } of seeds) grids.push(refineOnGrid(ids, c, quick));
+  }
 
   // Distinct candidates, start arrows pointed. Large parts first keep the two that read best
   // with automatic bends: choosing bends is the slow part.
@@ -87,17 +104,24 @@ async function bestLayout(part: Automaton): Promise<Automaton> {
       .map(({ c }) => c);
   }
 
-  let best: Automaton | null = null;
-  let bestCost = Infinity;
-  for (const c of shortlist) {
+  const free = cheapest(shortlist);
+  // A grid replaces the classic shapes (a row, a circle, layers) only when clearly better: on a
+  // near tie the row of a "contains 101" reads better than the same states in a staircase.
+  const gridded = cheapest(
+    grids.filter((g) => !seen.has(signature(g))).map((g) => assignStartAngles(place(part, g))),
+  );
+  return gridded && gridded.cost < free!.cost * (1 - GRID_MARGIN) ? gridded.laidOut : free!.laidOut;
+}
+
+/** The candidate that reads best once its arrows are bent, with its cost; null if none. */
+function cheapest(candidates: Automaton[]): { laidOut: Automaton; cost: number } | null {
+  let best: { laidOut: Automaton; cost: number } | null = null;
+  for (const c of candidates) {
     const laidOut = assignStartAngles(assignBends(c));
     const cost = layoutCost(laidOut);
-    if (cost < bestCost) {
-      bestCost = cost;
-      best = laidOut;
-    }
+    if (!best || cost < best.cost) best = { laidOut, cost };
   }
-  return best!;
+  return best;
 }
 
 /** Drops the hand-made drawing choices: bends, loop and start arrow directions, label sides. */

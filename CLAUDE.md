@@ -23,11 +23,11 @@ https://tomerti.github.io/automotion/.
 - `npm run typecheck`, `npm run lint`, `npm run build`
 - `npm run e2e`: Playwright (Chromium) against a production build served by `vite preview` on port 4173.
   First time: `npx playwright install chromium`. One spec: `npx playwright test e2e/convert.spec.ts`.
-- CI (`.github/workflows/ci.yml`) runs typecheck, lint, unit tests and e2e on every push/PR, then
+- CI (`.github/workflows/ci.yml`) runs typecheck, lint, the Prettier check, unit tests and e2e on every push/PR, then
   compiles the LaTeX that e2e `latex-samples.spec.ts` exported (`LATEX_SAMPLES_DIR`) with pdflatex
   (job `latex`; there is no TeX locally), and deploys to GitHub Pages from `master` only after all pass.
-- Don't run `npm run format` (`prettier --write .`) on this Windows checkout: it rewrites line endings
-  repo-wide. Format only the files you touch.
+- `npm run format:check` (`prettier --check .`) runs in CI; `npm run format` fixes. `.gitattributes` pins LF
+  line endings (`eol=lf`), so a Windows checkout with `core.autocrlf` still checks clean.
 
 ## Architecture
 
@@ -57,7 +57,9 @@ Layers, with dependencies pointing downward only:
     on a focused history entry it copies that automaton (handled there, `preventDefault` so the
     window listeners skip it). Ctrl+X (`store.cutSelection`, also Cut in the state menus) copies the
     selected states, then deletes them and the selected arrows in one undo step; the first placeless
-    paste after it lands back in place (`last.repeat` starts at −1). Ctrl+A on the canvas selects
+    paste after it lands back in place (`last.repeat` starts at −1), and the first paste
+    of a cut into the automaton it came from restores the arrows into the cut states from states left behind
+    (`incomingArrows`, `pasteClip`'s `incoming`; on a DFA minus symbols the source state reads elsewhere by then). Ctrl+A on the canvas selects
     every state and arrow and focuses the canvas, so Delete / Ctrl+X act on it next.
   - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
     snapshots (`trace.ts`). Each has a `can*` guard returning a user-facing reason or `null`.
@@ -78,10 +80,16 @@ Layers, with dependencies pointing downward only:
   (`aesthetics.ts` `assignBends` / `assignStartAngles`), and the cheapest by `layoutCost` wins:
   crossings, arrows through states, labels on states / labels / arrows, bunched arrows, arrows
   forward in reading order not pointing right, skewed angles, length, bends and area, all on the
-  curves the canvas draws. The weights were tuned on `samples.ts` (typical course automata;
+  curves the canvas draws. Parts of up to 10 states also get a grid candidate (`grid.ts`
+  `refineOnGrid`: the best candidate snapped to a SPACING grid, then hill-climbed by moving or
+  swapping states while the cost drops); it wins only when it beats the rest by `GRID_MARGIN`
+  (10%), so a near tie keeps the classic row or circle. The weights were tuned on `samples.ts` (typical course automata;
   `layout.test.ts` checks them). Tidy replaces positions, bends, loop and start arrow directions
-  and label sides. It is always loaded with a dynamic `import()` so elk (~1.5 MB) stays out of the
-  main bundle.
+  and label sides. It runs in a Web Worker (`layoutClient.ts` `layoutInWorker`, one worker kept
+  for later layouts; `layout.worker.ts` assigns `self.onmessage` after its imports, since
+  `elk.bundled.js` claims it inside a worker), loaded with a dynamic `import()`, so elk (~1.5 MB)
+  stays out of the main bundle and a 64-state layout (~1 s) doesn't freeze the page. Without
+  workers (jsdom tests), or if the worker fails to start, it runs on the page.
 - `src/store/`: one Zustand store (`store.ts`) holding the automata, active id, selection, per-automaton
   viewports, the open trace, per-automaton undo/redo (capped at 100) and the clipboard
   (`copySelection` / `cutSelection` / `paste` for states, `copyAutomaton` / `pasteAutomaton` for a whole automaton:
@@ -153,8 +161,10 @@ Layers, with dependencies pointing downward only:
     history entry's ⋯ menu is `copyLink.ts`; `useSharedLink.ts` opens a `#a=` share link on load and on `hashchange`:
     opens the saved copy (`sameAutomaton`) or adds the automaton (replacing a lone blank automaton, a fresh visitor's
     "Untitled"), fits it, toasts and clears the hash, and the welcome stays away on such a visit; `touch.ts`
-    `isTouchOnly()`: coarse main pointer and no fine one, a plain media query check (not reactive), makes the welcome the
-    phone variant; on phones (≤ 480 px, `App.css`) toasts sit under the top bar). Thumbnails are their own
+    `isTouchOnly()`: coarse main pointer and no fine one (`useTouchOnly()` follows the media queries, so attaching a mouse
+    changes the welcome), makes the welcome the phone variant; on phones (≤ 480 px, `App.css`) toasts sit under the
+    DFA/NFA switch, placed from `.av-body`; hover styles are all inside `@media (hover: hover)`, so taps don't leave them
+    stuck). Thumbnails are their own
     small SVG, not `Diagram`, so the canvas's `data-testid`s stay unique. There is no table or
     alphabet editor: `store.edit` keeps `alphabet` in sync with the transitions.
   - `tutorial/`: the interactive tutorial. `steps.ts` is a pure step table (each step's `done`,

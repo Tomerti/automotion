@@ -286,8 +286,7 @@
   line-height: 1.4;
   color: var(--av-red);
 }
-.av-tutorial-link,
-.av-tutorial-link:hover:not(:disabled) {
+.av-tutorial-link {
   min-height: 0;
   padding: 0;
   font-weight: 600;
@@ -296,6 +295,18 @@
   text-underline-offset: 2px;
   background: transparent;
   border: 0;
+}
+@media (hover: hover) {
+  .av-tutorial-link:hover:not(:disabled) {
+    min-height: 0;
+    padding: 0;
+    font-weight: 600;
+    color: var(--av-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    background: transparent;
+    border: 0;
+  }
 }
 
 .av-tutorial-actions {
@@ -308,10 +319,15 @@
   gap: 12px;
   animation: av-tutorial-step 160ms ease-out;
 }
-.av-tutorial-quit-button,
-.av-tutorial-quit-button:hover:not(:disabled) {
+.av-tutorial-quit-button {
   font-weight: 600;
   color: var(--av-red);
+}
+@media (hover: hover) {
+  .av-tutorial-quit-button:hover:not(:disabled) {
+    font-weight: 600;
+    color: var(--av-red);
+  }
 }
 
 /* The pointer: four corners framing the target, breathing outward. */

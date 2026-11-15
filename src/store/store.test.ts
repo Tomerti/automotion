@@ -424,6 +424,40 @@ describe('store', () => {
       ]);
     });
 
+    it('the first paste of a cut restores the arrows into it from the states left behind', () => {
+      const { st, active } = setup();
+      st().select({ states: ['q1'], transitions: [] });
+      st().cutSelection();
+      expect(active().transitions.map((t) => t.id)).toEqual(['q0->q0']);
+      st().paste();
+      const q1 = active().states.find((q) => q.label === 'q1')!;
+      expect(active().transitions.find((t) => t.from === 'q0' && t.to === q1.id)?.symbols).toEqual([
+        'a',
+      ]);
+      // Only the arrows between the pasted states are selected, as after a copy.
+      expect(st().selection.transitions).toHaveLength(1);
+      // A second paste is a copy: nothing comes into it.
+      st().paste();
+      const copy = st().selection.states[0]!;
+      expect(active().transitions.some((t) => t.to === copy && t.from !== copy)).toBe(false);
+    });
+
+    it('a cut pasted into another automaton brings no arrows into it', () => {
+      const { st, active } = setup();
+      st().select({ states: ['q1'], transitions: [] });
+      st().cutSelection();
+      st().addAutomaton(dfa('a2'));
+      st().paste();
+      const pasted = st().selection.states[0]!;
+      expect(active().transitions.some((t) => t.to === pasted && t.from !== pasted)).toBe(false);
+      // Nor does going back and pasting into the first one later.
+      st().select({ states: [], transitions: [] });
+      st().setActive('a1');
+      st().paste();
+      const back = st().selection.states[0]!;
+      expect(active().transitions.some((t) => t.to === back && t.from !== back)).toBe(false);
+    });
+
     it('a cut also deletes the selected arrows, and undo brings everything back', () => {
       const { st, active } = setup();
       st().select({ states: ['q0'], transitions: ['q1->q1'] });

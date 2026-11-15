@@ -7,6 +7,7 @@ import { runWord } from '../../core/run';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { issueMarksStore } from '../canvas/issueMarks';
+import { tutorialStore } from '../tutorial/tutorialStore';
 import { IssuesChip } from './IssuesChip';
 
 /** Complete DFA whose only issue is that q1 is unreachable. */
@@ -25,7 +26,10 @@ const unreachable = () =>
   });
 
 beforeEach(() => resetAppStore({ automata: [unreachable()], activeId: 'd' }));
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  tutorialStore.setState({ active: false, automatonId: null });
+});
 
 describe('IssuesChip', () => {
   it('is hidden without issues or without an automaton', () => {
@@ -138,5 +142,14 @@ describe('IssuesChip', () => {
     act(() => appStore.getState().openTrace(runWord(a, '')));
     const { container } = render(<IssuesChip />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('is grey on the tutorial’s automaton while the tutorial runs', () => {
+    act(() => tutorialStore.setState({ active: true, automatonId: 'd' }));
+    render(<IssuesChip />);
+    const chip = screen.getByRole('button', { name: /issue/ });
+    expect(chip).toHaveAttribute('data-severity', 'muted');
+    act(() => tutorialStore.setState({ active: true, automatonId: 'other' }));
+    expect(chip).toHaveAttribute('data-severity', 'warning');
   });
 });
