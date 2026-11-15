@@ -63,7 +63,8 @@ Press **?** in the app to see every control.
 ### Build and arrange
 
 - **DFAs and NFAs.** NFAs can have ε-transitions and several start states. Labels like `q_1`
-  show as subscripts; type `\eps` for ε.
+  show as subscripts; type `\eps` for ε (in symbols and words) and `\emptyset` for ∅ (in state
+  names).
 - **Mistakes are pointed out.** The issues chip lists what is wrong, from a missing start state
   to unreachable states, and Run, Convert to DFA and Minimize say why when they are blocked.
 - **Neat diagrams.** States snap into line as you drag, arrows bend, and **Tidy** lays out the
