@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { CloseIcon } from '../shell/icons';
+import { CloseIcon, LaptopIcon } from '../shell/icons';
 import { ThemeSwitch } from '../shell/ThemeSwitch';
 import { isTouchOnly } from '../shell/touch';
 import { useModalDialog } from '../shell/useModalDialog';
@@ -60,6 +60,21 @@ export function WelcomeCard({
           </button>
         </header>
         <p className="av-welcome-tagline">Watch automata come to life.</p>
+        {touchOnly && (
+          // First thing after the title, above the demo, so it is read before Got it is tapped.
+          <div className="av-welcome-device" role="note" data-testid="welcome-device-note">
+            <span className="av-welcome-device-icon">
+              <LaptopIcon />
+            </span>
+            <div>
+              <p className="av-welcome-device-head">Open this on a computer</p>
+              <p className="av-welcome-device-body">
+                AutoMotion is made for a computer with a mouse and keyboard. On a phone you can
+                only open shared automata and run words on them.
+              </p>
+            </div>
+          </div>
+        )}
         <WelcomeDemo />
         <div className="av-welcome-theme">
           <span className="av-welcome-text">Theme</span>
@@ -67,10 +82,6 @@ export function WelcomeCard({
         </div>
         {touchOnly ? (
           <>
-            <p className="av-welcome-text av-welcome-touch">
-              AutoMotion is made for a computer with a mouse and keyboard. On a phone you can open
-              shared automata and run words on them.
-            </p>
             <div className="av-welcome-actions">
               <button type="button" className="av-go" data-focus-stop onClick={onClose}>
                 Got it

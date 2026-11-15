@@ -150,6 +150,13 @@ it('on a touch-only device offers Got it instead of the tutorial', async () => {
     expect(
       within(d).getByText(/made for a computer with a mouse and keyboard/),
     ).toBeInTheDocument();
+    // A callout with a headline, above the demo, so it is read before Got it is tapped.
+    const note = within(d).getByRole('note');
+    expect(note).toHaveTextContent('Open this on a computer');
+    expect(
+      note.compareDocumentPosition(within(d).getByTestId('welcome-demo')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(within(d).queryByRole('button', { name: 'Start tutorial' })).toBeNull();
     expect(within(d).queryByRole('button', { name: 'Not now' })).toBeNull();
     expect(within(d).getByTestId('welcome-demo')).toBeInTheDocument();

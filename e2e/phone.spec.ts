@@ -37,8 +37,15 @@ test('the phone welcome says what a phone is for, then a shared link opens and r
   await expect(welcome).toContainText('made for a computer with a mouse and keyboard');
   await expect(welcome.getByRole('button', { name: 'Start tutorial' })).toHaveCount(0);
   await expect(welcome.getByTestId('welcome-demo')).toBeVisible();
+  // The notice is a callout above the demo, on screen without scrolling.
+  const note = welcome.getByRole('note');
+  await expect(note).toContainText('Open this on a computer');
+  const noteBox = (await note.boundingBox())!;
+  const demoBox = (await welcome.getByTestId('welcome-demo').boundingBox())!;
+  expect(noteBox.y + noteBox.height).toBeLessThanOrEqual(demoBox.y);
   const box = await welcome.boundingBox();
   const size = page.viewportSize()!;
+  expect(noteBox.y + noteBox.height).toBeLessThanOrEqual(size.height);
   expect(box!.x).toBeGreaterThanOrEqual(0);
   expect(box!.x + box!.width).toBeLessThanOrEqual(size.width);
   await page.screenshot({ path: 'test-results/phone-welcome.png' });
