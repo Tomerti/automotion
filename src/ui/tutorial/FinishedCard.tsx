@@ -2,6 +2,10 @@ import { useRef, useState } from 'react';
 import { CloseIcon } from '../shell/icons';
 import { useModalDialog } from '../shell/useModalDialog';
 import { CHEERS } from './cheers';
+import type { Lesson } from './engine';
+import { nextLesson } from './lessons';
+import { finishedLessons } from './lessonsDone';
+import { requestLesson } from './tutorialStore';
 import './tutorial.css';
 
 /** Confetti pieces: horizontal position (%), delay (s), colour token. */
@@ -15,10 +19,23 @@ const CONFETTI = Array.from({ length: 18 }, (_, i) => ({
  * The popup after Finish: well done, with a joke. Escape, the backdrop, the close button and the
  * button dismiss it.
  */
-export function FinishedCard({ onClose }: { onClose: () => void }): React.JSX.Element {
+export function FinishedCard({
+  lesson,
+  onClose,
+  onSeeLessons,
+}: {
+  lesson: Lesson;
+  onClose: () => void;
+  /** After the tutorial, See the lessons: open the Controls on the Lessons tab. */
+  onSeeLessons?: () => void;
+}): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalDialog(dialogRef, onClose);
   const [cheer] = useState(() => CHEERS[Math.floor(Math.random() * CHEERS.length)]!);
+  const tutorial = lesson.noun === 'tutorial';
+  // After the tutorial the lessons are pointed to, not started: they're there when wanted.
+  const [next] = useState(() => (tutorial ? null : nextLesson([...finishedLessons(), lesson.id])));
+  const title = tutorial ? 'Tutorial complete' : 'Lesson complete';
 
   return (
     <div
@@ -33,7 +50,7 @@ export function FinishedCard({ onClose }: { onClose: () => void }): React.JSX.El
         className="av-modal av-welcome av-finished"
         role="dialog"
         aria-modal="true"
-        aria-label="Tutorial complete"
+        aria-label={title}
         tabIndex={-1}
       >
         <div className="av-confetti" aria-hidden="true">
@@ -49,7 +66,7 @@ export function FinishedCard({ onClose }: { onClose: () => void }): React.JSX.El
           ))}
         </div>
         <header className="av-modal-head">
-          <h2>Tutorial complete!</h2>
+          <h2>{title}!</h2>
           <button
             type="button"
             className="av-icon-button"
@@ -64,13 +81,52 @@ export function FinishedCard({ onClose }: { onClose: () => void }): React.JSX.El
         <p className="av-finished-cheer" data-testid="tutorial-cheer">
           {cheer}
         </p>
-        <p className="av-welcome-note av-finished-note">
-          Your Tutorial automaton stays in the history.
-        </p>
+        {!tutorial && (
+          <p className="av-welcome-note av-finished-note">Its automata stay in your history.</p>
+        )}
         <div className="av-welcome-actions">
-          <button type="button" className="av-go" data-focus-stop onClick={onClose}>
-            Back to building
-          </button>
+          {tutorial ? (
+            <>
+              <button type="button" className="av-go" data-focus-stop onClick={onClose}>
+                Start building
+              </button>
+              <button
+                type="button"
+                data-focus-stop
+                onClick={() => {
+                  onClose();
+                  onSeeLessons?.();
+                }}
+              >
+                See the lessons
+              </button>
+            </>
+          ) : (
+            <>
+              {next && (
+                <button
+                  type="button"
+                  className="av-go"
+                  data-testid="next-lesson"
+                  data-focus-stop
+                  onClick={() => {
+                    onClose();
+                    void requestLesson(next.id);
+                  }}
+                >
+                  Next: {next.title}
+                </button>
+              )}
+              <button
+                type="button"
+                className={next ? undefined : 'av-go'}
+                data-focus-stop
+                onClick={onClose}
+              >
+                Back to building
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

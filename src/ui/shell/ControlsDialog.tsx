@@ -1,8 +1,12 @@
 import { useId, useRef, useState } from 'react';
 import { GestureChip } from './GestureChip';
 import type { Gesture } from './GestureChip';
+import type { LessonId } from '../tutorial/engine';
+import { LESSONS } from '../tutorial/lessons';
+import { finishedLessons } from '../tutorial/lessonsDone';
 import { useTutorial } from '../tutorial/tutorialStore';
 import { CloseIcon } from './icons';
+import { useTouchOnly } from './touch';
 import { useModalDialog } from './useModalDialog';
 
 interface Row {
@@ -131,20 +135,30 @@ const TABS: Tab[] = [
   },
 ];
 
+const TAB_TITLES = [...TABS.map((t) => t.title), 'Lessons'];
+
+/** The last tab lists the lessons instead of gestures. */
+const LESSONS_TAB = TABS.length;
+
 /**
  * Modal guide to the controls, one tab per task. Escape, the backdrop or the close button
  * dismiss it; ←/→ move between tabs.
  */
 export function ControlsDialog({
   onClose,
-  onStartTutorial,
+  onStartLesson,
+  openOnLessons = false,
 }: {
   onClose: () => void;
-  onStartTutorial: () => void;
+  onStartLesson: (id: LessonId) => void;
+  /** Open on the Lessons tab (from the popup after the tutorial) instead of the first. */
+  openOnLessons?: boolean;
 }): React.JSX.Element {
-  const tutorialRunning = useTutorial((s) => s.active);
+  const running = useTutorial((s) => (s.active ? s.lessonId : null));
+  const touchOnly = useTouchOnly();
+  const [done] = useState(finishedLessons);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState(openOnLessons ? LESSONS_TAB : 0);
   const baseId = useId();
   useModalDialog(dialogRef, onClose);
 
@@ -152,7 +166,7 @@ export function ControlsDialog({
     const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
     if (delta === 0) return;
     e.preventDefault();
-    const next = (tab + delta + TABS.length) % TABS.length;
+    const next = (tab + delta + TAB_TITLES.length) % TAB_TITLES.length;
     setTab(next);
     document.getElementById(`${baseId}-tab-${next}`)?.focus();
   };
@@ -177,14 +191,6 @@ export function ControlsDialog({
           <h2>Controls</h2>
           <button
             type="button"
-            className="av-guide-tutorial"
-            data-focus-stop
-            onClick={onStartTutorial}
-          >
-            {tutorialRunning ? 'Restart tutorial' : 'Take the tutorial'}
-          </button>
-          <button
-            type="button"
             className="av-icon-button"
             aria-label="Close controls"
             title="Close (Esc)"
@@ -195,9 +201,9 @@ export function ControlsDialog({
           </button>
         </header>
         <div className="av-guide-tabs" role="tablist" aria-label="Topics" onKeyDown={tabKeys}>
-          {TABS.map((t, i) => (
+          {TAB_TITLES.map((title, i) => (
             <button
-              key={t.id}
+              key={title}
               id={`${baseId}-tab-${i}`}
               type="button"
               role="tab"
@@ -207,7 +213,7 @@ export function ControlsDialog({
               data-focus-stop
               onClick={() => setTab(i)}
             >
-              {t.title}
+              {title}
             </button>
           ))}
         </div>
@@ -233,6 +239,41 @@ export function ControlsDialog({
               ))}
             </ul>
           ))}
+          <div
+            id={`${baseId}-panel-${LESSONS_TAB}`}
+            className="av-lessons"
+            role="tabpanel"
+            aria-labelledby={`${baseId}-tab-${LESSONS_TAB}`}
+            hidden={tab !== LESSONS_TAB}
+          >
+            {touchOnly && <p className="av-lessons-note">Lessons need a mouse and keyboard.</p>}
+            <ul className="av-guide-list">
+              {LESSONS.map((l) => (
+                <li key={l.id}>
+                  <button
+                    type="button"
+                    className="av-guide-row av-lesson-row"
+                    data-testid={`lesson-${l.id}`}
+                    disabled={touchOnly}
+                    onClick={() => onStartLesson(l.id)}
+                  >
+                    <span className="av-guide-what">
+                      <span className="av-guide-action">{l.title}</span>
+                      <span className="av-guide-hint">{l.summary}</span>
+                    </span>
+                    {done.includes(l.id) && (
+                      <span className="av-lesson-done" role="img" aria-label="finished">
+                        ✓
+                      </span>
+                    )}
+                    <span className="av-lesson-time">
+                      {running === l.id ? 'Restart' : `~${l.minutes} min`}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </div>

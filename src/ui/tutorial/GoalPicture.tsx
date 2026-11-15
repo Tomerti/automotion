@@ -15,6 +15,12 @@ const START_ARROW = 32;
 /** State names' font size: keep in sync with `.av-goal-label` in tutorial.css. */
 const GOAL_LABEL_SIZE = 14;
 
+/** A name's font size: the standard one, or smaller when the name would overflow its circle. */
+function labelSize(label: string): number {
+  const glyphs = label.replace(/_/g, '').length - 0.3 * (label.match(/_./g)?.length ?? 0);
+  return Math.min(GOAL_LABEL_SIZE, Math.max(9.5, (2 * STATE_RADIUS - 4) / (glyphs * 0.55)));
+}
+
 /**
  * A goal automaton as a small labelled picture, like the canvas draws it (states, start arrow,
  * accepting ring, arrows and their symbols), scaled to the card's width. Its own SVG, without
@@ -90,9 +96,10 @@ export const GoalPicture = memo(function GoalPicture(props: {
           <text
             className="av-goal-label"
             x={s.x}
-            y={s.y + GOAL_LABEL_SIZE * labelBaselineOffset(s.label)}
+            y={s.y + labelSize(s.label) * labelBaselineOffset(s.label)}
+            style={{ fontSize: labelSize(s.label) }}
           >
-            <LabelSpans label={s.label} fontSize={GOAL_LABEL_SIZE} />
+            <LabelSpans label={s.label} fontSize={labelSize(s.label)} />
           </text>
         </g>
       ))}

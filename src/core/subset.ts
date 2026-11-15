@@ -108,12 +108,16 @@ export function subsetConstruction(original: Automaton): SubsetTrace {
     });
   }
 
+  // Without ε-arrows every closure is the set itself, so the explanations leave it out.
+  const hasEpsilon = nfa.transitions.some((t) => t.symbols.includes(EPSILON));
   const startSubset = epsilonClosure(nfa, starts);
   const startEntry = addState(startSubset);
   steps.push({
     phase: 'init',
     subset: startSubset,
-    explanation: `Start state: ε-closure(${formatSet(nfa, starts)}) = ${formatSet(nfa, startSubset)}`,
+    explanation: hasEpsilon
+      ? `Start state: ε-closure(${formatSet(nfa, starts)}) = ${formatSet(nfa, startSubset)}`
+      : `Start state: ${formatSet(nfa, startSubset)}`,
     focus: { states: startSubset },
     dfaFocus: { states: [startEntry.id] },
     revealedStates: [...revealedStates],
@@ -153,7 +157,9 @@ export function subsetConstruction(original: Automaton): SubsetTrace {
         closure,
         target: target.id,
         isNew,
-        explanation: `${formatSet(nfa, source.subset)} on '${sym}': move = ${formatSet(nfa, moved)}, ε-closure = ${formatSet(nfa, closure)} → ${verb} state ${dfaLabel(nfa, closure)}`,
+        explanation: `${formatSet(nfa, source.subset)} on '${sym}': move = ${formatSet(nfa, moved)}${
+          hasEpsilon ? `, ε-closure = ${formatSet(nfa, closure)}` : ''
+        } → ${verb} state ${dfaLabel(nfa, closure)}`,
         focus: {
           states: source.subset,
           transitions: transitionsTaken(nfa, source.subset, sym),

@@ -26,6 +26,13 @@
   box-shadow: var(--av-shadow-float);
   animation: av-pop-in 160ms ease-out;
 }
+/*
+ * A lesson with a run or walkthrough open: room for a two-line explanation and the instruction,
+ * so the card (and the trace laid out below it) keeps one height from stop to stop.
+ */
+.av-tutorial[data-tracing] {
+  min-height: 190px;
+}
 
 .av-tutorial-head {
   display: flex;
@@ -87,6 +94,13 @@
 }
 .av-tutorial-examples [data-accepted='false'] .av-tutorial-mark {
   color: var(--av-red);
+}
+/* A goal without a picture: the text and the examples on one line, wrapping when they don't fit. */
+.av-tutorial-goal[data-no-picture] .av-tutorial-goal-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  align-items: center;
 }
 .av-tutorial-goal-picture {
   flex: none;
@@ -227,6 +241,19 @@
 .av-tutorial-now .av-tutorial-text {
   animation: av-tutorial-step 220ms ease-out;
 }
+.av-tutorial-explain {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--av-ink);
+}
+.av-tutorial-now .av-tutorial-explain {
+  animation: av-tutorial-step 220ms ease-out;
+}
+.av-tutorial-now .av-tutorial-idea {
+  font-weight: 400;
+}
 .av-tutorial-why {
   margin: 0;
   font-size: 13px;
@@ -286,28 +313,6 @@
   line-height: 1.4;
   color: var(--av-red);
 }
-.av-tutorial-link {
-  min-height: 0;
-  padding: 0;
-  font-weight: 600;
-  color: var(--av-accent);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  background: transparent;
-  border: 0;
-}
-@media (hover: hover) {
-  .av-tutorial-link:hover:not(:disabled) {
-    min-height: 0;
-    padding: 0;
-    font-weight: 600;
-    color: var(--av-accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    background: transparent;
-    border: 0;
-  }
-}
 
 .av-tutorial-actions {
   display: flex;
@@ -338,6 +343,17 @@
   z-index: 13;
   pointer-events: none;
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--av-run) 45%, transparent));
+}
+/* Framing a toolbar button: over the top bar (20) too. */
+.av-tutorial-pointer[data-over-bar] {
+  z-index: 21;
+}
+/* Framing a button: it hugs the button and breathes less (it may sit by the window's edge or
+   next to another button). */
+.av-tutorial-pointer[data-tight] .av-tutorial-corner {
+  --reach: 2px;
+  width: 9px;
+  height: 9px;
 }
 .av-tutorial-corner {
   position: absolute;
@@ -392,7 +408,7 @@
 
 @keyframes av-tutorial-breathe {
   50% {
-    transform: translate(calc(var(--dx) * 3px), calc(var(--dy) * 3px));
+    transform: translate(calc(var(--dx) * var(--reach, 3px)), calc(var(--dy) * var(--reach, 3px)));
   }
 }
 

@@ -254,6 +254,33 @@ export function renameAutomaton(a: Automaton, name: string): Automaton {
   return { ...a, name };
 }
 
+const sameList = <T>(a: T[] | undefined, b: T[] | undefined): boolean =>
+  (a ?? []).length === (b ?? []).length && (a ?? []).every((x, i) => x === (b ?? [])[i]);
+
+/**
+ * Whether `a` and `b` differ at most in layout and name: same kind, alphabet, states (id, label,
+ * `mergedFrom`), starts, accepting and transitions (id, ends, symbols), in the same order.
+ * Positions, angles, bends, label sides and the automaton's name are ignored.
+ */
+export function sameStructure(a: Automaton, b: Automaton): boolean {
+  return (
+    a.kind === b.kind &&
+    sameList(a.alphabet, b.alphabet) &&
+    sameList(a.starts, b.starts) &&
+    sameList(a.accepting, b.accepting) &&
+    a.states.length === b.states.length &&
+    a.states.every((s, i) => {
+      const o = b.states[i]!;
+      return s.id === o.id && s.label === o.label && sameList(s.mergedFrom, o.mergedFrom);
+    }) &&
+    a.transitions.length === b.transitions.length &&
+    a.transitions.every((t, i) => {
+      const o = b.transitions[i]!;
+      return t.id === o.id && t.from === o.from && t.to === o.to && sameList(t.symbols, o.symbols);
+    })
+  );
+}
+
 /** What a user may type for ε in a symbol input. */
 export const EPSILON_ALIASES = ['\\eps', 'eps', EPSILON];
 

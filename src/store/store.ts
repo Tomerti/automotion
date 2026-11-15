@@ -10,7 +10,7 @@ import {
   pasteClip,
 } from '../core/clipboard';
 import type { Clip } from '../core/clipboard';
-import { removeState, removeTransition, syncAlphabet } from '../core/edit';
+import { removeState, removeTransition, sameStructure, syncAlphabet } from '../core/edit';
 import { newId } from '../core/id';
 import { emptyAutomaton } from '../core/model';
 import type { Automaton, AutomatonKind, Transition } from '../core/model';
@@ -51,6 +51,10 @@ export interface AppState {
   stepIndex: number;
   history: Record<string, { past: Automaton[]; future: Automaton[] }>;
   clipboard: Clipboard | null;
+  /** Ids of automata whose structure can't change (layout moves still can); never saved. */
+  readOnly: string[];
+  /** Bumped each time an edit, undo or redo is refused because the automaton is read-only. */
+  blockedEdits: number;
 
   /** A blank automaton named "Untitled" (or "Untitled 2", …); a DFA unless `kind` says NFA. */
   createAutomaton(kind?: AutomatonKind): string;
@@ -68,12 +72,12 @@ export interface AppState {
   undo(): void;
   redo(): void;
   select(sel: Selection): void;
-  /** Copy the selected states of the active automaton (Ctrl+C); false if none is selected. */
+  /** Copy the selected states of the active automaton (Ctrl+C); false if none is selected. Allowed on a read-only automaton. */
   copySelection(): boolean;
   /**
    * Cut (Ctrl+X): copy the selected states, then delete them and the selected arrows as one undo
    * step. The first paste without a place puts them back where they were. False (and nothing
-   * changes) when no state is selected or a trace is open.
+   * changes) when no state is selected, a trace is open or the automaton is read-only.
    */
   cutSelection(): boolean;
   /** Copy automaton `id` as a whole (Ctrl+C in the history bar); false if there is none. */
@@ -87,10 +91,12 @@ export interface AppState {
    * Paste what was copied into the active automaton as one undo step, centred on `at` (world
    * coordinates), or a step down and right of where it was copied from; the pasted states and
    * the arrows between them become the selection. `promoted`: an ε-arrow turned a DFA into an
-   * NFA. `null` when no states were copied or a trace is open.
+   * NFA. `null` when no states were copied, a trace is open or the automaton is read-only.
    */
   paste(at?: { x: number; y: number }): { promoted: boolean } | null;
   setViewport(id: string, vp: Viewport): void;
+  /** Make exactly these automata read-only: structural edits, undo and redo into one are refused. */
+  setReadOnly(ids: string[]): void;
   openTrace(trace: AnyTrace): void;
   setStep(i: number): void;
   closeTrace(): void;
@@ -127,6 +133,8 @@ function initialData(
   | 'stepIndex'
   | 'history'
   | 'clipboard'
+  | 'readOnly'
+  | 'blockedEdits'
 > {
   const automata = initial.automata ?? [];
   return {
@@ -138,6 +146,8 @@ function initialData(
     stepIndex: 0,
     history: {},
     clipboard: null,
+    readOnly: [],
+    blockedEdits: 0,
   };
 }
 
@@ -167,6 +177,15 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           h.future = [];
         });
 
+      /** True (and counted) when `next` would change the structure of a read-only automaton. */
+      const blocked = (current: Automaton, next: Automaton): boolean => {
+        if (!get().readOnly.includes(current.id) || sameStructure(current, next)) return false;
+        set((s) => {
+          s.blockedEdits++;
+        });
+        return true;
+      };
+
       const swap = (from: 'past' | 'future', to: 'past' | 'future'): void => {
         const { activeId, trace, automata: all, history } = get();
         if (activeId === null || trace) return;
@@ -174,7 +193,7 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
         const current = all.find((a) => a.id === activeId);
         if (!stack || stack.length === 0 || !current) return;
         const target = stack[stack.length - 1];
-        if (!target) return;
+        if (!target || blocked(current, target)) return;
         set((s) => {
           const h = s.history[activeId];
           if (!h) return;
@@ -263,6 +282,7 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           if (!current) return;
           // The alphabet is derived from the transitions (there is no alphabet editor).
           const next = syncAlphabet(fn(current));
+          if (blocked(current, next)) return;
           if (opts?.record ?? true) record(activeId, current);
           set((s) => {
             toFront(
@@ -305,12 +325,12 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           const current = all.find((a) => a.id === activeId);
           const clip = current && !trace ? copyStates(current, selection.states) : null;
           if (!clip) return false;
-          get().edit((a) => {
-            let out = a;
-            for (const t of selection.transitions) out = removeTransition(out, t);
-            for (const st of clip.states) out = removeState(out, st.id);
-            return out;
-          });
+          let next = current!;
+          for (const t of selection.transitions) next = removeTransition(next, t);
+          for (const st of clip.states) next = removeState(next, st.id);
+          // Refused on a read-only automaton: nothing copied, the selection kept.
+          if (blocked(current!, syncAlphabet(next))) return false;
+          get().edit(() => next);
           set((s) => {
             // `repeat: -1`: the first placeless paste steps 0 times, back onto the cut states' spot.
             s.clipboard = {
@@ -372,6 +392,8 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
             offset,
             incoming?.automatonId === current.id ? incoming.transitions : [],
           );
+          // Refused on a read-only automaton: the clipboard and the selection stay as they were.
+          if (blocked(current, syncAlphabet(result.automaton))) return null;
           get().edit(() => result.automaton);
           set((s) => {
             s.clipboard = { kind: 'states', clip, last: { at: at ?? null, repeat } };
@@ -386,6 +408,12 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
         setViewport(id, vp) {
           set((s) => {
             s.viewports[id] = vp;
+          });
+        },
+
+        setReadOnly(ids) {
+          set((s) => {
+            s.readOnly = ids;
           });
         },
 

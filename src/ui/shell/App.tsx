@@ -9,7 +9,13 @@ import { TracePlayer } from '../player/TracePlayer';
 import { TraceView } from '../player/TraceView';
 import { TutorialCard } from '../tutorial/TutorialCard';
 import { FinishedCard } from '../tutorial/FinishedCard';
-import { closeCelebration, startTutorial, useTutorial } from '../tutorial/tutorialStore';
+import {
+  closeCelebration,
+  lessonOpensPaused,
+  lessonStopAt,
+  requestLesson,
+  useTutorial,
+} from '../tutorial/tutorialStore';
 import { WelcomeCard } from '../tutorial/WelcomeCard';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ControlsDialog } from './ControlsDialog';
@@ -70,9 +76,14 @@ export default function App(): React.JSX.Element {
   const setStep = useAppStore((s) => s.setStep);
   const closeTrace = useAppStore((s) => s.closeTrace);
   const [helpOpen, setHelpOpen] = useControlsHelp();
+  // The Controls opened from the popup after the tutorial start on the Lessons tab.
+  const [helpOnLessons, setHelpOnLessons] = useState(false);
   const [welcomeOpen, closeWelcome] = useWelcome(arrivedByLink());
   const [historyOpen, toggleHistory] = useHistoryOpen();
   const celebrating = useTutorial((s) => s.celebrating);
+  // A number or null: stable, and re-read as the lesson moves on.
+  const stopAt = useTutorial((s) => (trace ? lessonStopAt(trace, s) : null));
+  const opensPaused = useTutorial((s) => (trace ? lessonOpensPaused(trace, s) : false));
   const step = trace?.steps[stepIndex];
   const [dockRef, dockHeight] = useDockHeight();
 
@@ -117,7 +128,8 @@ export default function App(): React.JSX.Element {
                 onIndex={setStep}
                 explanation={step.explanation}
                 onClose={closeTrace}
-                autoPlay={trace.kind === 'run' || trace.kind === 'subset'}
+                autoPlay={(trace.kind === 'run' && !opensPaused) || trace.kind === 'subset'}
+                stopAt={stopAt}
                 extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
               />
             )}
@@ -129,10 +141,15 @@ export default function App(): React.JSX.Element {
       <ConfirmDialog />
       {helpOpen && (
         <ControlsDialog
-          onClose={() => setHelpOpen(false)}
-          onStartTutorial={() => {
+          openOnLessons={helpOnLessons}
+          onClose={() => {
             setHelpOpen(false);
-            startTutorial();
+            setHelpOnLessons(false);
+          }}
+          onStartLesson={(id) => {
+            setHelpOpen(false);
+            setHelpOnLessons(false);
+            void requestLesson(id);
           }}
         />
       )}
@@ -141,11 +158,20 @@ export default function App(): React.JSX.Element {
           onClose={closeWelcome}
           onStart={() => {
             closeWelcome();
-            startTutorial();
+            void requestLesson('basics');
           }}
         />
       )}
-      {celebrating && <FinishedCard onClose={closeCelebration} />}
+      {celebrating && (
+        <FinishedCard
+          lesson={celebrating}
+          onClose={closeCelebration}
+          onSeeLessons={() => {
+            setHelpOnLessons(true);
+            setHelpOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

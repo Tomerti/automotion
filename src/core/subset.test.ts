@@ -44,13 +44,11 @@ describe('subsetConstruction', () => {
     expect(result.name).toBe('fixture → DFA');
     expect(result.states.map((s) => s.label).sort()).toEqual(['{q0,q1}', '{q0,q2}', '{q0}']);
     expect(steps[0]?.phase).toBe('init');
-    expect(steps[0]?.explanation).toBe('Start state: ε-closure({q0}) = {q0}');
+    expect(steps[0]?.explanation).toBe('Start state: {q0}');
     expect(steps.at(-1)?.phase).toBe('done');
     expect(steps.at(-1)?.explanation).toBe('Done: 3 DFA states');
     expect(steps.filter((s) => s.phase === 'expand')).toHaveLength(3 * 2);
-    expect(steps[1]?.explanation).toBe(
-      "{q0} on 'a': move = {q0, q1}, ε-closure = {q0, q1} → new state {q0,q1}",
-    );
+    expect(steps[1]?.explanation).toBe("{q0} on 'a': move = {q0, q1} → new state {q0,q1}");
     expect(result.states.every((s) => s.x === 0 && s.y === 0)).toBe(true);
   });
 
@@ -80,9 +78,7 @@ describe('subsetConstruction', () => {
     const loop = result.transitions.find((t) => t.from === dead?.id && t.to === dead?.id);
     expect(loop?.symbols.sort()).toEqual(['a', 'b']);
     expect(steps.some((s) => s.explanation.includes('→ existing state ∅'))).toBe(true);
-    expect(steps.some((s) => s.explanation.includes('move = ∅, ε-closure = ∅ → new state ∅'))).toBe(
-      true,
-    );
+    expect(steps.some((s) => s.explanation.includes('move = ∅ → new state ∅'))).toBe(true);
   });
 
   it('revealedStates grows monotonically and ends with all result states', () => {
@@ -126,6 +122,10 @@ describe('subsetConstruction', () => {
     const { result, steps } = subsetConstruction(nfa);
     expect(result.states.map((s) => s.label)).toEqual(['{q0,q1}']);
     expect(steps[0]?.explanation).toBe('Start state: ε-closure({q0}) = {q0, q1}');
+    // With ε-arrows, each step names the closure too.
+    expect(steps[1]?.explanation).toBe(
+      "{q0, q1} on 'a': move = {q1}, ε-closure = {q0, q1} → existing state {q0,q1}",
+    );
     expect(accepts(result, 'aa')).toBe(true);
   });
 

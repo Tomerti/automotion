@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { moveState } from '../../core/edit';
@@ -7,6 +7,8 @@ import { fixture, nthFromEnd } from '../../core/testing/fixtures';
 import { decodeShare, readShareHash, sameAutomaton } from '../../persistence/shareLink';
 import { appStore, resetAppStore } from '../../store/store';
 import { Toolbar } from './Toolbar';
+import { TEST_LESSON } from '../tutorial/testing/testLesson';
+import { endLesson, startLesson, tutorialStore } from '../tutorial/tutorialStore';
 import { toastStore } from './toastStore';
 
 const nfa = () => fixture({ kind: 'NFA', alphabet: 'a', states: ['q0'], start: 'q0', name: 'n' });
@@ -306,6 +308,85 @@ describe('Toolbar', () => {
       expect(toastStore.getState().toasts).toMatchObject([
         { message: 'This browser can’t copy images: use Export PNG instead', kind: 'error' },
       ]);
+    });
+  });
+
+  describe('lesson actions', () => {
+    const reported = () => [...tutorialStore.getState().actions];
+    const renderWithDiagram = (): void => {
+      render(
+        <>
+          <Toolbar />
+          <div data-testid="canvas">
+            <svg data-testid="diagram">
+              <g />
+            </svg>
+          </div>
+        </>,
+      );
+    };
+    const urlFns = { create: URL.createObjectURL, revoke: URL.revokeObjectURL };
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn(() => 'blob:x');
+      URL.revokeObjectURL = vi.fn();
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    });
+    afterEach(() => {
+      URL.createObjectURL = urlFns.create;
+      URL.revokeObjectURL = urlFns.revoke;
+      act(() => endLesson());
+    });
+
+    /** A lesson running on the open automaton (the TEST_LESSON's own copy is the active one). */
+    const runLesson = (): void => {
+      resetAppStore({ automata: [] });
+      act(() => startLesson(TEST_LESSON));
+    };
+
+    it.each([
+      ['Share link', 'share-link'],
+      ['Copy image', 'copy-image'],
+      ['Copy LaTeX', 'copy-latex'],
+      ['Export SVG', 'export-svg'],
+      ['Export PNG', 'export-png'],
+      ['Export LaTeX', 'export-latex'],
+    ])('%s reports %s while a lesson runs', async (name, action) => {
+      const user = userEvent.setup();
+      runLesson();
+      renderWithDiagram();
+      await user.click(btn('Share, copy or export'));
+      await user.click(screen.getByRole('menuitem', { name }));
+      // Even though the clipboard or the picture then fails.
+      expect(reported()).toEqual([action]);
+    });
+
+    it('Ctrl+C with nothing selected reports copy-image', async () => {
+      const user = userEvent.setup();
+      runLesson();
+      renderWithDiagram();
+      await user.keyboard('{Control>}c{/Control}');
+      expect(reported()).toEqual(['copy-image']);
+    });
+
+    it('Ctrl+C with states selected reports nothing: the canvas copies the states', async () => {
+      const user = userEvent.setup();
+      runLesson();
+      renderWithDiagram();
+      const id = appStore.getState().activeId!;
+      const state = appStore.getState().automata.find((x) => x.id === id)!.states[0]!;
+      act(() => appStore.getState().select({ states: [state.id], transitions: [] }));
+      await user.keyboard('{Control>}c{/Control}');
+      expect(reported()).toEqual([]);
+    });
+
+    it('records nothing without a lesson', async () => {
+      const user = userEvent.setup();
+      resetAppStore({ automata: [nfa()], activeId: 'n' });
+      renderWithDiagram();
+      await user.click(btn('Share, copy or export'));
+      await user.click(screen.getByRole('menuitem', { name: 'Copy LaTeX' }));
+      await user.keyboard('{Control>}c{/Control}');
+      expect(reported()).toEqual([]);
     });
   });
 

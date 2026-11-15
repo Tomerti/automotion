@@ -14,10 +14,12 @@ function Harness({
   n = 4,
   onClose = () => {},
   autoPlay,
+  stopAt,
 }: {
   n?: number;
   onClose?: () => void;
   autoPlay?: boolean;
+  stopAt?: number | null;
 }): React.JSX.Element {
   const [i, setI] = useState(0);
   return (
@@ -28,6 +30,7 @@ function Harness({
       explanation={`explain ${i}`}
       onClose={onClose}
       autoPlay={autoPlay}
+      stopAt={stopAt}
     />
   );
 }
@@ -85,6 +88,24 @@ describe('TracePlayer', () => {
     expect(screen.getByText('Step 2 / 3')).toBeInTheDocument();
     unmount();
     render(<Harness n={1} autoPlay />);
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+  });
+
+  it('stopAt pauses playback on that step; Play again goes on to the end', () => {
+    vi.useFakeTimers();
+    render(<Harness n={5} autoPlay stopAt={2} />);
+    act(() => void vi.advanceTimersByTime(800));
+    expect(screen.getByText('Step 2 / 5')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+    act(() => void vi.advanceTimersByTime(800));
+    expect(screen.getByText('Step 3 / 5')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    act(() => void vi.advanceTimersByTime(1600));
+    expect(screen.getByText('Step 3 / 5')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
+    act(() => void vi.advanceTimersByTime(800));
+    act(() => void vi.advanceTimersByTime(800));
+    expect(screen.getByText('Step 5 / 5')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
   });
 

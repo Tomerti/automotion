@@ -17,6 +17,7 @@ import {
   renameAlphabetSymbol,
   renameAutomaton,
   renameState,
+  sameStructure,
   setEdgeBend,
   setEdgeSymbols,
   setLabelSide,
@@ -350,5 +351,25 @@ describe('start states', () => {
     expect(toggleStart(n, 'gone').starts).toEqual(['q0']);
     expect(toggleStart(d, 'gone').starts).toEqual(['q0']);
     expect(setStart(d, 'gone').starts).toEqual(['q0']);
+  });
+});
+
+describe('sameStructure', () => {
+  it('ignores layout and the automaton name', () => {
+    const a = dfa();
+    expect(sameStructure(a, moveState(a, 'q0', { x: 999, y: 5 }))).toBe(true);
+    const t = a.transitions[0]!;
+    expect(sameStructure(a, setEdgeBend(a, t.id, 30))).toBe(true);
+    expect(sameStructure(a, renameAutomaton(a, 'Other'))).toBe(true);
+  });
+
+  it('sees structural changes', () => {
+    const a = dfa();
+    const t = a.transitions[0]!;
+    expect(sameStructure(a, addState(a, { x: 0, y: 0 }))).toBe(false);
+    expect(sameStructure(a, renameState(a, 'q0', 'z'))).toBe(false);
+    expect(sameStructure(a, toggleAccepting(a, 'q0'))).toBe(false);
+    expect(sameStructure(a, setEdgeSymbols(a, t.from, t.to, ['b']))).toBe(false);
+    expect(sameStructure(a, { ...a, kind: 'NFA' })).toBe(false);
   });
 });

@@ -1,15 +1,22 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetAppStore } from '../../store/store';
 import App from './App';
-import { endTutorial } from '../tutorial/tutorialStore';
+import { LESSONS_DONE_KEY, markLessonFinished } from '../tutorial/lessonsDone';
+import { endLesson } from '../tutorial/tutorialStore';
 import { SEEN_HELP_KEY } from './help';
 
 const dialog = () => screen.queryByRole('dialog', { name: 'Controls' });
 
-beforeEach(() => resetAppStore());
-afterEach(cleanup);
+beforeEach(() => {
+  resetAppStore();
+  localStorage.removeItem(LESSONS_DONE_KEY);
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  cleanup();
+});
 
 describe('Controls popup', () => {
   it('opens from the help button on the Build tab, gestures shown as chips', async () => {
@@ -63,7 +70,7 @@ describe('Controls popup', () => {
     await user.click(screen.getByRole('button', { name: 'Controls' }));
     const d = dialog()!;
     const panels = d.querySelectorAll('[role="tabpanel"]');
-    expect(panels).toHaveLength(4);
+    expect(panels).toHaveLength(5);
     expect(Array.from(panels).filter((p) => !(p as HTMLElement).hidden)).toHaveLength(1);
     await user.click(within(d).getByRole('tab', { name: 'Run' }));
     expect(within(d).getByRole('tabpanel')).toHaveTextContent('Run the word');
@@ -78,18 +85,15 @@ describe('Controls popup', () => {
     const tab = (name: string) => within(d).getByRole('tab', { name });
     expect(d).toHaveFocus();
     await user.tab();
-    expect(within(d).getByRole('button', { name: 'Take the tutorial' })).toHaveFocus();
-    await user.tab();
     expect(within(d).getByRole('button', { name: 'Close controls' })).toHaveFocus();
+    expect(within(d).queryByRole('button', { name: 'Lessons' })).toBeNull();
     await user.tab();
     expect(tab('Build')).toHaveFocus();
     await user.keyboard('{ArrowRight}');
     expect(tab('Arrange')).toHaveFocus();
     expect(tab('Arrange')).toHaveAttribute('aria-selected', 'true');
     await user.keyboard('{ArrowLeft}{ArrowLeft}');
-    expect(tab('Keys')).toHaveAttribute('aria-selected', 'true');
-    await user.tab();
-    expect(within(d).getByRole('button', { name: 'Take the tutorial' })).toHaveFocus();
+    expect(tab('Lessons')).toHaveAttribute('aria-selected', 'true');
   });
 
   it('closes with Escape, the close button and the backdrop', async () => {
@@ -131,15 +135,51 @@ describe('Controls popup', () => {
     expect(dialog()).toBeNull();
   });
 
-  it('Take the tutorial closes it and starts the tutorial; it reads Restart while one runs', async () => {
+  it('the Lessons tab lists the lessons, a row starts its lesson', async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Controls' }));
-    await user.click(within(dialog()!).getByRole('button', { name: 'Take the tutorial' }));
+    await user.click(within(dialog()!).getByRole('tab', { name: 'Lessons' }));
+    expect(within(dialog()!).getByRole('tab', { name: 'Lessons' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    const row = within(dialog()!).getByTestId('lesson-basics');
+    expect(row).toHaveTextContent('Basics');
+    expect(row).toHaveTextContent(/~\d+ min/);
+    expect(within(row).queryByLabelText('finished')).toBeNull();
+    await user.click(row);
     expect(dialog()).toBeNull();
     expect(screen.getByTestId('tutorial-card')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Controls' }));
-    expect(within(dialog()!).getByRole('button', { name: 'Restart tutorial' })).toBeInTheDocument();
-    act(() => endTutorial());
+    await user.click(within(dialog()!).getByRole('tab', { name: 'Lessons' }));
+    expect(within(dialog()!).getByTestId('lesson-basics')).toHaveTextContent('Restart');
+    act(() => endLesson());
+  });
+
+  it('a finished lesson shows a tick', async () => {
+    markLessonFinished('basics');
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
+    await user.click(within(dialog()!).getByRole('tab', { name: 'Lessons' }));
+    expect(
+      within(within(dialog()!).getByTestId('lesson-basics')).getByLabelText('finished'),
+    ).toBeInTheDocument();
+  });
+
+  it('on a touch-only device the lessons are disabled, with a note', async () => {
+    const mm = vi.fn((q: string) => ({
+      matches: q === '(pointer: coarse)',
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    vi.stubGlobal('matchMedia', mm);
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
+    await user.click(within(dialog()!).getByRole('tab', { name: 'Lessons' }));
+    expect(within(dialog()!).getByText('Lessons need a mouse and keyboard.')).toBeInTheDocument();
+    expect(within(dialog()!).getByTestId('lesson-basics')).toBeDisabled();
   });
 });

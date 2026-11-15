@@ -5,7 +5,7 @@ import { resetAppStore } from '../../store/store';
 import App from '../shell/App';
 import { SEEN_HELP_KEY } from '../shell/help';
 import { applyTheme, THEME_KEY } from '../shell/theme';
-import { endTutorial } from './tutorialStore';
+import { endLesson } from './tutorialStore';
 
 const welcome = () => screen.queryByRole('dialog', { name: 'Welcome' });
 
@@ -16,7 +16,7 @@ beforeEach(() => {
   applyTheme('system');
 });
 afterEach(() => {
-  act(() => endTutorial());
+  act(() => endLesson());
   cleanup();
 });
 
