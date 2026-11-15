@@ -3,6 +3,7 @@ import { BASICS } from './basics';
 import { CONVERT_LESSON } from './convert';
 import { MINIMIZE_LESSON } from './minimize';
 import { NFA_LESSON } from './nfa';
+import { SHARE_LESSON } from './share';
 
 /** A lesson that is listed: it has a real id, unlike the tests' own lessons. */
 export type ListedLesson = Lesson & { id: LessonId };
@@ -13,6 +14,7 @@ export const LESSONS: readonly ListedLesson[] = [
   NFA_LESSON,
   CONVERT_LESSON,
   MINIMIZE_LESSON,
+  SHARE_LESSON,
 ];
 
 /** The first lesson not in `done`, or null when every one is finished. */

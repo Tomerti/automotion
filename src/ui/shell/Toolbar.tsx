@@ -8,6 +8,7 @@ import { withEmbeddedFont } from '../canvas/embedFont';
 import { canCopyImage, copyPng, exportableSvg, svgToPng } from '../canvas/exportDiagram';
 import { latexDocument, latexSnippet } from '../canvas/exportLatex';
 import { fitActive, tidyActive } from '../canvas/useCanvasEditing';
+import { noteLessonAction } from '../tutorial/tutorialStore';
 import { copyLink } from './copyLink';
 import { downloadBlob, downloadText, slug } from './download';
 import { isTypingTarget } from './help';
@@ -59,6 +60,7 @@ async function exportDiagram(
   automaton: Automaton | undefined,
   format: 'svg' | 'png',
 ): Promise<void> {
+  if (automaton) noteLessonAction(format === 'svg' ? 'export-svg' : 'export-png');
   const raw = automaton ? exportableSvg(automaton) : null;
   if (!automaton || raw === null) {
     toast('Nothing to export', 'error');
@@ -82,6 +84,7 @@ async function exportDiagram(
  * or key press (no await before it), or Safari refuses the clipboard write.
  */
 function copyDiagram(automaton: Automaton | undefined): void {
+  if (automaton) noteLessonAction('copy-image');
   const text = automaton ? exportableSvg(automaton) : null;
   if (text === null) {
     toast('Nothing to copy', 'error');
@@ -99,6 +102,7 @@ function copyDiagram(automaton: Automaton | undefined): void {
 
 /** Copy the diagram as a TikZ picture, to paste into a LaTeX document. */
 function copyLatex(automaton: Automaton | undefined): void {
+  if (automaton) noteLessonAction('copy-latex');
   if (!automaton || automaton.states.length === 0) {
     toast('Nothing to copy', 'error');
     return;
@@ -114,6 +118,7 @@ function copyLatex(automaton: Automaton | undefined): void {
 }
 
 function exportLatex(automaton: Automaton | undefined): void {
+  if (automaton) noteLessonAction('export-latex');
   if (!automaton || automaton.states.length === 0) {
     toast('Nothing to export', 'error');
     return;
@@ -197,8 +202,10 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
           onKeyDown={onMenuKeyDown}
         >
           {item('Share link', 'link', () => {
-            if (automaton) void copyLink(automaton);
-            else toast('Nothing to share', 'error');
+            if (automaton) {
+              noteLessonAction('share-link');
+              void copyLink(automaton);
+            } else toast('Nothing to share', 'error');
           })}
           <div role="separator" className="av-menu-sep" />
           {item('Copy image', 'copy', () => copyDiagram(automaton), {

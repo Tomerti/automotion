@@ -139,3 +139,38 @@ test('the Minimize lesson splits a block, merges the states, saves the DFA and f
   await guide.getByRole('tab', { name: 'Lessons' }).click();
   await expect(guide.getByTestId('lesson-minimize')).toContainText('✓');
 });
+
+test('the Share lesson shares a link, copies the picture, exports LaTeX and finishes', async ({
+  page,
+}) => {
+  await openApp(page, { clear: true });
+  await page.keyboard.press('?');
+  const guide = page.getByRole('dialog', { name: 'Controls' });
+  await guide.getByRole('tab', { name: 'Lessons' }).click();
+  await guide.getByTestId('lesson-share').click();
+  const card = page.getByTestId('tutorial-card');
+  await expect(card).toBeVisible();
+  // No examples to list.
+  await expect(card.getByRole('list', { name: 'For example' })).toHaveCount(0);
+  const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
+  await at(1);
+
+  // The clipboard is not granted: a failure toast may show, the step still completes.
+  await page.getByRole('button', { name: 'Share, copy or export' }).click();
+  await page.getByRole('menuitem', { name: 'Share link' }).click();
+  await at(2);
+
+  await page.keyboard.press('Control+c');
+  await at(3);
+
+  await page.getByRole('button', { name: 'Share, copy or export' }).click();
+  await page.getByRole('menuitem', { name: 'Export LaTeX' }).click();
+  await at(4);
+
+  await card.getByRole('button', { name: 'Finish' }).click();
+  const popup = page.getByRole('dialog', { name: 'Lesson complete' });
+  await popup.getByRole('button', { name: 'Back to building' }).click();
+  await page.keyboard.press('?');
+  await guide.getByRole('tab', { name: 'Lessons' }).click();
+  await expect(guide.getByTestId('lesson-share')).toContainText('✓');
+});
