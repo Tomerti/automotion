@@ -13,6 +13,11 @@ export interface TracePlayerProps {
   extraActions?: ReactNode;
   /** Start playing as soon as the player opens (a run or a conversion plays right away). */
   autoPlay?: boolean;
+  /**
+   * A step where playback pauses on its way to the end (a lesson's teaching moment): Play from
+   * there goes on. Stepping and jumps ignore it.
+   */
+  stopAt?: number | null;
 }
 
 const isTypingTarget = (t: EventTarget | null): boolean =>
@@ -66,7 +71,16 @@ function IconButton(props: {
 
 /** The floating step player shared by every trace kind. */
 export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
-  const { stepCount, index, onIndex, explanation, onClose, extraActions, autoPlay = false } = props;
+  const {
+    stepCount,
+    index,
+    onIndex,
+    explanation,
+    onClose,
+    extraActions,
+    autoPlay = false,
+    stopAt = null,
+  } = props;
   const [playing, setPlaying] = useState(autoPlay && stepCount > 1);
   // Local, so a new trace (which remounts the player) starts at 1×; mirrored for the views.
   const [speed, setSpeed] = useState(1);
@@ -75,18 +89,20 @@ export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
   useEffect(() => setPlaybackSpeed(speed), [speed]);
 
   // Latest values for the interval and key handlers, which must not re-subscribe on every step.
-  const latest = useRef({ index, last, onIndex, onClose, playing });
+  const latest = useRef({ index, last, onIndex, onClose, playing, stopAt });
   useEffect(() => {
-    latest.current = { index, last, onIndex, onClose, playing };
+    latest.current = { index, last, onIndex, onClose, playing, stopAt };
   });
 
   useEffect(() => {
     if (!playing) return;
     const id = setInterval(() => {
+      // Held before stepping: reaching `stopAt` may move a lesson on to a step without one
+      // before the next render, and playback must still pause here.
       const cur = latest.current;
       const next = Math.min(cur.index + 1, cur.last);
       cur.onIndex(next);
-      if (next >= cur.last) setPlaying(false);
+      if (next >= cur.last || next === cur.stopAt) setPlaying(false);
     }, stepIntervalMs(speed));
     return () => clearInterval(id);
   }, [playing, speed]);
