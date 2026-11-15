@@ -106,7 +106,7 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   order. Lessons open a read-only copy of a ready-made automaton with walkthroughs paused; automata saved
   from their walkthroughs belong to the lesson (Quit removes them, Finish keeps them).
 - Lesson texts mark keys `[Shift]`, states `«even»` and words to type in backticks. `lessons/index.test.ts`
-  caps them: instructions 100 chars, why lines 110 (70 for Basics, whose card is narrower).
+  caps them: instructions 100 chars, why lines 110 (70 for Basics, so its wording stays as it was).
 - `TutorialPointer.tsx` draws over the top bar for toolbar buttons, with a tight frame on buttons. Finished
   lessons are saved under `automotion:lessons-done` (`lessonsDone.ts`); the Controls Lessons tab shows ✓.
 

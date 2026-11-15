@@ -85,9 +85,10 @@ interface LessonPart {
 }
 ```
 
-`Goal` (today's: text, examples, picture, description) gains an optional `after` picture, drawn
-right of the first with an arrow between them, for lessons that turn one automaton into another
-(Convert: the NFA → the DFA). `examples` may be empty (Share and export has none).
+`Goal` (today's: text, examples, picture, description) gains an optional `after` picture, for
+lessons that turn one automaton into another (Convert: the NFA → the DFA). A goal with `after`
+shows only that target picture, in a full-width row of its own: the start automaton is already on
+the canvas, so showing both made them too small to read (controller ruling R7). `examples` may be empty (Share and export has none).
 
 Step specs stay as today's `StepSpec`, with one more way to complete. A step is done by:
 
@@ -121,7 +122,9 @@ Step ids are namespaced per lesson (`convert/open`); `StepId` becomes a string.
 
 - Basics opens on a blank DFA exactly as today (reusing an untouched Untitled, named "Tutorial").
 - Another lesson adds a copy of its `start` automaton under a free name made from its own name
-  ("Contains 01", "Contains 01 2", …), opens it and fits it below the card.
+  ("Contains 01", "Contains 01 2", …), opens it and fits it below the card. As for Basics, an
+  untouched "Untitled" is replaced by the copy, so no empty one is left behind (quitting still
+  never leaves the canvas without an automaton).
 - **Owned automata**: the lesson's automaton, plus any automaton saved from a walkthrough of an
   owned automaton while the lesson runs (Save as new automaton, Save and minimize). Being on an owned
   automaton, or having a walkthrough of one open, is not "elsewhere". This generalizes part 3's
@@ -139,12 +142,13 @@ such a lesson runs, every walkthrough or run of an owned automaton opens paused.
 ### Editing
 
 A lesson has `editable: boolean`: Basics `true`, the four lessons here `false`. While a
-non-editable lesson runs, its owned automata can't be changed (edits, Tidy, the DFA/NFA switch,
-undo and redo do nothing, through the store's existing lock), so every latch can count on the
-automaton's shape: an edited "Contains 01" might never reveal {q₀, q₁}, an edited DFA might come
+non-editable lesson runs, its owned automata can't be changed structurally (adding, deleting or
+renaming states and arrows, the DFA/NFA switch, and undo or redo of such edits are refused,
+through the store's read-only lock), so every latch can count on the automaton's shape: an edited "Contains 01" might never reveal {q₀, q₁}, an edited DFA might come
 out "Already minimal" with no Save button. A blocked edit puts a plain-ink line on the card: "This
 lesson's automaton is read-only: quit the lesson to change it." Runs, walkthroughs, selecting,
-moving states and panning still work (moving a state changes no latch). Future lessons that edit
+panning and layout changes still work: moving states, Tidy, and undo or redo of layout-only
+changes (they change no latch). Future lessons that edit
 (say, fixing a broken DFA) set `editable: true` and bring their own hints, as Basics does.
 
 ### Actions
@@ -200,7 +204,7 @@ throws; a bad value counts as none finished.
 
 ### The first lessons
 
-Wording below is a draft; the builder tightens it to the length caps. Fixtures are given as their
+Wording below is as built (changed during implementation, 2026-11-15, to fit the length caps). Fixtures are given as their
 language and shape; ids equal labels.
 
 **Convert NFA → DFA** (opens "Contains 01": q₀ start with a loop on 0,1; q₀ –0→ q₁ –1→ q₂; q₂
@@ -209,45 +213,54 @@ pictures, `1011` ✓ `110` ✗.
 
 1. Press **Convert to DFA** at the top. / It builds a DFA that accepts exactly the same words.
    (latch: a subset walkthrough of an owned automaton is open)
-2. Step with [→] until the first DFA state appears. / A DFA can't guess, so each of its states
-   stands for every NFA state you could be in: here just {q₀}. (latch: that walkthrough at or past
-   its first `init` step)
-3. Keep stepping until {q₀, q₁} appears. / After a `0` the NFA could still be in q₀ or have moved
-   to q₁, so the DFA state is both. (latch: that state is revealed) Points at the walkthrough's
-   explanation.
-4. Play to the end. / A set accepts if it holds an accepting NFA state: some guess got there.
-   (latch: last step)
-5. Press **Save as new automaton** to keep the DFA. / It's added to your history as a new automaton. (latch: an
-   owned DFA saved from it exists)
+2. Look at the first DFA state, «{q_0}», then press [→] once. / A DFA can't guess, so each of its
+   states stands for every NFA state you could be in: here «{q_0}». (latch: that walkthrough is past
+   its `init` step, so once the first press has been made)
+3. Keep stepping until «{q_0,q_1}» is expanded. / After a `0` the NFA is in q_0 or has moved to
+   q_1, so the DFA state holds both. (latch: the walkthrough has reached the step that expands
+   {q_0,q_1}) Points at the walkthrough's explanation.
+4. Press Play, or [Space], to run it to the end. / A set accepts when it holds an accepting NFA
+   state: some guess got there. (latch: last step)
+5. Press **Save as new automaton** to keep the DFA. / Saved, it's an automaton of its own: you can
+   run words on it, or minimize it next. (latch: an owned DFA saved from it exists; with the
+   walkthrough reopened short of its end, the card first asks to press Play to reach the end)
 
 **Minimize a DFA** (opens that 4-state DFA, named by its subsets; it minimizes to 3: {q₀, q₂} and
 {q₀, q₁, q₂} merge, after one split). Goal: "Make this DFA as small as possible", before → after.
 
-1. Press **Minimize**. / It looks for states no word can tell apart, and merges them. (latch)
-2. Step with [→] until a block splits. / It starts from accepting and not; a block splits when a
-   symbol sends its states to different blocks. (latch: the split step) Points at the explanation.
-3. Play to the end. / Nothing splits any more, so states sharing a block accept the same words:
-   each block becomes one state. (latch: last step)
-4. Press **Save as new automaton**. (latch: the minimized DFA saved)
+1. Press **Minimize** at the top. / It looks for states no word can tell apart, and merges them.
+   (latch)
+2. Step with [→] until a block splits. / On a `1`, «{q_0}» stays put but «{q_0,q_1}» reaches an
+   accepting state, so they differ. (latch: the split step) Points at the explanation.
+3. Press Play, or [Space], to run it to the end. / Nothing splits any more, so states in a block
+   act alike: each block becomes one state. (latch: last step)
+4. Press **Save as new automaton** to keep the smaller DFA. / Saved, it's an automaton of its own:
+   you can run words on it, or share it. (latch: the minimized DFA saved; as in Convert, the card
+   asks to press Play first when the reopened walkthrough is short of its end)
 
 **NFAs** (opens an NFA for a\*b\*: q₀ start, loop on a; q₀ –ε→ q₁; q₁ accepting, loop on b).
 Goal: "Run an NFA", `aab` ✓ `aba` ✗.
 
-1. Run `aab`. / The run starts in q₀ and q₁ at once: the ε-arrow moves without reading anything.
-   (latch: the run is open, at its first closure step)
-2. Step until a branch is crossed out. / q₁ has no arrow on `a`, so that guess dies; q₀ carries on.
-3. Play to the verdict. / Accepted: at least one branch ended in an accepting state. (run latched)
-4. Press [Esc], then run `aba`. / Every branch dies on the last `a`, so it's rejected. (run latched)
+1. Type `aab` in the word box and press Run. / The run starts in q_0 and q_1 at once: the ε-arrow
+   moves without reading. (latch: the run is open)
+2. Step with [→] until a branch is crossed out. / q_1 has no arrow on `a`, so that guess dies while
+   q_0 carries on. (latch: the first step where a branch dies)
+3. Press Play, or [Space], to run it to the verdict. / One branch reaching an accepting state is
+   enough: the NFA accepts if any guess works. (run latched)
+4. Press [Esc], run `aba`, then press Play. / Every branch dies on the last `a`, so no branch
+   accepts and the word is rejected. (run latched; the run opens paused, so while it is short of
+   its last step the card asks to press Play, or [Space], to see the verdict)
 
-**Share and export** (opens the Basics DFA, even zeros). Goal: "Share your automaton", no examples.
+**Share and export** (opens the Basics DFA, even zeros, its states named «even» and «odd»). Goal: "Share your automaton", no examples.
 
 1. Open **Share, copy or export** and choose **Share link**. / The automaton travels inside the
    link: whoever opens it gets their own copy. (action: share-link)
 2. Press [Ctrl] + [C] with nothing selected. / That copies the picture, ready to paste into notes
-   or slides. (action: copy-image, or export-png / export-svg, which the
-   copy's failure toast suggests)
-3. Choose **Copy LaTeX** or **Export LaTeX** from the same menu. / TikZ for your homework, laid out as on the canvas.
-   (action: copy-latex or export-latex)
+   or slides. (action: copy-image, or export-png / export-svg, which the copy's failure toast
+   suggests; with states selected Ctrl+C copies the states and nothing counts, so the card first
+   asks to click the empty canvas to clear the selection)
+3. Choose **Copy LaTeX** or **Export LaTeX** from the same menu. / It is TikZ, laid out as on the
+   canvas, to paste into a LaTeX document. (action: copy-latex or export-latex)
 
 Order in the list: Basics, NFAs, Convert, Minimize, Share and export.
 
