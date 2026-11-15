@@ -18,7 +18,7 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
   it('keeps its texts within the caps', () => {
     const whyCap = id === 'basics' ? 70 : 110;
     for (const s of lessonSteps(lesson)) {
-      expect(s.instruction(ctx).length, s.id).toBeLessThanOrEqual(100);
+      expect(s.instruction(ctx).length, s.id).toBeLessThanOrEqual(s.idea ? 240 : 100);
       expect(s.why(ctx)?.length ?? 0, s.id).toBeLessThanOrEqual(whyCap);
     }
   });
@@ -26,7 +26,7 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
   it('follows a step that pauses playback with one that says to press Play', () => {
     const steps = lessonSteps(lesson);
     steps.forEach((s, i) => {
-      if (s.pauseAt) expect(steps[i + 1]?.instruction(ctx), s.id).toMatch(/^Press Play to /);
+      if (s.pauseAt) expect(steps[i + 1]?.instruction(ctx), s.id).toMatch(/^Press /);
     });
   });
 
@@ -37,7 +37,9 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
   it('shows goal examples its goal automaton agrees with', () => {
     for (const part of lesson.parts) {
       for (const e of part.goal.examples) {
-        expect(runWord(part.goal.automaton!, e.word).accepted, e.word).toBe(e.accepted);
+        expect(runWord((part.goal.automaton ?? lesson.start)!, e.word).accepted, e.word).toBe(
+          e.accepted,
+        );
       }
     }
   });

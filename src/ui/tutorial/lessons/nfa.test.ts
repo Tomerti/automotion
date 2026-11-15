@@ -21,117 +21,113 @@ function ctx(trace: RunTrace | null, stepIndex = 0, more: Partial<TutorialContex
   } satisfies TutorialContext;
 }
 
-const at = (word: string, i?: number): TutorialContext => {
-  const t = runWord(start, word);
-  return ctx(t, i ?? t.steps.length - 1);
-};
+const at = (word: string, i: number): TutorialContext => ctx(runWord(start, word), i);
 
-const aab = runWord(start, 'aab');
-const firstRead = aab.steps.findIndex((s) => s.phase === 'read');
-/** Where the q_1 branch dies: «q_1» has no arrow on `a`. */
-const death = aab.steps.findIndex(
-  (s) => s.phase === 'read' && s.symbol === 'a' && s.before.includes('q_1'),
-);
+const idea = new Set(['nfa/idea']);
+const BACK = { kind: 'first', text: 'First, press [→] to get back to this point.' };
+const RERUN = { kind: 'first', text: 'First, run `001` again.' };
 
 describe('the NFAs lesson', () => {
-  it('holds its goal examples on the start automaton', () => {
-    for (const e of NFA_LESSON.parts[0]!.goal.examples) {
-      expect(runWord(start, e.word).accepted, e.word).toBe(e.accepted);
+  it('runs 001 over five steps, guessing and losing a branch, and accepts', () => {
+    const t = runWord(start, '001');
+    expect(t.steps.map((s) => s.active)).toEqual([
+      ['q_0'],
+      ['q_0', 'q_1'],
+      ['q_0', 'q_1'],
+      ['q_0', 'q_2'],
+      ['q_0', 'q_2'],
+    ]);
+    expect(t.accepted).toBe(true);
+  });
+
+  it('holds its goal examples, with no picture, and stays within six counted steps', () => {
+    const goal = NFA_LESSON.parts[0]!.goal;
+    expect(goal.text).toBe('Follow an NFA for words ending in `01`');
+    expect(goal.automaton).toBeUndefined();
+    for (const e of goal.examples) expect(runWord(start, e.word).accepted, e.word).toBe(e.accepted);
+    expect(countedSteps(NFA_LESSON)).toBe(6);
+    expect(NFA_LESSON.pausedRuns).toEqual(['001']);
+  });
+
+  it('walks idea, run, then one step per index, then the closing card', () => {
+    expect(advance(NFA_LESSON, 0, new Set(), ctx(null)).current).toBe(0);
+    const ideaDone = advance(NFA_LESSON, 0, idea, ctx(null));
+    expect(ideaDone.current).toBe(1);
+    let p = advance(NFA_LESSON, 0, idea, at('001', 0));
+    expect(p.current).toBe(2);
+    for (const i of [1, 2, 3, 4]) {
+      p = advance(NFA_LESSON, p.progress, p.latched, at('001', i));
+      expect(p.current).toBe(i + 2);
     }
+    expect(steps[p.current]!.id).toBe('done');
   });
 
-  it('stays within six counted steps', () => {
-    expect(countedSteps(NFA_LESSON)).toBeLessThanOrEqual(6);
+  it('pauses at the next index, only for an owned run of 001', () => {
+    expect([2, 3, 4].map((i) => steps[i]!.pauseAt!(at('001', 0)))).toEqual([1, 2, 3]);
+    for (const i of [2, 3, 4]) {
+      expect(steps[i]!.pauseAt!(ctx(null))).toBeNull();
+      expect(steps[i]!.pauseAt!(at('01', 0))).toBeNull();
+    }
+    for (const i of [0, 1, 5]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
   });
 
-  it('kills the q_1 branch on the first a, with q_0 carrying on', () => {
-    const step = aab.steps[death]!;
-    expect(death).toBe(firstRead);
-    expect(step.active).toEqual(['q_0']);
+  it('playing from the start stops at 1, 2, 3, 4 in turn', () => {
+    let p = advance(NFA_LESSON, 0, idea, at('001', 0));
+    const stops: (number | null)[] = [];
+    for (let i = 1; i <= 4; i++) {
+      stops.push(steps[p.current]!.pauseAt?.(at('001', i - 1)) ?? null);
+      p = advance(NFA_LESSON, p.progress, p.latched, at('001', i));
+    }
+    expect(stops).toEqual([1, 2, 3, null]);
+    expect(steps[p.current]!.id).toBe('done');
   });
 
-  it('walks from running aab, to a branch dying, to the verdict, to aba and the closing card', () => {
-    const none = advance(NFA_LESSON, 0, new Set(), ctx(null));
-    expect(none.current).toBe(0);
-
-    const opened = advance(NFA_LESSON, 0, new Set(), at('aab', 0));
-    expect(opened.current).toBe(1);
-
-    const died = advance(NFA_LESSON, opened.progress, opened.latched, at('aab', death));
-    expect(died.current).toBe(2);
-
-    const verdict = advance(NFA_LESSON, died.progress, died.latched, at('aab'));
-    expect(verdict.current).toBe(3);
-
-    const aba = advance(NFA_LESSON, verdict.progress, verdict.latched, at('aba'));
-    expect(aba.current).toBe(4);
-    expect(steps[aba.current]!.id).toBe('done');
+  it('hints how to get back to the explained moment', () => {
+    expect(steps[4]!.hint(at('001', 1))).toEqual(BACK);
+    expect(steps[4]!.hint(ctx(null))).toEqual(RERUN);
+    expect(steps[4]!.hint(at('01', 0))).toEqual(RERUN);
+    expect(steps[4]!.hint(at('001', 2))).toBeNull();
+    expect(steps[2]!.hint(ctx(null))).toEqual(RERUN);
+    expect(steps[2]!.hint(at('001', 0))).toBeNull();
+    expect(steps[3]!.hint(at('001', 0))).toEqual(BACK);
+    expect(steps[5]!.hint(at('001', 2))).toEqual(BACK);
+    expect(steps[5]!.hint(at('001', 3))).toBeNull();
   });
 
-  it('does not count a branch as dead before its first read', () => {
-    const early = advance(NFA_LESSON, 0, new Set(), at('aab', firstRead - 1));
-    expect(early.current).toBe(1);
-  });
-
-  it('asks to run aab again once the run is closed, and keeps step 1 latched', () => {
-    const opened = advance(NFA_LESSON, 0, new Set(), at('aab', 0));
-    const closed = advance(NFA_LESSON, opened.progress, opened.latched, ctx(null));
-    expect(closed.current).toBe(1);
-    expect(closed.latched.has('nfa/run')).toBe(true);
-    expect(steps[1]!.hint(ctx(null))).toEqual({ kind: 'first', text: 'First, run `aab` again.' });
-    expect(steps[1]!.hint(at('aab', 0))).toBeNull();
-    expect(steps[2]!.hint(ctx(null))).toEqual({ kind: 'first', text: 'First, run `aab` again.' });
-  });
-
-  it('says which word is open when another word than aab is run on the first step', () => {
-    expect(steps[0]!.hint(at('ab', 0))).toEqual({
+  it('says which word is open on the run step', () => {
+    expect(steps[1]!.hint(at('01', 0))).toEqual({
       kind: 'text',
-      text: 'That was `ab`. Press [Esc] and run `aab`.',
+      text: 'That was `01`. Press [Esc] and run `001`.',
     });
-    expect(steps[0]!.hint(at('aab', 0))).toBeNull();
-    expect(steps[0]!.hint(ctx(null))).toBeNull();
-    expect(steps[0]!.hint(at('', 0))).toEqual({
+    expect(steps[1]!.hint(at('', 0))).toEqual({
       kind: 'text',
-      text: 'That was `ε`. Press [Esc] and run `aab`.',
+      text: 'That was `ε`. Press [Esc] and run `001`.',
     });
+    expect(steps[1]!.hint(at('001', 0))).toBeNull();
+    expect(steps[1]!.hint(ctx(null))).toBeNull();
   });
 
-  it('pauses the aab run where the branch dies, the step it latches on', () => {
-    expect(steps[1]!.pauseAt!(at('aab', 0))).toBe(death);
-    expect(steps[1]!.pauseAt!(ctx(null))).toBeNull();
-    expect(steps[1]!.pauseAt!(at('ab', 0))).toBeNull();
-    const opened = advance(NFA_LESSON, 0, new Set(), at('aab', 0));
-    expect(advance(NFA_LESSON, 1, opened.latched, at('aab', death - 1)).current).toBe(1);
-    expect(advance(NFA_LESSON, 1, opened.latched, at('aab', death)).current).toBe(2);
-    for (const i of [0, 2, 3]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+  it('a run of 01 latches nothing past the run step', () => {
+    const p = advance(NFA_LESSON, 0, idea, at('01', 3));
+    expect(p.current).toBe(1);
+    expect(p.latched.has('nfa/run')).toBe(false);
   });
 
-  it('explains the paused moment on the card while paused, and says to press Play', () => {
-    expect(steps[2]!.instruction(ctx(null))).toBe('Press Play to see the verdict.');
-    expect(steps[2]!.why(ctx(null))).toBe(
-      '«q_1» has no arrow on `a`, so that guess dies while «q_0» carries on.',
+  it('explains each moment, with no why and no target', () => {
+    const c = ctx(null);
+    expect(steps[0]!.idea).toBe(true);
+    expect(steps[2]!.explain(c)).toBe('It starts in «q_0», with nothing guessed yet.');
+    expect(steps[3]!.explain(c)).toBe(
+      'It guessed this `0` starts the final `01`, so it follows both «q_0» and «q_1».',
     );
-  });
-
-  it('points at the run pill, then the dock', () => {
-    expect(steps[0]!.target(ctx(null))).toContain('Word');
-    expect(steps[1]!.target(ctx(null))).toBe('[data-testid="dock"]');
-    expect(steps[2]!.target(ctx(null))).toBe('[data-testid="dock"]');
-    expect(steps[3]!.target(ctx(null))).toContain('Word');
-  });
-
-  it('lets the aba run play to its verdict without asking for Play', () => {
-    expect(steps[3]!.instruction(ctx(null))).toBe('Press [Esc], then run `aba`.');
-    expect(steps[3]!.hint(at('aba', 0))).toBeNull();
-    expect(steps[3]!.hint(at('aba'))).toBeNull();
-  });
-
-  it('says every branch has died by the last a of aba, as the run shows', () => {
-    const aba = runWord(start, 'aba');
-    const end = aba.steps[aba.steps.length - 1]!;
-    expect(end.phase).toBe('stuck');
-    expect(end.symbol).toBe('a');
-    expect(end.active).toEqual([]);
-    expect(steps[3]!.why(ctx(null))).toContain('last `a` every branch has died');
+    expect(steps[4]!.explain(c)).toBe(
+      '«q_1» had no arrow on `0`, so that guess died; «q_0» made the same guess again.',
+    );
+    expect(steps[5]!.explain(c)).toBe('The guess in «q_1» read `1` and reached «q_2».');
+    for (const s of steps) {
+      expect(s.target(c), s.id).toBeNull();
+      expect(s.why(c), s.id).toBeNull();
+    }
+    expect(steps[1]!.explain(c)).toBeNull();
   });
 });
