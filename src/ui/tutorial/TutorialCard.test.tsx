@@ -475,6 +475,7 @@ describe('a lesson other than Basics', () => {
 
   it('has no Next once every lesson is finished', () => {
     markLessonFinished('basics');
+    markLessonFinished('nfa');
     render(<FinishedCard lesson={TEST_LESSON} onClose={() => {}} />);
     expect(screen.queryByTestId('next-lesson')).toBeNull();
     expect(screen.getByRole('button', { name: 'Back to building' })).toHaveClass('av-go');
