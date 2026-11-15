@@ -567,6 +567,7 @@ describe('Canvas editing', () => {
       'Set as start',
       'Toggle accepting',
       'Rename',
+      'Cut',
       'Copy',
       'Delete',
     ]);
@@ -1369,6 +1370,78 @@ describe('selecting several states, copy and paste', () => {
     expect(toasts().at(-1)?.message).toBe('Switched to NFA: ε-transitions need an NFA');
   });
 
+  it('Ctrl+X cuts the selected states (on a Hebrew layout too) and Ctrl+V pastes them back', () => {
+    load(three());
+    render(<Canvas />);
+    click(stateEl('q1'), 100, 0);
+    drag(stateEl('q2'), [200, 0], [], ctrl);
+    expect(key('x')).toBe(false);
+    expect(active().states.map((s) => s.label)).toEqual(['q0']);
+    expect(st().clipboard).toMatchObject({ kind: 'states' });
+    key('v');
+    expect(active().states.map((s) => s.label)).toEqual(['q0', 'q1', 'q2']);
+    click(stateEl('q0'), 0, 0);
+    fireEvent.keyDown(window, { key: 'ס', code: 'KeyX', ctrlKey: true });
+    expect(active().states.map((s) => s.label)).toEqual(['q1', 'q2']);
+  });
+
+  it('Cut in a state’s menu cuts it', async () => {
+    const user = userEvent.setup();
+    load(three());
+    render(<Canvas />);
+    fireEvent.contextMenu(stateEl('q1'), { clientX: 100, clientY: 0 });
+    await user.click(screen.getByRole('menuitem', { name: 'Cut' }));
+    expect(active().states.map((s) => s.label)).toEqual(['q0', 'q2']);
+    expect(st().clipboard).toMatchObject({ kind: 'states' });
+  });
+
+  it('Ctrl+X leaves inputs, arrows alone and open traces to the browser', () => {
+    load(three());
+    render(<Canvas />);
+    click(screen.getByTestId('edge-q0-q1'), 50, 0);
+    expect(key('x')).toBe(true);
+    expect(active().transitions).toHaveLength(3);
+    click(stateEl('q0'), 0, 0);
+    fireEvent.doubleClick(stateEl('q1'), { clientX: 100, clientY: 0 });
+    fireEvent.keyDown(screen.getByTestId('rename-input'), { key: 'x', ctrlKey: true });
+    fireEvent.keyDown(screen.getByTestId('rename-input'), { key: 'Escape' });
+    expect(active().states).toHaveLength(3);
+    click(stateEl('q0'), 0, 0);
+    act(() => st().openTrace(runWord({ ...active(), kind: 'NFA' }, 'a')));
+    expect(key('x')).toBe(true);
+    expect(active().states).toHaveLength(3);
+  });
+
+  it('Ctrl+A selects every state and arrow and focuses the canvas, so Delete clears it', () => {
+    load(three());
+    render(<Canvas />);
+    expect(key('a')).toBe(false);
+    expect(st().selection).toEqual({
+      states: ['q0', 'q1', 'q2'],
+      transitions: ['q0->q1', 'q1->q2', 'q2->q0'],
+    });
+    expect(canvas()).toHaveFocus();
+    fireEvent.keyDown(canvas(), { key: 'Delete' });
+    expect(active().states).toEqual([]);
+  });
+
+  it('Ctrl+A works on a Hebrew layout, but not while typing or with a trace open', () => {
+    load(three());
+    render(<Canvas />);
+    click(stateEl('q1'), 100, 0);
+    fireEvent.doubleClick(stateEl('q1'), { clientX: 100, clientY: 0 });
+    fireEvent.keyDown(screen.getByTestId('rename-input'), { key: 'a', ctrlKey: true });
+    expect(st().selection.states).toEqual(['q1']);
+    fireEvent.keyDown(screen.getByTestId('rename-input'), { key: 'Escape' });
+    act(() => st().openTrace(runWord({ ...active(), kind: 'NFA' }, 'a')));
+    const during = st().selection;
+    expect(key('a')).toBe(true);
+    expect(st().selection).toBe(during);
+    act(() => st().closeTrace());
+    fireEvent.keyDown(window, { key: 'ש', code: 'KeyA', ctrlKey: true });
+    expect(st().selection.states).toEqual(['q0', 'q1', 'q2']);
+  });
+
   it('the menu on a multi-selection copies or deletes it; the background menu pastes', async () => {
     const user = userEvent.setup();
     load(three());
@@ -1379,7 +1452,7 @@ describe('selecting several states, copy and paste', () => {
       within(screen.getByRole('menu'))
         .getAllByRole('menuitem')
         .map((i) => i.textContent),
-    ).toEqual(['Copy 2 states', 'Delete 2 states']);
+    ).toEqual(['Cut 2 states', 'Copy 2 states', 'Delete 2 states']);
     expect(st().selection.states).toEqual(['q1', 'q2']);
     await user.click(screen.getByRole('menuitem', { name: 'Copy 2 states' }));
     fireEvent.contextMenu(diagram(), { clientX: 400, clientY: 200 });

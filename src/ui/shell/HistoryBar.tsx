@@ -358,8 +358,9 @@ export function HistoryBar(): React.JSX.Element {
         (entries.find((el) => el.getAttribute('aria-current') === 'page') ?? entries[0])?.focus();
       }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    // Capture: before the canvas's window listener, whose Ctrl+A selects every state instead.
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, []);
 
   /** Rename edits the open automaton, so open it first (never while a trace is open). */

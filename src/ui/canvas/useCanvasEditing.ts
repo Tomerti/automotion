@@ -761,6 +761,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       setMenu({
         at,
         items: [
+          item(`Cut ${n} states`, () => store.cutSelection()),
           item(`Copy ${n} states`, () => store.copySelection()),
           item(`Delete ${n} states`, () => deleteSelection(appStore.getState().selection)),
         ],
@@ -785,6 +786,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
             : []),
           item('Toggle accepting', () => edit((a) => toggleAccepting(a, stateId))),
           item('Rename', () => openRename(stateId)),
+          item('Cut', () => appStore.getState().cutSelection()),
           item('Copy', () => appStore.getState().copySelection()),
           item('Delete', () => {
             edit((a) => removeState(a, stateId));
@@ -846,22 +848,35 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
     pointer.current = null;
   };
 
-  // Copy and paste are listened for app-wide (like undo), so Ctrl+V works right after opening
-  // another automaton from the history bar. Typing, selected text and open dialogs keep the
-  // browser's own copy and paste; a key already handled (Ctrl+C on a history entry) is left alone.
+  // Select all, cut, copy and paste are listened for app-wide (like undo), so Ctrl+V works right
+  // after opening another automaton from the history bar. Typing, selected text and open dialogs
+  // keep the browser's own; a key already handled (Ctrl+C on a history entry, the history bar's
+  // Ctrl+A, which listens in the capture phase to come first) is left alone.
   // Ctrl+V pastes what was copied last: states into the open automaton, or a whole automaton
   // (copied in the history bar) as a new copy of it.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.defaultPrevented || isTyping(e.target)) return;
-      const key = isCtrlLetter(e, 'c') ? 'c' : isCtrlLetter(e, 'v') ? 'v' : null;
+      const key = (['a', 'x', 'c', 'v'] as const).find((k) => isCtrlLetter(e, k));
       if (!key) return;
       if (document.querySelector('[aria-modal="true"]')) return;
       const store = appStore.getState();
       if (store.trace) return;
-      if (key === 'c') {
+      if (key === 'a') {
+        const a = store.automata.find((x) => x.id === store.activeId);
+        if (!a) return;
+        e.preventDefault();
+        store.select({
+          states: a.states.map((s) => s.id),
+          transitions: a.transitions.map((t) => t.id),
+        });
+        // So Delete, S or A act on it next.
+        containerRef.current?.focus({ preventScroll: true });
+        return;
+      }
+      if (key === 'c' || key === 'x') {
         if (window.getSelection()?.isCollapsed === false) return;
-        if (store.copySelection()) e.preventDefault();
+        if (key === 'c' ? store.copySelection() : store.cutSelection()) e.preventDefault();
         return;
       }
       // Nothing of the app's own: the `paste` event may still bring LaTeX (pasteLatex.ts).

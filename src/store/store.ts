@@ -4,7 +4,7 @@ import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
 import { clipCenter, copyStates, internalTransitions, pasteClip } from '../core/clipboard';
 import type { Clip } from '../core/clipboard';
-import { syncAlphabet } from '../core/edit';
+import { removeState, removeTransition, syncAlphabet } from '../core/edit';
 import { newId } from '../core/id';
 import { emptyAutomaton } from '../core/model';
 import type { Automaton, AutomatonKind } from '../core/model';
@@ -61,6 +61,12 @@ export interface AppState {
   select(sel: Selection): void;
   /** Copy the selected states of the active automaton (Ctrl+C); false if none is selected. */
   copySelection(): boolean;
+  /**
+   * Cut (Ctrl+X): copy the selected states, then delete them and the selected arrows as one undo
+   * step. The first paste without a place puts them back where they were. False (and nothing
+   * changes) when no state is selected or a trace is open.
+   */
+  cutSelection(): boolean;
   /** Copy automaton `id` as a whole (Ctrl+C in the history bar); false if there is none. */
   copyAutomaton(id: string): boolean;
   /**
@@ -281,6 +287,25 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           if (!clip) return false;
           set((s) => {
             s.clipboard = { kind: 'states', clip, last: null };
+          });
+          return true;
+        },
+
+        cutSelection() {
+          const { activeId, automata: all, selection, trace } = get();
+          const current = all.find((a) => a.id === activeId);
+          const clip = current && !trace ? copyStates(current, selection.states) : null;
+          if (!clip) return false;
+          get().edit((a) => {
+            let out = a;
+            for (const t of selection.transitions) out = removeTransition(out, t);
+            for (const st of clip.states) out = removeState(out, st.id);
+            return out;
+          });
+          set((s) => {
+            // `repeat: -1`: the first placeless paste steps 0 times, back onto the cut states' spot.
+            s.clipboard = { kind: 'states', clip, last: { at: null, repeat: -1 } };
+            s.selection = NO_SELECTION;
           });
           return true;
         },

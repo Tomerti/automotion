@@ -111,6 +111,24 @@ it('Ctrl+C on a history entry copies that automaton and Ctrl+V adds a copy of it
   expect(appStore.getState().activeId).toBe(appStore.getState().automata[0]!.id);
 });
 
+it('Ctrl+A in the history bar picks automata, not the canvas’s states; elsewhere it selects the states', async () => {
+  const user = userEvent.setup();
+  localStorage.removeItem(HISTORY_BAR_KEY);
+  const other = { ...loop(), id: 'e', name: 'e' };
+  resetAppStore({ automata: [loop(), other], activeId: 'd' });
+  render(<App />);
+  const nav = screen.getByRole('navigation', { name: 'History' });
+  const entries = within(nav).getAllByTestId('history-item');
+  await user.click(entries[0]!);
+  await user.keyboard('{Control>}a{/Control}');
+  expect(entries.map((el) => el.dataset.selected)).toEqual(['true', 'true']);
+  expect(appStore.getState().selection.states).toEqual([]);
+  await user.keyboard('{Escape}');
+  await user.click(screen.getByTestId('diagram'));
+  await user.keyboard('{Control>}a{/Control}');
+  expect(appStore.getState().selection.states).toEqual(['q0']);
+});
+
 it('a failed autosave shows an error toast', async () => {
   const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
     throw new Error('full');
