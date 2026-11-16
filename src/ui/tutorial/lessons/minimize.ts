@@ -84,7 +84,8 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'minimize/groups',
-    instruction: () => 'Press Play.',
+    // Each moment is one step on from the last: stepped by hand, like the NFA lessons.
+    instruction: () => 'Press [→] to see which group splits.',
     explain: () =>
       'It starts with two groups, accepting and not: the empty word already tells those apart.',
     // Playback pauses on the split, which latches this step.
@@ -95,7 +96,7 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'minimize/split',
-    instruction: () => 'Press Play to finish.',
+    instruction: () => 'Press [→] to see what merges.',
     explain: () => 'On `1`, «{q_0}» stays out of accepting but «{q_0,q_1}» gets in, so they split.',
     // Playback runs on to the end, but stops at the split while it is still ahead.
     pauseAt: (ctx) => {
@@ -116,7 +117,7 @@ const STEPS: StepSpec[] = [
       const t = minimizeOf(ctx);
       if (!t) return needMinimize(ctx);
       // The walkthrough reopens paused, and saving shows only at its last step.
-      return ctx.stepIndex < t.steps.length - 1 ? 'First, press Play to reach the end.' : null;
+      return ctx.stepIndex < t.steps.length - 1 ? 'First, press [→] until the last step.' : null;
     },
     target: () => '[data-testid="save-trace-result"]',
   },

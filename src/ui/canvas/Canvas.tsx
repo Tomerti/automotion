@@ -201,6 +201,7 @@ function EditableCanvas(props: {
           at={inline.at}
           fontSize={inline.fontSize}
           symbols={inline.testId === 'symbol-input'}
+          selectAll={inline.selectAll}
           baseline={inline.baseline}
           normalize={inline.normalize}
           onSubmit={inline.onSubmit}

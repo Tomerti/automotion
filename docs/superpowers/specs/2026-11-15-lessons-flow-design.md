@@ -182,8 +182,9 @@ the first accepting one); then the end (index 9).
 Changed after user feedback (the idea lacked the "every NFA has a DFA" fact; the card and the
 player line were two places to read; the card's height change made the diagram jump): the card
 explains and points at the line below the walkthrough, which drops "ε-closure" when the NFA has no
-ε-arrows (`core/subset.ts`); the card keeps one height while a lesson's trace is open
-(`data-tracing`, a 190 px minimum) and the trace's top padding only grows while one trace is open.
+ε-arrows (`core/subset.ts`); while a lesson's trace is open
+(`data-tracing`) the trace's top padding reserves room for a 190 px card and only grows while one
+trace is open; the card itself fits its text, so a short one (Done) has no empty space under it.
 
 1. Idea: "Every NFA has a DFA that accepts exactly the same words. A DFA can't guess, so each of its
    states is a set: all the NFA states you could be in after the same input." [Next]

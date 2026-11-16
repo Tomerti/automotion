@@ -91,6 +91,11 @@ test('the NFAs lesson steps 001 by hand, each stop explained, and finishes', asy
     await expect(card).toContainText(text);
   }
   await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'true');
+  // The Done card fits its text, run open or not: no empty space under Finish.
+  await expect(card.getByRole('button', { name: 'Finish' })).toBeVisible();
+  const done = (await card.boundingBox())!;
+  const finishButton = (await card.getByRole('button', { name: 'Finish' }).boundingBox())!;
+  expect(done.y + done.height - (finishButton.y + finishButton.height)).toBeLessThan(24);
 
   const check = await finish(page, guide, card, 'lesson-nfa');
   await check();
@@ -149,7 +154,7 @@ test('the ε-moves lesson steps b by hand, then plays ba and finishes', async ({
   await check();
 });
 
-test('the Convert lesson opens paused on {q_0}, stops at the accepting pair, saves the DFA and finishes', async ({
+test('the Convert lesson opens paused on {q_0}, steps to the accepting pair by hand, saves the DFA and finishes', async ({
   page,
 }) => {
   await openApp(page, { clear: true });
@@ -158,7 +163,8 @@ test('the Convert lesson opens paused on {q_0}, stops at the accepting pair, sav
   await expect(card.getByTestId('tutorial-goal-picture')).toHaveCount(0);
   await card.getByTestId('tutorial-next').click();
 
-  await page.getByRole('button', { name: 'Convert to DFA' }).click();
+  const convert = page.getByRole('button', { name: 'Convert to DFA' });
+  await convert.click();
   const counter = page.getByTestId('step-counter');
   // It opens paused on {q_0}, and waits there for →.
   await expect(counter).toHaveText('Step 1 / 10');
@@ -175,16 +181,22 @@ test('the Convert lesson opens paused on {q_0}, stops at the accepting pair, sav
   await page.keyboard.press('ArrowRight');
   await expect(counter).toHaveText('Step 2 / 10');
   await expect(card).toContainText('Below, it follows 0');
+  // The toolbar button let go of the focus, so → doesn't light up its focus ring.
+  await expect(convert).not.toBeFocused();
   const atPair = await top();
   expect(atPair).toBeCloseTo(atStart, 0);
 
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(counter).toHaveText('Step 5 / 10', PLAYING);
-  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  // Stepped by hand to the next stop, then on to the end.
+  await expect(card).toContainText('Press → to go on.');
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+  await expect(counter).toHaveText('Step 5 / 10');
   await expect(card).toContainText('accepts too');
+  await expect(card).toContainText('Press → until the last step.');
   expect(await top()).toBeCloseTo(atPair, 0);
+  await expect(card).not.toContainText('Play');
 
-  await page.getByRole('button', { name: 'Play' }).click();
+  // Space plays too (Convert to DFA no longer has the focus to be pressed again).
+  await page.keyboard.press(' ');
   await expect(counter).toHaveText('Step 10 / 10', PLAYING);
 
   await page.getByRole('button', { name: 'Save as new automaton' }).click();
@@ -213,7 +225,7 @@ test('the Convert lesson stops the same way when Convert is pressed before Next'
   await expect(card).toContainText('Below, it follows 0');
 });
 
-test('the Minimize lesson opens paused, splits, merges, saves the DFA and finishes', async ({
+test('the Minimize lesson opens paused, steps to the split and the merge, saves the DFA and finishes', async ({
   page,
 }) => {
   await openApp(page, { clear: true });
@@ -226,12 +238,18 @@ test('the Minimize lesson opens paused, splits, merges, saves the DFA and finish
   await expect(counter).toHaveText('Step 1 / 3');
   await expect(card).toContainText('two groups');
 
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(counter).toHaveText('Step 2 / 3', PLAYING);
+  // Each moment is one step on: stepped by hand with →.
+  await expect(card).toContainText('Press → to see which group splits.');
+  await page.keyboard.press('ArrowRight');
+  await expect(counter).toHaveText('Step 2 / 3');
   await expect(card).toContainText('so they split');
+  await expect(card).toContainText('Press → to see what merges.');
 
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(counter).toHaveText('Step 3 / 3', PLAYING);
+  await page.keyboard.press('ArrowRight');
+  await expect(counter).toHaveText('Step 3 / 3');
+  // The card fits its text: no empty space under it while the walkthrough is open.
+  await expect(card).toContainText('so they merge');
+  expect((await card.boundingBox())!.height).toBeLessThan(170);
 
   await page.getByRole('button', { name: 'Save as new automaton' }).click();
   await expect(card.getByRole('button', { name: 'Finish' })).toBeVisible();

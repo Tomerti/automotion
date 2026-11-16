@@ -157,9 +157,17 @@ function ProgressBar({ lesson, done }: { lesson: Lesson; done: number }): React.
 }
 
 /**
+ * How tall the card may get while a lesson's trace is open (a two-line explanation and the
+ * instruction): the trace starts below that from the first step, so it doesn't move as the card
+ * grows. The card itself fits its text, so a short one (Done) has no empty space under it.
+ */
+const TRACING_CARD_HEIGHT = 190;
+
+/**
  * Tells the canvas area how far down the card reaches (`--av-tutorial-pad`), so trace views
  * start below it: the run's tape and verdict sit where the card is otherwise. While `hold` (the
- * open trace) stays the same, the pad only grows, so a shorter card never pulls the diagram up.
+ * open trace) is set, the pad reserves `TRACING_CARD_HEIGHT` and, while it stays the same, only
+ * grows, so a shorter card never pulls the diagram up.
  */
 function useCardPad(
   ref: React.RefObject<HTMLElement | null>,
@@ -177,7 +185,8 @@ function useCardPad(
     const area = el?.parentElement;
     if (!el || !area) return;
     const key = holdRef.current;
-    let pad = el.offsetTop + el.offsetHeight + 4;
+    const height = key === null ? el.offsetHeight : Math.max(el.offsetHeight, TRACING_CARD_HEIGHT);
+    let pad = el.offsetTop + height + 4;
     if (key !== null && held.current.key === key) pad = Math.max(pad, held.current.pad);
     held.current = { key, pad };
     area.style.setProperty('--av-tutorial-pad', `${pad}px`);
@@ -226,8 +235,8 @@ export function TutorialCard(): React.JSX.Element | null {
   const blockedEdits = useAppStore((s) => s.blockedEdits);
   const tutorialName = useAppStore((s) => s.automata.find((a) => a.id === automatonId)?.name);
   const steps = lesson ? lessonSteps(lesson) : [];
-  // A lesson with a run or walkthrough open: the card keeps one height (tutorial.css) and the
-  // trace below it doesn't move as the text changes. Basics is left as it was.
+  // A lesson with a run or walkthrough open: the trace below the card doesn't move as the text
+  // changes (`useCardPad`). Basics is left as it was.
   const tracing = lesson?.noun === 'lesson' && trace !== null;
   const step = active && lesson ? steps[current] : undefined;
   const ctx = tutorialContext(appStore.getState(), automatonId);

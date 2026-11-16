@@ -9,7 +9,7 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Lesson: Arrange (box select, Ctrl+click, move together, copy and paste, Tidy)
-- [ ] Space doesn't play or pause right after Convert to DFA or Minimize is clicked: focus stays on that toolbar button, so Space presses it again (the player leaves Space on a focused button alone). Move focus off it when a walkthrough opens, then the lessons can say "Press Play, or [Space]" again
+- [ ] Renaming a state ("even", start and accepting, with a self-loop) reportedly shows its text lower while the input is open. Not reproduced (Chromium headless, Chrome and Edge; 1, 1.25, 1.5 and 2× pixel ratios; four zoom levels; the text's ink sits on the same rows editing or not): needs the exact steps, browser and a screenshot
 
 ## Ideas (later)
 
@@ -17,6 +17,13 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Lessons for regex → NFA, TMs, and checking an automaton against a language, as those features land
 
 ## Done
+
+### Lesson cards fit their text, walkthroughs stepped with →, rename selects (2026-11-16)
+
+- [x] A lesson card with a run or walkthrough open no longer keeps a 190 px minimum (the NFAs, ε-moves and Minimize Done cards and Convert's step 5 had a big empty space under them): the card fits its text, and the trace's top padding reserves the 190 px instead (`TRACING_CARD_HEIGHT` in `useCardPad`), so the trace still doesn't move as the card grows
+- [x] Convert and Minimize step their walkthroughs by hand with [→], like NFAs and ε-moves: "Press Play" and "Press Play to finish" are gone (Minimize's stops are one step apart, so Play only ever moved one step). Convert says "Press [→] to go on." and "Press [→] until the last step.", Minimize "to see which group splits" and "to see what merges"; Play still pauses at the same moments
+- [x] Opening a walkthrough takes the focus off the toolbar button that opened it (`TracePlayer`, buttons only; the word box keeps it): → no longer lit Convert to DFA's keyboard focus ring, and Space plays instead of pressing Convert to DFA or Minimize again
+- [x] Double-clicking a state opens its name selected (`InlineInput` `selectAll`), so typing replaces it; an arrow's symbols still open with the caret after them, to add the next one
 
 ### Lesson fixes: Convert waits on {q_0}, Save only, Share wording, finish popup (2026-11-16)
 

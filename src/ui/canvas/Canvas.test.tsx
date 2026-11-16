@@ -435,6 +435,17 @@ describe('Canvas editing', () => {
     expect(screen.queryByTestId('rename-input')).toBeNull();
   });
 
+  it('double-click a state opens its name selected, so typing replaces it', async () => {
+    const user = userEvent.setup();
+    load(two());
+    render(<Canvas />);
+    fireEvent.doubleClick(stateEl('q0'), { clientX: 0, clientY: 0 });
+    const input = screen.getByTestId<HTMLInputElement>('rename-input');
+    expect([input.selectionStart, input.selectionEnd]).toEqual([0, 2]);
+    await user.keyboard('even{Enter}');
+    expect(active().states[0]?.label).toBe('even');
+  });
+
   it('typing \\emptyset in a state name turns into ∅', async () => {
     const user = userEvent.setup();
     load(two());

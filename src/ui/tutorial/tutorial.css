@@ -26,13 +26,6 @@
   box-shadow: var(--av-shadow-float);
   animation: av-pop-in 160ms ease-out;
 }
-/*
- * A lesson with a run or walkthrough open: room for a two-line explanation and the instruction,
- * so the card (and the trace laid out below it) keeps one height from stop to stop.
- */
-.av-tutorial[data-tracing] {
-  min-height: 190px;
-}
 
 .av-tutorial-head {
   display: flex;

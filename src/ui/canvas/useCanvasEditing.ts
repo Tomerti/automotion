@@ -108,6 +108,8 @@ interface InlineEdit {
   fontSize: number;
   /** Where the label it replaces puts its baseline (see `InlineInputProps.baseline`). */
   baseline?(text: string): number;
+  /** Open with the text selected (see `InlineInputProps.selectAll`). */
+  selectAll?: boolean;
   /** State or transition whose drawn label the input covers. */
   covers?: string;
   /** The arrow of a new transition, kept on screen while its symbols are typed. */
@@ -473,6 +475,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       at: { x: state.x, y: state.y },
       fontSize: labelFontSize(state.label),
       baseline: labelBaselineOffset,
+      selectAll: true,
       covers: id,
       normalize: normalizeStateLabel,
       submit: (text) => commitRename(id, text),
@@ -971,6 +974,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
           at: toScreen(inline.at),
           fontSize: inline.fontSize * viewport.zoom,
           baseline: inline.baseline,
+          selectAll: inline.selectAll,
           normalize: inline.normalize,
           onSubmit: (text) => {
             const error = inline.submit(text);
