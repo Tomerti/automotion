@@ -226,12 +226,15 @@ test('the Minimize lesson opens paused, splits, merges, saves the DFA and finish
   await expect(counter).toHaveText('Step 1 / 3');
   await expect(card).toContainText('two groups');
 
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(counter).toHaveText('Step 2 / 3', PLAYING);
+  // Stepped by hand, as the card says.
+  await expect(card).toContainText('Press → to try the letters');
+  await page.keyboard.press('ArrowRight');
+  await expect(counter).toHaveText('Step 2 / 3');
   await expect(card).toContainText('so they split');
+  await expect(card).toContainText('Press → to finish');
 
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(counter).toHaveText('Step 3 / 3', PLAYING);
+  await page.keyboard.press('ArrowRight');
+  await expect(counter).toHaveText('Step 3 / 3');
 
   await page.getByRole('button', { name: 'Save as new automaton' }).click();
   await expect(card.getByRole('button', { name: 'Finish' })).toBeVisible();

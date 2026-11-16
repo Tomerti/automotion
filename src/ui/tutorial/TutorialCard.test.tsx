@@ -511,6 +511,25 @@ describe('a lesson other than Basics', () => {
     expect(card()).not.toHaveAttribute('data-tracing');
   });
 
+  it('lets the closing card and the quit question be shorter than a step, run or not', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    act(() => startLesson(NFA_LESSON));
+    const own = app().automata.find((x) => x.id === tutorialStore.getState().automatonId)!;
+    act(() => pressNext());
+    act(() => app().openTrace(runWord(own, '001')));
+    await user.click(within(card()).getByRole('button', { name: 'End lesson' }));
+    expect(within(card()).getByRole('button', { name: 'Quit' })).toBeInTheDocument();
+    expect(card()).not.toHaveAttribute('data-tracing');
+    await user.click(within(card()).getByRole('button', { name: 'Keep going' }));
+    expect(card()).toHaveAttribute('data-tracing');
+    const done = lessonSteps(NFA_LESSON).length - 1;
+    act(() => tutorialStore.setState({ progress: done, current: done }));
+    expect(within(card()).getByRole('button', { name: 'Finish' })).toBeInTheDocument();
+    expect(app().trace).not.toBeNull();
+    expect(card()).not.toHaveAttribute('data-tracing');
+  });
+
   it('never marks Basics as tracing', () => {
     render(<App />);
     act(() => startLesson('basics'));

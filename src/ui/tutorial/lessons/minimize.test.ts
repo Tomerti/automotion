@@ -152,11 +152,11 @@ describe('the Minimize a DFA lesson', () => {
 
   it('explains each moment, with the instruction a plain press', () => {
     expect(steps[1]!.instruction(ctx(null))).toBe('Press Minimize at the top.');
-    expect(steps[2]!.instruction(ctx(null))).toBe('Press Play.');
+    expect(steps[2]!.instruction(ctx(null))).toBe('Press [→] to try the letters.');
     expect(steps[2]!.explain(ctx(null))).toBe(
       'It starts with two groups, accepting and not: the empty word already tells those apart.',
     );
-    expect(steps[3]!.instruction(ctx(null))).toBe('Press Play to finish.');
+    expect(steps[3]!.instruction(ctx(null))).toBe('Press [→] to finish.');
     expect(steps[3]!.explain(ctx(null))).toBe(
       'On `1`, «{q_0}» stays out of accepting but «{q_0,q_1}» gets in, so they split.',
     );
@@ -180,8 +180,8 @@ describe('the Minimize a DFA lesson', () => {
     expect(steps[4]!.target(ctx(null))).toBe('[data-testid="save-trace-result"]');
   });
 
-  it('asks to press Play on the save step while the reopened walkthrough is short of its end', () => {
-    const text = 'First, press Play to reach the end.';
+  it('asks to press → on the save step while the reopened walkthrough is short of its end', () => {
+    const text = 'First, press [→] to reach the end.';
     expect(steps[4]!.hint(ctx(trace, 0))).toEqual({ kind: 'first', text });
     expect(steps[4]!.hint(ctx(trace, last))).toBeNull();
     expect(steps[4]!.hint(ctx(trace, 0, SAVED))).toBeNull();

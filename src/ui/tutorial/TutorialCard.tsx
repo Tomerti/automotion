@@ -271,7 +271,9 @@ export function TutorialCard(): React.JSX.Element | null {
       aria-label={capitalized(noun)}
       data-testid="tutorial-card"
       data-step={current + 1}
-      data-tracing={tracing || undefined}
+      // Only steps keep the height: the closing card and the quit question are shorter, and
+      // the held pad keeps the trace where it is.
+      data-tracing={(tracing && !last && !quitting) || undefined}
     >
       <header className="av-tutorial-head">
         <span className="av-tutorial-count">

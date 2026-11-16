@@ -18,6 +18,11 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Lesson cards: no gap under Finish, Minimize steps with → (2026-11-16)
+
+- [x] A lesson that ends with its run or walkthrough still open (NFAs, ε-moves, Minimize) no longer leaves a tall empty band under Finish: the closing card and the quit question don't take the 190 px a step keeps while tracing (`data-tracing`); the held pad keeps the trace below where it was
+- [x] Minimize's walkthrough has three steps, so its cards say "Press [→] to try the letters." and "Press [→] to finish." (and "First, press [→] to reach the end.") instead of Play, like the other hand-stepped lessons; Play still pauses at the split
+
 ### Lesson fixes: Convert waits on {q_0}, Save only, Share wording, finish popup (2026-11-16)
 
 - [x] The Convert lesson's walkthrough opens paused on «{q_0}» (`pausedConvert`) instead of playing on to «{q_0,q_1}»: opening it completes the Convert step, and the next card says to press [→] to follow `0`, then Play
