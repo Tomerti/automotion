@@ -18,6 +18,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Convert lesson waits on {q_0} (2026-11-16)
+
+- [x] The Convert lesson's walkthrough opens paused on «{q_0}» (`pausedConvert`) instead of playing on to «{q_0,q_1}»: opening it completes the Convert step, and the next card says to press [→] to follow `0`, then Play
+
 ### Lessons (2026-11-15)
 
 - [x] The tutorial is a lesson engine (`ui/tutorial/engine.ts`, `lessons/`; `steps.ts` is gone): a step completes by a check, a run at its verdict, a latch or a reported action. Basics is the old tutorial, unchanged
@@ -26,7 +30,7 @@ Nothing in progress: pick the next task from the list below.
 - [x] Controls (?) has a Lessons tab with ✓ for finished lessons (`automotion:lessons-done`); the finish popup offers "Next: …"; starting another lesson midway asks first
 - [x] The pointer draws over the top bar for toolbar buttons, with a tight frame on buttons
 - [x] `lessons/index.test.ts` caps every lesson's text: instructions 100 characters, why lines 110 (70 for Basics)
-- [x] Walkthroughs pause where a step explains (`pauseAt`, `TracePlayer` `stopAt`, `lessonStopAt`); Convert stops at 2 and 5 of 10, Minimize opens paused and stops at 2 of 3
+- [x] Walkthroughs pause where a step explains (`pauseAt`, `TracePlayer` `stopAt`, `lessonStopAt`); Convert opens paused on 1 and stops at 2 and 5 of 10, Minimize opens paused and stops at 2 of 3
 - [x] Lessons rework (`2026-11-15-lessons-flow-design.md`): idea steps with a Next button, a step's `explain` shown before its instruction, and goal pictures and word-box/dock frames only in Basics
 - [x] NFAs is stepped by hand on `001` and the new ε-moves lesson on `b`, then `ba` plays (`pausedRuns`, `lessons/handStep.ts`)
 - [x] The Controls header Lessons button is gone: the Lessons tab is the only way in

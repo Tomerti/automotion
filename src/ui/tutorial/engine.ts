@@ -158,6 +158,8 @@ export interface Lesson {
   closing: string;
   /** Words whose runs of an owned automaton open paused (see `lessonOpensPaused`). */
   pausedRuns?: readonly string[];
+  /** Convert to DFA walkthroughs of an owned automaton open paused, as Minimize's always do. */
+  pausedConvert?: true;
 }
 
 export interface Step {

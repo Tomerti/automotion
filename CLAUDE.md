@@ -107,8 +107,9 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   belong to the lesson (Quit removes them, Finish keeps them). A step with `idea: true` is
   read, not done, and goes on with Next (`tutorial-next`). A step's `explain` shows first on the card, then
   its instruction. `pausedRuns` lists words whose runs open paused, stepped by hand with → (NFAs on `001`,
-  ε-moves on `b`; `lessons/handStep.ts`). A step's `pauseAt` pauses the player (`stopAt`, via
-  `lessonStopAt`) at the moment the card explains while the run is before it, else at the next one
+  ε-moves on `b`; `lessons/handStep.ts`); `pausedConvert` opens Convert to DFA walkthroughs paused too
+  (Convert waits on «{q_0}» for →; Minimize walkthroughs always open paused). A step's `pauseAt`
+  pauses the player (`stopAt`, via `lessonStopAt`) at the moment the card explains while the run is before it, else at the next one
   (every hand-stepped, Convert and Minimize step). During an idea step the pacing step is the one
   Next would land on (`pacingStep`), so a run opened early is paced too. A step done on reaching a
   point of a run or walkthrough has `steppedBack`: stepped back (←) before that point, it shows again,

@@ -70,14 +70,19 @@ const STEPS: StepSpec[] = [
   {
     id: 'convert/open',
     instruction: () => 'Press Convert to DFA at the top.',
-    // Playback pauses as «{q_0,q_1}» appears; the walkthrough may be opened during the idea step.
-    pauseAt: (ctx) => stateAt(ctx, PAIR),
-    latch: shown(PAIR),
+    // The walkthrough opens paused on «{q_0}» (`pausedConvert`), maybe during the idea step.
+    latch: (ctx) => subsetOf(ctx) !== null,
     target: () => 'button[aria-label="Convert to DFA"]',
   },
   {
     id: 'convert/pair',
-    instruction: () => 'Press Play.',
+    // On «{q_0}», step by hand to the pair's moment; from there, Play.
+    instruction: (_, ctx) => {
+      const pair = stateAt(ctx, PAIR);
+      return pair !== null && ctx.stepIndex < pair
+        ? 'Press [→] to follow `0` from «{q_0}».'
+        : 'Press Play.';
+    },
     // What the line below the walkthrough shows: the start, the pair's moment, or the steps between.
     explain: (l, ctx) => {
       const pair = stateAt(ctx, PAIR);
@@ -88,7 +93,7 @@ const STEPS: StepSpec[] = [
         return `Below, it follows \`0\` from «{q_0}»: ${l.q0} can stay or move to ${l.q1}, so the new DFA state is «${PAIR}».`;
       return BETWEEN;
     },
-    // Before the pair's moment (stepped back, or reopened there): stop on it first.
+    // Before the pair's moment (opened, stepped back or reopened there): stop on it first.
     pauseAt: (ctx) => {
       const pair = stateAt(ctx, PAIR);
       return pair !== null && ctx.stepIndex < pair ? pair : stateAt(ctx, ACCEPTING_PAIR);
@@ -125,7 +130,7 @@ const STEPS: StepSpec[] = [
       if (ctx.owned.length > 1) return null;
       const t = subsetOf(ctx);
       if (!t) return needConvert(ctx);
-      // Saving shows only at the last step; a reopened walkthrough plays there by itself.
+      // The walkthrough reopens paused, and saving shows only at its last step.
       return ctx.stepIndex < t.steps.length - 1 ? 'First, press Play to reach the end.' : null;
     },
     target: () => '[data-testid="save-trace-result"]',
@@ -140,6 +145,7 @@ export const CONVERT_LESSON: Lesson & { id: 'convert' } = {
   minutes: 1,
   start: CONTAINS_01,
   editable: false,
+  pausedConvert: true,
   parts: [
     {
       title: 'Convert an NFA',

@@ -5,6 +5,7 @@ import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { subsetConstruction } from '../../core/subset';
 import { startMinimize, startRun, startSubset } from '../../store/traceActions';
+import { CONVERT_LESSON } from '../tutorial/lessons/convert';
 import { IDEA_LESSON, PAUSING_LESSON } from '../tutorial/testing/testLesson';
 import { endLesson, startLesson, tutorialStore } from '../tutorial/tutorialStore';
 import App from './App';
@@ -212,6 +213,20 @@ it('a lesson pauses playback at the moment its step explains, even once that ste
   } finally {
     endLesson();
     vi.useRealTimers();
+  }
+});
+
+it('opens the Convert lesson’s walkthrough paused on its first step', async () => {
+  try {
+    startLesson(CONVERT_LESSON);
+    render(<App />);
+    act(() => screen.getByTestId('tutorial-next').click());
+    await act(() => startSubset());
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    expect(screen.getByTestId('step-counter')).toHaveTextContent(/^Step 1 \/ /);
+    expect(screen.getByTestId('tutorial-card')).toHaveTextContent('The DFA starts in');
+  } finally {
+    endLesson();
   }
 });
 

@@ -149,7 +149,7 @@ test('the ε-moves lesson steps b by hand, then plays ba and finishes', async ({
   await check();
 });
 
-test('the Convert lesson stops at {q_0,q_1} and at the accepting pair, saves the DFA and finishes', async ({
+test('the Convert lesson opens paused on {q_0}, stops at the accepting pair, saves the DFA and finishes', async ({
   page,
 }) => {
   await openApp(page, { clear: true });
@@ -160,20 +160,23 @@ test('the Convert lesson stops at {q_0,q_1} and at the accepting pair, saves the
 
   await page.getByRole('button', { name: 'Convert to DFA' }).click();
   const counter = page.getByTestId('step-counter');
-  await expect(counter).toHaveText('Step 2 / 10', PLAYING);
+  // It opens paused on {q_0}, and waits there for →.
+  await expect(counter).toHaveText('Step 1 / 10');
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
-  await expect(card).toContainText('Below, it follows 0');
+  await expect(card).toContainText('The DFA starts in');
+  await expect(card).toContainText('to follow 0 from');
+  await page.waitForTimeout(1200);
+  await expect(counter).toHaveText('Step 1 / 10');
 
   // The diagram stays put as the card's text changes from stop to stop.
   const nfaState = page.locator('[data-state-id="q_0"] .av-state-body').first();
   const top = async () => (await nfaState.boundingBox())!.y;
-  const atPair = await top();
-  await page.keyboard.press('ArrowLeft');
-  await expect(counter).toHaveText('Step 1 / 10');
-  await expect(card).toContainText('The DFA starts in');
-  expect(await top()).toBeCloseTo(atPair, 0);
+  const atStart = await top();
   await page.keyboard.press('ArrowRight');
   await expect(counter).toHaveText('Step 2 / 10');
+  await expect(card).toContainText('Below, it follows 0');
+  const atPair = await top();
+  expect(atPair).toBeCloseTo(atStart, 0);
 
   await page.getByRole('button', { name: 'Play' }).click();
   await expect(counter).toHaveText('Step 5 / 10', PLAYING);
@@ -201,10 +204,12 @@ test('the Convert lesson stops the same way when Convert is pressed before Next'
   const { card } = await startLesson(page, 'lesson-convert');
 
   await page.getByRole('button', { name: 'Convert to DFA' }).click();
-  await expect(page.getByTestId('step-counter')).toHaveText('Step 2 / 10', PLAYING);
+  await expect(page.getByTestId('step-counter')).toHaveText('Step 1 / 10');
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
 
   await card.getByTestId('tutorial-next').click();
+  await expect(card).toContainText('The DFA starts in');
+  await page.keyboard.press('ArrowRight');
   await expect(card).toContainText('Below, it follows 0');
 });
 

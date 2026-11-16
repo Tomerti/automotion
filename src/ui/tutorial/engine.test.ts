@@ -10,6 +10,7 @@ import { answerConfirm, confirmStore } from '../shell/confirmStore';
 import { advance, lessonSteps, pacingStep } from './engine';
 import type { LessonId, TutorialContext } from './engine';
 import { BASICS } from './lessons/basics';
+import { CONVERT_LESSON } from './lessons/convert';
 import { NFA_LESSON } from './lessons/nfa';
 import {
   CONTAINS_01,
@@ -239,6 +240,13 @@ describe('a lesson with a start automaton', () => {
     expect(lessonOpensPaused(runWord(own, '01'))).toBe(true);
     expect(lessonOpensPaused(runWord(own, '1'))).toBe(false);
     expect(lessonOpensPaused({ ...runWord(own, '01'), source: other() })).toBe(false);
+    expect(lessonOpensPaused(subsetConstruction(own))).toBe(false);
+  });
+
+  it('opens a Convert to DFA walkthrough paused only in a lesson that asks, on an owned automaton', () => {
+    startLesson(CONVERT_LESSON);
+    expect(lessonOpensPaused(subsetConstruction(active()))).toBe(true);
+    expect(lessonOpensPaused(subsetConstruction({ ...active(), id: 'someone-else' }))).toBe(false);
   });
 });
 
