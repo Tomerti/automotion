@@ -8,6 +8,7 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
+- [ ] Repo social preview: upload `public/og.png` in GitHub Settings → General → Social preview (web UI only, no API)
 - [ ] Lesson: Arrange (box select, Ctrl+click, move together, copy and paste, Tidy)
 - [ ] A state's name can still drop one device pixel when its rename input opens at some zooms (2 of 11 zoom levels at 125%, 5 at 150%, in Chrome): there the SVG label and the HTML input rasterize the text differently (the ink also moves sideways), which no input position can cancel. Gone for good only if the text being edited is drawn by the SVG itself, with the input's own text invisible (the caret and selection stay the input's)
 
@@ -17,6 +18,11 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Lessons for regex → NFA, TMs, and checking an automaton against a language, as those features land
 
 ## Done
+
+### v1.1.0 prep (2026-11-16)
+
+- [x] The README counts five lessons and lists ε-moves (it still said four, from before the ε-moves lesson)
+- [x] Version 1.1.0 in `package.json`; draft GitHub release `v1.1.0` ("Lessons") written, to publish once this merges (it tags master then)
 
 ### Lesson cards fit their text, walkthroughs stepped with →, rename selects and stays put (2026-11-16)
 
