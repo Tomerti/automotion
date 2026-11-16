@@ -636,7 +636,11 @@
   line-height: 1.5;
 }
 .av-welcome-note.av-finished-note {
-  margin: 8px 0 18px;
+  margin: 8px 0 0;
+}
+/* On the actions, not the note: the tutorial's popup has no note and needs the same room. */
+.av-finished .av-welcome-actions {
+  margin-top: 18px;
 }
 .av-confetti {
   position: absolute;

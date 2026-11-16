@@ -32,6 +32,7 @@ function ctx(t: SubsetTrace | null, stepIndex = 0, more: Partial<TutorialContext
 const SAVED = { owned: [CONTAINS_01.id, 'saved-dfa'] };
 const idea = new Set(['convert/idea']);
 const START = 'The DFA starts in «{q_0}»: before reading anything, the NFA can only be in «q_0».';
+const TO_PAIR = 'Press [→] to follow `0` from «{q_0}».';
 const BETWEEN =
   'Below, it follows each symbol from each set: a set it already has is reused, a new one becomes a state.';
 
@@ -73,8 +74,9 @@ describe('the Convert NFA → DFA lesson', () => {
   it('walks from the idea, to Convert to DFA, to each stop, to the end, to saving', () => {
     const first = advance(L, 0, idea, ctx(null));
     expect(first.current).toBe(1);
+    // The walkthrough opens paused on «{q_0}»: opening it is the step.
     const opened = advance(L, first.progress, first.latched, ctx(trace, 0));
-    expect(opened.current).toBe(1);
+    expect(opened.current).toBe(2);
     const pair = advance(L, opened.progress, opened.latched, ctx(trace, pairAt));
     expect(pair.current).toBe(2);
     const early = advance(L, pair.progress, pair.latched, ctx(trace, acceptingAt - 1));
@@ -87,27 +89,29 @@ describe('the Convert NFA → DFA lesson', () => {
     expect(steps[saved.current]!.id).toBe('done');
   });
 
+  it('opens Convert to DFA walkthroughs paused, on «{q_0}»', () => {
+    expect(L.pausedConvert).toBe(true);
+  });
+
   it('pauses where «{q_0,q_1}» and «{q_0,q_2}» appear', () => {
-    expect(steps[1]!.pauseAt!(ctx(trace, 0))).toBe(pairAt);
-    expect(steps[1]!.pauseAt!(ctx(null))).toBeNull();
-    // Stepped back or reopened below the explained moment: stop there first.
+    // Opened paused, or stepped back or reopened below the explained moment: stop there first.
     expect(steps[2]!.pauseAt!(ctx(trace, 0))).toBe(pairAt);
     expect(steps[2]!.pauseAt!(ctx(trace, pairAt))).toBe(acceptingAt);
     expect(steps[3]!.pauseAt!(ctx(trace, 0))).toBe(acceptingAt);
     expect(steps[3]!.pauseAt!(ctx(trace, acceptingAt))).toBeNull();
     expect(steps[3]!.pauseAt!(ctx(null))).toBeNull();
-    for (const i of [0, 4]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
+    for (const i of [0, 1, 4]) expect(steps[i]!.pauseAt, String(i)).toBeUndefined();
     const moment = trace.steps[pairAt]!;
     expect(moment).toMatchObject({ subset: ['q_0'], symbol: '0', isNew: true });
     expect(moment.moved).toEqual(['q_0', 'q_1']);
   });
 
-  it('lands on the first stop when the walkthrough was opened during the idea step', () => {
+  it('lands on «{q_0}» when the walkthrough was opened during the idea step', () => {
     const c = ctx(trace, 0);
     const at0 = { progress: 0, current: 0, latched: new Set<string>() };
-    expect(pacingStep(L, at0, c)!.id).toBe('convert/open');
+    expect(pacingStep(L, at0, c)!.id).toBe('convert/pair');
     expect(pacingStep(L, at0, c)!.pauseAt!(c)).toBe(1);
-    expect(advance(L, 0, idea, ctx(trace, pairAt), 0).current).toBe(2);
+    expect(advance(L, 0, idea, c, 0).current).toBe(2);
     expect(steps[2]!.id).toBe('convert/pair');
   });
 
@@ -126,13 +130,17 @@ describe('the Convert NFA → DFA lesson', () => {
     expect(advance(L, 4, upToSave, ctx(null), 4).current).toBe(4);
   });
 
-  it('keeps saying to press Convert to DFA until the first stop', () => {
-    expect(advance(L, 0, idea, ctx(trace, 0)).current).toBe(1);
+  it('keeps saying to press Convert to DFA until the walkthrough opens', () => {
+    expect(advance(L, 0, idea, ctx(null)).current).toBe(1);
     expect(steps[1]!.instruction(ctx(null))).toBe('Press Convert to DFA at the top.');
+    expect(advance(L, 0, idea, ctx(trace, 0)).current).toBe(2);
   });
 
   it('explains each moment, with the instruction a plain press', () => {
     expect(steps[1]!.explain(ctx(null))).toBeNull();
+    // On «{q_0}» it steps by hand to the pair; from the pair on, Play.
+    expect(steps[2]!.instruction(ctx(trace, 0))).toBe(TO_PAIR);
+    expect(steps[2]!.instruction(ctx(trace, pairAt))).toBe('Press Play.');
     expect(steps[2]!.instruction(ctx(null))).toBe('Press Play.');
     expect(steps[2]!.explain(ctx(trace, 0))).toBe(START);
     expect(steps[2]!.explain(ctx(trace, pairAt))).toBe(

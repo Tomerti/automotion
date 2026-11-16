@@ -16,6 +16,7 @@ import { BASICS } from './lessons/basics';
 import { LESSONS } from './lessons';
 import { CONVERT_LESSON } from './lessons/convert';
 import { NFA_LESSON } from './lessons/nfa';
+import { SHARE_LESSON } from './lessons/share';
 import { LESSONS_DONE_KEY, markLessonFinished } from './lessonsDone';
 import { IDEA_LESSON, TEST_LESSON } from './testing/testLesson';
 import {
@@ -665,16 +666,18 @@ describe('a lesson other than Basics', () => {
     expect(popup).toHaveTextContent('Its automata stay in your history.');
   });
 
-  it('offers the first unfinished lesson as Next, and starts it', async () => {
+  it('offers the first unfinished lesson after Basics as Next, and starts it', async () => {
     localStorage.removeItem(LESSONS_DONE_KEY);
     const onClose = vi.fn();
     render(<FinishedCard lesson={TEST_LESSON} onClose={onClose} />);
+    // Basics, skipped, is the tutorial: it is never offered as Next.
     const next = screen.getByTestId('next-lesson');
-    expect(next).toHaveTextContent('Next: Basics');
+    expect(next).toHaveTextContent('Next: NFAs');
     expect(screen.getByRole('button', { name: 'Back to building' })).not.toHaveClass('av-go');
+    expect(screen.queryByRole('button', { name: 'See the lessons' })).toBeNull();
     await userEvent.setup().click(next);
     expect(onClose).toHaveBeenCalled();
-    expect(tutorialStore.getState().lessonId).toBe('basics');
+    expect(tutorialStore.getState().lessonId).toBe('nfa');
   });
 
   it('never offers the lesson just finished, even when storage is blocked', () => {
@@ -682,7 +685,7 @@ describe('a lesson other than Basics', () => {
       throw new Error('denied');
     });
     render(<FinishedCard lesson={NFA_LESSON} onClose={() => {}} />);
-    expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: Basics');
+    expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: ε-moves');
   });
 
   it('after the tutorial, offers Start building and See the lessons instead of starting a lesson', async () => {
@@ -717,10 +720,22 @@ describe('a lesson other than Basics', () => {
     );
   });
 
-  it('has no Next once every lesson is finished', () => {
+  it('has no Next once every lesson is finished, and offers See the lessons', async () => {
     for (const l of LESSONS) markLessonFinished(l.id);
-    render(<FinishedCard lesson={TEST_LESSON} onClose={() => {}} />);
+    const onClose = vi.fn();
+    const onSeeLessons = vi.fn();
+    render(<FinishedCard lesson={TEST_LESSON} onClose={onClose} onSeeLessons={onSeeLessons} />);
     expect(screen.queryByTestId('next-lesson')).toBeNull();
     expect(screen.getByRole('button', { name: 'Back to building' })).toHaveClass('av-go');
+    await userEvent.setup().click(screen.getByRole('button', { name: 'See the lessons' }));
+    expect(onClose).toHaveBeenCalled();
+    expect(onSeeLessons).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers See the lessons, not Basics, when only Basics is left', () => {
+    for (const l of LESSONS) if (l.id !== 'basics') markLessonFinished(l.id);
+    render(<FinishedCard lesson={SHARE_LESSON} onClose={() => {}} onSeeLessons={() => {}} />);
+    expect(screen.queryByTestId('next-lesson')).toBeNull();
+    expect(screen.getByRole('button', { name: 'See the lessons' })).toBeInTheDocument();
   });
 });

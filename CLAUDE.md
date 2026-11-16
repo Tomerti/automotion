@@ -104,17 +104,20 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   a check on the automaton, a run reaching its verdict, a latch, or a reported action. `tutorial/lessons/`
   has `basics.ts` (the original tutorial), `nfa`, `epsilon`, `convert`, `minimize` and `share`; `index.ts`
   lists them in order. Lessons open a read-only copy of a ready-made automaton; automata saved from their walkthroughs
-  belong to the lesson (Quit removes them, Finish keeps them). A step with `idea: true` is
+  belong to the lesson (Quit removes them, Finish keeps them); a lesson's walkthrough offers only Save as new
+  automaton, not Save and minimize (`player/traceExtraActions.tsx`). A step with `idea: true` is
   read, not done, and goes on with Next (`tutorial-next`). A step's `explain` shows first on the card, then
   its instruction. `pausedRuns` lists words whose runs open paused, stepped by hand with → (NFAs on `001`,
-  ε-moves on `b`; `lessons/handStep.ts`). A step's `pauseAt` pauses the player (`stopAt`, via
-  `lessonStopAt`) at the moment the card explains while the run is before it, else at the next one
+  ε-moves on `b`; `lessons/handStep.ts`); `pausedConvert` opens Convert to DFA walkthroughs paused too
+  (Convert waits on «{q_0}» for →; Minimize walkthroughs always open paused). A step's `pauseAt`
+  pauses the player (`stopAt`, via `lessonStopAt`) at the moment the card explains while the run is before it, else at the next one
   (every hand-stepped, Convert and Minimize step). During an idea step the pacing step is the one
   Next would land on (`pacingStep`), so a run opened early is paced too. A step done on reaching a
   point of a run or walkthrough has `steppedBack`: stepped back (←) before that point, it shows again,
   so the card follows the trace back. While another automaton is open the card hides (it comes back on
   the lesson's own). Finishing Basics removes its automaton and its popup offers Start building or See
-  the lessons (Controls on the Lessons tab); a lesson's Finish keeps its automata and offers Next.
+  the lessons (Controls on the Lessons tab); a lesson's Finish keeps its automata and offers Next
+  (`nextLesson`: never Basics; See the lessons once none is left).
   Only Basics has goal pictures and frames the word box and dock.
 - Lesson texts mark keys `[Shift]`, states `«even»` and words to type in backticks. `lessons/index.test.ts`
   caps them: instructions 100 chars (idea steps 240), why lines 110 (70 for Basics, so its wording

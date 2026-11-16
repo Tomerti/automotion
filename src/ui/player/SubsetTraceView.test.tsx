@@ -5,6 +5,8 @@ import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { startSubset } from '../../store/traceActions';
 import { endsAb } from '../../store/testing/fixtures';
+import { CONVERT_LESSON } from '../tutorial/lessons/convert';
+import { endLesson, startLesson } from '../tutorial/tutorialStore';
 import App from '../shell/App';
 import { chooseSplitLayout } from './splitLayout';
 
@@ -133,6 +135,21 @@ describe('SubsetTraceView', () => {
     expect(saved?.name).toBe('ends ab → DFA');
     expect(s.trace?.kind).toBe('minimize');
     expect(s.trace?.kind === 'minimize' && s.trace.source).toBe(saved);
+  });
+
+  it('offers only Save in a lesson’s walkthrough: Minimize has its own lesson', async () => {
+    try {
+      startLesson(CONVERT_LESSON);
+      render(<App />);
+      await act(async () => {
+        await startSubset();
+      });
+      lastStep();
+      expect(screen.getByRole('button', { name: 'Save as new automaton' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Save and minimize' })).toBeNull();
+    } finally {
+      endLesson();
+    }
   });
 });
 

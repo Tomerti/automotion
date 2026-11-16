@@ -268,20 +268,16 @@ export function lessonStopAt(
 }
 
 /**
- * A run of `trace` opens paused: it is a run of an automaton the running lesson owns, of a word in
- * the lesson's `pausedRuns`.
+ * `trace` opens paused: it is of an automaton the running lesson owns, and either a run of a word
+ * in the lesson's `pausedRuns` or a Convert to DFA walkthrough in a lesson with `pausedConvert`.
  */
 export function lessonOpensPaused(
   trace: AnyTrace,
   t: TutorialState = tutorialStore.getState(),
 ): boolean {
-  return (
-    t.active &&
-    t.lesson?.pausedRuns !== undefined &&
-    trace.kind === 'run' &&
-    t.owned.includes(trace.source.id) &&
-    t.lesson.pausedRuns.includes(trace.word)
-  );
+  if (!t.active || !t.lesson || !t.owned.includes(trace.source.id)) return false;
+  if (trace.kind === 'subset') return t.lesson.pausedConvert === true;
+  return trace.kind === 'run' && (t.lesson.pausedRuns?.includes(trace.word) ?? false);
 }
 
 /** Next on an idea step: latch it and move on. Does nothing on any other step. */

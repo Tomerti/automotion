@@ -128,7 +128,8 @@ Step ids are namespaced per lesson (`convert/open`); `StepId` becomes a string.
   untouched "Untitled" is replaced by the copy, so no empty one is left behind (quitting still
   never leaves the canvas without an automaton).
 - **Owned automata**: the lesson's automaton, plus any automaton saved from a walkthrough of an
-  owned automaton while the lesson runs (Save as new automaton, Save and minimize). Being on an owned
+  owned automaton while the lesson runs (Save as new automaton; Save and minimize was hidden in
+  lessons on 2026-11-16, see PROGRESS.md). Being on an owned
   automaton, or having a walkthrough of one open, is not "elsewhere". This generalizes part 3's
   `derivedId`.
 - Quitting midway removes every owned automaton (asking first, as now). Finishing keeps them.
