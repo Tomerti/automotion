@@ -123,6 +123,17 @@ export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
     latest.current.onIndex(i);
   };
 
+  // Opened from a button (Convert to DFA, Minimize): the focus stays on it, so Space would press
+  // it again instead of playing, and → would show its keyboard focus ring. Take the focus off it;
+  // a text field (the word box) keeps it.
+  const playerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && isActivatable(focused)) {
+      if (!playerRef.current?.contains(focused)) focused.blur();
+    }
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (isTypingTarget(e.target)) return;
@@ -140,7 +151,13 @@ export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
   }, []);
 
   return (
-    <div className="av-player" data-testid="trace-player" role="group" aria-label="Step player">
+    <div
+      ref={playerRef}
+      className="av-player"
+      data-testid="trace-player"
+      role="group"
+      aria-label="Step player"
+    >
       <p className="av-player-explanation" aria-live="polite">
         <LabelText text={explanation} />
       </p>

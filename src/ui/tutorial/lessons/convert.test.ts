@@ -138,16 +138,16 @@ describe('the Convert NFA → DFA lesson', () => {
 
   it('explains each moment, with the instruction a plain press', () => {
     expect(steps[1]!.explain(ctx(null))).toBeNull();
-    // On «{q_0}» it steps by hand to the pair; from the pair on, Play.
+    // Stepped by hand all the way: on «{q_0}» to the pair, then on to the next stop.
     expect(steps[2]!.instruction(ctx(trace, 0))).toBe(TO_PAIR);
-    expect(steps[2]!.instruction(ctx(trace, pairAt))).toBe('Press Play.');
-    expect(steps[2]!.instruction(ctx(null))).toBe('Press Play.');
+    expect(steps[2]!.instruction(ctx(trace, pairAt))).toBe('Press [→] to go on.');
+    expect(steps[2]!.instruction(ctx(null))).toBe('Press [→] to go on.');
     expect(steps[2]!.explain(ctx(trace, 0))).toBe(START);
     expect(steps[2]!.explain(ctx(trace, pairAt))).toBe(
       'Below, it follows `0` from «{q_0}»: «q_0» can stay or move to «q_1», so the new DFA state is «{q_0,q_1}».',
     );
     expect(steps[2]!.explain(ctx(trace, pairAt + 1))).toBe(BETWEEN);
-    expect(steps[3]!.instruction(ctx(null))).toBe('Press Play to finish.');
+    expect(steps[3]!.instruction(ctx(null))).toBe('Press [→] until the last step.');
     expect(steps[3]!.explain(ctx(trace, acceptingAt))).toBe(
       'Below, `1` from «{q_0,q_1}» leads to «{q_0,q_2}». It holds «q_2», which accepts, so this DFA state accepts too.',
     );
@@ -194,8 +194,8 @@ describe('the Convert NFA → DFA lesson', () => {
     expect(steps[4]!.target(ctx(null))).toBe('[data-testid="save-trace-result"]');
   });
 
-  it('asks to press Play to reach the end on the save step', () => {
-    const text = 'First, press Play to reach the end.';
+  it('asks to step to the end on the save step', () => {
+    const text = 'First, press [→] until the last step.';
     expect(steps[4]!.hint(ctx(trace, 0))).toEqual({ kind: 'first', text });
     expect(steps[4]!.hint(ctx(trace, last))).toBeNull();
     expect(steps[4]!.hint(ctx(trace, 0, SAVED))).toBeNull();

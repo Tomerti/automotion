@@ -11,6 +11,8 @@ export interface InlineInputProps {
   fontSize: number;
   /** Set in the symbol font, like the edge label it replaces (else like a state's name). */
   symbols?: boolean;
+  /** Open with the whole text selected, to type a new one (a state's name), not the caret after it. */
+  selectAll?: boolean;
   /**
    * Where the drawn label puts its alphabetic baseline for a text, in ems below `at`: the input's
    * text is set on that baseline, so it doesn't jump when the input opens or closes. Without it
@@ -39,6 +41,7 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
     at,
     fontSize,
     symbols,
+    selectAll,
     baseline,
     normalize,
     onSubmit,
@@ -57,21 +60,34 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
   /** Set once Enter or Escape closed the input, so a blur on unmount does nothing. */
   const closed = useRef(false);
 
-  // Open with the caret after the text, to type more of it (an arrow's next symbol).
+  // Open with the caret after the text, to type more of it (an arrow's next symbol), or with
+  // all of it selected, to replace it.
   useLayoutEffect(() => {
     const input = inputRef.current;
-    input?.setSelectionRange(input.value.length, input.value.length);
+    if (!input) return;
+    if (selectAll) input.select();
+    else input.setSelectionRange(input.value.length, input.value.length);
+    // Only on opening: later renders keep the caret where typing put it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // The box centres its line, which puts the text's baseline wherever the font's ascent and
   // descent say; the drawn label puts it to centre its letters (`labelBaselineOffset`). Measure
   // where the baseline sits now (the transform moves both rects alike) and move it there.
+  // The drawn label's baseline lands on the nearest device pixel row; HTML text a fraction off
+  // it can round to the next row (the text dropped 1 px on opening at some zooms), so the
+  // input's baseline goes on that row exactly.
+  const applied = useRef(0);
   useLayoutEffect(() => {
     const box = boxRef.current?.getBoundingClientRect();
     const mark = baselineRef.current?.getBoundingClientRect();
     if (!baseline || !box || !mark) return;
     const centred = mark.top - box.top - box.height / 2;
-    setShift(fontSize * baseline(value) - centred);
+    const middle = box.top + box.height / 2 - applied.current;
+    const dpr = window.devicePixelRatio || 1;
+    const row = Math.round((middle + fontSize * baseline(value)) * dpr) / dpr;
+    applied.current = row - middle - centred;
+    setShift(applied.current);
   }, [baseline, value, fontSize]);
 
   useLayoutEffect(() => {

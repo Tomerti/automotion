@@ -185,6 +185,43 @@ describe('TracePlayer', () => {
     expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
   });
 
+  it('takes the focus off the button that opened it, so Space plays instead of pressing it again', () => {
+    function Opener(): React.JSX.Element {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Convert to DFA
+          </button>
+          {open && <Harness />}
+        </>
+      );
+    }
+    render(<Opener />);
+    const opener = screen.getByRole('button', { name: 'Convert to DFA' });
+    opener.focus();
+    fireEvent.click(opener);
+    expect(opener).not.toHaveFocus();
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('leaves the focus in a text field that opened it', () => {
+    function Opener(): React.JSX.Element {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <input aria-label="Test a word" onKeyDown={() => setOpen(true)} />
+          {open && <Harness />}
+        </>
+      );
+    }
+    render(<Opener />);
+    const input = screen.getByLabelText('Test a word');
+    input.focus();
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(input).toHaveFocus();
+  });
+
   it('Close button closes and extraActions render', async () => {
     const onClose = vi.fn();
     const user = userEvent.setup();

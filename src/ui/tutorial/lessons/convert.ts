@@ -76,12 +76,12 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'convert/pair',
-    // On «{q_0}», step by hand to the pair's moment; from there, Play.
+    // Stepped by hand, like the NFA lessons: on «{q_0}» to the pair's moment, then on from there.
     instruction: (_, ctx) => {
       const pair = stateAt(ctx, PAIR);
       return pair !== null && ctx.stepIndex < pair
         ? 'Press [→] to follow `0` from «{q_0}».'
-        : 'Press Play.';
+        : 'Press [→] to go on.';
     },
     // What the line below the walkthrough shows: the start, the pair's moment, or the steps between.
     explain: (l, ctx) => {
@@ -104,7 +104,7 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'convert/accepting',
-    instruction: () => 'Press Play to finish.',
+    instruction: () => 'Press [→] until the last step.',
     explain: (_, ctx) => {
       const at = stateAt(ctx, ACCEPTING_PAIR);
       if (at === null) return null;
@@ -131,7 +131,7 @@ const STEPS: StepSpec[] = [
       const t = subsetOf(ctx);
       if (!t) return needConvert(ctx);
       // The walkthrough reopens paused, and saving shows only at its last step.
-      return ctx.stepIndex < t.steps.length - 1 ? 'First, press Play to reach the end.' : null;
+      return ctx.stepIndex < t.steps.length - 1 ? 'First, press [→] until the last step.' : null;
     },
     target: () => '[data-testid="save-trace-result"]',
   },

@@ -499,7 +499,7 @@ describe('a lesson other than Basics', () => {
     expect(within(card()).queryByTestId('tutorial-explain')).toBeNull();
   });
 
-  it('marks itself as tracing while a lesson run is open, so it keeps one height', () => {
+  it('marks itself as tracing while a lesson run is open', () => {
     render(<App />);
     act(() => startLesson(NFA_LESSON));
     const own = app().automata.find((x) => x.id === tutorialStore.getState().automatonId)!;
@@ -540,6 +540,29 @@ describe('a lesson other than Basics', () => {
       expect(pad()).toBe('204px');
       act(() => app().closeTrace());
       expect(pad()).toBe('154px');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('keeps room for a taller card below a short one while a lesson trace is open', () => {
+    // The card fits its text (no empty space under Finish); the trace still starts where a
+    // two-line explanation would end, so it doesn't move as the card grows.
+    const spy = vi
+      .spyOn(HTMLElement.prototype, 'offsetHeight', 'get')
+      .mockImplementation(() => 100);
+    try {
+      render(<App />);
+      const area = document.querySelector<HTMLElement>('.av-canvas-area')!;
+      const pad = () => area.style.getPropertyValue('--av-tutorial-pad');
+      act(() => startLesson(NFA_LESSON));
+      expect(pad()).toBe('104px');
+      const own = app().automata.find((x) => x.id === tutorialStore.getState().automatonId)!;
+      act(() => pressNext());
+      act(() => app().openTrace(runWord(own, '001')));
+      expect(pad()).toBe('194px');
+      act(() => app().closeTrace());
+      expect(pad()).toBe('104px');
     } finally {
       spy.mockRestore();
     }
