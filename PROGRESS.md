@@ -18,10 +18,11 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
-### Convert lesson waits on {q_0} (2026-11-16)
+### Lesson fixes: Convert waits on {q_0}, Save only, Share wording (2026-11-16)
 
 - [x] The Convert lesson's walkthrough opens paused on «{q_0}» (`pausedConvert`) instead of playing on to «{q_0,q_1}»: opening it completes the Convert step, and the next card says to press [→] to follow `0`, then Play
 - [x] A lesson's Convert to DFA walkthrough offers only Save as new automaton: Save and minimize finished the lesson under a Minimize walkthrough it never explained (and Finish closed it), and Minimize has its own lesson
+- [x] Share and export's goal says what it does ("Share this DFA as a link, a picture and LaTeX"), and its steps call the icon-only menu button "the share button"
 
 ### Lessons (2026-11-15)
 

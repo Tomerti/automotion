@@ -22,12 +22,13 @@ const EVEN_ZEROS: Automaton = {
   ],
 };
 
+/** The share button: it shows only its icon, so the card calls it the share button. */
 const MENU = 'button[aria-label="Share, copy or export"]';
 
 const STEPS: StepSpec[] = [
   {
     id: 'share/link',
-    instruction: () => 'Open Share, copy or export, and choose Share link.',
+    instruction: () => 'Press the share button at the top and choose Share link.',
     why: () => 'The automaton travels inside the link: whoever opens it gets their own copy.',
     action: ['share-link'],
     target: () => MENU,
@@ -45,7 +46,7 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'share/latex',
-    instruction: () => 'Open Share, copy or export again and choose Copy LaTeX.',
+    instruction: () => 'Press the share button again and choose Copy LaTeX.',
     explain: () =>
       'Copied: paste it into notes, slides or a chat and you get a picture of the automaton.',
     action: ['copy-latex'],
@@ -64,7 +65,7 @@ export const SHARE_LESSON: Lesson & { id: 'share' } = {
     {
       title: 'Share and export',
       goal: {
-        text: 'Share your automaton',
+        text: 'Share this DFA as a link, a picture and LaTeX',
         examples: [],
       },
       steps: STEPS,

@@ -25,6 +25,7 @@ describe('the Share and export lesson', () => {
   it('opens on the even-zeros DFA, with no examples', () => {
     expect(start.name).toBe('Even zeros');
     expect(start.kind).toBe('DFA');
+    expect(L.parts[0]!.goal.text).toBe('Share this DFA as a link, a picture and LaTeX');
     expect(L.parts[0]!.goal.examples).toEqual([]);
     expect(runWord(start, '1010').accepted).toBe(true);
     expect(runWord(start, '10').accepted).toBe(false);
@@ -61,11 +62,15 @@ describe('the Share and export lesson', () => {
     const exported = ctx('share-link', 'copy-image', 'export-latex');
     expect(advance(L, b.progress, b.latched, exported).current).toBe(2);
     expect(steps[2]!.instruction(ctx())).toBe(
-      'Open Share, copy or export again and choose Copy LaTeX.',
+      'Press the share button again and choose Copy LaTeX.',
     );
   });
 
   it('frames the menu only on the first step', () => {
+    // The button shows only its icon: the card calls it the share button.
+    expect(steps[0]!.instruction(ctx())).toBe(
+      'Press the share button at the top and choose Share link.',
+    );
     expect(steps[0]!.target(ctx())).toBe('button[aria-label="Share, copy or export"]');
     expect(steps[1]!.target(ctx())).toBeNull();
     expect(steps[2]!.target(ctx())).toBeNull();

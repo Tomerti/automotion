@@ -219,8 +219,8 @@ Closing as now.
 
 **Share and export**: the goal row loses its picture. Changed after user feedback (the frame stayed
 on the menu after it was used, the LaTeX step offered two choices, and nothing said what the copied
-picture is for): only the first step (Share link) frames the menu; the LaTeX step is "Open Share,
-copy or export again and choose Copy LaTeX." (action `copy-latex` only) and leads with "Copied:
+picture is for): only the first step (Share link) frames the menu; the LaTeX step is "Press the
+share button again and choose Copy LaTeX." (action `copy-latex` only) and leads with "Copied:
 paste it into notes, slides or a chat and you get a picture of the automaton."; the closing card is
 "Copied as TikZ: paste it into a LaTeX document and it draws the automaton as on the canvas."
 
