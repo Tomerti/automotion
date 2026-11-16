@@ -26,7 +26,7 @@ export function FinishedCard({
 }: {
   lesson: Lesson;
   onClose: () => void;
-  /** After the tutorial, See the lessons: open the Controls on the Lessons tab. */
+  /** See the lessons (after the tutorial, or a lesson with none next): open the Lessons tab. */
   onSeeLessons?: () => void;
 }): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -36,6 +36,18 @@ export function FinishedCard({
   // After the tutorial the lessons are pointed to, not started: they're there when wanted.
   const [next] = useState(() => (tutorial ? null : nextLesson([...finishedLessons(), lesson.id])));
   const title = tutorial ? 'Tutorial complete' : 'Lesson complete';
+  const seeLessons = (
+    <button
+      type="button"
+      data-focus-stop
+      onClick={() => {
+        onClose();
+        onSeeLessons?.();
+      }}
+    >
+      See the lessons
+    </button>
+  );
 
   return (
     <div
@@ -90,16 +102,7 @@ export function FinishedCard({
               <button type="button" className="av-go" data-focus-stop onClick={onClose}>
                 Start building
               </button>
-              <button
-                type="button"
-                data-focus-stop
-                onClick={() => {
-                  onClose();
-                  onSeeLessons?.();
-                }}
-              >
-                See the lessons
-              </button>
+              {seeLessons}
             </>
           ) : (
             <>
@@ -117,6 +120,8 @@ export function FinishedCard({
                   Next: {next.title}
                 </button>
               )}
+              {/* No lesson left to offer: the list is there for Basics, or to go over one again. */}
+              {!next && seeLessons}
               <button
                 type="button"
                 className={next ? undefined : 'av-go'}

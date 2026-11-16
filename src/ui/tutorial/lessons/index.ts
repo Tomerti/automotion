@@ -19,9 +19,12 @@ export const LESSONS: readonly ListedLesson[] = [
   SHARE_LESSON,
 ];
 
-/** The first lesson not in `done`, or null when every one is finished. */
+/**
+ * The first lesson not in `done`, or null when every one is finished. Never Basics: it is the
+ * tutorial, offered by the welcome and the Lessons tab, not as the next lesson.
+ */
 export function nextLesson(done: readonly string[]): ListedLesson | null {
-  return LESSONS.find((l) => !done.includes(l.id)) ?? null;
+  return LESSONS.find((l) => l !== BASICS && !done.includes(l.id)) ?? null;
 }
 
 export function lessonById(id: LessonId): Lesson {
