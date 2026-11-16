@@ -74,12 +74,20 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
   // The box centres its line, which puts the text's baseline wherever the font's ascent and
   // descent say; the drawn label puts it to centre its letters (`labelBaselineOffset`). Measure
   // where the baseline sits now (the transform moves both rects alike) and move it there.
+  // The drawn label's baseline lands on the nearest device pixel row; HTML text a fraction off
+  // it can round to the next row (the text dropped 1 px on opening at some zooms), so the
+  // input's baseline goes on that row exactly.
+  const applied = useRef(0);
   useLayoutEffect(() => {
     const box = boxRef.current?.getBoundingClientRect();
     const mark = baselineRef.current?.getBoundingClientRect();
     if (!baseline || !box || !mark) return;
     const centred = mark.top - box.top - box.height / 2;
-    setShift(fontSize * baseline(value) - centred);
+    const middle = box.top + box.height / 2 - applied.current;
+    const dpr = window.devicePixelRatio || 1;
+    const row = Math.round((middle + fontSize * baseline(value)) * dpr) / dpr;
+    applied.current = row - middle - centred;
+    setShift(applied.current);
   }, [baseline, value, fontSize]);
 
   useLayoutEffect(() => {

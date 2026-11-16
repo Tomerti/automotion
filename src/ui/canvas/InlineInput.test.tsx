@@ -44,4 +44,20 @@ describe('InlineInput', () => {
     expect(baseline).toHaveBeenCalledWith('even');
     expect(box.style.transform).toBe('translate(-50%, calc(-50% + -1px))');
   });
+
+  it('puts its baseline on a whole device pixel, where the drawn label’s baseline rounds to', () => {
+    // At 125% the label wants its baseline at 127.3 css px = 159.125 device px, drawn on row 159:
+    // the input's text goes there exactly (127.2 css px), not a fraction off that HTML text rounds
+    // to the next row.
+    vi.spyOn(window, 'devicePixelRatio', 'get').mockReturnValue(1.25);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.classList.contains('av-inline-baseline') ? rect(128.3, 0) : rect(100.3, 36);
+    });
+    render(<InlineInput {...props({ baseline: () => 0.3 })} />);
+    const box = screen.getByTestId('rename-input').parentElement as HTMLElement;
+    const shift = Number(/calc\(-50% \+ (-?[\d.]+)px\)/.exec(box.style.transform)?.[1]);
+    expect(shift).toBeCloseTo(-1.1, 6);
+  });
 });
