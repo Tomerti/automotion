@@ -2,6 +2,7 @@ import { canMinimize } from '../../core/minimize';
 import type { AnyTrace, MinimizeTrace, SubsetTrace } from '../../core/trace';
 import { appStore } from '../../store/store';
 import { startMinimize } from '../../store/traceActions';
+import { useTutorial } from '../tutorial/tutorialStore';
 
 /** Extra player buttons for the open trace (rendered by TracePlayer's `extraActions`). */
 export function TraceExtraActions({
@@ -11,6 +12,8 @@ export function TraceExtraActions({
   trace: AnyTrace;
   stepIndex: number;
 }): React.JSX.Element | null {
+  // A lesson's walkthrough offers only Save: its card asks for that, and Minimize has its own lesson.
+  const inLesson = useTutorial((s) => s.active && s.owned.includes(trace.source.id));
   const isLast = stepIndex === trace.steps.length - 1;
   if (!isLast) return null;
   switch (trace.kind) {
@@ -28,7 +31,9 @@ export function TraceExtraActions({
       return (
         <>
           <SaveButton trace={trace} />
-          {canMinimize(trace.result) === null && <SaveAndMinimizeButton trace={trace} />}
+          {!inLesson && canMinimize(trace.result) === null && (
+            <SaveAndMinimizeButton trace={trace} />
+          )}
         </>
       );
     case 'run':

@@ -104,7 +104,8 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   a check on the automaton, a run reaching its verdict, a latch, or a reported action. `tutorial/lessons/`
   has `basics.ts` (the original tutorial), `nfa`, `epsilon`, `convert`, `minimize` and `share`; `index.ts`
   lists them in order. Lessons open a read-only copy of a ready-made automaton; automata saved from their walkthroughs
-  belong to the lesson (Quit removes them, Finish keeps them). A step with `idea: true` is
+  belong to the lesson (Quit removes them, Finish keeps them); a lesson's walkthrough offers only Save as new
+  automaton, not Save and minimize (`player/traceExtraActions.tsx`). A step with `idea: true` is
   read, not done, and goes on with Next (`tutorial-next`). A step's `explain` shows first on the card, then
   its instruction. `pausedRuns` lists words whose runs open paused, stepped by hand with → (NFAs on `001`,
   ε-moves on `b`; `lessons/handStep.ts`); `pausedConvert` opens Convert to DFA walkthroughs paused too
