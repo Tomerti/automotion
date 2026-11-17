@@ -52,6 +52,29 @@ describe('regexToMinimalDfa', () => {
     expect(accepts(regexToMinimalDfa('א|ב'), 'ב')).toBe(true);
   });
 
+  it('a big subset DFA that minimizes small is accepted', () => {
+    const d = regexToMinimalDfa(`(a|b)*a${'(a|b)'.repeat(9)}|(a|b)*`);
+    expect(d.states).toHaveLength(1);
+    expect(accepts(d, 'abba')).toBe(true);
+  });
+
+  it('is fast enough to run on every keystroke', () => {
+    const blowup = (n: number, tail: string): string => `(a|b)*a${'(a|b)'.repeat(n)}${tail}`;
+    const inputs = [
+      'a'.repeat(1000),
+      blowup(9, '(a*|b*)'.repeat(100)),
+      blowup(8, '(c|d)*'.repeat(100)),
+      '(a|b)*a(a|b)(a|b)(a|b)(a|b)(a|b)(a|b)' + '(e|f)*'.repeat(100),
+      blowup(0, '(a|b)'.repeat(190)),
+      '(a*b*)*'.repeat(140),
+    ];
+    for (const input of inputs) {
+      const start = performance.now();
+      canBuildFromRegex(input);
+      expect(performance.now() - start).toBeLessThan(500);
+    }
+  });
+
   it('refusals', () => {
     expect(canBuildFromRegex('')).toBe('Type a regex');
     expect(canBuildFromRegex('a|')).toBe('Nothing after |');

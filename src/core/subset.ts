@@ -65,10 +65,7 @@ function dfaLabel(nfa: Automaton, subset: StateId[]): string {
   return formatSet(nfa, subset).replaceAll(', ', ',');
 }
 
-export function subsetConstruction(
-  original: Automaton,
-  maxStates: number = MAX_DFA_STATES,
-): SubsetTrace {
+export function subsetConstruction(original: Automaton): SubsetTrace {
   const reason = canConvert(original);
   if (reason !== null) throw new Error(reason);
   const { nfa, added } = withSingleStart(original);
@@ -83,8 +80,8 @@ export function subsetConstruction(
   const revealedTransitions: string[] = [];
 
   const addState = (subset: StateId[]): { id: StateId; subset: StateId[] } => {
-    if (states.length >= maxStates) {
-      throw new Error(`Conversion stopped: the DFA would have more than ${maxStates} states`);
+    if (states.length >= MAX_DFA_STATES) {
+      throw new Error(`Conversion stopped: the DFA would have more than ${MAX_DFA_STATES} states`);
     }
     const entry = { id: newId(), subset };
     byKey.set(subset.join('|'), entry);
