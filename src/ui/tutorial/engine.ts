@@ -2,7 +2,15 @@ import { startStates } from '../../core/model';
 import type { Automaton, State, StateId, Sym } from '../../core/model';
 import type { AnyTrace } from '../../core/trace';
 
-export const LESSON_IDS = ['basics', 'nfa', 'epsilon', 'convert', 'minimize', 'share'] as const;
+export const LESSON_IDS = [
+  'basics',
+  'nfa',
+  'epsilon',
+  'convert',
+  'minimize',
+  'share',
+  'arrange',
+] as const;
 export type LessonId = (typeof LESSON_IDS)[number];
 
 /** Something done in the shell that leaves no trace in the state (see the spec's *Actions*). */
