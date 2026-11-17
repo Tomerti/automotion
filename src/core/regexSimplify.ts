@@ -20,9 +20,12 @@ function plusBody(branch: Regex): Regex | null {
   return null;
 }
 
-/** `ε|rr* = ε|r*r = r*`: each `rr*` / `r*r` branch becomes `r*` when `ε` is present. */
+/**
+ * `ε|rr* = ε|r*r = r*`: each `rr*` / `r*r` branch becomes `r*` when `ε` or a star branch is present
+ * (either already matches the empty word).
+ */
 function absorbEpsIntoPlus(branches: Regex[]): Regex[] {
-  if (!branches.some((b) => b.type === 'eps')) return branches;
+  if (!branches.some((b) => b.type === 'eps' || b.type === 'star')) return branches;
   let changed = false;
   const out = branches.map((b) => {
     const body = plusBody(b);

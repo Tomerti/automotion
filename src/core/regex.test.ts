@@ -32,10 +32,9 @@ describe('regex parser and printer', () => {
   });
   it('postfix operators stack', () =>
     expect(ok('a*+')).toMatchObject({ type: 'plus', body: { type: 'star' } }));
-  it('whitespace is ignored and spans index the normalised text', () => {
+  it('whitespace is ignored', () => {
     const r = parseRegex('(a | \\eps)*');
     expect(r).toMatchObject({ ok: true, text: '(a | ε)*' });
-    expect(r.ok && r.regex.span).toEqual({ start: 0, end: 8 });
   });
   it('\\epsilon is ε too, not ε followed by ilon', () => {
     expect(normalizeRegexText(String.raw`(a|\epsilon)\emptyset\eps`)).toBe('(a|ε)∅ε');

@@ -389,7 +389,7 @@ input.av-switcher-input {
   padding: 8px 10px 10px;
   border-top: 1px solid var(--av-rule);
 }
-/* Create and Export all menus: the anchor takes the button's share of the row; the menu opens upward. */
+/* Create and Export menus: the anchor takes the button's share of the row (Export's menu opens upward, Create's downward). */
 .av-history-export {
   flex: 1;
 }

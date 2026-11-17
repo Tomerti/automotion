@@ -1,18 +1,13 @@
 import type { Sym } from './model';
 import { EPSILON } from './model';
 
-export interface Span {
-  start: number;
-  end: number;
-}
-
 export type Regex =
-  | { type: 'sym'; sym: Sym; span?: Span }
-  | { type: 'eps'; span?: Span }
-  | { type: 'empty'; span?: Span }
-  | { type: 'concat'; left: Regex; right: Regex; span?: Span }
-  | { type: 'union'; branches: Regex[]; span?: Span } // at least 2 branches
-  | { type: 'star' | 'plus'; body: Regex; span?: Span };
+  | { type: 'sym'; sym: Sym }
+  | { type: 'eps' }
+  | { type: 'empty' }
+  | { type: 'concat'; left: Regex; right: Regex }
+  | { type: 'union'; branches: Regex[] } // at least 2 branches
+  | { type: 'star' | 'plus'; body: Regex };
 
 export const EMPTY_SET = '∅';
 
@@ -49,7 +44,7 @@ class ParseError {
   }
 }
 
-/** Parse a regex; never throws. Offsets in spans and errors index the normalised `text`. */
+/** Parse a regex; never throws. Error offsets index the normalised `text`. */
 export function parseRegex(input: string): ParseResult {
   const text = normalizeRegexText(input);
   const tokens: Token[] = [];
@@ -72,26 +67,14 @@ export function parseRegex(input: string): ParseResult {
     }
     const first = branches[0] as Regex;
     if (branches.length === 1) return first;
-    const last = branches[branches.length - 1] as Regex;
-    return {
-      type: 'union',
-      branches,
-      span: { start: first.span!.start, end: last.span!.end },
-    };
+    return { type: 'union', branches };
   }
 
   function parseConcat(afterBar: number | undefined): Regex {
     let acc: Regex | undefined;
     while (startsAtom(peek())) {
       const next = parsePostfix();
-      acc = acc
-        ? {
-            type: 'concat',
-            left: acc,
-            right: next,
-            span: { start: acc.span!.start, end: next.span!.end },
-          }
-        : next;
+      acc = acc ? { type: 'concat', left: acc, right: next } : next;
     }
     if (acc) return acc;
     const t = peek();
@@ -107,31 +90,26 @@ export function parseRegex(input: string): ParseResult {
     let body = parseAtom();
     for (let t = peek(); t && (t.ch === '*' || t.ch === '+'); t = peek()) {
       pos++;
-      body = {
-        type: t.ch === '*' ? 'star' : 'plus',
-        body,
-        span: { start: body.span!.start, end: t.end },
-      };
+      body = { type: t.ch === '*' ? 'star' : 'plus', body };
     }
     return body;
   }
 
   function parseAtom(): Regex {
     const t = tokens[pos++] as Token;
-    const span = { start: t.start, end: t.end };
-    if (t.ch === EPSILON) return { type: 'eps', span };
-    if (t.ch === EMPTY_SET) return { type: 'empty', span };
+    if (t.ch === EPSILON) return { type: 'eps' };
+    if (t.ch === EMPTY_SET) return { type: 'empty' };
     if (t.ch === '(') {
       if (peek()?.ch === ')') throw new ParseError('Empty ( )', t.start);
       const inner = parseUnion();
       const close = peek();
       if (close?.ch !== ')') throw new ParseError('Missing )', text.length);
       pos++;
-      return { ...inner, span: { start: t.start, end: close.end } };
+      return inner;
     }
     if (t.ch === '\\') throw new ParseError('Unknown \\ command', t.start);
     if (t.ch === ',') throw new ParseError("',' can't be a symbol", t.start);
-    return { type: 'sym', sym: t.ch, span };
+    return { type: 'sym', sym: t.ch };
   }
 
   try {

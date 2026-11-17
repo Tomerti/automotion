@@ -4,6 +4,7 @@ import { canBuildFromRegex } from '../../core/regexToDfa';
 import { createFromRegex } from '../../store/regexActions';
 import { CloseIcon } from './icons';
 import { closeRegexDialog, useRegexDialog } from './regexDialogStore';
+import { toast } from './toastStore';
 import { useModalDialog } from './useModalDialog';
 
 /** The open regex dialog, if any (rendered once, in `App`). */
@@ -35,7 +36,7 @@ function RegexModal(): React.JSX.Element {
   const submit = (): void => {
     if (refusal !== null) return;
     closeRegexDialog();
-    void createFromRegex(text);
+    void createFromRegex(text, (m) => toast(m, 'error'));
   };
 
   return (

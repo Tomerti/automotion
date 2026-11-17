@@ -22,6 +22,8 @@ describe('regexSimplify', () => {
     [() => mkUnion(EPS, mkConcat(mkStar(A), A)), 'a*'], // ε|r*r = r*
     [() => mkUnion(mkConcat(A, mkStar(A)), EPS), 'a*'], // order-independent
     [() => mkUnion(EPS, mkStar(A)), 'a*'], // ε|r* = r*
+    [() => mkUnion(mkStar(A), mkConcat(B, mkStar(B))), 'a*|b*'], // a star branch is nullable: rr* = r*
+    [() => mkUnion(A, mkConcat(B, mkStar(B))), 'a|bb*'], // no nullable branch: unchanged
     [() => mkUnion(A, mkStar(A)), 'a*'], // r|r* = r*
     [() => mkUnion(mkUnion(EPS, B), mkConcat(A, mkStar(A))), 'b|a*'], // inside a longer union
     [() => mkStar(mkUnion(EPS, A)), 'a*'], // (ε|r)* = r*

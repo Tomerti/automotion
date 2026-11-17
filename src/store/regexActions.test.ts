@@ -1,8 +1,15 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { layoutInWorker } from '../layout/layoutClient';
 import { fixture } from '../core/testing/fixtures';
 import { createFromRegex } from './regexActions';
 import { appStore, resetAppStore } from './store';
 import { startRun } from './traceActions';
+
+vi.mock('../layout/layoutClient', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../layout/layoutClient')>();
+  return { ...real, layoutInWorker: vi.fn(real.layoutInWorker) };
+});
+const layoutMock = vi.mocked(layoutInWorker);
 
 const seeded = fixture({
   name: 'Seeded',
@@ -34,6 +41,15 @@ describe('createFromRegex', () => {
   it('does nothing for a refused regex', async () => {
     const before = appStore.getState().automata;
     expect(await createFromRegex('a|')).toBeNull();
+    expect(appStore.getState().automata).toBe(before);
+  });
+
+  it('reports a layout failure through onError and adds nothing', async () => {
+    const before = appStore.getState().automata;
+    layoutMock.mockRejectedValueOnce(new Error('elk exploded'));
+    const onError = vi.fn();
+    expect(await createFromRegex('a', onError)).toBeNull();
+    expect(onError).toHaveBeenCalledWith('Could not lay out the automaton');
     expect(appStore.getState().automata).toBe(before);
   });
 

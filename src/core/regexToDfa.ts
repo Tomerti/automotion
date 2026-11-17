@@ -14,6 +14,9 @@ export const MAX_REGEX_INPUT = 1000;
  */
 const MAX_SUBSET_STATES = 4096;
 
+/** Subset states times alphabet size: bounds the work, which a wide alphabet would multiply. */
+const MAX_SUBSET_WORK = MAX_SUBSET_STATES * 16;
+
 const TOO_BIG = `Too big: the DFA would have more than ${MAX_DFA_STATES} states`;
 
 /** A complete DFA over `alphabet` on integer states; `delta[q][k]` is the target on symbol k. */
@@ -103,7 +106,11 @@ function subsetTable(nfa: Automaton): Table | null {
     const key = set.join(',');
     const known = ids.get(key);
     if (known !== undefined) return known;
-    if (sets.length >= MAX_SUBSET_STATES) return null;
+    if (
+      sets.length >= MAX_SUBSET_STATES ||
+      (sets.length + 1) * nfa.alphabet.length > MAX_SUBSET_WORK
+    )
+      return null;
     ids.set(key, sets.length);
     sets.push(set);
     return sets.length - 1;
@@ -191,9 +198,10 @@ function refine(table: Table): { classOf: number[]; count: number } {
   return { classOf: blockOf, count: blocks.length };
 }
 
-/** The minimal DFA, states named q_0, q_1, … breadth-first from the start in alphabet order. */
-function minimalDfa(table: Table, alphabet: Sym[], name: string): Automaton {
+/** The minimal DFA (null past `MAX_DFA_STATES`), states named q_0, q_1, … breadth-first from the start in alphabet order. */
+function minimalDfa(table: Table, alphabet: Sym[], name: string): Automaton | null {
   const { classOf, count } = refine(table);
+  if (count > MAX_DFA_STATES) return null;
   const rows: number[][] = Array.from({ length: count }, () => []);
   const accepting = new Set<number>();
   table.delta.forEach((row, q) => {
@@ -203,9 +211,13 @@ function minimalDfa(table: Table, alphabet: Sym[], name: string): Automaton {
 
   // The start (state 0) is class classOf[0]; every state is reachable, so BFS numbers them all.
   const order = [classOf[0] as number];
+  const seen = new Set(order);
   for (let head = 0; head < order.length; head++) {
     for (const t of rows[order[head] as number] as number[]) {
-      if (!order.includes(t)) order.push(t);
+      if (!seen.has(t)) {
+        seen.add(t);
+        order.push(t);
+      }
     }
   }
   const position = new Map(order.map((c, i) => [c, i]));
@@ -250,7 +262,7 @@ function build(input: string): { ok: true; dfa: Automaton } | { ok: false; error
   const table = subsetTable(nfa);
   if (table === null) return { ok: false, error: TOO_BIG };
   const dfa = minimalDfa(table, nfa.alphabet, nfa.name);
-  if (dfa.states.length > MAX_DFA_STATES) return { ok: false, error: TOO_BIG };
+  if (dfa === null) return { ok: false, error: TOO_BIG };
   return { ok: true, dfa };
 }
 

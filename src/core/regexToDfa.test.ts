@@ -75,6 +75,14 @@ describe('regexToMinimalDfa', () => {
     }
   });
 
+  it('a ~300-symbol alphabet is refused or built quickly, never slow', () => {
+    const wide = Array.from({ length: 300 }, (_, i) => String.fromCodePoint(0x4e00 + i)).join('|');
+    const input = `(a|b|${wide})*a(a|b)(a|b)(a|b)(a|b)(a|b)(a|b)(a|b)(a|b)(a|b)(a|b)(a|b)(a|b)`;
+    const start = performance.now();
+    expect(() => canBuildFromRegex(input)).not.toThrow();
+    expect(performance.now() - start).toBeLessThan(500);
+  });
+
   it('refusals', () => {
     expect(canBuildFromRegex('')).toBe('Type a regex');
     expect(canBuildFromRegex('a|')).toBe('Nothing after |');

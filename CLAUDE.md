@@ -46,8 +46,8 @@ https://tomerti.github.io/automotion/.
   snapshots (`trace.ts`); each has a `can*` guard returning a user-facing reason or `null`.
   `subsetConstruction` throws past `MAX_DFA_STATES` (64).
 - `regex.ts`: parser (never throws) and minimal-parentheses printer. A symbol is one code point other
-  than `| + * ( ) , \`, ε, ∅ and whitespace (ignored); `\eps`/`\emptyset` normalise to ε/∅. Spans and
-  error offsets are UTF-16 offsets into the normalised text. `regexSimplify.ts`: the smart
+  than `| + * ( ) , \`, ε, ∅ and whitespace (ignored); `\eps`/`\emptyset` normalise to ε/∅. Parse-error
+  offsets are UTF-16 offsets into the normalised text. `regexSimplify.ts`: the smart
   constructors (`mkUnion`, `mkConcat`, `mkStar`) that keep elimination labels short.
 - `thompson.ts` only exports `thompsonNfa` (regex → ε-NFA). `regexToDfa.ts`: regex → Thompson NFA →
   bitset subset construction → Hopcroft minimization → relabel (`q_0`… breadth-first); input past
