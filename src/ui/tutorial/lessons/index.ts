@@ -1,4 +1,5 @@
 import type { Lesson, LessonId } from '../engine';
+import { ARRANGE_LESSON } from './arrange';
 import { BASICS } from './basics';
 import { CONVERT_LESSON } from './convert';
 import { EPSILON_LESSON } from './epsilon';
@@ -12,6 +13,7 @@ export type ListedLesson = Lesson & { id: LessonId };
 /** Every lesson, in the order the list shows them. */
 export const LESSONS: readonly ListedLesson[] = [
   BASICS,
+  ARRANGE_LESSON,
   NFA_LESSON,
   EPSILON_LESSON,
   CONVERT_LESSON,

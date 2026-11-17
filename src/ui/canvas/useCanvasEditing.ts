@@ -205,11 +205,11 @@ export function fitActive(): void {
  * Auto-layout the active automaton as one undo step, then fit it. A layout that draws it as it
  * already is (Tidy pressed again) only fits: no undo entry, no edit. A layout failure shows an
  * error toast; if the automaton, the active automaton or the trace changes meanwhile, the layout
- * is dropped.
+ * is dropped. Resolves true once the layout landed (or was already the same), false otherwise.
  */
-export async function tidyActive(): Promise<void> {
+export async function tidyActive(): Promise<boolean> {
   const a = activeAutomaton();
-  if (!a || appStore.getState().trace) return;
+  if (!a || appStore.getState().trace) return false;
   let laidOut: Automaton;
   try {
     // In a worker (elk is large, and a big layout takes a second), loaded on first use.
@@ -217,16 +217,17 @@ export async function tidyActive(): Promise<void> {
     laidOut = await layoutInWorker(a);
   } catch {
     toast('Could not lay out the automaton', 'error');
-    return;
+    return false;
   }
   const now = appStore.getState();
-  if (now.activeId !== a.id || activeAutomaton() !== a || now.trace) return;
+  if (now.activeId !== a.id || activeAutomaton() !== a || now.trace) return false;
   if (!sameDrawing(a, withDrawing(a, laidOut))) {
     // Checkpoint and edit together, after the await, so a dropped layout leaves no undo entry.
     now.checkpoint();
     now.edit((cur) => withDrawing(cur, laidOut), { record: false });
   }
   fitActive();
+  return true;
 }
 
 /**

@@ -427,4 +427,11 @@ describe('Toolbar', () => {
     await user.click(btn('Redo'));
     expect(appStore.getState().automata[0]?.states[0]?.x).toBe(5);
   });
+
+  it('Tidy reports to a running lesson once the layout lands', async () => {
+    startLesson(TEST_LESSON);
+    render(<Toolbar />);
+    await userEvent.setup().click(btn('Tidy'));
+    await waitFor(() => expect(tutorialStore.getState().actions.has('tidy')).toBe(true));
+  });
 });

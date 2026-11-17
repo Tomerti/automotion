@@ -38,6 +38,11 @@ export interface TutorialState {
   /** Actions reported on an owned automaton since the lesson started. */
   actions: ReadonlySet<LessonAction>;
   /**
+   * The lesson's own automaton right after its last Tidy, undefined before one; the Arrange
+   * lesson's checks compare against it (see `noteTidied`).
+   */
+  tidied: Automaton | undefined;
+  /**
    * The app's `blockedEdits` when the step on the card last changed: the card says the
    * automaton is read-only while more edits than this have been refused.
    */
@@ -59,6 +64,7 @@ const OFF: TutorialState = {
   current: 0,
   latched: NOTHING,
   actions: NO_ACTIONS,
+  tidied: undefined,
   blockedSeen: 0,
   celebrating: null,
 };
@@ -72,7 +78,7 @@ export const useTutorial = <T>(selector: (s: TutorialState) => T): T =>
 export function tutorialContext(
   app: AppState,
   automatonId: string | null,
-  t: Pick<TutorialState, 'owned' | 'actions'> = tutorialStore.getState(),
+  t: Pick<TutorialState, 'owned' | 'actions' | 'tidied'> = tutorialStore.getState(),
 ): TutorialContext {
   return {
     automaton: app.automata.find((a) => a.id === automatonId),
@@ -82,6 +88,7 @@ export function tutorialContext(
     selected: app.selection.states,
     owned: t.owned,
     actions: t.actions,
+    tidied: t.tidied,
   };
 }
 
@@ -250,6 +257,20 @@ export function noteLessonAction(action: LessonAction): void {
   if (!t.active || app.activeId === null || !t.owned.includes(app.activeId)) return;
   if (t.actions.has(action)) return;
   tutorialStore.setState({ actions: new Set([...t.actions, action]) });
+  moveOn(app);
+}
+
+/**
+ * Report a finished Tidy: when a lesson runs and the open automaton is its own, remember the
+ * automaton as Tidy left it and count the `tidy` action (every time, not only the first).
+ */
+export function noteTidied(): void {
+  const t = tutorialStore.getState();
+  const app = appStore.getState();
+  if (!t.active || app.activeId === null || app.activeId !== t.automatonId) return;
+  const tidied = app.automata.find((a) => a.id === app.activeId);
+  if (!tidied) return;
+  tutorialStore.setState({ tidied, actions: new Set([...t.actions, 'tidy']) });
   moveOn(app);
 }
 

@@ -35,13 +35,13 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
     });
   });
 
-  it('has at most six counted steps, unless it is Basics', () => {
-    if (id !== 'basics') expect(countedSteps(lesson)).toBeLessThanOrEqual(6);
+  it('has at most six counted steps, unless it is Basics or Arrange', () => {
+    if (id !== 'basics' && id !== 'arrange') expect(countedSteps(lesson)).toBeLessThanOrEqual(6);
   });
 
-  it('opens every lesson but Basics and Share with an idea step, and no other step is one', () => {
+  it('opens every lesson but Basics, Arrange and Share with an idea step, and no other step is one', () => {
     const steps = lessonSteps(lesson);
-    const opens = id !== 'basics' && id !== 'share';
+    const opens = id !== 'basics' && id !== 'arrange' && id !== 'share';
     steps.forEach((s, i) => {
       expect(Boolean(s.idea), s.id).toBe(opens && i === 0);
     });
@@ -82,6 +82,7 @@ describe.each(LESSONS.map((l) => [l.id, l] as const))('the %s lesson', (id, less
 it('lists the lessons in order', () => {
   expect(LESSONS.map((l) => l.id)).toEqual([
     'basics',
+    'arrange',
     'nfa',
     'epsilon',
     'convert',

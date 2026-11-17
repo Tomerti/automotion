@@ -58,9 +58,9 @@ Press **?** in the app to see every control.
 - **See the goal first.** Each part of the tutorial shows the finished automaton and example
   words, then walks you there one short step at a time.
 - **Guided as you go.** It checks your automaton live and points at what to use next.
-- **Short lessons after the basics.** Five one-minute lessons, each on a ready-made automaton
-  you can't break: **NFAs**, **ε-moves**, **Convert NFA → DFA**, **Minimize a DFA** and
-  **Share and export**. They pause at the moment they explain, and finished ones get a ✓.
+- **Lessons after the basics.** Six short lessons, each on a ready-made automaton
+  you can't break: **Arrange**, **NFAs**, **ε-moves**, **Convert NFA → DFA**, **Minimize a DFA** and
+  **Share and export**. Those with a run or walkthrough pause at the moment they explain, and finished ones get a ✓.
 - **Find them again** whenever you like: press **?** and open the **Lessons** tab.
 
 ### Build and arrange
