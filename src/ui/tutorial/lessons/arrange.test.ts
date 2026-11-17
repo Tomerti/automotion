@@ -178,4 +178,15 @@ describe('the Arrange lesson', () => {
       expect(p.current).toBe(4);
     }
   });
+
+  it('fails the bend, label and start checks on the messy drawing', () => {
+    const snapped = withState(start, 'q_1', { y: at(start, 'q_4').y });
+    const c = tidyCtx({ automaton: snapped });
+    // Snap holds, so each fall-back lands on the bend step; label and start are checked directly.
+    for (const progress of [5, 6, 7]) {
+      expect(advance(L, progress, new Set(), c).current).toBe(5);
+    }
+    expect(steps[4]!.done(c)).toBe(true);
+    for (const i of [5, 6, 7]) expect(steps[i]!.done(c), steps[i]!.id).toBe(false);
+  });
 });
