@@ -9,7 +9,6 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Repo social preview: upload `public/og.png` in GitHub Settings → General → Social preview (web UI only, no API)
-- [ ] Lesson: Arrange (box select, Ctrl+click, move together, copy and paste, Tidy)
 - [ ] At 1024×480 with the history bar open, the floating trace player sits partly under the history bar, hiding its first buttons (Last among them); every walkthrough, not just regex
 - [ ] Typing `\epsilon` key by key in the regex or symbol inputs still gives `εilon`: `\eps` is normalised the moment it's typed (pasting `\epsilon` works)
 - [ ] `LabelText` keeps a quoted `'…'` literal only before a space, `,` `.` `:` `;` or the end: a quote followed directly by `)`, `!`, `?` or `→` is parsed as a label (no caller writes that today)
@@ -45,6 +44,15 @@ Nothing in progress: pick the next task from the list below.
 - [x] NFA → regex: the toolbar's To regex walks through state elimination with simplified labels; clicking a state while paused picks the next one removed, and the done step shows the regex with a Copy button
 - [x] Controls' Run tab lists both, with the syntax; the README has a Regular expressions section
 - [x] `e2e/regex.spec.ts` covers both directions
+
+### Arrange lesson (2026-11-17)
+
+- [x] Tidy reports to the running lesson (the `'tidy'` action and `TutorialContext.tidied`, a snapshot of what it laid out)
+- [x] Lesson: Arrange (Tidy, box select, Ctrl+click, move together, bend, label side, start arrow, Ctrl+A)
+- [x] Its gestures latch: once the group drag, bend, label or start arrow has happened the step stays done, so dragging the start arrow (or a bend) back to where it was no longer leaves the lesson stuck, and Tidy again doesn't re-ask them
+- [x] Arrange is listed second, right after Basics (`LESSON_IDS`, `LESSONS`), so it is the first lesson the finish popups offer as Next
+- [x] The Arrange lesson uses "Number of 0s mod 5 = 0" and has no snap step (user feedback)
+- [x] Arrange has 8 counted steps and no idea step: exempt from the six-step cap like Basics, and from the idea step like Share
 
 ### v1.1.0 prep (2026-11-16)
 

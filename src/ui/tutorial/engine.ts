@@ -3,12 +3,26 @@ import type { Automaton, State, StateId, Sym } from '../../core/model';
 import { traceSourceId } from '../../core/trace';
 import type { AnyTrace } from '../../core/trace';
 
-export const LESSON_IDS = ['basics', 'nfa', 'epsilon', 'convert', 'minimize', 'share'] as const;
+export const LESSON_IDS = [
+  'basics',
+  'arrange',
+  'nfa',
+  'epsilon',
+  'convert',
+  'minimize',
+  'share',
+] as const;
 export type LessonId = (typeof LESSON_IDS)[number];
 
 /** Something done in the shell that leaves no trace in the state (see the spec's *Actions*). */
 export type LessonAction =
-  'share-link' | 'copy-image' | 'export-svg' | 'export-png' | 'copy-latex' | 'export-latex';
+  | 'share-link'
+  | 'copy-image'
+  | 'export-svg'
+  | 'export-png'
+  | 'copy-latex'
+  | 'export-latex'
+  | 'tidy';
 
 /** What the steps look at: the lesson's automaton (by id) and whatever run is on screen. */
 export interface TutorialContext {
@@ -27,6 +41,11 @@ export interface TutorialContext {
   owned: readonly string[];
   /** Actions reported on an owned automaton since the lesson started (see `noteLessonAction`). */
   actions: ReadonlySet<LessonAction>;
+  /**
+   * The lesson's own automaton as it was right after the last Tidy of it (see `noteTidied`); absent
+   * before any Tidy. The Arrange lesson's checks compare the diagram against it.
+   */
+  tidied?: Automaton;
 }
 /** `trace` was computed from an automaton in `owned`. */
 export function ownsId(owned: readonly string[], trace: AnyTrace): boolean {
