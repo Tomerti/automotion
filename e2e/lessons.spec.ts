@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { openApp } from './helpers.ts';
+import { openApp, stateCenter } from './helpers.ts';
 
 test('? opens the guide, its Lessons tab lists Basics, and the row starts the tutorial', async ({
   page,
@@ -295,4 +295,102 @@ test('the Share lesson shares a link, copies the picture, copies LaTeX and finis
   await page.keyboard.press('?');
   await guide.getByRole('tab', { name: 'Lessons' }).click();
   await expect(guide.getByTestId('lesson-share')).toContainText('✓');
+});
+
+test('the Arrange lesson walks Tidy and every arranging gesture, and finishes', async ({
+  page,
+}) => {
+  await openApp(page, { clear: true });
+  const { guide, card } = await startLesson(page, 'lesson-arrange');
+  const at = (n: number) => expect(card).toHaveAttribute('data-step', String(n));
+  await at(1);
+
+  /** Presses at `from`, drags to each point in turn, and releases. */
+  const drag = async (
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    steps: number,
+  ) => {
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(to.x, to.y, { steps });
+    await page.mouse.up();
+  };
+
+  /** Waits until q_4's circle stops moving, so positions read next stay true. */
+  const settle = async () => {
+    let last = await stateCenter(page, 'q_4');
+    for (let i = 0; i < 50; i++) {
+      await page.waitForTimeout(100);
+      const now = await stateCenter(page, 'q_4');
+      if (now.x === last.x && now.y === last.y && i > 2) return;
+      last = now;
+    }
+  };
+
+  // Read every position after the step before it: Tidy refits the view.
+  await page.getByRole('button', { name: 'Tidy' }).click();
+  await at(2);
+  // The refit may still be gliding: wait until the diagram holds still.
+  await settle();
+
+  const body = (await page.getByTestId('state-q_0').locator('.av-state-body').boundingBox())!;
+  const d = body.width;
+  const q0 = await stateCenter(page, 'q_0');
+  const q2 = await stateCenter(page, 'q_2');
+  await page.keyboard.down('Control');
+  await page.mouse.move(q0.x - d, q0.y - d);
+  await page.mouse.down();
+  await page.mouse.move(q2.x + d, q2.y + d, { steps: 10 });
+  await expect(page.getByTestId('select-box')).toBeVisible();
+  await page.mouse.up();
+  await page.keyboard.up('Control');
+  await at(3);
+
+  const q3 = await stateCenter(page, 'q_3');
+  await page.keyboard.down('Control');
+  await page.mouse.click(q3.x, q3.y);
+  await page.keyboard.up('Control');
+  await at(4);
+
+  const m0 = await stateCenter(page, 'q_0');
+  await drag(m0, { x: m0.x, y: m0.y - 80 }, 10);
+  await at(5);
+
+  const q1 = await stateCenter(page, 'q_1');
+  const q4 = await stateCenter(page, 'q_4');
+  await drag(q1, { x: q1.x + 70, y: q4.y + 3 }, 12);
+  await at(6);
+
+  const a = await stateCenter(page, 'q_3');
+  const b = await stateCenter(page, 'q_2');
+  const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  const len = Math.hypot(b.x - a.x, b.y - a.y);
+  const perp = { x: -(b.y - a.y) / len, y: (b.x - a.x) / len };
+  const P = { x: mid.x + perp.x * 40, y: mid.y + perp.y * 40 };
+  await drag(mid, P, 10);
+  await at(7);
+
+  const labelBox = (await page
+    .getByTestId('edge-q_3-q_2')
+    .getByTestId('edge-label')
+    .boundingBox())!;
+  const L = { x: labelBox.x + labelBox.width / 2, y: labelBox.y + labelBox.height / 2 };
+  await drag(L, { x: 2 * P.x - L.x, y: 2 * P.y - L.y }, 10);
+  await at(8);
+
+  const arrow = (await page.getByTestId('start-arrow').boundingBox())!;
+  const c0 = await stateCenter(page, 'q_0');
+  await drag(
+    { x: arrow.x + arrow.width / 2, y: arrow.y + arrow.height / 2 },
+    { x: c0.x, y: c0.y + 80 },
+    10,
+  );
+  await at(9);
+
+  await page.keyboard.press('Control+a');
+  await at(10);
+
+  const ticked = await finish(page, guide, card, 'lesson-arrange');
+  await ticked();
 });
