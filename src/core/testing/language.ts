@@ -16,7 +16,7 @@ export function wordsUpTo(alphabet: string[], maxLength: number): string[] {
 function source(r: Regex): string {
   switch (r.type) {
     case 'sym':
-      return r.sym.replace(/[.*+?^${}()|[\]\\/-]/gu, '\\$&');
+      return r.sym.replace(/[.*+?^${}()|[\]\\/]/gu, '\\$&');
     case 'eps':
       return '(?:)';
     case 'empty':

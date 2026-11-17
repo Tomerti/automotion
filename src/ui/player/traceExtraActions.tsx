@@ -51,6 +51,7 @@ export function TraceExtraActions({
         </>
       );
     case 'run':
+    case 'eliminate':
       return null;
   }
 }

@@ -33,7 +33,7 @@ export interface RunTrace {
   accepted: boolean;
 }
 
-export type AnyTrace = RunTrace | SubsetTrace | MinimizeTrace | ThompsonTrace;
+export type AnyTrace = RunTrace | SubsetTrace | MinimizeTrace | ThompsonTrace | EliminateTrace;
 
 /** Id of the automaton a trace was computed from; null for a trace with no source (Thompson). */
 export function traceSourceId(t: AnyTrace): string | null {
@@ -113,4 +113,27 @@ export interface ThompsonTrace {
   regex: string;
   result: Automaton;
   steps: ThompsonStep[];
+}
+
+export interface EliminateStep extends StepBase {
+  phase: 'gnfa' | 'pick' | 'remove' | 'done';
+  /** The GNFA to draw; each arrow's single symbol is its printed label. */
+  automaton: Automaton;
+  /** pick and remove. */
+  removing?: StateId;
+  /** Original states removed once this step is shown. */
+  removed: StateId[];
+  /** remove: ids of new or changed arrows. */
+  changed?: string[];
+  /** done. */
+  regex?: string;
+}
+
+export interface EliminateTrace {
+  kind: 'eliminate';
+  source: Automaton;
+  steps: EliminateStep[];
+  /** Every original state, in the order removed. */
+  order: StateId[];
+  regex: string;
 }
