@@ -143,8 +143,10 @@ snapshot taken when Tidy was pressed (see *Checks*).
    (snapping copies the coordinate, so equality is exact).
 6. **Drag the arrow «f» → «g» to bend it.** Why: drag a loop the same way to turn it around its
    state. Done: that arrow's `bend` differs from the tidied one.
-7. **Drag that arrow's symbols to the other side.** Done: its `labelSide` differs from the tidied
-   one (absent counts as automatic, the value it resolves to on the canvas; see *Checks*).
+7. **Drag that arrow's symbols to the other side.** Done: its label is drawn on the side that is
+   *not* the automatic one for the arrow's current bend (`labelSideOf(bend, labelSide) !==
+   labelSideOf(bend, undefined)`). Not "differs from tidied": bending the arrow the other way in
+   step 6 flips the automatic side, which would pass with no label drag.
 8. **Drag the start arrow to turn it.** Done: the start state's `startAngle` differs from the
    tidied one.
 9. **Press [Ctrl] + [A].** Why: everything is selected, so dragging any state moves the whole
@@ -179,8 +181,9 @@ line), and a test asserts that. The student just redoes, or presses Tidy again.
 - **Selection** is already in the context (`selected`, states only); that is all steps 2, 3 and 9
   need. Box select adds to the selection, so steps 2–3 hold even if something was selected before.
 - **Drawn values, steps 6–8:** compare what the canvas draws, not the raw fields (see *Chosen*):
-  `drawnBend`, `labelSideOf(drawnBend, labelSide)`, `startAngle ?? START_ANGLE`. A label drag
-  writes an explicit side only when it changes the drawn side, so this is exact.
+  `drawnBend` and `startAngle ?? START_ANGLE` against `tidied`; the label side against the
+  automatic side for the current bend (step 7). A label drag writes an explicit side only when it
+  changes the drawn side, so this is exact.
 
 ### Tests to update
 
