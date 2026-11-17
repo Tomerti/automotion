@@ -11,31 +11,23 @@ const POSITIONS: Record<string, [number, number]> = {
   q_4: [300, 220],
 };
 
-/** Divisible by 5, drawn badly on purpose: only the positions are messy, nothing else is set. */
-const DIVISIBLE_BY_5: Automaton = {
+/** Number of 0s mod 5 = 0, drawn badly on purpose: only the positions are messy, nothing else is set. */
+const ZEROS_MOD_5: Automaton = {
   id: 'arrange-lesson',
-  name: 'Divisible by 5',
+  name: 'Number of 0s mod 5 = 0',
   kind: 'DFA',
   alphabet: ['0', '1'],
   states: NAMES.map((id) => ({ id, label: id, x: POSITIONS[id]![0], y: POSITIONS[id]![1] })),
   starts: ['q_0'],
   accepting: ['q_0'],
-  transitions: [
-    ['q_0', 'q_0', '0'],
-    ['q_0', 'q_1', '1'],
-    ['q_1', 'q_2', '0'],
-    ['q_1', 'q_3', '1'],
-    ['q_2', 'q_4', '0'],
-    ['q_2', 'q_0', '1'],
-    ['q_3', 'q_1', '0'],
-    ['q_3', 'q_2', '1'],
-    ['q_4', 'q_3', '0'],
-    ['q_4', 'q_4', '1'],
-  ].map(([from, to, sym], i) => ({ id: `t${i}`, from: from!, to: to!, symbols: [sym!] })),
+  transitions: NAMES.flatMap((from, i) => [
+    [from, NAMES[(i + 1) % 5]!, '0'],
+    [from, from, '1'],
+  ]).map(([from, to, sym], i) => ({ id: `t${i}`, from: from!, to: to!, symbols: [sym!] })),
 };
 
 const SAME = 1e-6;
-const THREE: StateId[] = ['q_0', 'q_2', 'q_3'];
+const THREE: StateId[] = ['q_1', 'q_2', 'q_3'];
 
 const hasAll = (ctx: TutorialContext, ids: readonly StateId[]): boolean =>
   ids.every((id) => ctx.selected.includes(id));
@@ -54,7 +46,7 @@ function offsetsFromTidy(ctx: TutorialContext, ids: readonly StateId[]) {
   });
 }
 
-/** Every offset equals the first . */
+/** Every offset equals the first. */
 function sameOffsets(offsets: ReturnType<typeof offsetsFromTidy>): boolean {
   const first = offsets?.[0];
   if (!offsets || !first) return false;
@@ -89,9 +81,9 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'arrange/box',
-    instruction: () => 'Hold [Ctrl] and drag a box around «q_0» and «q_2».',
+    instruction: () => 'Hold [Ctrl] and drag a box around «q_1» and «q_2».',
     why: () => 'A box selects every state inside it.',
-    latch: (ctx) => !!ctx.automaton && hasAll(ctx, ['q_0', 'q_2']),
+    latch: (ctx) => !!ctx.automaton && hasAll(ctx, ['q_1', 'q_2']),
   },
   {
     id: 'arrange/add',
@@ -106,36 +98,26 @@ const STEPS: StepSpec[] = [
     first: (ctx) => {
       if (movedTogether(ctx, THREE)) return null;
       if (movedApart(ctx, THREE)) return 'First, press Tidy: one of them moved on its own.';
-      return hasAll(ctx, THREE) ? null : 'First, select «q_0», «q_2» and «q_3» again.';
-    },
-  },
-  {
-    id: 'arrange/snap',
-    instruction: () => 'Drag «q_1» until it snaps into line with «q_4».',
-    why: () => 'States snap into line, and to equal gaps, as you drag them.',
-    done: (ctx) => {
-      const p = ctx.automaton && stateOf(ctx.automaton, 'q_1');
-      const q = ctx.automaton && stateOf(ctx.automaton, 'q_4');
-      return !!p && !!q && (p.x === q.x || p.y === q.y);
+      return hasAll(ctx, THREE) ? null : 'First, select «q_1», «q_2» and «q_3» again.';
     },
   },
   {
     id: 'arrange/bend',
-    instruction: () => 'Drag the arrow from «q_3» to «q_2» to bend it.',
+    instruction: () => 'Drag the arrow from «q_4» to «q_0» to bend it.',
     why: () => 'Drag a loop the same way to turn it around its state.',
     done: (ctx) =>
       !!ctx.automaton &&
       !!ctx.tidied &&
-      drawnBend(ctx.automaton, 'q_3', 'q_2') !== drawnBend(ctx.tidied, 'q_3', 'q_2'),
+      drawnBend(ctx.automaton, 'q_4', 'q_0') !== drawnBend(ctx.tidied, 'q_4', 'q_0'),
   },
   {
     id: 'arrange/label',
-    instruction: () => 'Drag that arrow’s `1` to the other side.',
+    instruction: () => 'Drag that arrow’s `0` to the other side.',
     done: (ctx) => {
       const a = ctx.automaton;
-      const t = a?.transitions.find((x) => x.from === 'q_3' && x.to === 'q_2');
+      const t = a?.transitions.find((x) => x.from === 'q_4' && x.to === 'q_0');
       if (!a || !t) return false;
-      const b = drawnBend(a, 'q_3', 'q_2');
+      const b = drawnBend(a, 'q_4', 'q_0');
       return labelSideOf(b, t.labelSide) !== labelSideOf(b, undefined);
     },
   },
@@ -154,8 +136,8 @@ const STEPS: StepSpec[] = [
   },
 ];
 
-/** Steps 0, 1-3 and 4-8 of `STEPS`, by part. */
-const PART_SIZES = [1, 3, 5] as const;
+/** Steps 0, 1-3 and 4-7 of `STEPS`, by part. */
+const PART_SIZES = [1, 3, 4] as const;
 const PART_TITLES = ['Tidy up', 'Select and move', 'Fine-tune'] as const;
 
 const GOAL = { text: 'Tidy this DFA up, then make it yours', examples: [] };
@@ -166,7 +148,7 @@ export const ARRANGE_LESSON: Lesson & { id: 'arrange' } = {
   title: 'Arrange',
   summary: 'Tidy, select, move, bend',
   minutes: 2,
-  start: DIVISIBLE_BY_5,
+  start: ZEROS_MOD_5,
   editable: false,
   parts: PART_SIZES.map((size, i) => {
     const from = PART_SIZES.slice(0, i).reduce((n, s) => n + s, 0);

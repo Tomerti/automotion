@@ -331,10 +331,10 @@ test('the Arrange lesson walks Tidy and every arranging gesture, and finishes', 
 
   const body = (await page.getByTestId('state-q_0').locator('.av-state-body').boundingBox())!;
   const d = body.width;
-  const q0 = await stateCenter(page, 'q_0');
+  const q1 = await stateCenter(page, 'q_1');
   const q2 = await stateCenter(page, 'q_2');
   await page.keyboard.down('Control');
-  await page.mouse.move(q0.x - d, q0.y - d);
+  await page.mouse.move(q1.x - d, q1.y - d);
   await page.mouse.down();
   await page.mouse.move(q2.x + d, q2.y + d, { steps: 10 });
   await expect(page.getByTestId('select-box')).toBeVisible();
@@ -348,32 +348,27 @@ test('the Arrange lesson walks Tidy and every arranging gesture, and finishes', 
   await page.keyboard.up('Control');
   await at(4);
 
-  const m0 = await stateCenter(page, 'q_0');
-  await drag(m0, { x: m0.x, y: m0.y - 80 } /* up, off the row */, 10);
+  const m1 = await stateCenter(page, 'q_1');
+  await drag(m1, { x: m1.x, y: m1.y - 80 } /* up: the whole top row moves */, 10);
   await at(5);
 
-  const q1 = await stateCenter(page, 'q_1');
-  const q4 = await stateCenter(page, 'q_4');
-  await drag(q1, { x: q1.x + 70, y: q4.y + 3 } /* near q_4's row: the snap does the rest */, 12);
-  await at(6);
-
-  const a = await stateCenter(page, 'q_3');
-  const b = await stateCenter(page, 'q_2');
+  const a = await stateCenter(page, 'q_4');
+  const b = await stateCenter(page, 'q_0');
   const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
   const len = Math.hypot(b.x - a.x, b.y - a.y);
   const perp = { x: -(b.y - a.y) / len, y: (b.x - a.x) / len };
   // 40 px sideways bends the arrow clearly. P is the apex the label mirrors across.
   const P = { x: mid.x + perp.x * 40, y: mid.y + perp.y * 40 };
   await drag(mid, P, 10);
-  await at(7);
+  await at(6);
 
   const labelBox = (await page
-    .getByTestId('edge-q_3-q_2')
+    .getByTestId('edge-q_4-q_0')
     .getByTestId('edge-label')
     .boundingBox())!;
   const L = { x: labelBox.x + labelBox.width / 2, y: labelBox.y + labelBox.height / 2 };
   await drag(L, { x: 2 * P.x - L.x, y: 2 * P.y - L.y }, 10);
-  await at(8);
+  await at(7);
 
   const arrow = (await page.getByTestId('start-arrow').boundingBox())!;
   const c0 = await stateCenter(page, 'q_0');
@@ -382,10 +377,10 @@ test('the Arrange lesson walks Tidy and every arranging gesture, and finishes', 
     { x: c0.x, y: c0.y + 80 }, // 80 px below q_0: well clear of its circle
     10,
   );
-  await at(9);
+  await at(8);
 
   await page.keyboard.press('Control+a');
-  await at(10);
+  await at(9);
 
   const ticked = await finish(page, guide, card, 'lesson-arrange');
   await ticked();

@@ -10,7 +10,7 @@ import { ARRANGE_LESSON } from './arrange';
 const L = ARRANGE_LESSON;
 const start = L.start!;
 const steps = lessonSteps(L);
-const THREE: StateId[] = ['q_0', 'q_2', 'q_3'];
+const THREE: StateId[] = ['q_1', 'q_2', 'q_3'];
 
 let tidied: Automaton;
 beforeAll(async () => {
@@ -59,23 +59,22 @@ const tidyCtx = (over: Partial<TutorialContext> = {}): TutorialContext =>
 const OTHER_SIDE: LabelSide = labelSideOf(40, undefined) === 'left' ? 'right' : 'left';
 
 /** Every part-3 change made on top of the three moved together. */
-const stage = (n: 1 | 2 | 3 | 4): Automaton => {
+const stage = (n: 1 | 2 | 3): Automaton => {
   let a = moved(tidied, THREE, 0, -80);
-  a = withState(a, 'q_1', { y: at(a, 'q_4').y });
-  if (n >= 2) a = withTransition(a, 'q_3', 'q_2', { bend: 40 });
-  if (n >= 3) a = withTransition(a, 'q_3', 'q_2', { labelSide: OTHER_SIDE });
-  if (n >= 4) a = withState(a, 'q_0', { startAngle: Math.PI / 2 });
+  if (n >= 1) a = withTransition(a, 'q_4', 'q_0', { bend: 40 });
+  if (n >= 2) a = withTransition(a, 'q_4', 'q_0', { labelSide: OTHER_SIDE });
+  if (n >= 3) a = withState(a, 'q_0', { startAngle: Math.PI / 2 });
   return a;
 };
 
 describe('the Arrange lesson', () => {
-  it('opens on Divisible by 5', () => {
-    expect(start.name).toBe('Divisible by 5');
+  it('opens on Number of 0s mod 5 = 0', () => {
+    expect(start.name).toBe('Number of 0s mod 5 = 0');
     expect(start.kind).toBe('DFA');
-    expect(runWord(start, '101').accepted).toBe(true);
-    expect(runWord(start, '1010').accepted).toBe(true);
-    expect(runWord(start, '110').accepted).toBe(false);
-    expect(runWord(start, '111').accepted).toBe(false);
+    for (const w of ['', '00000', '1010101010', '111']) {
+      expect(runWord(start, w).accepted, w).toBe(true);
+    }
+    for (const w of ['0', '0000']) expect(runWord(start, w).accepted, w).toBe(false);
   });
 
   it('is messy by positions only', () => {
@@ -88,11 +87,7 @@ describe('the Arrange lesson', () => {
   });
 
   it('Tidy leaves every step something to do', () => {
-    for (const a of [start, tidied]) {
-      expect(at(a, 'q_1').x).not.toBe(at(a, 'q_4').x);
-      expect(at(a, 'q_1').y).not.toBe(at(a, 'q_4').y);
-    }
-    const [p, q] = [at(tidied, 'q_0'), at(tidied, 'q_2')];
+    const [p, q] = [at(tidied, 'q_1'), at(tidied, 'q_2')];
     const box = {
       x0: Math.min(p.x, q.x) - STATE_RADIUS,
       x1: Math.max(p.x, q.x) + STATE_RADIUS,
@@ -100,18 +95,18 @@ describe('the Arrange lesson', () => {
       y1: Math.max(p.y, q.y) + STATE_RADIUS,
     };
     for (const s of tidied.states) {
-      if (s.id === 'q_0' || s.id === 'q_2') continue;
-      const inside =
+      if (s.id === 'q_1' || s.id === 'q_2') continue;
+      const near =
         s.x >= box.x0 - STATE_RADIUS &&
         s.x <= box.x1 + STATE_RADIUS &&
         s.y >= box.y0 - STATE_RADIUS &&
         s.y <= box.y1 + STATE_RADIUS;
-      expect(inside, s.id).toBe(false);
+      expect(near, s.id).toBe(false);
     }
     const q3 = at(tidied, 'q_3');
     expect(q3.x >= box.x0 && q3.x <= box.x1 && q3.y >= box.y0 && q3.y <= box.y1).toBe(false);
-    const t = tidied.transitions.find((x) => x.from === 'q_3' && x.to === 'q_2');
-    expect(t?.symbols).toEqual(['1']);
+    const t = tidied.transitions.find((x) => x.from === 'q_4' && x.to === 'q_0');
+    expect(t?.symbols).toEqual(['0']);
     expect(t?.bend).toBeUndefined();
     expect(t?.labelSide).toBeUndefined();
     expect(at(tidied, 'q_0').startAngle).toBeUndefined();
@@ -127,31 +122,30 @@ describe('the Arrange lesson', () => {
     let p: Progress = { progress: 0, current: 0, latched: new Set() };
     const currents = [
       tidyCtx(),
-      tidyCtx({ selected: ['q_0', 'q_2'] }),
+      tidyCtx({ selected: ['q_1', 'q_2'] }),
       tidyCtx({ selected: THREE }),
       tidyCtx({ automaton: three, selected: THREE }),
       tidyCtx({ automaton: stage(1) }),
       tidyCtx({ automaton: stage(2) }),
       tidyCtx({ automaton: stage(3) }),
-      tidyCtx({ automaton: stage(4) }),
-      tidyCtx({ automaton: stage(4), selected: all }),
+      tidyCtx({ automaton: stage(3), selected: all }),
     ].map((c) => {
       p = advance(L, p.progress, p.latched, c);
       return p.current;
     });
-    expect(currents).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-    expect(steps[9]!.id).toBe('done');
+    expect(currents).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(steps[8]!.id).toBe('done');
   });
 
   it('needs all three moved by the same offset at step 4', () => {
-    const c = tidyCtx({ automaton: moved(tidied, ['q_0'], 0, -80) });
+    const c = tidyCtx({ automaton: moved(tidied, ['q_1'], 0, -80) });
     expect(advance(L, 3, new Set(['arrange/box', 'arrange/add']), c).current).toBe(3);
   });
 
   it('asks to reselect the three when they are not all selected', () => {
-    expect(steps[3]!.hint(tidyCtx({ selected: ['q_0'] }))).toEqual({
+    expect(steps[3]!.hint(tidyCtx({ selected: ['q_1'] }))).toEqual({
       kind: 'first',
-      text: 'First, select «q_0», «q_2» and «q_3» again.',
+      text: 'First, select «q_1», «q_2» and «q_3» again.',
     });
     expect(steps[3]!.hint(tidyCtx({ selected: THREE }))).toBeNull();
   });
@@ -171,22 +165,22 @@ describe('the Arrange lesson', () => {
   });
 
   it('does not take a bend that flips the automatic side for moving the symbols', () => {
-    const a = withTransition(stage(2), 'q_3', 'q_2', { bend: -40 });
-    expect(advance(L, 6, new Set(), tidyCtx({ automaton: a })).current).toBe(6);
+    const a = withTransition(stage(1), 'q_4', 'q_0', { bend: -40 });
+    expect(advance(L, 5, new Set(), tidyCtx({ automaton: a })).current).toBe(5);
   });
 
   it('does not take turning the start arrow back to where it was', () => {
-    const a = withState(stage(3), 'q_0', { startAngle: START_ANGLE });
-    expect(advance(L, 7, new Set(), tidyCtx({ automaton: a })).current).toBe(7);
+    const a = withState(stage(2), 'q_0', { startAngle: START_ANGLE });
+    expect(advance(L, 6, new Set(), tidyCtx({ automaton: a })).current).toBe(6);
   });
 
   it('sends part 3 back to its first undone step when Tidy is pressed again', () => {
-    const p = advance(L, 8, new Set(['arrange/all']), tidyCtx({ automaton: tidied }));
+    const p = advance(L, 7, new Set(['arrange/all']), tidyCtx({ automaton: tidied }));
     expect(p.current).toBe(4);
   });
 
   it('completes no part-3 step when undo goes past Tidy', () => {
-    for (const progress of [4, 5, 6, 7]) {
+    for (const progress of [4, 5, 6]) {
       const p = advance(L, progress, new Set(), tidyCtx({ automaton: start }));
       expect(p.progress).toBe(progress);
       expect(p.current).toBe(4);
@@ -194,13 +188,7 @@ describe('the Arrange lesson', () => {
   });
 
   it('fails the bend, label and start checks on the messy drawing', () => {
-    const snapped = withState(start, 'q_1', { y: at(start, 'q_4').y });
-    const c = tidyCtx({ automaton: snapped });
-    // Snap holds, so each fall-back lands on the bend step; label and start are checked directly.
-    for (const progress of [5, 6, 7]) {
-      expect(advance(L, progress, new Set(), c).current).toBe(5);
-    }
-    expect(steps[4]!.done(c)).toBe(true);
-    for (const i of [5, 6, 7]) expect(steps[i]!.done(c), steps[i]!.id).toBe(false);
+    const c = tidyCtx({ automaton: start });
+    for (const i of [4, 5, 6]) expect(steps[i]!.done(c), steps[i]!.id).toBe(false);
   });
 });
