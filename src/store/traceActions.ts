@@ -3,7 +3,6 @@ import { canMinimize, minimize } from '../core/minimize';
 import type { StateId } from '../core/model';
 import { canRun, runWord } from '../core/run';
 import { canConvert, subsetConstruction } from '../core/subset';
-import { canThompson, thompson } from '../core/thompson';
 import { appStore } from './store';
 
 const message = (e: unknown, fallback: string): string =>
@@ -15,15 +14,6 @@ export function startRun(word: string): void {
   const a = automata.find((x) => x.id === activeId);
   if (!a || canRun(a, word) !== null) return;
   openTrace(runWord(a, word));
-}
-
-/**
- * Open Thompson's construction for `input` over whatever automaton is active (which stays
- * as it is; it is locked while the trace is open). No-op when the regex is refused.
- */
-export function startThompson(input: string): void {
-  if (canThompson(input) !== null) return;
-  appStore.getState().openTrace(thompson(input));
 }
 
 /** A conversion is waiting for its layout: further Convert clicks are ignored until it settles. */

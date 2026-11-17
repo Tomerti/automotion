@@ -235,14 +235,11 @@ export function Toolbar(): React.JSX.Element {
     s.activeId ? (s.history[s.activeId]?.future.length ?? 0) : 0,
   );
   const tracing = useAppStore((s) => s.trace !== null);
-  // A Thompson walkthrough shows its own NFA, not the active automaton these would act on.
-  const building = useAppStore((s) => s.trace?.kind === 'thompson');
   const none = automaton === undefined;
 
-  const busy = building ? 'Save the NFA first' : null;
-  const convertReason = busy ?? (automaton ? canConvert(automaton) : null);
-  const minimizeReason = busy ?? (automaton ? canMinimize(automaton) : null);
-  const eliminateReason = busy ?? (automaton ? canEliminate(automaton) : null);
+  const convertReason = automaton ? canConvert(automaton) : null;
+  const minimizeReason = automaton ? canMinimize(automaton) : null;
+  const eliminateReason = automaton ? canEliminate(automaton) : null;
 
   return (
     <div className="av-toolbar" role="toolbar" aria-label="Automaton tools">

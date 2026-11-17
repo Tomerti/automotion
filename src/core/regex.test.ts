@@ -2,7 +2,6 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { normalizeRegexText, parseRegex, printRegex, regexSymbols } from './regex';
 import { arbRegex } from './testing/arbitraries';
-import { canThompson } from './thompson';
 
 const ok = (s: string) => {
   const r = parseRegex(s);
@@ -45,7 +44,6 @@ describe('regex parser and printer', () => {
   it('deep nesting is an error, never a throw', () => {
     const deep = '('.repeat(20000) + 'a' + ')'.repeat(20000);
     expect(parseRegex(deep)).toEqual({ ok: false, error: 'Nested too deeply', at: 0 });
-    expect(canThompson(deep)).toBe('Nested too deeply');
     expect(parseRegex('('.repeat(100) + 'a' + ')'.repeat(100)).ok).toBe(true);
   });
   it('astral symbol is one symbol', () => {

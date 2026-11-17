@@ -119,10 +119,7 @@ export default function App(): React.JSX.Element {
                 onIndex={setStep}
                 explanation={step.explanation}
                 onClose={closeTrace}
-                autoPlay={
-                  (trace.kind === 'run' || trace.kind === 'subset' || trace.kind === 'thompson') &&
-                  !opensPaused
-                }
+                autoPlay={(trace.kind === 'run' || trace.kind === 'subset') && !opensPaused}
                 stopAt={stopAt}
                 onPlayingChange={setPlaying}
                 extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}

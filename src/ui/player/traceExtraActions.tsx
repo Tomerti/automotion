@@ -1,9 +1,7 @@
 import { canMinimize } from '../../core/minimize';
-import { canConvert } from '../../core/subset';
-import type { AnyTrace, MinimizeTrace, SubsetTrace, ThompsonTrace } from '../../core/trace';
+import type { AnyTrace, MinimizeTrace, SubsetTrace } from '../../core/trace';
 import { appStore } from '../../store/store';
-import { startMinimize, startSubset } from '../../store/traceActions';
-import { toast } from '../shell/toastStore';
+import { startMinimize } from '../../store/traceActions';
 import { ownsId } from '../tutorial/engine';
 import { useTutorial } from '../tutorial/tutorialStore';
 
@@ -17,8 +15,6 @@ export function TraceExtraActions({
 }): React.JSX.Element | null {
   // A lesson's walkthrough offers only Save: its card asks for that, and Minimize has its own lesson.
   const inLesson = useTutorial((s) => s.active && ownsId(s.owned, trace));
-  // A Thompson trace is never a lesson's own, so any active lesson hides its Save and convert.
-  const lessonActive = useTutorial((s) => s.active);
   const isLast = stepIndex === trace.steps.length - 1;
   if (!isLast) return null;
   switch (trace.kind) {
@@ -41,15 +37,6 @@ export function TraceExtraActions({
           )}
         </>
       );
-    case 'thompson':
-      return (
-        <>
-          <SaveButton trace={trace} />
-          {!lessonActive && canConvert(trace.result) === null && (
-            <SaveAndConvertButton trace={trace} />
-          )}
-        </>
-      );
     case 'run':
     case 'eliminate':
       return null;
@@ -57,11 +44,7 @@ export function TraceExtraActions({
 }
 
 /** Adds the result as a new automaton; that opens it and closes the trace. */
-function SaveButton({
-  trace,
-}: {
-  trace: SubsetTrace | MinimizeTrace | ThompsonTrace;
-}): React.JSX.Element {
+function SaveButton({ trace }: { trace: SubsetTrace | MinimizeTrace }): React.JSX.Element {
   return (
     <button
       type="button"
@@ -70,23 +53,6 @@ function SaveButton({
       onClick={() => appStore.getState().addAutomaton(trace.result)}
     >
       Save as new automaton
-    </button>
-  );
-}
-
-/** The next step after building an NFA from a regex: save it and convert it at once. */
-function SaveAndConvertButton({ trace }: { trace: ThompsonTrace }): React.JSX.Element {
-  return (
-    <button
-      type="button"
-      data-testid="save-and-convert"
-      title="Save the NFA as a new automaton, then convert it to a DFA step by step"
-      onClick={() => {
-        appStore.getState().addAutomaton(trace.result);
-        void startSubset((m) => toast(m, 'error'));
-      }}
-    >
-      Save and convert to DFA
     </button>
   );
 }

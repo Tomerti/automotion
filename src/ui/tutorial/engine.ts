@@ -28,10 +28,9 @@ export interface TutorialContext {
   /** Actions reported on an owned automaton since the lesson started (see `noteLessonAction`). */
   actions: ReadonlySet<LessonAction>;
 }
-/** `trace` was computed from an automaton in `owned` (a source-less trace never is). */
+/** `trace` was computed from an automaton in `owned`. */
 export function ownsId(owned: readonly string[], trace: AnyTrace): boolean {
-  const id = traceSourceId(trace);
-  return id !== null && owned.includes(id);
+  return owned.includes(traceSourceId(trace));
 }
 
 /** The open trace is a run or walkthrough of an automaton the lesson owns. */

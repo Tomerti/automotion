@@ -3,7 +3,6 @@ import { EliminateTraceView } from './EliminateTraceView';
 import { MinimizeTraceView } from './MinimizeTraceView';
 import { RunTraceView } from './RunTraceView';
 import { SubsetTraceView } from './SubsetTraceView';
-import { ThompsonTraceView } from './ThompsonTraceView';
 
 /** Canvas-area view for an open trace. */
 export function TraceView({
@@ -20,8 +19,6 @@ export function TraceView({
       return <SubsetTraceView trace={trace} stepIndex={stepIndex} />;
     case 'minimize':
       return <MinimizeTraceView trace={trace} stepIndex={stepIndex} />;
-    case 'thompson':
-      return <ThompsonTraceView trace={trace} stepIndex={stepIndex} />;
     case 'eliminate':
       return <EliminateTraceView trace={trace} stepIndex={stepIndex} />;
   }

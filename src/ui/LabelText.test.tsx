@@ -2,7 +2,6 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { eliminate } from '../core/eliminate';
 import { fixture } from '../core/testing/fixtures';
-import { thompson } from '../core/thompson';
 import { LabelText } from './LabelText';
 
 afterEach(cleanup);
@@ -36,25 +35,7 @@ describe('LabelText', () => {
   });
 });
 
-describe('LabelText with regex walkthrough explanations', () => {
-  it('shows Thompson regexes literally, without backticks or subscripts', () => {
-    const steps = thompson('(a | _)*').steps;
-    const star = steps.filter((s) => s.phase === 'build' && s.span?.start === 0).at(-1);
-    const sym = steps.find((s) => s.phase === 'build' && s.span?.start === 5);
-    const done = steps.at(-1);
-    const shown = [star, sym, done].map((step) => {
-      const { container, unmount } = render(<LabelText text={step?.explanation ?? ''} />);
-      const text = container.textContent;
-      expect(subs(container)).toEqual([]);
-      unmount();
-      return text;
-    });
-    for (const text of shown) expect(text).not.toContain('`');
-    expect(shown[0]).toMatch(/^'\(a\|_\)\*': a new start/);
-    expect(shown[1]).toMatch(/^'_': .* joined by '_'\.$/);
-    expect(shown[2]).toMatch(/^The NFA for '\(a\|_\)\*': /);
-  });
-
+describe('LabelText with eliminate explanations', () => {
   it('shows an eliminate formula with a _ symbol literally, state subscripts kept', () => {
     const a = fixture({
       kind: 'NFA',
