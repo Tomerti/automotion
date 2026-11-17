@@ -1597,6 +1597,7 @@ describe('Fit and Tidy', () => {
       release();
       await done;
     });
+    expect(await done).toBe(false);
     expect(active().states.map((s) => [s.x, s.y])).toEqual([
       [7, 7],
       [100, 0],

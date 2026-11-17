@@ -42,21 +42,39 @@ const hasAll = (ctx: TutorialContext, ids: readonly StateId[]): boolean =>
 
 const stateOf = (a: Automaton, id: StateId) => a.states.find((s) => s.id === id);
 
-/** The three states are all off where Tidy put them by one and the same, non-zero, offset. */
-function movedTogether(ctx: TutorialContext, ids: readonly StateId[]): boolean {
+/** Where each state sits relative to where Tidy left it, null if it or the snapshot is missing. */
+function offsetsFromTidy(ctx: TutorialContext, ids: readonly StateId[]) {
   const a = ctx.automaton;
   const t = ctx.tidied;
-  if (!a || !t) return false;
-  const offsets = ids.map((id) => {
+  if (!a || !t) return null;
+  return ids.map((id) => {
     const now = stateOf(a, id);
     const was = stateOf(t, id);
     return now && was ? { x: now.x - was.x, y: now.y - was.y } : null;
   });
-  const first = offsets[0];
-  if (!first || Math.hypot(first.x, first.y) <= SAME) return false;
+}
+
+/** Every offset equals the first . */
+function sameOffsets(offsets: ReturnType<typeof offsetsFromTidy>): boolean {
+  const first = offsets?.[0];
+  if (!offsets || !first) return false;
   return offsets.every(
     (o) => o !== null && Math.abs(o.x - first.x) <= SAME && Math.abs(o.y - first.y) <= SAME,
   );
+}
+
+/** The three states are all off where Tidy put them by one and the same, non-zero, offset. */
+function movedTogether(ctx: TutorialContext, ids: readonly StateId[]): boolean {
+  const offsets = offsetsFromTidy(ctx, ids);
+  const first = offsets?.[0];
+  if (!first || Math.hypot(first.x, first.y) <= SAME) return false;
+  return sameOffsets(offsets);
+}
+
+/** One of them moved on its own: no group drag can complete the step until Tidy resets them. */
+function movedApart(ctx: TutorialContext, ids: readonly StateId[]): boolean {
+  const offsets = offsetsFromTidy(ctx, ids);
+  return !!offsets && !sameOffsets(offsets);
 }
 
 const startAngleOf = (a: Automaton): number => stateOf(a, 'q_0')?.startAngle ?? START_ANGLE;
@@ -85,10 +103,11 @@ const STEPS: StepSpec[] = [
     id: 'arrange/move',
     instruction: () => 'Drag one of them: the other two move along.',
     done: (ctx) => movedTogether(ctx, THREE),
-    first: (ctx) =>
-      !hasAll(ctx, THREE) && !movedTogether(ctx, THREE)
-        ? 'First, select «q_0», «q_2» and «q_3» again.'
-        : null,
+    first: (ctx) => {
+      if (movedTogether(ctx, THREE)) return null;
+      if (movedApart(ctx, THREE)) return 'First, press Tidy: one of them moved on its own.';
+      return hasAll(ctx, THREE) ? null : 'First, select «q_0», «q_2» and «q_3» again.';
+    },
   },
   {
     id: 'arrange/snap',

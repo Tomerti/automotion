@@ -156,6 +156,20 @@ describe('the Arrange lesson', () => {
     expect(steps[3]!.hint(tidyCtx({ selected: THREE }))).toBeNull();
   });
 
+  it('says to press Tidy when one of the three moved on its own', () => {
+    const apart = moved(moved(tidied, ['q_2'], 30, 0), THREE, 0, -80);
+    const c = tidyCtx({ automaton: apart, selected: THREE });
+    expect(advance(L, 3, new Set(['arrange/box', 'arrange/add']), c).current).toBe(3);
+    expect(steps[3]!.hint(c)).toEqual({
+      kind: 'first',
+      text: 'First, press Tidy: one of them moved on its own.',
+    });
+    const again = tidyCtx({ automaton: moved(tidied, THREE, 0, -80), selected: THREE });
+    expect(advance(L, 3, new Set(['arrange/box', 'arrange/add']), again).current).toBeGreaterThan(
+      3,
+    );
+  });
+
   it('does not take a bend that flips the automatic side for moving the symbols', () => {
     const a = withTransition(stage(2), 'q_3', 'q_2', { bend: -40 });
     expect(advance(L, 6, new Set(), tidyCtx({ automaton: a })).current).toBe(6);

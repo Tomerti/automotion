@@ -22,7 +22,7 @@ Nothing in progress: pick the next task from the list below.
 
 - [x] Tidy reports to the running lesson (the `'tidy'` action and `TutorialContext.tidied`, a snapshot of what it laid out)
 - [x] Lesson: Arrange (Tidy, box select, Ctrl+click, move together, snap, bend, label side, start arrow, Ctrl+A)
-- [x] Arrange is listed second, right after Basics (`LESSON_IDS`, `LESSONS`), so it is the first Next after Basics
+- [x] Arrange is listed second, right after Basics (`LESSON_IDS`, `LESSONS`), so it is the first lesson the finish popups offer as Next
 - [x] Arrange has 9 counted steps and no idea step: exempt from the six-step cap like Basics, and from the idea step like Share
 
 ### v1.1.0 prep (2026-11-16)

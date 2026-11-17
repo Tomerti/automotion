@@ -380,7 +380,6 @@ test('the Arrange lesson walks Tidy and every arranging gesture, and finishes', 
   await drag(
     { x: arrow.x + arrow.width / 2, y: arrow.y + arrow.height / 2 },
     { x: c0.x, y: c0.y + 80 }, // 80 px below q_0: well clear of its circle
-
     10,
   );
   await at(9);
