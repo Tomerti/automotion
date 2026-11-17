@@ -45,10 +45,21 @@ https://tomerti.github.io/automotion/.
 - `run.ts`, `subset.ts`, `minimize.ts` compute a whole process eagerly into an immutable trace of step
   snapshots (`trace.ts`); each has a `can*` guard returning a user-facing reason or `null`.
   `subsetConstruction` throws past `MAX_DFA_STATES` (64).
+- `regex.ts`: parser (never throws) and minimal-parentheses printer. A symbol is one code point other
+  than `| + * ( ) , \`, ε, ∅ and whitespace (ignored); `\eps`/`\emptyset` normalise to ε/∅. Spans and
+  error offsets are UTF-16 offsets into the normalised text. `regexSimplify.ts`: the smart
+  constructors (`mkUnion`, `mkConcat`, `mkStar`) that keep elimination labels short.
+- `thompson.ts`: regex → NFA as a `thompson` trace, refused past `MAX_THOMPSON_STATES` (64).
+  `thompsonLayout.ts` places it structurally (no elk) once, so nothing moves between steps.
+- `eliminate.ts`: automaton → regex by state elimination on a GNFA (new states `gnfa-s`/`gnfa-f`;
+  `ui/player/player.css` hard-codes those ids). `order` is a prefix of states to remove first, the
+  rest automatic; it throws once a label passes `MAX_REGEX_LENGTH` (2000 chars).
+- The `thompson` trace has no source automaton: use `traceSourceId` (`trace.ts`) or `ownsId`
+  (`ui/tutorial/engine.ts`), never `trace.source` on `AnyTrace`.
 - `geometry.ts`: how the diagram is drawn, as pure math (radius, curves and automatic bends, loops,
   start arrows, label spots). The canvas, exports and the layout's scoring all use it, so change it here.
 - `testing/fixtures.ts` (`fixture()`: ids equal labels) and `testing/arbitraries.ts` (fast-check
-  generators) back the property tests.
+  generators) back the property tests; `testing/language.ts` compares languages on all short words.
 
 ### `src/layout/`
 
@@ -66,7 +77,9 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
 - The editing lock lives here: `edit`, `checkpoint` and undo/redo do nothing while a trace is open.
 - `automata` is kept most recently edited first and saved in that order (the app reopens on the last
   edited one): edits, undo/redo, creating and adding move one to the front; switching doesn't.
-- The clipboard is in memory only, never saved. `traceActions.ts` opens traces.
+- The clipboard is in memory only, never saved. `traceActions.ts` opens traces. `replaceTrace` swaps
+  the open trace (a To regex pick) without bumping `traceKey`, which `App` keys the player on, so the
+  player stays.
 - Read-only automata: ids in `readOnly` (set by lessons, never saved) refuse `edit`, undo/redo into other
   structure, cut and paste unless `sameStructure` (`core/edit.ts`) holds, so layout moves, Tidy and runs
   still work. Each refusal bumps `blockedEdits`, which the tutorial card reads to say it's read-only.
@@ -95,8 +108,9 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
 - `canvas/useCanvasEditing.ts` holds all editing gestures; pointer capture starts only once a drag
   crosses 3 px, so double-clicks keep their real target.
 - `player/`: the generic `TracePlayer` plus one view per trace kind (`TraceView` switches on `kind`).
+  `playingStore.ts` mirrors whether it plays (To regex takes a state click as a pick only while paused).
 - `shell/`: top bar, history bar, dock, dialogs, import/export. Confirmations use `askConfirm()`
-  (`confirmStore.ts`), never `window.confirm`.
+  (`confirmStore.ts`), never `window.confirm`. `regexDialogStore.ts` opens the From regex… dialog.
 - Every letter shortcut goes through `shell/shortcut.ts` (`isCtrlLetter`, `shortcutLetter`), which handles
   non-Latin layouts (Hebrew Ctrl+A is `ש`).
 - Hover styles go inside `@media (hover: hover)`, so taps don't leave them stuck.

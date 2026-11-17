@@ -159,7 +159,8 @@ accept on the right edge, both on the box's middle line.
 - symbol / ε / ∅: two states one `GAP` apart.
 - concatenation: the boxes side by side, one `GAP` between r's accept and s's start, middle lines
   aligned.
-- union: new start left, all branches' boxes stacked vertically and centred, new accept right.
+- union: new start left, all branches' boxes stacked vertically, aligned left and right (a short
+  branch's arrow stretches to the widest), new accept right.
 - star / plus: new start left, the operand's box, new accept right; the back arrow
   (r.accept → r.start) bent over the box, the skip arrow (start → accept) bent under it, both
   with `bend` set so they clear the box.
@@ -196,10 +197,11 @@ the source-less kind (`TraceExtraActions`' lesson check: a Thompson trace is nev
 - The empty canvas's hint gets one more line, "or build one from a regex", a link button opening
   the same dialog.
 - The dialog: one input in IBM Plex Mono with live `\eps` / `\emptyset` normalisation, a one-line
-  syntax reminder (`| or · + one or more · * any number · ε as \eps · ∅ as \emptyset`), and
-  under the input, while invalid, the error with a caret under the offending character. **Build
-  NFA** is disabled with the error as its reason; Enter builds; Escape cancels. Styled like
-  `PasteLatexDialog`.
+  syntax reminder (`| or, + one or more, * any number, ε as \eps, ∅ as \emptyset`, each operator
+  and command in a chip: no separator that reads as an operator), and under the input, while
+  invalid, the error with a caret under the offending character, or, when it parses but needs too
+  many states, that reason without a caret. **Build NFA** is disabled with the error as its
+  reason; Enter builds; Escape cancels. Styled like `PasteLatexDialog`.
 
 ### 6. State elimination (`core/eliminate.ts`)
 
