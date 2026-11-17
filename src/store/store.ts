@@ -55,6 +55,8 @@ export interface AppState {
   clipboard: Clipboard | null;
   /** Ids of automata whose structure can't change (layout moves still can); never saved. */
   readOnly: string[];
+  /** Ids of the running lesson's automata: never autosaved, no empty-canvas hint; never saved itself. */
+  lessonIds: string[];
   /** Bumped each time an edit, undo or redo is refused because the automaton is read-only. */
   blockedEdits: number;
 
@@ -99,6 +101,8 @@ export interface AppState {
   setViewport(id: string, vp: Viewport): void;
   /** Make exactly these automata read-only: structural edits, undo and redo into one are refused. */
   setReadOnly(ids: string[]): void;
+  /** Mark exactly these automata as the running lesson's. */
+  setLessonIds(ids: string[]): void;
   openTrace(trace: AnyTrace): void;
   setStep(i: number): void;
   closeTrace(): void;
@@ -137,6 +141,7 @@ function initialData(
   | 'history'
   | 'clipboard'
   | 'readOnly'
+  | 'lessonIds'
   | 'blockedEdits'
 > {
   const automata = initial.automata ?? [];
@@ -151,6 +156,7 @@ function initialData(
     history: {},
     clipboard: null,
     readOnly: [],
+    lessonIds: [],
     blockedEdits: 0,
   };
 }
@@ -418,6 +424,12 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
         setReadOnly(ids) {
           set((s) => {
             s.readOnly = ids;
+          });
+        },
+
+        setLessonIds(ids) {
+          set((s) => {
+            s.lessonIds = ids;
           });
         },
 

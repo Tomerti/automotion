@@ -82,7 +82,8 @@ export function loadFromStorage(storage: Storage | null): {
   if (raw === null) return { automata: blank() };
   const parsed = parseFile(raw, new Set(), { repair: true });
   if (parsed.ok) {
-    return { automata: cleanup ? dropOldExamples(storage, parsed.automata) : parsed.automata };
+    const automata = cleanup ? dropOldExamples(storage, parsed.automata) : parsed.automata;
+    return { automata: automata.length > 0 ? automata : blank() };
   }
   try {
     storage.setItem(BACKUP_KEY, raw);
