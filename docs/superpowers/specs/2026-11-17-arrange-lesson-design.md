@@ -89,6 +89,36 @@ A unit test runs `layoutAutomaton` (the Tidy layout, on the page as in jsdom) on
 automaton and asserts these. If a later change to the layout's costs breaks one, that test fails and
 the lesson's choices get updated.
 
+#### Chosen (experiment, 2026-11-17)
+
+**Binary numbers divisible by 5**, picked by the user: `q_i` is the remainder `i`, δ(q_i, b) =
+q_(2i+b mod 5); start and accepting `q_0`; name "Divisible by 5". Ten transitions on nine edges:
+loops q_0 →0 q_0 and q_4 →1 q_4; q_0 →1 q_1, q_1 →0 q_2, q_1 →1 q_3, q_3 →0 q_1, q_2 →0 q_4,
+q_2 →1 q_0, q_3 →1 q_2, q_4 →0 q_3.
+
+A throwaway spike ran `layoutAutomaton` on it from two different messy drawings (a pile of
+overlapping states, and states spread with crossing arrows). Findings:
+
+- **Tidy's result doesn't depend on the starting drawing**: both gave the same layout, two rows on
+  a 140 grid: q_0 (0, 0), q_2 (140, 0), q_4 (280, 0) on top; q_1 (0, 140), q_3 (280, 140) below
+  (the bottom middle is empty; the q_1 ⇄ q_3 pair curves through it).
+- **Tidy leaves every drawing choice automatic** here: no `bend`, `loopAngle`, `labelSide` or
+  `startAngle`. So the "differs from tidied" checks compare **drawn** values: `drawnBend`
+  (`core/geometry.ts`), the side `labelSideOf` resolves to, and `startAngle ?? START_ANGLE`. A drag
+  back to the drawn value doesn't count. Since the messy drawing is automatic too, its drawn
+  values equal the tidied ones and *Undo past Tidy* can't complete steps 6–8.
+- Unaligned pairs after Tidy: q_0–q_3, q_1–q_2, q_1–q_4, q_2–q_3. With the snap pair outside the
+  group of three, only four combinations satisfy the constraints; the chosen one boxes two
+  neighbours in the top row.
+
+**Messy drawing:** the spread one, states apart (no overlaps, so it reads as badly drawn rather
+than broken) with crossing arrows: q_0 (400, 300), q_1 (150, 150), q_2 (420, 140), q_3 (180, 320),
+q_4 (300, 220). The builder may adjust it, keeping q_1 and q_4 out of line and nothing explicit.
+
+**What each step names:** box «q_0» and «q_2» (step 2; the box is clean); Ctrl+click «q_3»
+(step 3); snap «q_1» into line with «q_4» (step 5); bend «q_3» → «q_2» and move its symbols (steps
+6–7, a diagonal); the start arrow is «q_0»'s (step 8).
+
 ### Steps
 
 Instructions ≤ 100 chars, why ≤ 110, markup as in the other lessons (keys `[Ctrl]`, states
@@ -148,11 +178,9 @@ line), and a test asserts that. The student just redoes, or presses Tidy again.
   Tidy they are not done. It is cleared when the lesson ends, like `actions`.
 - **Selection** is already in the context (`selected`, states only); that is all steps 2, 3 and 9
   need. Box select adds to the selection, so steps 2–3 hold even if something was selected before.
-- **Label side, step 8:** an automatic `labelSide` (absent) means the canvas chose a side. Dragging
-  the symbols writes an explicit side. "Differs" should compare the side the canvas actually draws
-  (via `core/geometry.ts`), not the raw field, so a drag that writes the same side Tidy left
-  implicitly doesn't count; the builder confirms what the drag writes and picks the comparison.
-  The same care applies to `bend` and `startAngle` if Tidy leaves them absent.
+- **Drawn values, steps 6–8:** compare what the canvas draws, not the raw fields (see *Chosen*):
+  `drawnBend`, `labelSideOf(drawnBend, labelSide)`, `startAngle ?? START_ANGLE`. A label drag
+  writes an explicit side only when it changes the drawn side, so this is exact.
 
 ### Tests to update
 
@@ -167,6 +195,5 @@ line), and a test asserts that. The student just redoes, or presses Tidy again.
 
 ## Left to the builder
 
-The starting automaton and its language, the states and arrow each step names, all final wording,
-how `tidied` is plumbed through the tutorial store, the label-side comparison, and the e2e spec's
-shape.
+All final wording, small adjustments to the messy drawing (within the rules above), how `tidied`
+is plumbed through the tutorial store, and the e2e spec's shape.
