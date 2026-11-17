@@ -99,6 +99,8 @@ describe('eliminate steps', () => {
     ).toEqual(['0']);
     expect(traceSourceId(t)).toBe(endsInOne.id);
     expect(t.steps.at(-1)?.regex).toBe(t.regex);
+    // Pinned for readability: the automatic order and the simplifier keep it this short.
+    expect(t.regex).toBe('0*1(1|00*1)*');
     expect(t.steps.at(-1)?.automaton.states.map((s) => s.id)).toEqual([GNFA_START, GNFA_ACCEPT]);
     expect(t.steps.at(-1)?.removed).toEqual(t.order);
     expect(t.steps[1]?.explanation).toMatch(/Click another state to remove it first instead\.$/);
@@ -175,6 +177,52 @@ describe('eliminate steps', () => {
     expect(new Set(forced.order).size).toBe(hubbed.states.length);
     expect(forced.steps.slice(0, 3)).toEqual(auto.steps.slice(0, 3));
     expect(forced.steps.length).toBe(auto.steps.length);
+  });
+
+  it("keeps the student's bends on arrows the automaton had, none on new ones", () => {
+    // p → q → r, plus p → r: removing q rewrites p → r (an old pair) and makes no new pair;
+    // s → p and r → f are new.
+    const a = fixture({
+      kind: 'NFA',
+      alphabet: 'abc',
+      states: ['p', 'q', 'r'],
+      start: 'p',
+      accepting: ['r'],
+      edges: [
+        ['p', 'a', 'q'],
+        ['q', 'b', 'r'],
+        ['p', 'c', 'r'],
+        ['q', 'a', 'q'],
+      ],
+    });
+    const shaped = {
+      ...a,
+      transitions: a.transitions.map((t) =>
+        t.id === 'p->r'
+          ? { ...t, bend: 40, labelSide: 'right' as const }
+          : t.id === 'q->q'
+            ? { ...t, loopAngle: 1 }
+            : t.id === 'p->q'
+              ? { ...t, bend: -15 }
+              : t,
+      ),
+    };
+    const t = eliminate(shaped, ['q']);
+    const arrow = (step: number, id: string) =>
+      t.steps[step]?.automaton.transitions.find((x) => x.id === id);
+    expect(arrow(0, 'p->r')).toMatchObject({ bend: 40, labelSide: 'right' });
+    expect(arrow(0, 'p->q')).toMatchObject({ bend: -15 });
+    expect(arrow(0, 'q->q')).toMatchObject({ loopAngle: 1 });
+    for (const id of [`${GNFA_START}->p`, `r->${GNFA_ACCEPT}`]) {
+      expect(Object.keys(arrow(0, id)!)).toEqual(['id', 'from', 'to', 'symbols']);
+    }
+    // After q goes, p → r has a new label but is still the student's arrow.
+    expect(arrow(2, 'p->r')).toMatchObject({ symbols: ['c|aa*b'], bend: 40, labelSide: 'right' });
+
+    // Steps before a diverging pick stay deep-equal with bends carried.
+    const auto = eliminate(shaped);
+    const other = auto.order[0] === 'p' ? 'q' : 'p';
+    expect(eliminate(shaped, [other]).steps.slice(0, 1)).toEqual(auto.steps.slice(0, 1));
   });
 
   it('ignores unknown, duplicate and GNFA ids in the prefix', () => {

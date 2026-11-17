@@ -1,7 +1,7 @@
 import { labelPlainText } from './label';
 import { EPSILON, startStates } from './model';
 import type { Automaton, State, StateId, Transition } from './model';
-import { EMPTY_SET, isRegexSymbol, printRegex } from './regex';
+import { EMPTY_SET, isRegexSymbol, printRegex, quoteRegex } from './regex';
 import type { Regex } from './regex';
 import { EMPTY, EPS, mkConcat, mkStar, mkSym, mkUnion } from './regexSimplify';
 import type { EliminateStep, EliminateTrace } from './trace';
@@ -104,12 +104,24 @@ export function eliminate(a: Automaton, order: StateId[] = []): EliminateTrace {
   let remaining = a.states.map((s) => s.id);
   let removed: StateId[] = [];
 
+  // The student's shaping of each original arrow, kept on the GNFA arrow of the same pair (even
+  // once its label changes); arrows to or from s and f, and pairs made by a removal, get none.
+  const shapes = new Map<string, Pick<Transition, 'bend' | 'loopAngle' | 'labelSide'>>();
+  for (const t of a.transitions) {
+    const shape: Pick<Transition, 'bend' | 'loopAngle' | 'labelSide'> = {};
+    if (t.bend !== undefined) shape.bend = t.bend;
+    if (t.loopAngle !== undefined) shape.loopAngle = t.loopAngle;
+    if (t.labelSide !== undefined) shape.labelSide = t.labelSide;
+    shapes.set(key(t.from, t.to), shape);
+  }
+
   const snapshot = (): Automaton => {
     const transitions: Transition[] = [...arrows.values()].map((r) => ({
       id: `${r.from}->${r.to}`,
       from: r.from,
       to: r.to,
       symbols: [printRegex(r.label)],
+      ...shapes.get(key(r.from, r.to)),
     }));
     return {
       id: a.id,
@@ -207,7 +219,7 @@ export function eliminate(a: Automaton, order: StateId[] = []): EliminateTrace {
           );
         }
         // Applied after all pairs are read: every formula uses the labels from before q went.
-        formulas.push(`${text(i.from)} → ${text(o.to)}: ${printed}`);
+        formulas.push(`${text(i.from)} → ${text(o.to)}: ${quoteRegex(printed)}`);
         pending.push([i.from, o.to, next]);
       }
     }

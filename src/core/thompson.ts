@@ -1,7 +1,7 @@
 import { newId } from './id';
 import { EPSILON } from './model';
 import type { Automaton, State, StateId, Sym, Transition } from './model';
-import { parseRegex, printRegex, regexSymbols } from './regex';
+import { parseRegex, printRegex, quoteRegex, regexSymbols } from './regex';
 import type { Regex, Span } from './regex';
 import { layoutPieces } from './thompsonLayout';
 import type { ThompsonStep, ThompsonTrace } from './trace';
@@ -94,7 +94,7 @@ export function thompson(input: string): ThompsonTrace {
 
     const newStates: StateId[] = [];
     const newTransitions: string[] = [];
-    const name = `\`${nameOf(node)}\``;
+    const name = quoteRegex(nameOf(node));
     let start: StateId;
     let accept: StateId;
     let explanation: string;
@@ -103,7 +103,7 @@ export function thompson(input: string): ThompsonTrace {
         start = addState(newStates);
         accept = addState(newStates);
         addArrow(start, accept, node.sym, newTransitions);
-        explanation = `${name}: a start state and an accepting state, joined by ${node.sym}.`;
+        explanation = `${name}: a start state and an accepting state, joined by ${quoteRegex(node.sym)}.`;
         break;
       case 'eps':
         start = addState(newStates);
@@ -188,7 +188,7 @@ export function thompson(input: string): ThompsonTrace {
   const root = walk(regex);
   steps.push({
     phase: 'done',
-    explanation: `The NFA for \`${text}\`: the last piece built, with its one start and one accepting state.`,
+    explanation: `The NFA for ${quoteRegex(text)}: the last piece built, with its one start and one accepting state.`,
     focus: { states: [root.start, root.accept], transitions: [] },
     builtSpans: [...builtSpans],
     newStates: [],

@@ -23,9 +23,12 @@ export function isRegexSymbol(ch: string): boolean {
   return [...ch].length === 1 && !RESERVED.has(ch) && !/\s/u.test(ch);
 }
 
-/** `\eps` → ε and `\emptyset` → ∅. */
+/** `\eps` (or `\epsilon`) → ε and `\emptyset` → ∅. */
 export function normalizeRegexText(text: string): string {
-  return text.replaceAll('\\emptyset', EMPTY_SET).replaceAll('\\eps', EPSILON);
+  return text
+    .replaceAll('\\emptyset', EMPTY_SET)
+    .replaceAll('\\epsilon', EPSILON)
+    .replaceAll('\\eps', EPSILON);
 }
 
 export type ParseResult =
@@ -138,6 +141,8 @@ export function parseRegex(input: string): ParseResult {
     return { ok: true, regex, text };
   } catch (e) {
     if (e instanceof ParseError) return { ok: false, error: e.error, at: e.at };
+    // Thousands of nested ( overflow the recursive descent's stack.
+    if (e instanceof RangeError) return { ok: false, error: 'Nested too deeply', at: 0 };
     throw e;
   }
 }
@@ -168,6 +173,14 @@ export function printRegex(r: Regex): string {
     case 'plus':
       return child(r.body, PREC.star) + '+';
   }
+}
+
+/**
+ * Regex text for an explanation: quoted like a symbol ('a') and without whitespace, so the
+ * player's `LabelText` shows it literally (a `_` symbol is not read as a label subscript).
+ */
+export function quoteRegex(regexText: string): string {
+  return `'${regexText.replace(/\s+/gu, '')}'`;
 }
 
 /** The symbols used, sorted and unique. */
