@@ -98,21 +98,26 @@ describe('HistoryBar', () => {
     render(<HistoryBar />);
     expect(screen.queryByRole('button', { name: /New [DN]FA/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Create' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Blank automaton' }));
     expect(items()).toHaveLength(3);
     expect(items()[0]).toHaveTextContent('Untitled');
     expect(items()[0]).toHaveAttribute('aria-current', 'page');
     expect(st().automata[0]?.kind).toBe('DFA');
   });
 
-  it('Create still creates in one click; its ▾ menu has From regex…', async () => {
+  it('Create opens a menu with Blank automaton and From regex…', async () => {
     const user = userEvent.setup();
     closeRegexDialog();
     render(<HistoryBar />);
-    await user.click(screen.getByRole('button', { name: 'More ways to create' }));
+    expect(screen.queryByRole('button', { name: 'More ways to create' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Create' }));
     expect(items()).toHaveLength(2);
+    await user.click(screen.getByRole('menuitem', { name: 'Blank automaton' }));
+    expect(items()).toHaveLength(3);
+    await user.click(screen.getByRole('button', { name: 'Create' }));
     await user.click(screen.getByRole('menuitem', { name: 'From regex…' }));
     expect(useRegexDialog.getState().open).toBe(true);
-    expect(items()).toHaveLength(2);
+    expect(items()).toHaveLength(3);
     closeRegexDialog();
   });
 

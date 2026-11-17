@@ -1,7 +1,7 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { normalizeRegexText, parseRegex } from '../../core/regex';
-import { canThompson } from '../../core/thompson';
-import { startThompson } from '../../store/traceActions';
+import { canBuildFromRegex } from '../../core/regexToDfa';
+import { createFromRegex } from '../../store/regexActions';
 import { CloseIcon } from './icons';
 import { closeRegexDialog, useRegexDialog } from './regexDialogStore';
 import { useModalDialog } from './useModalDialog';
@@ -13,8 +13,8 @@ export function RegexDialog(): React.JSX.Element | null {
 }
 
 /**
- * Create ▾ → From regex…: a box for a regular expression. Build NFA opens Thompson's
- * construction as a walkthrough; a syntax error is shown under the offending character.
+ * Create → From regex…: a box for a regular expression. Create DFA adds the regex's
+ * minimal DFA as a new automaton; a syntax error is shown under the offending character.
  */
 function RegexModal(): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -26,16 +26,16 @@ function RegexModal(): React.JSX.Element {
   // After the dialog's own focus (effects run in order): the box is what to use first.
   useEffect(() => inputRef.current?.focus(), []);
 
-  const refusal = canThompson(text);
+  const refusal = useMemo(() => canBuildFromRegex(text), [text]);
   const parsed = text === '' ? null : parseRegex(text);
   const error = parsed && !parsed.ok ? parsed : null;
-  // Parses but can't be built (too many states): said under the box too, not only as a tooltip.
+  // Parses but can't be built (too long, too many states): said under the box too, not only as a tooltip.
   const tooLong = parsed?.ok && refusal !== null ? refusal : null;
 
   const submit = (): void => {
     if (refusal !== null) return;
     closeRegexDialog();
-    startThompson(text);
+    void createFromRegex(text);
   };
 
   return (
@@ -55,7 +55,7 @@ function RegexModal(): React.JSX.Element {
         tabIndex={-1}
       >
         <header className="av-modal-head">
-          <h2 id={`${id}-title`}>Build an NFA from a regex</h2>
+          <h2 id={`${id}-title`}>Create a DFA from a regex</h2>
           <button
             type="button"
             className="av-icon-button"
@@ -134,7 +134,7 @@ function RegexModal(): React.JSX.Element {
               disabled={refusal !== null}
               title={refusal ?? undefined}
             >
-              Build NFA
+              Create DFA
             </button>
           </div>
         </form>

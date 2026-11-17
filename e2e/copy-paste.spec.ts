@@ -87,6 +87,7 @@ test('a copy pastes into another automaton', async ({ page }) => {
   await page.keyboard.press('Control+c');
 
   await page.getByRole('button', { name: 'Create', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Blank automaton' }).click();
   await expect(page.getByTestId('canvas-hint')).toBeVisible();
   await page.mouse.move(q0.x + 60, q0.y + 60);
   await page.keyboard.press('Control+v');

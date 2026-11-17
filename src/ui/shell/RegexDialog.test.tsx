@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { appStore, resetAppStore } from '../../store/store';
@@ -22,17 +22,19 @@ describe('RegexDialog', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('normalises \\eps live and builds on Enter', async () => {
+  it('normalises \\eps live; Enter creates the DFA and closes', async () => {
     const user = userEvent.setup();
     openDialog();
-    await user.type(screen.getByLabelText('Regex'), '(a|\\eps)*');
+    await user.type(screen.getByLabelText('Regex'), String.raw`(a|\eps)*`);
     expect(screen.getByLabelText('Regex')).toHaveValue('(a|ε)*');
     await user.type(screen.getByLabelText('Regex'), '{Enter}');
-    expect(appStore.getState().trace?.kind).toBe('thompson');
     expect(useRegexDialog.getState().open).toBe(false);
+    await waitFor(() => expect(appStore.getState().automata[0]?.name).toBe('(a|ε)*'));
+    expect(appStore.getState().automata[0]?.kind).toBe('DFA');
+    expect(appStore.getState().trace).toBeNull();
   });
 
-  it('shows the error under the offending character and disables Build NFA', async () => {
+  it('shows the error under the offending character and disables Create DFA', async () => {
     const user = userEvent.setup();
     openDialog();
     await user.type(screen.getByLabelText('Regex'), 'a|');
@@ -43,15 +45,16 @@ describe('RegexDialog', () => {
     expect(build).toBeDisabled();
     expect(build).toHaveAttribute('title', 'Nothing after |');
     await user.type(screen.getByLabelText('Regex'), '{Enter}');
-    expect(appStore.getState().trace).toBeNull();
+    expect(appStore.getState().automata).toHaveLength(0);
     expect(useRegexDialog.getState().open).toBe(true);
   });
 
-  it('shows a too-long refusal under the box, without a caret', async () => {
+  it('a too-big regex shows its reason under the box, without a caret', async () => {
     const user = userEvent.setup();
     openDialog();
-    await user.type(screen.getByLabelText('Regex'), '(a|b)'.repeat(11));
-    const reason = 'Too long to draw: this regex needs 66 states (at most 64)';
+    // The 7th symbol from the end: its DFA needs 2^7 = 128 states.
+    await user.type(screen.getByLabelText('Regex'), '(a|b)*a(a|b)(a|b)(a|b)(a|b)(a|b)(a|b)');
+    const reason = 'Too big: the DFA would have more than 64 states';
     expect(screen.getByTestId('regex-error')).toHaveTextContent(reason);
     expect(screen.queryByTestId('regex-caret')).toBeNull();
     expect(screen.getByLabelText('Regex')).toHaveAccessibleDescription(reason);
@@ -85,19 +88,20 @@ describe('RegexDialog', () => {
     expect(screen.getByTestId('regex-caret').textContent).toBe('(a|ε)*^');
   });
 
-  it('empty input: Build NFA disabled, no error shown yet', () => {
+  it('empty input: Create DFA disabled, no error shown yet', () => {
     openDialog();
     expect(screen.queryByTestId('regex-error')).toBeNull();
     expect(screen.getByTestId('regex-build')).toBeDisabled();
     expect(screen.getByTestId('regex-build')).toHaveAttribute('title', 'Type a regex');
   });
 
-  it('the Build NFA button builds', async () => {
+  it('the build button is Create DFA, and it creates', async () => {
     const user = userEvent.setup();
     openDialog();
     await user.type(screen.getByLabelText('Regex'), 'ab');
-    await user.click(screen.getByTestId('regex-build'));
-    expect(appStore.getState().trace?.kind).toBe('thompson');
+    await user.click(screen.getByRole('button', { name: 'Create DFA' }));
+    await waitFor(() => expect(appStore.getState().automata[0]?.name).toBe('ab'));
+    expect(appStore.getState().trace).toBeNull();
   });
 
   it('Escape cancels', async () => {
@@ -106,6 +110,6 @@ describe('RegexDialog', () => {
     await user.type(screen.getByLabelText('Regex'), 'ab');
     await user.keyboard('{Escape}');
     expect(useRegexDialog.getState().open).toBe(false);
-    expect(appStore.getState().trace).toBeNull();
+    expect(appStore.getState().automata).toHaveLength(0);
   });
 });

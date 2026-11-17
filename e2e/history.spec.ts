@@ -14,6 +14,7 @@ test('the history bar lists automata newest edit first and switches between them
 
   // Create makes a DFA; the pill at the top of the canvas switches it to an NFA.
   await bar.getByRole('button', { name: 'Create', exact: true }).click();
+  await bar.getByRole('menuitem', { name: 'Blank automaton' }).click();
   await expect(entries).toHaveCount(2);
   await expect(entries.first()).toContainText('Untitled 2');
   await expect(entries.first()).toContainText('DFA');
@@ -57,6 +58,7 @@ test('rename and delete an automaton from its ⋯ menu in the history bar', asyn
   const bar = page.getByRole('navigation', { name: 'History' });
   const entries = bar.getByTestId('history-item');
   await bar.getByRole('button', { name: 'Create', exact: true }).click();
+  await bar.getByRole('menuitem', { name: 'Blank automaton' }).click();
   await expect(entries).toHaveCount(2);
   // There is no dropdown in the top bar any more.
   await expect(page.getByRole('button', { name: 'Automata' })).toHaveCount(0);
@@ -109,6 +111,7 @@ test('Ctrl+C on a history entry copies it and Ctrl+V adds a copy', async ({ page
   const entries = bar.getByTestId('history-item');
   await addStateAt(page, 300, 200);
   await bar.getByRole('button', { name: 'Create', exact: true }).click();
+  await bar.getByRole('menuitem', { name: 'Blank automaton' }).click();
   await expect(entries).toHaveCount(2);
 
   await entries.nth(1).click();
@@ -127,6 +130,7 @@ test('the Delete key deletes a clicked history entry after asking', async ({ pag
   const bar = page.getByRole('navigation', { name: 'History' });
   const entries = bar.getByTestId('history-item');
   await bar.getByRole('button', { name: 'Create', exact: true }).click();
+  await bar.getByRole('menuitem', { name: 'Blank automaton' }).click();
   await expect(entries).toHaveCount(2);
 
   await entries.nth(1).click();
@@ -154,7 +158,9 @@ test('Ctrl+click picks several history entries and Delete deletes them together'
   const bar = page.getByRole('navigation', { name: 'History' });
   const entries = bar.getByTestId('history-item');
   await bar.getByRole('button', { name: 'Create', exact: true }).click();
+  await bar.getByRole('menuitem', { name: 'Blank automaton' }).click();
   await bar.getByRole('button', { name: 'Create', exact: true }).click();
+  await bar.getByRole('menuitem', { name: 'Blank automaton' }).click();
   await expect(entries).toHaveCount(3);
 
   // The open automaton ("Untitled 3", on top) starts the selection.
@@ -181,7 +187,9 @@ test('Ctrl+A on a history entry picks every automaton and Delete deletes them al
   const bar = page.getByRole('navigation', { name: 'History' });
   const entries = bar.getByTestId('history-item');
   await bar.getByRole('button', { name: 'Create', exact: true }).click();
+  await bar.getByRole('menuitem', { name: 'Blank automaton' }).click();
   await bar.getByRole('button', { name: 'Create', exact: true }).click();
+  await bar.getByRole('menuitem', { name: 'Blank automaton' }).click();
   await expect(entries).toHaveCount(3);
 
   // Click the bar's empty space below the entries (it focuses nothing), then Ctrl+A.

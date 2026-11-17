@@ -1,0 +1,58 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { fixture } from '../core/testing/fixtures';
+import { createFromRegex } from './regexActions';
+import { appStore, resetAppStore } from './store';
+import { startRun } from './traceActions';
+
+const seeded = fixture({
+  name: 'Seeded',
+  kind: 'DFA',
+  alphabet: 'a',
+  states: ['p'],
+  start: 'p',
+  accepting: ['p'],
+  edges: [['p', 'a', 'p']],
+});
+
+beforeEach(() => resetAppStore({ automata: [seeded], activeId: seeded.id }));
+
+describe('createFromRegex', () => {
+  it('adds one minimal DFA named after the regex and opens it', async () => {
+    const before = appStore.getState().automata.length;
+    const id = await createFromRegex('(a|b)*abb');
+    const st = appStore.getState();
+    expect(st.automata).toHaveLength(before + 1);
+    expect(st.activeId).toBe(id);
+    const a = st.automata[0]!;
+    expect(a.id).toBe(id);
+    expect(a.kind).toBe('DFA');
+    expect(a.name).toBe('(a|b)*abb');
+    expect(a.states).toHaveLength(4);
+    expect(a.states.some((s) => s.x !== 0 || s.y !== 0)).toBe(true);
+  });
+
+  it('does nothing for a refused regex', async () => {
+    const before = appStore.getState().automata;
+    expect(await createFromRegex('a|')).toBeNull();
+    expect(appStore.getState().automata).toBe(before);
+  });
+
+  it('closes an open trace', async () => {
+    startRun('a');
+    expect(appStore.getState().trace).not.toBeNull();
+    await createFromRegex('a');
+    const st = appStore.getState();
+    expect(st.trace).toBeNull();
+    st.edit((a) => ({ ...a, name: 'Renamed' }));
+    expect(appStore.getState().automata[0]?.name).toBe('Renamed');
+  });
+
+  it('is editable even when a lesson automaton was active', async () => {
+    appStore.setState({ readOnly: [seeded.id] });
+    const id = await createFromRegex('a');
+    expect(id).not.toBeNull();
+    expect(appStore.getState().readOnly).not.toContain(id);
+    appStore.getState().edit((a) => ({ ...a, name: 'Renamed' }));
+    expect(appStore.getState().automata[0]?.name).toBe('Renamed');
+  });
+});

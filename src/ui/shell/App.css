@@ -389,7 +389,7 @@ input.av-switcher-input {
   padding: 8px 10px 10px;
   border-top: 1px solid var(--av-rule);
 }
-/* Export all's menu: the anchor takes the button's share of the row; the menu opens upward. */
+/* Create and Export all menus: the anchor takes the button's share of the row; the menu opens upward. */
 .av-history-export {
   flex: 1;
 }
@@ -604,16 +604,7 @@ input.av-switcher-input {
   transform: translateX(-50%);
 }
 
-/* Create | ▾: the button keeps its row; the ▾ is a narrow one beside it. */
-.av-split .av-menu-anchor {
-  flex: none;
-}
-.av-history-actions .av-split-more {
-  flex: none;
-  padding-inline: 6px;
-}
-
-/* Regex dialog (Create ▾ → From regex…) */
+/* Regex dialog (Create → From regex…) */
 /* One rule for the box and the caret row under it, so their glyph widths can't drift apart. */
 .av-regex .av-regex-input,
 .av-regex .av-regex-caret {
