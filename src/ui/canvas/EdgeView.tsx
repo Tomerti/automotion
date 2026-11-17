@@ -11,6 +11,8 @@ export interface EdgeViewProps {
   error: boolean;
   /** Its label is being edited in place: hide the drawn one under the input. */
   editing?: boolean;
+  /** Native tooltip, as a `<title>` child (none when absent). */
+  title?: string;
 }
 
 const HEAD_LENGTH = 10;
@@ -31,8 +33,18 @@ export function Arrowhead(props: { end: Point; angle: number }): React.JSX.Eleme
 }
 
 export function EdgeView(props: EdgeViewProps): React.JSX.Element {
-  const { transitionId, fromLabel, toLabel, symbols, geometry, taken, selected, error, editing } =
-    props;
+  const {
+    transitionId,
+    fromLabel,
+    toLabel,
+    symbols,
+    geometry,
+    taken,
+    selected,
+    error,
+    editing,
+    title,
+  } = props;
   return (
     <g
       className="av-edge"
@@ -43,6 +55,7 @@ export function EdgeView(props: EdgeViewProps): React.JSX.Element {
       data-error={String(error)}
       data-editing={editing ? 'true' : undefined}
     >
+      {title !== undefined && <title>{title}</title>}
       <path className="av-edge-hit" d={geometry.d} />
       <path className="av-edge-path" d={geometry.d} />
       <Arrowhead end={geometry.end} angle={geometry.endAngle} />

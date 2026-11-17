@@ -220,6 +220,32 @@ select.av-player-speed {
   stroke-dasharray: 6 5;
   pointer-events: none;
 }
+/* To regex: while paused, a click on a state (not s or f) removes it next. */
+.av-trace-diagram[data-picking='true']
+  .av-state:not([data-state-id='gnfa-s']):not([data-state-id='gnfa-f']) {
+  cursor: pointer;
+}
+.av-regex-result-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 20px;
+}
+.av-regex-result {
+  min-width: 0;
+  max-height: 30vh;
+  overflow-y: auto;
+  font-family: var(--av-font-symbol);
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: var(--av-ink);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+.av-regex-result-panel button {
+  flex: none;
+}
 .av-trace-diagram[data-interactive='true'] {
   cursor: grab;
   touch-action: none;

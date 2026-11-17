@@ -49,6 +49,11 @@ export interface AppState {
   viewports: Record<string, Viewport>;
   trace: AnyTrace | null;
   stepIndex: number;
+  /**
+   * Bumped by `openTrace`, not by `replaceTrace`: the player is keyed on it, so a trace swapped in
+   * place (a To regex pick) keeps its player, with its speed and paused state.
+   */
+  traceKey: number;
   history: Record<string, { past: Automaton[]; future: Automaton[] }>;
   clipboard: Clipboard | null;
   /** Ids of automata whose structure can't change (layout moves still can); never saved. */
@@ -98,6 +103,11 @@ export interface AppState {
   /** Make exactly these automata read-only: structural edits, undo and redo into one are refused. */
   setReadOnly(ids: string[]): void;
   openTrace(trace: AnyTrace): void;
+  /**
+   * Swap the open trace for `trace` at `stepIndex` (clamped), keeping it open: the editing lock
+   * and the player stay. A no-op when no trace is open.
+   */
+  replaceTrace(trace: AnyTrace, stepIndex: number): void;
   setStep(i: number): void;
   closeTrace(): void;
 }
@@ -131,6 +141,7 @@ function initialData(
   | 'viewports'
   | 'trace'
   | 'stepIndex'
+  | 'traceKey'
   | 'history'
   | 'clipboard'
   | 'readOnly'
@@ -144,6 +155,7 @@ function initialData(
     viewports: {},
     trace: null,
     stepIndex: 0,
+    traceKey: 0,
     history: {},
     clipboard: null,
     readOnly: [],
@@ -421,7 +433,17 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           set((s) => {
             s.trace = trace;
             s.stepIndex = 0;
+            s.traceKey += 1;
             s.selection = NO_SELECTION;
+          });
+        },
+
+        replaceTrace(trace, stepIndex) {
+          if (!get().trace) return;
+          const max = trace.steps.length - 1;
+          set((s) => {
+            s.trace = trace;
+            s.stepIndex = Math.min(Math.max(stepIndex, 0), max);
           });
         },
 

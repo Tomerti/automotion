@@ -123,6 +123,25 @@ describe('store', () => {
     expect(st().trace).toBeNull();
   });
 
+  it('replaceTrace swaps the open trace and sets the step, keeping the lock and the trace key', () => {
+    const { st, active } = setup();
+    st().replaceTrace(runWord(active(), 'a'), 1);
+    expect(st().trace).toBeNull(); // no-op when no trace is open
+    st().openTrace(runWord(active(), 'a'));
+    const key = st().traceKey;
+    const next = runWord(active(), 'ab');
+    st().replaceTrace(next, 2);
+    expect(st().trace).toBe(next);
+    expect(st().stepIndex).toBe(2);
+    expect(st().traceKey).toBe(key);
+    st().replaceTrace(next, 999);
+    expect(st().stepIndex).toBe(next.steps.length - 1);
+    st().edit((a) => renameAutomaton(a, 'x'));
+    expect(active().name).not.toBe('x');
+    st().openTrace(runWord(active(), 'a'));
+    expect(st().traceKey).not.toBe(key);
+  });
+
   it('createAutomaton picks a free name, returns id, becomes active, goes first', () => {
     const s = createAppStore();
     const id1 = s.getState().createAutomaton();

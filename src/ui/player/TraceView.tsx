@@ -1,4 +1,5 @@
 import type { AnyTrace } from '../../core/trace';
+import { EliminateTraceView } from './EliminateTraceView';
 import { MinimizeTraceView } from './MinimizeTraceView';
 import { RunTraceView } from './RunTraceView';
 import { SubsetTraceView } from './SubsetTraceView';
@@ -22,6 +23,6 @@ export function TraceView({
     case 'thompson':
       return <ThompsonTraceView trace={trace} stepIndex={stepIndex} />;
     case 'eliminate':
-      return null; // the walkthrough view arrives with the To regex entry point
+      return <EliminateTraceView trace={trace} stepIndex={stepIndex} />;
   }
 }

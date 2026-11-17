@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { AnyTrace } from '../../core/trace';
 import { useAppStore } from '../../store/store';
 import { Canvas } from '../canvas/Canvas';
 import { useAutosave } from '../../persistence/useAutosave';
 import { RunPanel } from '../player/RunPanel';
+import { setPlaying } from '../player/playingStore';
 import { TraceExtraActions } from '../player/traceExtraActions';
 import { TracePlayer } from '../player/TracePlayer';
 import { TraceView } from '../player/TraceView';
@@ -33,18 +33,6 @@ import { TopBar } from './TopBar';
 import '../player/player.css';
 import './App.css';
 
-/** One key per trace object, so a new trace remounts the player (resetting play and speed). */
-const traceKeys = new WeakMap<AnyTrace, number>();
-let nextTraceKey = 0;
-function traceKey(trace: AnyTrace): number {
-  let key = traceKeys.get(trace);
-  if (key === undefined) {
-    key = nextTraceKey++;
-    traceKeys.set(trace, key);
-  }
-  return key;
-}
-
 /**
  * Height of the floating dock (run pill or player), kept current as it changes. Trace views pad
  * their bottom by it (`--av-dock-h`), so nothing they fit to view ends up behind the player.
@@ -73,6 +61,8 @@ export default function App(): React.JSX.Element {
   usePasteLatex();
   useSharedLink();
   const trace = useAppStore((s) => s.trace);
+  // A new trace remounts the player (resetting play and speed); one swapped in place keeps it.
+  const traceKey = useAppStore((s) => s.traceKey);
   const stepIndex = useAppStore((s) => s.stepIndex);
   const setStep = useAppStore((s) => s.setStep);
   const closeTrace = useAppStore((s) => s.closeTrace);
@@ -123,7 +113,7 @@ export default function App(): React.JSX.Element {
             <RunPanel hidden={trace !== null} />
             {trace && step && (
               <TracePlayer
-                key={traceKey(trace)}
+                key={traceKey}
                 stepCount={trace.steps.length}
                 index={stepIndex}
                 onIndex={setStep}
@@ -134,6 +124,7 @@ export default function App(): React.JSX.Element {
                   !opensPaused
                 }
                 stopAt={stopAt}
+                onPlayingChange={setPlaying}
                 extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
               />
             )}
