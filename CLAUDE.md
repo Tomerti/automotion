@@ -75,6 +75,7 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
 - `automata` is kept most recently edited first and saved in that order (the app reopens on the last
   edited one): edits, undo/redo, creating and adding move one to the front; switching doesn't.
 - The clipboard is in memory only, never saved. `traceActions.ts` opens traces. `openTrace` bumps `traceKey`, which `App` keys the player on (one player per opened trace).
+- `lessonIds` (set by the tutorial, never saved): the running lesson's automata, left out of the autosave.
 - Read-only automata: ids in `readOnly` (set by lessons, never saved) refuse `edit`, undo/redo into other
   structure, cut and paste unless `sameStructure` (`core/edit.ts`) holds, so layout moves, Tidy and runs
   still work. Each refusal bumps `blockedEdits`, which the tutorial card reads to say it's read-only.
@@ -113,7 +114,7 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   has `basics.ts` (the original tutorial), `arrange`, `nfa`, `epsilon`, `convert`, `minimize` and `share`; `index.ts`
   lists them in order. Tidy reports to lessons (the `'tidy'` action and the `tidied` snapshot: `noteTidied`,
   called by the Toolbar when `tidyActive` resolves true; `useCanvasEditing` must not import the tutorial store). Lessons open a read-only copy of a ready-made automaton; automata saved from their walkthroughs
-  belong to the lesson (Quit removes them, Finish keeps them); a lesson's walkthrough offers only Save as new
+  belong to the lesson; Quit and Finish both remove them, and none are autosaved (the store's `lessonIds`, which also hides the empty-canvas hint); a lesson's walkthrough offers only Save as new
   automaton, not Save and minimize (`player/traceExtraActions.tsx`). A step with `idea: true` is
   read, not done, and goes on with Next (`tutorial-next`). A step's `explain` shows first on the card, then
   its instruction. `pausedRuns` lists words whose runs open paused, stepped by hand with → (NFAs on `001`,
@@ -125,7 +126,7 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   point of a run or walkthrough has `steppedBack`: stepped back (←) before that point, it shows again,
   so the card follows the trace back. While another automaton is open the card hides (it comes back on
   the lesson's own). Finishing Basics removes its automaton and its popup offers Start building or See
-  the lessons (Controls on the Lessons tab); a lesson's Finish keeps its automata and offers Next
+  the lessons (Controls on the Lessons tab); a lesson's Finish offers Next
   (`nextLesson`: never Basics; See the lessons once none is left).
   Only Basics has goal pictures and frames the word box and dock.
 - Lesson texts mark keys `[Shift]`, states `«even»` and words to type in backticks. `lessons/index.test.ts`

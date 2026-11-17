@@ -20,6 +20,13 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Lessons leave no automata behind (2026-11-17)
+
+- [x] Finish removes a lesson's automata (the copy and saved walkthrough results), as Quit does
+- [x] Starting a lesson from a finished one's closing card removes the finished one's automata too
+- [x] Lesson automata are never autosaved, so a reload midway leaves nothing (an empty saved list opens a blank Untitled)
+- [x] No empty-canvas hint on a lesson's automaton (Basics' regex link filled the Tutorial automaton)
+
 ### Create is one click again; regex from the empty canvas (2026-11-17)
 
 - [x] Create makes a blank automaton in one click again (its menu is gone): the empty canvas's "or build one from a regex" link is the way in

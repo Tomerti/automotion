@@ -203,10 +203,21 @@ test('the Convert lesson opens paused on {q_0}, steps to the accepting pair by h
   await expect(card.getByRole('button', { name: 'Finish' })).toBeVisible();
 
   const check = await finish(page, guide, card, 'lesson-convert');
-  await expect(page.getByRole('navigation', { name: 'History' })).toContainText(
-    'Contains 01 → DFA',
-  );
+  const history = page.getByRole('navigation', { name: 'History' });
+  await expect(history).not.toContainText('Contains 01 → DFA');
+  await expect(history).not.toContainText('Contains 01');
   await check();
+});
+
+test('a reload midway leaves no lesson automaton behind', async ({ page }) => {
+  await openApp(page, { clear: true });
+  const { card } = await startLesson(page, 'lesson-nfa');
+  // Autosave is debounced 500 ms: let it run, so the reload tests what was really saved.
+  await page.waitForTimeout(800);
+  await page.reload();
+  await expect(card).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'History' })).not.toContainText('Ends in 01');
+  await expect(page.getByTestId('canvas-hint')).toBeVisible();
 });
 
 test('the Convert lesson stops the same way when Convert is pressed before Next', async ({

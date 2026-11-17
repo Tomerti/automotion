@@ -18,8 +18,8 @@ function browserStorage(): Storage | null {
 }
 
 /**
- * Save the automata, less the running lesson's, to localStorage 500 ms after the last change; a save still pending when the
- * page is hidden or unloaded (`pagehide`) is written immediately.
+ * Save the automata, less the running lesson's, to localStorage 500 ms after the last change; a save
+ * still pending when the page is hidden or unloaded (`pagehide`) is written immediately.
  */
 export function useAutosave(options: AutosaveOptions = {}): void {
   const onFail = useRef(options.onFail);

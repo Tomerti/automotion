@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { addStateAt, clickState, shiftDrag, stateCenter } from './helpers.ts';
+import { addStateAt, clickState, openApp, shiftDrag, stateCenter } from './helpers.ts';
 
 /** Shift + drag from a state out and back onto itself, then type the loop's symbols. */
 async function selfLoop(page: Page, label: string, symbols: string): Promise<void> {
@@ -138,6 +138,17 @@ test('the first visit offers the tutorial, which walks through building and chan
   await expect(entry(page, 'Tutorial')).toHaveCount(0);
   await expect(entry(page, 'Untitled')).toHaveCount(1);
   await expect(page.getByTestId('canvas').locator('.av-state-body')).toHaveCount(0);
+});
+
+test('Basics opens on a canvas without the hint', async ({ page }) => {
+  await openApp(page, { clear: true });
+  await page.keyboard.press('?');
+  const guide = page.getByRole('dialog', { name: 'Controls' });
+  await guide.getByRole('tab', { name: 'Lessons' }).click();
+  await guide.getByTestId('lesson-basics').click();
+  await expect(page.getByTestId('tutorial-card')).toBeVisible();
+  await expect(page.getByTestId('canvas-hint')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'or build one from a regex' })).toHaveCount(0);
 });
 
 test('quitting the tutorial midway asks first, then removes it from the history', async ({
