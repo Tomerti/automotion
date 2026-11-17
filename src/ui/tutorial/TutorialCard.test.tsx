@@ -12,6 +12,7 @@ import { CHEERS } from './cheers';
 import { lessonSteps } from './engine';
 import type { Lesson } from './engine';
 import { FinishedCard } from './FinishedCard';
+import { ARRANGE_LESSON } from './lessons/arrange';
 import { BASICS } from './lessons/basics';
 import { LESSONS } from './lessons';
 import { CONVERT_LESSON } from './lessons/convert';
@@ -707,8 +708,8 @@ describe('a lesson other than Basics', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('denied');
     });
-    render(<FinishedCard lesson={NFA_LESSON} onClose={() => {}} />);
-    expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: Arrange');
+    render(<FinishedCard lesson={ARRANGE_LESSON} onClose={() => {}} />);
+    expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: NFAs');
   });
 
   it('after the tutorial, offers Start building and See the lessons instead of starting a lesson', async () => {
