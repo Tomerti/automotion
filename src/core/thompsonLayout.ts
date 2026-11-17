@@ -11,6 +11,15 @@ const V_GAP = 88;
 const ARC_CLEARANCE = 24;
 /** Room beyond a star's arc for its label. */
 const ARC_LABEL = 20;
+/**
+ * How much taller than its floor (the body's extent + a state's radius + ARC_CLEARANCE) a star's
+ * arc may get before the star pads its body's ends instead. A parabola k times its floor high
+ * meets a box with flat, full-height ends at u(1 − u) = 1/(4k) along it, so a lower k pads more.
+ * 3/2 was picked on the test's ARCHES: well under the 2× it allows, 10–20% narrower than 4/3.
+ */
+const ARC_SLACK = 3 / 2;
+/** Step in which a star pads its body's ends. */
+const INSET_STEP = 24;
 
 /** A piece's box: start at x = 0 and accept at x = width, both on its middle line. */
 interface Box {
@@ -24,6 +33,18 @@ interface Box {
   /** Star / plus: how far its back arrow bulges above the line and its skip arrow below. */
   back?: number;
   skip?: number;
+  /**
+   * Star / plus: padding at both ends of its body and on both ε-arrows around it, which keeps the
+   * arcs low over a body with tall ends.
+   */
+  inset?: number;
+}
+
+/** A star / plus's choice: the padding at its body's ends and the bulges it leads to. */
+interface Arcs {
+  inset: number;
+  back: number;
+  skip: number;
 }
 
 /** A star / plus arc as laid out: from x1 to x2 on the line y, its apex `depth` below (< 0: above). */
@@ -59,8 +80,12 @@ function arcObstacles({ x1, x2, y, depth }: Arc): Obstacle[] {
 }
 
 const ARC_SEGMENTS = 32;
-/** Bulge past which an arc stops growing to clear something (never reached by a ≤ 64-state NFA). */
-const MAX_BULGE = 1 << 16;
+/**
+ * An arc always clears in the end: as it grows its ends turn vertical, and every obstacle is at
+ * least a state's width (an inner arc's point: an eighth of its chord) in from them. A bulge this
+ * big means that broke, which is a bug, not a drawing to show.
+ */
+const MAX_BULGE = 1 << 20;
 
 /** Distance from (x, out) to the arc 4·bulge·u·(1 − u) over the chord from x = 0 to `width`. */
 function distanceToArc(x: number, out: number, width: number, bulge: number): number {
@@ -101,7 +126,8 @@ function bulgeClearing(obstacles: Obstacle[], width: number, up: boolean, least:
     if (clears(bulge)) continue;
     let lo = bulge;
     let hi = Math.max(2 * bulge, 1);
-    while (!clears(hi) && hi < MAX_BULGE) {
+    while (!clears(hi)) {
+      if (hi >= MAX_BULGE) throw new Error('Thompson layout: an arc cannot clear its body');
       lo = hi;
       hi *= 2;
     }
@@ -190,35 +216,67 @@ export function layoutPieces(root: Piece, result: Automaton): Automaton {
       case 'plus': {
         const bodyPiece = p.children[0]!;
         const body = measure(bodyPiece);
-        // The body laid out on its own, start at (0, 0), for what the arcs must clear.
-        const local: Placed = { pos: new Map(), bends: new Map(), arcs: [] };
-        place(bodyPiece, 0, 0, body.width, local);
-        const obstacles: Obstacle[] = [
-          ...[...local.pos.values()].map((s) => ({ ...s, r: STATE_RADIUS })),
-          ...local.arcs.flatMap(arcObstacles),
-        ];
-        // At least the body's extent on that side plus a state's radius and the clearance.
-        const back = bulgeClearing(
-          obstacles,
-          body.width,
-          true,
-          body.above + STATE_RADIUS + ARC_CLEARANCE,
-        );
-        const skip =
-          p.node.type === 'star'
+        const star = p.node.type === 'star';
+        // The least each arc needs: the body's extent on that side, a state's radius, clearance.
+        const backFloor = body.above + STATE_RADIUS + ARC_CLEARANCE;
+        const skipFloor = body.below + STATE_RADIUS + ARC_CLEARANCE;
+        /** The arcs over the body padded by `inset` at both ends, laid out on its own at (0, 0). */
+        const arcsWith = (inset: number): Arcs => {
+          const local: Placed = { pos: new Map(), bends: new Map(), arcs: [] };
+          const bw = body.width + 2 * inset;
+          place(bodyPiece, 0, 0, bw, inset, inset, local);
+          const obstacles: Obstacle[] = [
+            ...[...local.pos.values()].map((s) => ({ ...s, r: STATE_RADIUS })),
+            ...local.arcs.flatMap(arcObstacles),
+          ];
+          const back = bulgeClearing(obstacles, bw, true, backFloor);
+          // The skip's chord: the ε-arrows into and out of the body, padded alike, and the body.
+          const side = H_GAP + inset;
+          const skip = star
             ? bulgeClearing(
-                obstacles.map((o) => ({ ...o, x: o.x + H_GAP })),
-                body.width + 2 * H_GAP,
+                obstacles.map((o) => ({ ...o, x: o.x + side })),
+                bw + 2 * side,
                 false,
-                body.below + STATE_RADIUS + ARC_CLEARANCE,
+                skipFloor,
               )
             : 0;
+          return { inset, back, skip };
+        };
+        const excess = (a: Arcs): number =>
+          Math.max(a.back / backFloor, star ? a.skip / skipFloor : 0);
+        const snug = (a: Arcs): boolean => excess(a) <= ARC_SLACK;
+        // The arcs rise steeply from their ends, so over a body whose ends are tall (a union's
+        // stacked branches) they would tower over it. Padding the ends (inside the body for the
+        // back arrow, the ε-arrows around it for the skip) trades width for height: the smallest
+        // padding that keeps them snug, by doubling, then bisection; failing that the snuggest.
+        let arcs = arcsWith(0);
+        if (!snug(arcs)) {
+          const maxSteps = Math.ceil((4 * body.width) / INSET_STEP);
+          let best = arcs;
+          let lo = 0;
+          let hi = 1;
+          arcs = arcsWith(INSET_STEP);
+          while (!snug(arcs) && hi < maxSteps) {
+            if (excess(arcs) < excess(best)) best = arcs;
+            lo = hi;
+            hi = Math.min(2 * hi, maxSteps);
+            arcs = arcsWith(hi * INSET_STEP);
+          }
+          if (!snug(arcs) && excess(best) <= excess(arcs)) arcs = best;
+          while (snug(arcs) && hi - lo > 1) {
+            const mid = Math.floor((lo + hi) / 2);
+            const tried = arcsWith(mid * INSET_STEP);
+            if (snug(tried)) {
+              hi = mid;
+              arcs = tried;
+            } else lo = mid;
+          }
+        }
         box = {
-          width: body.width + 2 * H_GAP,
-          above: back + ARC_LABEL,
-          below: p.node.type === 'star' ? skip + ARC_LABEL : body.below,
-          back,
-          skip,
+          width: body.width + 4 * arcs.inset + 2 * H_GAP,
+          above: arcs.back + ARC_LABEL,
+          below: star ? arcs.skip + ARC_LABEL : body.below,
+          ...arcs,
         };
         break;
       }
@@ -227,10 +285,22 @@ export function layoutPieces(root: Piece, result: Automaton): Automaton {
     return box;
   };
 
-  /** Lays `p` out with its start at (x, y), stretched to `width` (at least its box's). */
-  const place = (p: Piece, x: number, y: number, width: number, out: Placed): void => {
+  /**
+   * Lays `p` out with its start at (x, y), stretched to `width` (at least its box's): `lead` of it
+   * goes between its start and the rest of it, `trail` between the rest and its accept, and any
+   * more to its middle.
+   */
+  const place = (
+    p: Piece,
+    x: number,
+    y: number,
+    width: number,
+    lead: number,
+    trail: number,
+    out: Placed,
+  ): void => {
     const box = measure(p);
-    const extra = width - box.width;
+    const extra = width - box.width - lead - trail;
     switch (p.node.type) {
       case 'sym':
       case 'eps':
@@ -241,32 +311,35 @@ export function layoutPieces(root: Piece, result: Automaton): Automaton {
       case 'concat': {
         // The joining ε-arrow takes up any extra width.
         const [l, r] = p.children as [Piece, Piece];
-        const lw = measure(l).width;
-        const rw = measure(r).width;
-        place(l, x, y, lw, out);
-        place(r, x + lw + H_GAP + extra, y, rw, out);
+        const lw = measure(l).width + lead;
+        const rw = measure(r).width + trail;
+        place(l, x, y, lw, lead, 0, out);
+        place(r, x + lw + H_GAP + extra, y, rw, 0, trail, out);
         break;
       }
       case 'union': {
         // Every branch is stretched to the widest, so their starts and accepts line up; the fans
-        // take up any extra width.
-        const fan = box.fan! + extra / 2;
-        const inner = width - 2 * fan;
+        // take up any extra width, lead and trail.
+        const fanIn = box.fan! + extra / 2 + lead;
+        const inner = width - 2 * box.fan! - extra - lead - trail;
         out.pos.set(p.start, { x, y });
         out.pos.set(p.accept, { x: x + width, y });
         for (const [i, c] of p.children.entries())
-          place(c, x + fan, y + box.offsets![i]!, inner, out);
+          place(c, x + fanIn, y + box.offsets![i]!, inner, 0, 0, out);
         break;
       }
       case 'star':
       case 'plus': {
         const body = p.children[0]!;
-        const bw = measure(body).width;
-        // The ε-arrows into and out of the body take up any extra width.
-        const bodyX = x + H_GAP + extra / 2;
+        const inset = box.inset!;
+        const bw = measure(body).width + 2 * inset;
+        // The ε-arrows into and out of the body are padded by the inset too, and take up any
+        // extra width, lead and trail in equal shares: lengthening both ends alike keeps the skip
+        // arrow clear of the body.
+        const bodyX = x + H_GAP + inset + (extra + lead + trail) / 2;
         out.pos.set(p.start, { x, y });
         out.pos.set(p.accept, { x: x + width, y });
-        place(body, bodyX, y, bw, out);
+        place(body, bodyX, y, bw, inset, inset, out);
         // Both arcs bulge right of their direction on screen (a negative bend): the back arrow
         // points left and goes over, the skip arrow points right and goes under.
         out.bends.set(arrowId(body.accept, body.start), -box.back!);
@@ -285,7 +358,7 @@ export function layoutPieces(root: Piece, result: Automaton): Automaton {
   };
 
   const placed: Placed = { pos: new Map(), bends: new Map(), arcs: [] };
-  place(root, 0, 0, measure(root).width, placed);
+  place(root, 0, 0, measure(root).width, 0, 0, placed);
   return {
     ...result,
     states: result.states.map((s) => ({ ...s, ...placed.pos.get(s.id) })),

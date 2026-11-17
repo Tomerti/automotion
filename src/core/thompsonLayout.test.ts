@@ -2,7 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { drawnBend, STATE_RADIUS, transitionPolyline } from './geometry';
 import { EPSILON } from './model';
-import type { Automaton, State, StateId } from './model';
+import type { Automaton, State, StateId, Transition } from './model';
 import { printRegex } from './regex';
 import type { Regex } from './regex';
 import { arbRegex } from './testing/arbitraries';
@@ -47,7 +47,7 @@ function expectNoOverlap(a: Automaton): void {
 
 function expectNoArrowThroughStates(a: Automaton): void {
   for (const t of a.transitions) {
-    const pts = transitionPolyline(a, byId(a, t.from), byId(a, t.to));
+    const pts = transitionPolyline(a, byId(a, t.from), byId(a, t.to), 128);
     for (const st of a.states.filter((x) => x.id !== t.from && x.id !== t.to)) {
       const closest = Math.min(...pts.map((p) => Math.hypot(p.x - st.x, p.y - st.y)));
       expect(closest, `${t.id} past ${st.id}`).toBeGreaterThan(STATE_RADIUS);
@@ -57,6 +57,54 @@ function expectNoArrowThroughStates(a: Automaton): void {
 
 /** Harder than SAMPLES: a tall union, unbalanced branches, a long star body opening with a star. */
 const HARD = ['a|b|c|d|e|f|g|h|i|j|k', 'a|bcdefg|h', '(a*bcdefg)*', '((a|b|c|d)*e|f)*'];
+
+/** Course regexes whose star bodies open or close with a wide union. */
+const ARCHES = [
+  '(0|1(01*0)*1)*',
+  '(aa|bb|(ab|ba)(aa|bb)*(ab|ba))*',
+  '(1(01*0)*1|0)*',
+  '(a|bcdefgh)*',
+  '(a|b(c)*d)*',
+  '(a|b)*abb',
+  '((a|b)(c|d))*',
+  '(a|bc|d*)*e',
+  '((a*b)*c)*',
+  '((((a*b)*c|d)*e|(f|g)*)*(h|i*)*)*',
+];
+
+/**
+ * Every star / plus arc of `s` (the arrows the layout bends): its bend, and the least it could be:
+ * the body's reach on the arc's side + a state's radius + 24, where the body reaches as far as its
+ * states (with their radius) and its own arcs on that side, each taken at its least + 20 for its
+ * label. Inner arcs count at their least, not their drawn bend, so excess can't compound unseen.
+ */
+function arcsOf(s: string): { id: string; bend: number; least: number }[] {
+  const t = thompson(s);
+  const a = t.result;
+  const bent = a.transitions.filter((tr) => tr.bend !== undefined && tr.bend !== 0);
+  const least = new Map<string, number>();
+  const leastOf = (tr: Transition): number => {
+    const known = least.get(tr.id);
+    if (known !== undefined) return known;
+    const step = t.steps.find((st) => st.newTransitions.includes(tr.id))!;
+    const body = new Set(step.pieceStates.filter((id) => !step.newStates.includes(id)));
+    const from = byId(a, tr.from);
+    const up = from.x > byId(a, tr.to).x; // the back arrow points left and goes over
+    const out = (y: number) => (up ? from.y - y : y - from.y);
+    let reach = 0;
+    for (const id of body) reach = Math.max(reach, out(byId(a, id).y) + STATE_RADIUS);
+    for (const inner of bent) {
+      if (inner.id === tr.id || !body.has(inner.from) || !body.has(inner.to)) continue;
+      const innerFrom = byId(a, inner.from);
+      if (innerFrom.x > byId(a, inner.to).x !== up) continue; // bulges the other way
+      reach = Math.max(reach, out(innerFrom.y) + leastOf(inner) + 20);
+    }
+    const value = reach + STATE_RADIUS + 24;
+    least.set(tr.id, value);
+    return value;
+  };
+  return bent.map((tr) => ({ id: tr.id, bend: Math.abs(tr.bend!), least: leastOf(tr) }));
+}
 
 describe('Thompson layout', () => {
   it.each(SAMPLES)('%s: no two states overlap', (s) => {
@@ -191,6 +239,12 @@ describe('Thompson layout', () => {
       't1->t0',
       't2->t3',
     ]);
+  });
+
+  it.each(ARCHES)("%s: each star's arcs stay in proportion to its body", (s) => {
+    for (const arc of arcsOf(s)) {
+      expect(arc.bend, arc.id).toBeLessThanOrEqual(2 * arc.least);
+    }
   });
 
   it('same regex, same layout (deterministic)', () => {
