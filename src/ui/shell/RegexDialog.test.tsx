@@ -47,6 +47,29 @@ describe('RegexDialog', () => {
     expect(useRegexDialog.getState().open).toBe(true);
   });
 
+  it('shows a too-long refusal under the box, without a caret', async () => {
+    const user = userEvent.setup();
+    openDialog();
+    await user.type(screen.getByLabelText('Regex'), '(a|b)'.repeat(11));
+    const reason = 'Too long to draw: this regex needs 66 states (at most 64)';
+    expect(screen.getByTestId('regex-error')).toHaveTextContent(reason);
+    expect(screen.queryByTestId('regex-caret')).toBeNull();
+    expect(screen.getByLabelText('Regex')).toHaveAccessibleDescription(reason);
+    const build = screen.getByTestId('regex-build');
+    expect(build).toBeDisabled();
+    expect(build).toHaveAttribute('title', reason);
+  });
+
+  it('the syntax reminder sets each operator apart, with commas between', () => {
+    openDialog();
+    const input = screen.getByLabelText('Regex');
+    expect(input).toHaveAccessibleDescription(
+      String.raw`| or, + one or more, * any number, ε as \eps, ∅ as \emptyset`,
+    );
+    const chips = [...document.querySelectorAll('.av-regex-syntax code')].map((c) => c.textContent);
+    expect(chips).toEqual(['|', '+', '*', String.raw`\eps`, String.raw`\emptyset`]);
+  });
+
   it('counts an astral character as one column in the caret', async () => {
     const user = userEvent.setup();
     openDialog();

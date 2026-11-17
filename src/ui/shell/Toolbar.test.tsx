@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { moveState } from '../../core/edit';
 import { runWord } from '../../core/run';
+import { thompson } from '../../core/thompson';
 import { fixture, nthFromEnd } from '../../core/testing/fixtures';
 import { decodeShare, readShareHash, sameAutomaton } from '../../persistence/shareLink';
 import { appStore, resetAppStore } from '../../store/store';
@@ -432,6 +433,32 @@ describe('Toolbar', () => {
     appStore.getState().openTrace(runWord(active, 'a'));
     render(<Toolbar />);
     for (const n of ['Undo', 'Redo', 'Share, copy or export']) expect(btn(n)).toBeDisabled();
+  });
+
+  it('Convert, Minimize and To regex are disabled during a Thompson walkthrough', () => {
+    const d = fixture({
+      kind: 'DFA',
+      alphabet: 'a',
+      states: ['q0'],
+      start: 'q0',
+      edges: [['q0', 'a', 'q0']],
+      name: 'd',
+    });
+    resetAppStore({ automata: [d, { ...nfa(), id: 'n2' }], activeId: 'd' });
+    appStore.getState().openTrace(thompson('(a|b)*abb'));
+    const { unmount } = render(<Toolbar />);
+    for (const n of ['Convert to DFA', 'Minimize', 'To regex']) {
+      expect(btn(n)).toBeDisabled();
+      expect(btn(n)).toHaveAttribute('title', 'Save the NFA first');
+    }
+    unmount();
+
+    // Another walkthrough doesn't disable them: the active automaton is on screen.
+    appStore.getState().closeTrace();
+    appStore.getState().openTrace(runWord(appStore.getState().automata[0]!, 'a'));
+    render(<Toolbar />);
+    expect(btn('Minimize')).toBeEnabled();
+    expect(btn('To regex')).toBeEnabled();
   });
 
   it('Undo/Redo call the store and follow history', async () => {

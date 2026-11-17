@@ -85,7 +85,10 @@ describe('Controls popup', () => {
     const panel = within(dialog()!).getByRole('tabpanel');
     expect(within(panel).getByText('Build an NFA from a regex')).toBeInTheDocument();
     expect(within(panel).getByText('Create ▾ → From regex…')).toBeInTheDocument();
-    expect(within(panel).getByText(/\\eps/)).toBeInTheDocument();
+    // Commas, not ·, between the operators: · could be read as concatenation.
+    expect(
+      within(panel).getByText(String.raw`| or, + one or more, * any number, ε as \eps`),
+    ).toBeInTheDocument();
     expect(within(panel).getByText('Turn the automaton into a regex')).toBeInTheDocument();
     expect(within(panel).getByText('To regex')).toBeInTheDocument();
     expect(

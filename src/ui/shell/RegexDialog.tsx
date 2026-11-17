@@ -29,6 +29,8 @@ function RegexModal(): React.JSX.Element {
   const refusal = canThompson(text);
   const parsed = text === '' ? null : parseRegex(text);
   const error = parsed && !parsed.ok ? parsed : null;
+  // Parses but can't be built (too many states): said under the box too, not only as a tooltip.
+  const tooLong = parsed?.ok && refusal !== null ? refusal : null;
 
   const submit = (): void => {
     if (refusal !== null) return;
@@ -76,8 +78,8 @@ function RegexModal(): React.JSX.Element {
             className="av-regex-input"
             data-testid="regex-input"
             aria-label="Regex"
-            aria-invalid={error !== null}
-            aria-describedby={error ? `${id}-error` : `${id}-syntax`}
+            aria-invalid={error !== null || tooLong !== null}
+            aria-describedby={error || tooLong ? `${id}-error` : `${id}-syntax`}
             data-focus-stop
             spellCheck={false}
             autoComplete="off"
@@ -108,8 +110,20 @@ function RegexModal(): React.JSX.Element {
               <p>{error.error}</p>
             </div>
           )}
+          {tooLong && (
+            <div
+              id={`${id}-error`}
+              className="av-regex-error"
+              data-testid="regex-error"
+              role="alert"
+            >
+              <p>{tooLong}</p>
+            </div>
+          )}
+          {/* Each operator in a chip, commas between: a · could be read as concatenation. */}
           <p id={`${id}-syntax`} className="av-regex-syntax">
-            {String.raw`| or · + one or more · * any number · ε as \eps · ∅ as \emptyset`}
+            <code>|</code> or, <code>+</code> one or more, <code>*</code> any number, ε as{' '}
+            <code>{String.raw`\eps`}</code>, ∅ as <code>{String.raw`\emptyset`}</code>
           </p>
           <div className="av-regex-foot">
             <button

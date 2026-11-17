@@ -98,7 +98,7 @@ const TABS: Tab[] = [
       {
         gesture: { mouse: 'click', on: 'Create ▾ → From regex…' },
         action: 'Build an NFA from a regex',
-        hint: '| or · + one or more · * any number · \\eps',
+        hint: '| or, + one or more, * any number, ε as \\eps',
       },
       {
         gesture: { mouse: 'click', on: 'To regex' },
