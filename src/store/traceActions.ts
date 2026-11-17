@@ -113,5 +113,6 @@ export function pickEliminate(stateId: StateId, onError?: (message: string) => v
     return;
   }
   const pick = next.steps.findIndex((s) => s.phase === 'pick' && s.removing === stateId);
+  if (pick < 0) return;
   replaceTrace(next, pick);
 }

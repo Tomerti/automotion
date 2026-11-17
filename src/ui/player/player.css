@@ -220,7 +220,10 @@ select.av-player-speed {
   stroke-dasharray: 6 5;
   pointer-events: none;
 }
-/* To regex: while paused, a click on a state (not s or f) removes it next. */
+/*
+ * To regex: while paused, a click on a state (not s or f) removes it next. The ids are
+ * GNFA_START and GNFA_ACCEPT in core/eliminate.ts: change them together.
+ */
 .av-trace-diagram[data-picking='true']
   .av-state:not([data-state-id='gnfa-s']):not([data-state-id='gnfa-f']) {
   cursor: pointer;
