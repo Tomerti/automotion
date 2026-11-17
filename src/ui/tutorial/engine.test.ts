@@ -146,7 +146,7 @@ describe('a lesson with a start automaton', () => {
     expect(app().readOnly).toEqual([]);
   });
 
-  it('quit removes every owned automaton; finish keeps them', () => {
+  it('quit and finish both remove every owned automaton', () => {
     startLesson(TEST_LESSON);
     app().addAutomaton(convert().result);
     expect(tut().owned).toHaveLength(2);
@@ -158,7 +158,8 @@ describe('a lesson with a start automaton', () => {
     const own = tut().owned;
     expect(own).toHaveLength(2);
     finishLesson();
-    for (const id of own) expect(app().automata.some((a) => a.id === id)).toBe(true);
+    for (const id of own) expect(app().automata.some((a) => a.id === id)).toBe(false);
+    expect(app().automata.map((a) => a.id)).toEqual(['mine']);
     expect(app().readOnly).toEqual([]);
   });
 

@@ -628,10 +628,7 @@
   font-size: 15px;
   line-height: 1.5;
 }
-.av-welcome-note.av-finished-note {
-  margin: 8px 0 0;
-}
-/* On the actions, not the note: the tutorial's popup has no note and needs the same room. */
+/* On the actions, so every finish popup has the same room. */
 .av-finished .av-welcome-actions {
   margin-top: 18px;
 }

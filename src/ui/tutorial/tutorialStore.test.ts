@@ -204,14 +204,36 @@ describe('startLesson', () => {
     expect(active()?.name).toBe('Tutorial');
   });
 
-  it('starting again from the closing card keeps the finished one', () => {
+  it('starting again from the closing card removes the finished one', () => {
     startLesson('basics');
     const first = tut().automatonId;
     const done = lessonSteps(BASICS).length - 1;
     tutorialStore.setState({ progress: done, current: done });
     startLesson('basics');
-    expect(app().automata.some((a) => a.id === first)).toBe(true);
-    expect(active()?.name).toBe('Tutorial 2');
+    expect(app().automata.some((a) => a.id === first)).toBe(false);
+    expect(active()?.name).toBe('Tutorial');
+  });
+
+  it('lessonIds follows owned and clears when the lesson ends', () => {
+    startLesson('basics');
+    expect(app().lessonIds).toEqual([tut().automatonId]);
+    endLesson();
+    expect(app().lessonIds).toEqual([]);
+  });
+
+  it('Finish of a lesson removes its copy and what was saved from its walkthrough', () => {
+    resetAppStore({ automata: [loop()] });
+    startLesson(TEST_LESSON);
+    const copy = tut().automatonId;
+    // Simulate a saved walkthrough result joining `owned`, as follow() does.
+    const saved = { ...loop(), id: 'saved', name: 'saved' };
+    app().addAutomaton(saved);
+    tutorialStore.setState({ owned: [copy!, 'saved'] });
+    app().setLessonIds([copy!, 'saved']);
+    finishLesson();
+    expect(app().automata.map((a) => a.id)).toEqual(['mine']);
+    expect(app().activeId).toBe('mine');
+    expect(app().lessonIds).toEqual([]);
   });
 
   it('quitting ends it and removes its automaton', () => {
