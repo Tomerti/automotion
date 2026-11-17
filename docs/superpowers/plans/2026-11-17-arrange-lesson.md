@@ -4,6 +4,8 @@
 
 **Goal:** A seventh lesson, "Arrange", that has the student press Tidy and then do each arranging gesture once (box select, Ctrl+click, group drag, snap, bend, label side, start arrow, Ctrl+A) on a read-only "Divisible by 5" DFA.
 
+> **Superseded in part (2026-11-17, after review):** the lesson now runs on "Number of 0s mod 5 = 0" and has no snap step (8 counted steps). The spec's amendment is the current design.
+
 **Architecture:** Lessons are data (`src/ui/tutorial/lessons/*.ts`) run by the existing engine (`engine.ts`) and store (`tutorialStore.ts`). The only engine addition is Tidy reporting: a `tidy` lesson action plus a `tidied` snapshot of the lesson automaton in `TutorialContext`, which the "moved / bent / turned" checks compare against. Everything else is a new lesson file, its listing, and tests.
 
 **Tech Stack:** TypeScript (strict, `noUncheckedIndexedAccess`), React 19, Zustand, Vitest + Testing Library, Playwright.

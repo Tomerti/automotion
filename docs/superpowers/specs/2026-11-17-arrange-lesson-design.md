@@ -109,7 +109,7 @@ A throwaway spike ran `layoutAutomaton` on it from three different messy drawing
 
 **Messy drawing:** states apart (no overlaps, so it reads as badly drawn rather than broken) with
 crossing arrows: q_0 (400, 300), q_1 (150, 150), q_2 (420, 140), q_3 (180, 320), q_4 (300, 220).
-The builder may adjust it, keeping nothing explicit.
+The builder may adjust it, keeping every drawing choice automatic.
 
 **What each step names:** box «q_1» and «q_2» (step 2; the box is clean); Ctrl+click «q_3»
 (step 3); bend «q_4» → «q_0» and move its symbols (steps 5–6, straight along the bottom row); the
