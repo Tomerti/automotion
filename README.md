@@ -98,7 +98,8 @@ Press **?** in the app to see every control.
 
 ### Regular expressions
 
-- **From regex** (in **Create**) creates the minimal DFA for the regex.
+- **Build one from a regex:** on an empty canvas, click **or build one from a regex**, type it, and the
+  canvas fills with the regex's minimal DFA.
 - **The syntax:** `|` for or, `+` one or more, `*` any number, `\eps` for ε, `\emptyset` for ∅;
   write symbols side by side to join them and use `( )` to group.
 

@@ -13,7 +13,6 @@ import { copyLink } from './copyLink';
 import { downloadText, slug } from './download';
 import { IMPORT_ACCEPT, importFile } from './importFile';
 import { PasteLatexDialog } from './PasteLatexDialog';
-import { openRegexDialog } from './regexDialogStore';
 import { toast } from './toastStore';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
 
@@ -174,56 +173,6 @@ function ImportMenu(props: { onPickFile: () => void; onPasteLatex: () => void })
             'Paste an automaton’s LaTeX (TikZ) code, from Overleaf, notes, …',
             onPasteLatex,
           )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Create: a menu of the ways to start an automaton, a blank one or one built from a regex. */
-function CreateMenu(): React.JSX.Element {
-  const { open, setOpen, rootRef, triggerRef } = usePopover();
-  const menuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (open) focusFirstItem(menuRef.current);
-  }, [open]);
-  const item = (label: string, hint: string, run: () => void): React.JSX.Element => (
-    <button
-      type="button"
-      role="menuitem"
-      title={hint}
-      onClick={() => {
-        setOpen(false);
-        run();
-      }}
-    >
-      {label}
-    </button>
-  );
-  return (
-    <div className="av-menu-anchor av-history-export" ref={rootRef}>
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title="Create a new automaton (switch it between DFA and NFA above the canvas)"
-        onClick={() => setOpen(!open)}
-      >
-        Create
-      </button>
-      {open && (
-        <div
-          ref={menuRef}
-          className="av-popover av-menu"
-          role="menu"
-          aria-label="Create"
-          onKeyDown={onMenuKeyDown}
-        >
-          {item('Blank automaton', 'An empty DFA to draw on', () =>
-            appStore.getState().createAutomaton(),
-          )}
-          {item('From regex', 'Type a regular expression and get its minimal DFA', openRegexDialog)}
         </div>
       )}
     </div>
@@ -439,7 +388,13 @@ export function HistoryBar(): React.JSX.Element {
       onPointerLeave={() => (hoveredRef.current = false)}
     >
       <div className="av-history-actions">
-        <CreateMenu />
+        <button
+          type="button"
+          title="Create a new automaton (switch it between DFA and NFA above the canvas)"
+          onClick={() => appStore.getState().createAutomaton()}
+        >
+          Create
+        </button>
       </div>
       <ul ref={listRef} className="av-history-list" data-picking={picking ? 'true' : undefined}>
         {automata.map((a) => {

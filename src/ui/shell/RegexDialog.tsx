@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { normalizeRegexText, parseRegex } from '../../core/regex';
 import { canBuildFromRegex } from '../../core/regexToDfa';
 import { createFromRegex } from '../../store/regexActions';
+import { fitActive } from '../canvas/useCanvasEditing';
 import { CloseIcon } from './icons';
 import { closeRegexDialog, useRegexDialog } from './regexDialogStore';
 import { toast } from './toastStore';
@@ -14,7 +15,7 @@ export function RegexDialog(): React.JSX.Element | null {
 }
 
 /**
- * Create → From regex: a box for a regular expression. Create DFA adds the regex's
+ * The empty canvas's "or build one from a regex": a box for a regular expression. Create DFA adds the regex's
  * minimal DFA as a new automaton; a syntax error is shown under the offending character.
  */
 function RegexModal(): React.JSX.Element {
@@ -36,7 +37,10 @@ function RegexModal(): React.JSX.Element {
   const submit = (): void => {
     if (refusal !== null) return;
     closeRegexDialog();
-    void createFromRegex(text, (m) => toast(m, 'error'));
+    // The DFA lands in the canvas the dialog came from: fit it, whatever that canvas was panned to.
+    void createFromRegex(text, (m) => toast(m, 'error')).then((id) => {
+      if (id !== null) fitActive();
+    });
   };
 
   return (

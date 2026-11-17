@@ -21,6 +21,12 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Create is one click again; regex from the empty canvas (2026-11-17)
+
+- [x] Create makes a blank automaton in one click again (its menu is gone): the empty canvas's "or build one from a regex" link is the way in
+- [x] Building from a regex fills that empty canvas in place (same history entry, one undo step back to the empty one) and fits it; with no empty automaton to fill it adds one
+- [x] The link is in the run's orange and on the dot grid like the two hint lines above it (it had the global button box: 30 px tall, off the 20 px rows)
+
 ### To regex removed (2026-11-17)
 
 - [x] To regex (automaton → regex by state elimination) dropped by decision, with its walkthrough, `playingStore`, `replaceTrace`, `edgeTitles` and Controls row; From regex stays

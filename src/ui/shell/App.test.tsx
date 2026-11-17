@@ -81,7 +81,6 @@ it('Create from the history bar shows its diagram, and the kind pill switches it
   const user = userEvent.setup();
   render(<App />);
   await user.click(screen.getByRole('button', { name: 'Create' }));
-  await user.click(screen.getByRole('menuitem', { name: 'Blank automaton' }));
   expect(screen.getByTestId('diagram')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Untitled' })).toBeInTheDocument();
   const pill = screen.getByRole('group', { name: 'Kind' });

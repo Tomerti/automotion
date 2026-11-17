@@ -133,18 +133,29 @@
   font-size: 12.5px;
 }
 
-/* The one clickable thing in the hint: the rest of it lets pointers through to the canvas. */
+/*
+ * The one clickable thing in the hint: the rest of it lets pointers through to the canvas. It
+ * undoes the global button box (inline-flex, 30 px min-height, padding) so its line is one dot
+ * gap tall like the two above it, and sits between the same rows of dots. In the run's orange.
+ */
 .av-canvas-hint-link {
+  display: inline;
+  min-height: 0;
   padding: 0;
   font: inherit;
-  color: var(--av-accent);
+  color: var(--av-run);
   background: none;
   border: 0;
+  border-radius: 0;
   cursor: pointer;
   pointer-events: auto;
 }
+button.av-canvas-hint-link:active:not(:disabled) {
+  transform: none;
+}
 @media (hover: hover) {
-  .av-canvas-hint-link:hover {
+  button.av-canvas-hint-link:hover:not(:disabled) {
+    background: none;
     text-decoration: underline;
   }
 }

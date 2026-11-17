@@ -10,7 +10,6 @@ import { startRun } from '../../store/traceActions';
 import { ConfirmDialog } from './ConfirmDialog';
 import { confirmStore } from './confirmStore';
 import { HistoryBar } from './HistoryBar';
-import { closeRegexDialog, useRegexDialog } from './regexDialogStore';
 import { toastStore } from './toastStore';
 
 const parity = fixture({
@@ -98,27 +97,21 @@ describe('HistoryBar', () => {
     render(<HistoryBar />);
     expect(screen.queryByRole('button', { name: /New [DN]FA/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Create' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Blank automaton' }));
     expect(items()).toHaveLength(3);
     expect(items()[0]).toHaveTextContent('Untitled');
     expect(items()[0]).toHaveAttribute('aria-current', 'page');
     expect(st().automata[0]?.kind).toBe('DFA');
   });
 
-  it('Create opens a menu with Blank automaton and From regex', async () => {
+  it('Create is one click: no menu, no regex entry (that lives on the empty canvas)', async () => {
     const user = userEvent.setup();
-    closeRegexDialog();
     render(<HistoryBar />);
-    expect(screen.queryByRole('button', { name: 'More ways to create' })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Create' }));
-    expect(items()).toHaveLength(2);
-    await user.click(screen.getByRole('menuitem', { name: 'Blank automaton' }));
+    const create = screen.getByRole('button', { name: 'Create' });
+    expect(create).not.toHaveAttribute('aria-haspopup');
+    await user.click(create);
     expect(items()).toHaveLength(3);
-    await user.click(screen.getByRole('button', { name: 'Create' }));
-    await user.click(screen.getByRole('menuitem', { name: 'From regex' }));
-    expect(useRegexDialog.getState().open).toBe(true);
-    expect(items()).toHaveLength(3);
-    closeRegexDialog();
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'From regex' })).toBeNull();
   });
 
   it('an edit moves the automaton to the top of the list', () => {

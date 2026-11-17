@@ -23,8 +23,36 @@ const seeded = fixture({
 
 beforeEach(() => resetAppStore({ automata: [seeded], activeId: seeded.id }));
 
+const blank = fixture({ name: 'Untitled', kind: 'DFA', alphabet: '', states: [], edges: [] });
+
 describe('createFromRegex', () => {
-  it('adds one minimal DFA named after the regex and opens it', async () => {
+  it('fills the active empty automaton in place: no new history entry, one undo step', async () => {
+    resetAppStore({ automata: [seeded, blank], activeId: blank.id });
+    const id = await createFromRegex('(a|b)*abb');
+    const st = appStore.getState();
+    expect(id).toBe(blank.id);
+    expect(st.automata).toHaveLength(2);
+    expect(st.activeId).toBe(blank.id);
+    const a = st.automata.find((x) => x.id === blank.id)!;
+    expect(a.kind).toBe('DFA');
+    expect(a.name).toBe('(a|b)*abb');
+    expect(a.states).toHaveLength(4);
+    expect(a.states.some((s) => s.x !== 0 || s.y !== 0)).toBe(true);
+    st.undo();
+    const back = appStore.getState().automata.find((x) => x.id === blank.id)!;
+    expect(back.states).toHaveLength(0);
+    expect(back.name).toBe('Untitled');
+  });
+
+  it('adds a new automaton when there is none to fill', async () => {
+    resetAppStore({ automata: [], activeId: null });
+    const id = await createFromRegex('a');
+    const st = appStore.getState();
+    expect(st.automata).toHaveLength(1);
+    expect(st.activeId).toBe(id);
+  });
+
+  it('adds one minimal DFA named after the regex and opens it when the active one has states', async () => {
     const before = appStore.getState().automata.length;
     const id = await createFromRegex('(a|b)*abb');
     const st = appStore.getState();

@@ -51,7 +51,8 @@ https://tomerti.github.io/automotion/.
 - `thompson.ts` only exports `thompsonNfa` (regex → ε-NFA). `regexToDfa.ts`: regex → Thompson NFA →
   bitset subset construction → Hopcroft minimization → relabel (`q_0`… breadth-first); input past
   `MAX_REGEX_INPUT` (1000 chars) or a minimal DFA past `MAX_DFA_STATES` is refused. It makes no trace;
-  `store/regexActions.ts` (`createFromRegex`) lays the result out and adds it.
+  `store/regexActions.ts` (`createFromRegex`) lays the result out and puts it in the active automaton when
+  that is empty (in place, one undo step; the dialog opens from the empty canvas's link), else adds it.
 - `geometry.ts`: how the diagram is drawn, as pure math (radius, curves and automatic bends, loops,
   start arrows, label spots). The canvas, exports and the layout's scoring all use it, so change it here.
 - `testing/fixtures.ts` (`fixture()`: ids equal labels) and `testing/arbitraries.ts` (fast-check
