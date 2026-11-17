@@ -98,8 +98,8 @@ Press **?** in the app to see every control.
 
 ### Regular expressions
 
-- **From regex…** (in **Create**) builds an NFA by Thompson's construction, one operator per step.
-- **To regex** removes states one at a time until a regex is left. Click a state while paused to
+- **From regex…** (in **Create**) creates the minimal DFA for the regex.
+- **To regex** removes states one at a time until a simplified regex is left. Click a state while paused to
   choose which goes next.
 - **The syntax:** `|` for or, `+` one or more, `*` any number, `\eps` for ε, `\emptyset` for ∅;
   write symbols side by side to join them and use `( )` to group.

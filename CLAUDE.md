@@ -49,13 +49,14 @@ https://tomerti.github.io/automotion/.
   than `| + * ( ) , \`, ε, ∅ and whitespace (ignored); `\eps`/`\emptyset` normalise to ε/∅. Spans and
   error offsets are UTF-16 offsets into the normalised text. `regexSimplify.ts`: the smart
   constructors (`mkUnion`, `mkConcat`, `mkStar`) that keep elimination labels short.
-- `thompson.ts`: regex → NFA as a `thompson` trace, refused past `MAX_THOMPSON_STATES` (64).
-  `thompsonLayout.ts` places it structurally (no elk) once, so nothing moves between steps.
+- `thompson.ts` only exports `thompsonNfa` (regex → ε-NFA). `regexToDfa.ts`: regex → Thompson NFA →
+  bitset subset construction → Hopcroft minimization → relabel (`q_0`… breadth-first); input past
+  `MAX_REGEX_INPUT` (1000 chars) or a minimal DFA past `MAX_DFA_STATES` is refused. It makes no trace;
+  `store/regexActions.ts` (`createFromRegex`) lays the result out and adds it.
 - `eliminate.ts`: automaton → regex by state elimination on a GNFA (new states `gnfa-s`/`gnfa-f`;
   `ui/player/player.css` hard-codes those ids). `order` is a prefix of states to remove first, the
-  rest automatic; it throws once a label passes `MAX_REGEX_LENGTH` (2000 chars).
-- The `thompson` trace has no source automaton: use `traceSourceId` (`trace.ts`) or `ownsId`
-  (`ui/tutorial/engine.ts`), never `trace.source` on `AnyTrace`.
+  rest automatic; it throws once a label passes `MAX_REGEX_LENGTH` (2000 chars). The smart constructors
+  also fold `ε|rr*`, `r|r*`, `(ε|r)*` and adjacent `r*r*`, `(ε|r)r*` into `r*`, so `a*b*` stays `a*b*`.
 - `geometry.ts`: how the diagram is drawn, as pure math (radius, curves and automatic bends, loops,
   start arrows, label spots). The canvas, exports and the layout's scoring all use it, so change it here.
 - `testing/fixtures.ts` (`fixture()`: ids equal labels) and `testing/arbitraries.ts` (fast-check

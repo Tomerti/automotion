@@ -1,5 +1,7 @@
 # Regex: regex → NFA and NFA → regex
 
+> Note: the regex → NFA walkthrough described here was replaced the same day; see `2026-11-17-regex-rework-design.md`.
+
 Agreed in chat 2026-11-17. Extends the main design spec (`2026-10-28-automotion-design.md`, which
 listed "Regex → NFA (planned later)"); this document wins where they disagree.
 
