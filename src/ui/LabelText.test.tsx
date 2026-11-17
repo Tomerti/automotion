@@ -25,4 +25,10 @@ describe('LabelText', () => {
     const { container } = render(<LabelText text="Ended in q_1,  which" />);
     expect(container.textContent).toBe('Ended in q1,  which');
   });
+
+  it('keeps a quote inside a quoted regex, and subscripts after it', () => {
+    const { container } = render(<LabelText text="'a'_b': then q_1, then {q_2', q_3}." />);
+    expect(container.textContent).toBe("'a'_b': then q1, then {q2', q3}.");
+    expect(subs(container)).toEqual(['1', '2', '3']);
+  });
 });

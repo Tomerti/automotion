@@ -1,6 +1,7 @@
 import fc from 'fast-check';
 import { EPSILON } from '../model';
 import type { Automaton, AutomatonKind, Transition } from '../model';
+import type { Regex } from '../regex';
 
 export interface ArbOpts {
   maxStates?: number;
@@ -101,4 +102,31 @@ export function arbDfa(opts: ArbOpts = {}): fc.Arbitrary<Automaton> {
 export function arbWord(alphabet = 'ab', maxLength = 8): fc.Arbitrary<string> {
   if (alphabet.length === 0) return fc.constant('');
   return fc.array(fc.constantFrom(...Array.from(alphabet)), { maxLength }).map((cs) => cs.join(''));
+}
+
+/** Random regexes (no spans) over `symbols`; unions have 2-3 branches. */
+export function arbRegex(symbols = 'ab', maxDepth = 4): fc.Arbitrary<Regex> {
+  const syms = Array.from(symbols);
+  const leaf: fc.Arbitrary<Regex> = fc.oneof(
+    ...(syms.length > 0
+      ? [fc.constantFrom(...syms).map((sym): Regex => ({ type: 'sym', sym }))]
+      : []),
+    fc.constant<Regex>({ type: 'eps' }),
+    fc.constant<Regex>({ type: 'empty' }),
+  );
+  const tree = fc.memo((depth: number): fc.Arbitrary<Regex> => {
+    if (depth <= 0) return leaf;
+    const sub = tree(depth - 1);
+    return fc.oneof(
+      leaf,
+      fc.tuple(sub, sub).map(([left, right]): Regex => ({ type: 'concat', left, right })),
+      fc
+        .array(sub, { minLength: 2, maxLength: 3 })
+        .map((branches): Regex => ({ type: 'union', branches })),
+      fc
+        .tuple(fc.constantFrom<'star' | 'plus'>('star', 'plus'), sub)
+        .map(([type, body]): Regex => ({ type, body })),
+    );
+  });
+  return tree(maxDepth);
 }

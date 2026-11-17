@@ -56,7 +56,7 @@ test('the card hides on a new canvas and comes back on the lesson’s automaton'
 }) => {
   await openApp(page, { clear: true });
   const { card } = await startLesson(page, 'lesson-nfa');
-  await page.getByRole('button', { name: 'Create' }).click();
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
   await expect(card).toHaveCount(0);
   await page.getByRole('navigation', { name: 'History' }).getByText('Ends in 01').click();
   await expect(card).toBeVisible();

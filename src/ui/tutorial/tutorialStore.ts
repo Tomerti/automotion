@@ -11,7 +11,7 @@ import type { AppState } from '../../store/store';
 import { fitActive } from '../canvas/useCanvasEditing';
 import { playFanfareSound } from '../player/sound';
 import { askConfirm } from '../shell/confirmStore';
-import { advance, lessonSteps, pacingStep } from './engine';
+import { advance, lessonSteps, ownsId, pacingStep } from './engine';
 import type { Lesson, LessonAction, LessonId, TutorialContext } from './engine';
 import { lessonById } from './lessons';
 import { isLessonId, markLessonFinished } from './lessonsDone';
@@ -102,7 +102,7 @@ let unsubscribe: (() => void) | null = null;
 function nextOwned(owned: string[], app: AppState, prev: AppState, grows: boolean): string[] {
   const t = prev.trace;
   let next = owned;
-  if (grows && t && t.kind !== 'run' && owned.includes(t.source.id)) {
+  if (grows && t && t.kind !== 'run' && ownsId(owned, t)) {
     const saved = t.result.id;
     const isNew = !prev.automata.some((a) => a.id === saved);
     if (isNew && !owned.includes(saved) && app.automata.some((a) => a.id === saved)) {
@@ -282,7 +282,7 @@ export function lessonStopAt(
   trace: AnyTrace,
   t: TutorialState = tutorialStore.getState(),
 ): number | null {
-  if (!t.active || !t.lesson || !t.owned.includes(trace.source.id)) return null;
+  if (!t.active || !t.lesson || !ownsId(t.owned, trace)) return null;
   const ctx = { ...tutorialContext(appStore.getState(), t.automatonId, t), trace };
   const pauseAt = pacingStep(t.lesson, t, ctx)?.pauseAt;
   return pauseAt ? pauseAt(ctx) : null;
@@ -296,7 +296,7 @@ export function lessonOpensPaused(
   trace: AnyTrace,
   t: TutorialState = tutorialStore.getState(),
 ): boolean {
-  if (!t.active || !t.lesson || !t.owned.includes(trace.source.id)) return false;
+  if (!t.active || !t.lesson || !ownsId(t.owned, trace)) return false;
   if (trace.kind === 'subset') return t.lesson.pausedConvert === true;
   return trace.kind === 'run' && (t.lesson.pausedRuns?.includes(trace.word) ?? false);
 }
@@ -341,7 +341,7 @@ export function finishLesson(): void {
   endLesson();
   if (lesson && isLessonId(lesson.id)) markLessonFinished(lesson.id);
   const app = appStore.getState();
-  if (app.trace && owned.includes(app.trace.source.id)) app.closeTrace();
+  if (app.trace && ownsId(owned, app.trace)) app.closeTrace();
   if (lesson?.noun === 'tutorial') {
     removeAutomata(owned);
     tutorialStore.setState({ celebrating: lesson });

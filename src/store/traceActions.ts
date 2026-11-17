@@ -3,6 +3,9 @@ import { canRun, runWord } from '../core/run';
 import { canConvert, subsetConstruction } from '../core/subset';
 import { appStore } from './store';
 
+const message = (e: unknown, fallback: string): string =>
+  e instanceof Error ? e.message : fallback;
+
 /** Run `word` on the active automaton and open the resulting trace (no-op if it can't run). */
 export function startRun(word: string): void {
   const { automata, activeId, openTrace } = appStore.getState();
@@ -28,7 +31,7 @@ export async function startSubset(onError?: (message: string) => void): Promise<
   try {
     trace = subsetConstruction(a);
   } catch (e) {
-    onError?.(e instanceof Error ? e.message : 'Could not convert the automaton');
+    onError?.(message(e, 'Could not convert the automaton'));
     return;
   }
   converting = true;

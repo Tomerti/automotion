@@ -77,6 +77,20 @@ describe('Controls popup', () => {
     expect(Array.from(panels).filter((p) => !(p as HTMLElement).hidden)).toHaveLength(1);
   });
 
+  it('the Run tab lists creating a DFA from a regex', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
+    await user.click(within(dialog()!).getByRole('tab', { name: 'Run' }));
+    const panel = within(dialog()!).getByRole('tabpanel');
+    expect(within(panel).getByText('Create a DFA from a regex')).toBeInTheDocument();
+    expect(within(panel).getByText('regex link (empty canvas)')).toBeInTheDocument();
+    // Commas, not ·, between the operators: · could be read as concatenation.
+    expect(
+      within(panel).getByText(String.raw`| or, + one or more, * any number, ε as \eps`),
+    ).toBeInTheDocument();
+  });
+
   it('arrow keys move between tabs and Tab stays inside the dialog', async () => {
     const user = userEvent.setup();
     render(<App />);

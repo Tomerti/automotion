@@ -103,6 +103,17 @@ describe('HistoryBar', () => {
     expect(st().automata[0]?.kind).toBe('DFA');
   });
 
+  it('Create is one click: no menu, no regex entry (that lives on the empty canvas)', async () => {
+    const user = userEvent.setup();
+    render(<HistoryBar />);
+    const create = screen.getByRole('button', { name: 'Create' });
+    expect(create).not.toHaveAttribute('aria-haspopup');
+    await user.click(create);
+    expect(items()).toHaveLength(3);
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'From regex' })).toBeNull();
+  });
+
   it('an edit moves the automaton to the top of the list', () => {
     resetAppStore({ automata: [parity, blank], activeId: 'blank' });
     render(<HistoryBar />);

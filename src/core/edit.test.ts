@@ -269,6 +269,8 @@ describe('parseSymbolInput', () => {
 describe('normalizeSymbolText', () => {
   it('replaces \\eps with ε while typing', () =>
     expect(normalizeSymbolText('a,\\eps')).toBe('a,ε'));
+  it('replaces a pasted \\epsilon with ε, not ε followed by ilon', () =>
+    expect(normalizeSymbolText('a,\\epsilon,\\eps')).toBe('a,ε,ε'));
 });
 
 describe('normalizeStateLabel', () => {

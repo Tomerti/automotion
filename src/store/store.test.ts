@@ -123,6 +123,16 @@ describe('store', () => {
     expect(st().trace).toBeNull();
   });
 
+  it('edits are blocked while a trace is open, and each opened trace gets a new trace key', () => {
+    const { st, active } = setup();
+    st().openTrace(runWord(active(), 'a'));
+    const key = st().traceKey;
+    st().edit((a) => renameAutomaton(a, 'x'));
+    expect(active().name).not.toBe('x');
+    st().openTrace(runWord(active(), 'a'));
+    expect(st().traceKey).not.toBe(key);
+  });
+
   it('createAutomaton picks a free name, returns id, becomes active, goes first', () => {
     const s = createAppStore();
     const id1 = s.getState().createAutomaton();

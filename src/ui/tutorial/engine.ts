@@ -1,5 +1,6 @@
 import { startStates } from '../../core/model';
 import type { Automaton, State, StateId, Sym } from '../../core/model';
+import { traceSourceId } from '../../core/trace';
 import type { AnyTrace } from '../../core/trace';
 
 export const LESSON_IDS = [
@@ -46,10 +47,14 @@ export interface TutorialContext {
    */
   tidied?: Automaton;
 }
+/** `trace` was computed from an automaton in `owned`. */
+export function ownsId(owned: readonly string[], trace: AnyTrace): boolean {
+  return owned.includes(traceSourceId(trace));
+}
 
 /** The open trace is a run or walkthrough of an automaton the lesson owns. */
 export function ownsTrace(ctx: TutorialContext): boolean {
-  return ctx.trace !== null && ctx.owned.includes(ctx.trace.source.id);
+  return ctx.trace !== null && ownsId(ctx.owned, ctx.trace);
 }
 
 /** An owned automaton is open, or a walkthrough of one: anything else is "elsewhere". */

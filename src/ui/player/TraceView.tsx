@@ -10,7 +10,7 @@ export function TraceView({
 }: {
   trace: AnyTrace;
   stepIndex: number;
-}): React.JSX.Element {
+}): React.JSX.Element | null {
   switch (trace.kind) {
     case 'run':
       return <RunTraceView trace={trace} stepIndex={stepIndex} />;

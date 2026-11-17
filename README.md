@@ -7,7 +7,7 @@
 
 <p align="center">
   Draw a DFA or an NFA, type a word, and watch it run, one symbol at a time.<br>
-  Convert NFAs to DFAs and minimize them, with every step explained.
+  Convert NFAs to DFAs, minimize them, and build one from a regex, with every step explained.
 </p>
 
 <p align="center">
@@ -95,6 +95,13 @@ Press **?** in the app to see every control.
   which states differ and on which symbol.
 - **Every step is explained** in words. Save the result as a new automaton, or go from a
   conversion straight to minimizing it.
+
+### Regular expressions
+
+- **Build one from a regex:** on an empty canvas, click **or build one from a regex**, type it, and the
+  canvas fills with the regex's minimal DFA.
+- **The syntax:** `|` for or, `+` one or more, `*` any number, `\eps` for ε, `\emptyset` for ∅;
+  write symbols side by side to join them and use `( )` to group.
 
 ### Save, share and export
 

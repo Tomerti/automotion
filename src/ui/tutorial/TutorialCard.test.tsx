@@ -5,6 +5,7 @@ import { addState, renameState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
 import { runWord } from '../../core/run';
 import { subsetConstruction } from '../../core/subset';
+import { traceSourceId } from '../../core/trace';
 import { appStore, resetAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
 import App from '../shell/App';
@@ -195,7 +196,7 @@ it('asks to leave a run before an editing step first, in plain ink, not as a mis
   expect(first).toHaveTextContent('First, press Esc to get back to editing.');
   expect(first.querySelector('kbd')).toHaveTextContent('Esc');
   expect(card().querySelector('.av-tutorial-hint')).toBeNull();
-  expect(app().trace?.source.id).toBe(id);
+  expect(traceSourceId(app().trace!)).toBe(id);
 });
 
 it('says a part is done while the run that ended it is open, until Esc closes it', () => {

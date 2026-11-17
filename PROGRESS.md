@@ -9,14 +9,41 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] Repo social preview: upload `public/og.png` in GitHub Settings → General → Social preview (web UI only, no API)
+- [ ] At 1024×480 with the history bar open, the floating trace player sits partly under the history bar, hiding its first buttons (Last among them); every walkthrough, not just regex
+- [ ] Typing `\epsilon` key by key in the regex or symbol inputs still gives `εilon`: `\eps` is normalised the moment it's typed (pasting `\epsilon` works)
+- [ ] `LabelText` keeps a quoted `'…'` literal only before a space, `,` `.` `:` `;` or the end: a quote followed directly by `)`, `!`, `?` or `→` is parsed as a label (no caller writes that today)
 - [ ] A state's name can still drop one device pixel when its rename input opens at some zooms (2 of 11 zoom levels at 125%, 5 at 150%, in Chrome): there the SVG label and the HTML input rasterize the text differently (the ink also moves sideways), which no input position can cancel. Gone for good only if the text being edited is drawn by the SVG itself, with the input's own text invisible (the caret and selection stay the input's)
 
 ## Ideas (later)
 
-- [ ] Regex → NFA
-- [ ] Lessons for regex → NFA, TMs, and checking an automaton against a language, as those features land
+- [ ] Lessons for regex → DFA, TMs, and checking an automaton against a language, as those features land
 
 ## Done
+
+### Create is one click again; regex from the empty canvas (2026-11-17)
+
+- [x] Create makes a blank automaton in one click again (its menu is gone): the empty canvas's "or build one from a regex" link is the way in
+- [x] Building from a regex fills that empty canvas in place (same history entry, one undo step back to the empty one) and fits it; with no empty automaton to fill it adds one
+- [x] The link is in the run's orange and on the dot grid like the two hint lines above it (it had the global button box: 30 px tall, off the 20 px rows)
+
+### To regex removed (2026-11-17)
+
+- [x] To regex (automaton → regex by state elimination) dropped by decision, with its walkthrough, `playingStore`, `replaceTrace`, `edgeTitles` and Controls row; From regex stays
+- [x] The Create menu item reads From regex (no ellipsis)
+
+### Regex rework (2026-11-17)
+
+- [x] From regex… creates the regex's minimal DFA directly (Thompson NFA, subset construction, Hopcroft, relabel q_0…), named after the regex
+- [x] To regex simplifies more (`ε|rr*`, `r|r*`, `(ε|r)*`, `r*r*`, `(ε|r)r*` → `r*`), so `a*b*` comes back as `a*b*`
+- [x] From regex… moved into the Create button's menu next to Blank automaton; dialog "Create a DFA from a regex"
+- [x] The Thompson walkthrough (trace kind, view, layout, Save and convert to DFA) is removed
+
+### Regex (2026-11-17)
+
+- [x] Regex → NFA: From regex… (Create ▾, or the empty canvas's link) parses a regex (`core/regex`, errors shown with a caret) and walked through Thompson's construction one operator per step (replaced the same day by the minimal DFA, see Regex rework)
+- [x] NFA → regex: the toolbar's To regex walks through state elimination with simplified labels; clicking a state while paused picks the next one removed, and the done step shows the regex with a Copy button
+- [x] Controls' Run tab lists both, with the syntax; the README has a Regular expressions section
+- [x] `e2e/regex.spec.ts` covers both directions
 
 ### Arrange lesson (2026-11-17)
 

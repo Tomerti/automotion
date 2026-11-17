@@ -3,6 +3,7 @@ import type { Automaton } from '../../core/model';
 import { ignoringIncomplete, validate } from '../../core/validate';
 import { appStore, useAppStore } from '../../store/store';
 import type { Viewport } from '../../store/types';
+import { openRegexDialog } from '../shell/regexDialogStore';
 import { ContextMenu } from './ContextMenu';
 import { Diagram } from './Diagram';
 import { Arrowhead } from './EdgeView';
@@ -189,6 +190,11 @@ function EditableCanvas(props: {
           <p className="av-canvas-hint-small">
             <span>Ctrl+V pastes LaTeX (TikZ) code ·</span>{' '}
             <span>Drop a .json / .tex file to import</span>
+          </p>
+          <p className="av-canvas-hint-small">
+            <button type="button" className="av-canvas-hint-link" onClick={openRegexDialog}>
+              or build one from a regex
+            </button>
           </p>
         </div>
       )}

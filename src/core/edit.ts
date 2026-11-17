@@ -284,9 +284,9 @@ export function sameStructure(a: Automaton, b: Automaton): boolean {
 /** What a user may type for ε in a symbol input. */
 export const EPSILON_ALIASES = ['\\eps', 'eps', EPSILON];
 
-/** Live input normalization: `\eps` turns into ε as soon as it is typed. */
+/** Live input normalization: `\eps` turns into ε as soon as it is typed (a pasted `\epsilon` too). */
 export function normalizeSymbolText(text: string): string {
-  return text.replaceAll('\\eps', EPSILON);
+  return text.replaceAll('\\epsilon', EPSILON).replaceAll('\\eps', EPSILON);
 }
 
 /** Live state-name normalization: `\emptyset` turns into ∅ (the dead state's usual name). */

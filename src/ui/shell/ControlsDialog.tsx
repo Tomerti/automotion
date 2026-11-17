@@ -95,6 +95,11 @@ const TABS: Tab[] = [
       { gesture: { keys: ['→'] }, action: 'Step forward' },
       { gesture: { keys: ['←'] }, action: 'Step back' },
       { gesture: { keys: ['Esc'] }, action: 'Back to editing' },
+      {
+        gesture: { mouse: 'click', on: 'regex link (empty canvas)' },
+        action: 'Create a DFA from a regex',
+        hint: '| or, + one or more, * any number, ε as \\eps',
+      },
     ],
   },
   {

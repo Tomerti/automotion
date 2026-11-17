@@ -34,6 +34,11 @@ export interface RunTrace {
 
 export type AnyTrace = RunTrace | SubsetTrace | MinimizeTrace;
 
+/** Id of the automaton a trace was computed from. */
+export function traceSourceId(t: AnyTrace): string {
+  return t.source.id;
+}
+
 export interface SubsetStep extends StepBase {
   /** `starts`: several start states, so a single new one is added first. */
   phase: 'starts' | 'init' | 'expand' | 'done';

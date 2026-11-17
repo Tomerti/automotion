@@ -7,6 +7,7 @@ import { moveState } from '../../core/edit';
 import { fixture } from '../../core/testing/fixtures';
 import { layoutAutomaton } from '../../layout/layout';
 import { appStore, resetAppStore } from '../../store/store';
+import { closeRegexDialog, useRegexDialog } from '../shell/regexDialogStore';
 import { toastStore } from '../shell/toastStore';
 import { Canvas } from './Canvas';
 import { fitActive, tidyActive } from './useCanvasEditing';
@@ -131,6 +132,19 @@ describe('Canvas editing', () => {
     );
     fireEvent.doubleClick(diagram(), { clientX: 200, clientY: 150 });
     expect(screen.queryByTestId('canvas-hint')).toBeNull();
+  });
+
+  it('the empty canvas offers building from a regex', async () => {
+    load(fixture({ kind: 'DFA', alphabet: 'a', states: [], name: 'm' }));
+    render(<Canvas />);
+    closeRegexDialog();
+    await userEvent.setup().click(
+      within(screen.getByTestId('canvas-hint')).getByRole('button', {
+        name: 'or build one from a regex',
+      }),
+    );
+    expect(useRegexDialog.getState().open).toBe(true);
+    closeRegexDialog();
   });
 
   it('clicking a state selects it; clicking the background clears the selection', () => {

@@ -86,7 +86,7 @@ test('a copy pastes into another automaton', async ({ page }) => {
   await boxSelect(page, { x: q0.x - 50, y: q0.y - 50 }, { x: q1.x + 50, y: q1.y + 50 });
   await page.keyboard.press('Control+c');
 
-  await page.getByRole('button', { name: 'Create' }).click();
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
   await expect(page.getByTestId('canvas-hint')).toBeVisible();
   await page.mouse.move(q0.x + 60, q0.y + 60);
   await page.keyboard.press('Control+v');

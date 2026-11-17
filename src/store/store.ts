@@ -49,6 +49,8 @@ export interface AppState {
   viewports: Record<string, Viewport>;
   trace: AnyTrace | null;
   stepIndex: number;
+  /** Bumped by `openTrace`: the player is keyed on it, one per opened trace. */
+  traceKey: number;
   history: Record<string, { past: Automaton[]; future: Automaton[] }>;
   clipboard: Clipboard | null;
   /** Ids of automata whose structure can't change (layout moves still can); never saved. */
@@ -131,6 +133,7 @@ function initialData(
   | 'viewports'
   | 'trace'
   | 'stepIndex'
+  | 'traceKey'
   | 'history'
   | 'clipboard'
   | 'readOnly'
@@ -144,6 +147,7 @@ function initialData(
     viewports: {},
     trace: null,
     stepIndex: 0,
+    traceKey: 0,
     history: {},
     clipboard: null,
     readOnly: [],
@@ -421,6 +425,7 @@ export function createAppStore(initial: Initial = {}): StoreApi<AppState> {
           set((s) => {
             s.trace = trace;
             s.stepIndex = 0;
+            s.traceKey += 1;
             s.selection = NO_SELECTION;
           });
         },
