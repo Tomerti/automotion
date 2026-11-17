@@ -103,7 +103,7 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'arrange/bend',
-    instruction: () => 'Drag the arrow from «q_4» to «q_0» to bend it.',
+    instruction: () => 'Drag the line from «q_4» to «q_0» to bend the arrow.',
     why: () => 'Drag a loop the same way to turn it around its state.',
     done: (ctx) =>
       !!ctx.automaton &&
@@ -112,7 +112,8 @@ const STEPS: StepSpec[] = [
   },
   {
     id: 'arrange/label',
-    instruction: () => 'Drag that arrow’s `0` to the other side.',
+    instruction: () => 'Now drag the `0` written on that arrow across it, to the other side.',
+    why: () => 'Drag the line to bend an arrow, and its symbols to move them.',
     done: (ctx) => {
       const a = ctx.automaton;
       const t = a?.transitions.find((x) => x.from === 'q_4' && x.to === 'q_0');
@@ -140,7 +141,7 @@ const STEPS: StepSpec[] = [
 const PART_SIZES = [1, 3, 4] as const;
 const PART_TITLES = ['Tidy up', 'Select and move', 'Fine-tune'] as const;
 
-const GOAL = { text: 'Tidy this DFA up, then make it yours', examples: [] };
+const GOAL = { text: 'Learn to arrange a diagram: Tidy first, then by hand', examples: [] };
 
 export const ARRANGE_LESSON: Lesson & { id: 'arrange' } = {
   id: 'arrange',

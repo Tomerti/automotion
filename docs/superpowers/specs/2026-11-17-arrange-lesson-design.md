@@ -67,8 +67,9 @@ lines.
   convert, minimize, share. `nextLesson` then offers Arrange first.
 - **No idea step**: like Share and export, it teaches no theory. The "opens with an idea step" test
   exempts it as it exempts Share.
-- No goal picture, no goal examples. Goal line for all three parts, something like "Tidy this DFA
-  up, then make it yours" (builder's wording, same markup rules).
+- No goal picture, no goal examples. Goal line for all three parts: "Learn to arrange a diagram:
+  Tidy first, then by hand" (after review: it says what the student learns, which "Tidy this DFA
+  up, then make it yours" didn't).
 - Closing card: one line saying all of this is under ? → Arrange (builder's wording).
 
 ### The starting automaton
@@ -135,9 +136,11 @@ snapshot taken when Tidy was pressed (see *Checks*).
 
 **Part 3, Fine-tune**
 
-5. **Drag the arrow «f» → «g» to bend it.** Why: drag a loop the same way to turn it around its
-   state. Done: that arrow's `bend` differs from the tidied one.
-6. **Drag that arrow's symbols to the other side.** Done: its label is drawn on the side that is
+5. **Drag the line «f» → «g» to bend the arrow.** Why: drag a loop the same way to turn it around
+   its state. Done: that arrow's `bend` differs from the tidied one.
+6. **Now drag the symbol written on that arrow across it, to the other side.** Why: the line bends
+   the arrow, its symbols move on their own (steps 5 and 6 both drag "the arrow", so each names
+   which part to grab). Done: its label is drawn on the side that is
    *not* the automatic one for the arrow's current bend (`labelSideOf(bend, labelSide) !==
    labelSideOf(bend, undefined)`). Not "differs from tidied": bending the arrow the other way in
    step 5 flips the automatic side, which would pass with no label drag.
