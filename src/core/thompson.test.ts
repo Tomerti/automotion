@@ -2,10 +2,18 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { EPSILON } from './model';
 import { printRegex } from './regex';
+import type { Regex } from './regex';
 import { arbRegex } from './testing/arbitraries';
 import { accepts, regexToJs, wordsUpTo } from './testing/language';
 import { canThompson, thompson } from './thompson';
 import { validate } from './validate';
+
+/**
+ * Only regexes within MAX_THOMPSON_STATES: `thompson` throws on the rest. About 1 in 1000 of
+ * `arbRegex()` is over the cap, so the filter costs nothing and a 100-run property never skips out.
+ */
+const buildable = (arb: fc.Arbitrary<Regex>): fc.Arbitrary<Regex> =>
+  arb.filter((r) => canThompson(printRegex(r)) === null);
 
 describe('thompson', () => {
   it('(a|b)*abb: 10 build steps, 14 states', () => {
@@ -42,7 +50,7 @@ describe('thompson', () => {
   });
   it('every piece has one start and one accept; never two arrows for one (from, to) pair', () => {
     fc.assert(
-      fc.property(arbRegex(), (r) => {
+      fc.property(buildable(arbRegex()), (r) => {
         const t = thompson(printRegex(r));
         const pairs = t.result.transitions.map((x) => `${x.from}>${x.to}`);
         expect(new Set(pairs).size).toBe(pairs.length);
@@ -55,7 +63,7 @@ describe('thompson', () => {
   });
   it('accepts exactly the regex language (words up to length 6)', () => {
     fc.assert(
-      fc.property(arbRegex('ab', 3), (r) => {
+      fc.property(buildable(arbRegex('ab', 3)), (r) => {
         const nfa = thompson(printRegex(r)).result;
         const js = regexToJs(r);
         for (const w of wordsUpTo(['a', 'b'], 6)) expect(accepts(nfa, w)).toBe(js.test(w));
