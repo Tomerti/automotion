@@ -26,7 +26,9 @@ export interface TutorialState {
   automatonId: string | null;
   /**
    * The automata the lesson owns: its own, then any saved from a walkthrough of an owned one.
-   * Read-only while a lesson that isn't `editable` runs; quitting removes them.
+   * Read-only while a lesson that isn't `editable` runs. Quit and Finish both remove them, as does
+   * deleting the lesson's own automaton midway. Mirrored to the app store's `lessonIds`, so they
+   * are never autosaved.
    */
   owned: string[];
   /** The furthest step reached (index into `lessonSteps`). */
@@ -113,9 +115,13 @@ function nextOwned(owned: string[], app: AppState, prev: AppState, grows: boolea
   return kept.length === next.length ? next : kept;
 }
 
-/** Set `owned`, locking exactly those automata while a lesson that isn't editable runs. */
+/**
+ * Set `owned`, mirrored to the app's `lessonIds` (so autosave leaves them out), and locking
+ * exactly those automata while a lesson that isn't editable runs.
+ */
 function setOwned(owned: string[]): void {
   tutorialStore.setState({ owned });
+  appStore.getState().setLessonIds(owned);
   if (tutorialStore.getState().lesson?.editable === false) appStore.getState().setReadOnly(owned);
 }
 
@@ -123,7 +129,11 @@ function follow(app: AppState, prev: AppState): void {
   const t = tutorialStore.getState();
   if (!t.active || !t.lesson) return;
   if (!app.automata.some((a) => a.id === t.automatonId)) {
+    // Its other automata would become ordinary, autosaved ones: remove them, as Quit does.
+    // `endLesson` unsubscribes first, so removing them doesn't come back in here.
+    const rest = t.owned.filter((id) => id !== t.automatonId);
     endLesson();
+    removeAutomata(rest);
     return;
   }
   const owned = nextOwned(t.owned, app, prev, t.lesson.start !== null);
@@ -205,14 +215,13 @@ function openCopy(start: Automaton): string {
  * Start (or restart) a lesson: by id from the UI, or a lesson object (the tests' own lessons).
  * Basics opens on a DFA named "Tutorial": the active automaton if it is untouched (so a first
  * visit leaves no empty "Untitled" behind), else a new one. A lesson with a `start` automaton
- * opens a copy of it (replacing an untouched active automaton). Starting removes an unfinished lesson's automata, as quitting does.
+ * opens a copy of it (replacing an untouched active automaton). Starting removes the previous
+ * lesson's automata, finished or not, as quitting does.
  */
 export function startLesson(which: LessonId | Lesson): void {
   // Before anything changes: an unknown id throws here.
   const lesson = typeof which === 'string' ? lessonById(which) : which;
-  // A finished one stays, as with Finish.
-  if (onClosingCard(tutorialStore.getState())) endLesson();
-  else quitLesson();
+  quitLesson();
   appStore.getState().closeTrace();
   const automatonId = lesson.start ? openCopy(lesson.start) : openBlank();
   tutorialStore.setState({
@@ -224,7 +233,7 @@ export function startLesson(which: LessonId | Lesson): void {
     owned: [automatonId],
     blockedSeen: appStore.getState().blockedEdits,
   });
-  if (lesson.editable === false) appStore.getState().setReadOnly([automatonId]);
+  setOwned([automatonId]);
   unsubscribe = appStore.subscribe(follow);
   moveOn(appStore.getState());
 }
@@ -332,9 +341,8 @@ function removeAutomata(ids: readonly string[]): void {
 
 /**
  * Finish from the closing card: the run or walkthrough that ended the lesson closes, back to
- * editing, and the congratulations popup opens. A lesson's automata stay (a saved DFA is the
- * user's work) and the view fits them; the tutorial's practice automaton is removed, leaving the
- * user's own automata, or a blank Untitled to start building on.
+ * editing, and the congratulations popup opens. A lesson leaves nothing behind: its automata are
+ * removed, leaving the user's own, or a blank Untitled.
  */
 export function finishLesson(): void {
   const { owned, lesson } = tutorialStore.getState();
@@ -342,30 +350,27 @@ export function finishLesson(): void {
   if (lesson && isLessonId(lesson.id)) markLessonFinished(lesson.id);
   const app = appStore.getState();
   if (app.trace && ownsId(owned, app.trace)) app.closeTrace();
-  if (lesson?.noun === 'tutorial') {
-    removeAutomata(owned);
-    tutorialStore.setState({ celebrating: lesson });
-    playFanfareSound();
-    return;
-  }
+  removeAutomata(owned);
   tutorialStore.setState({ celebrating: lesson });
   playFanfareSound();
-  // Once the editing canvas is back on screen, so the fit has its size.
-  requestAnimationFrame(() => {
-    const activeId = appStore.getState().activeId;
-    if (activeId !== null && owned.includes(activeId)) fitActive();
-  });
 }
 
 export function closeCelebration(): void {
   tutorialStore.setState({ celebrating: null });
 }
 
-/** Stop following the app and unlock its automata, which stay like any other. */
+/**
+ * Stop following the app and unlock its automata, which become ordinary ones. `quitLesson`,
+ * `finishLesson` and `follow` (the lesson's own automaton was deleted) call it, then remove the
+ * automata; tests also call it directly.
+ */
 export function endLesson(): void {
   unsubscribe?.();
   unsubscribe = null;
   const wasActive = tutorialStore.getState().active;
   tutorialStore.setState(OFF);
-  if (wasActive) appStore.getState().setReadOnly([]);
+  if (wasActive) {
+    appStore.getState().setReadOnly([]);
+    appStore.getState().setLessonIds([]);
+  }
 }

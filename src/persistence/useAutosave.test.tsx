@@ -46,6 +46,31 @@ describe('useAutosave', () => {
     expect(localStorage.getItem(STORAGE_KEY)).not.toContain('readOnly');
   });
 
+  it('does not save the running lesson’s automata, but saves the user’s own', () => {
+    renderHook(() => useAutosave());
+    add('Mine');
+    add('Lesson');
+    act(() => appStore.getState().setLessonIds([appStore.getState().activeId!]));
+    add('Mine 2'); // a later change triggers the save
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    const saved = localStorage.getItem(STORAGE_KEY)!;
+    expect(saved).toContain('"Mine"');
+    expect(saved).toContain('"Mine 2"');
+    expect(saved).not.toContain('"Lesson"');
+  });
+
+  it('saves an empty list when every automaton is a lesson’s', () => {
+    renderHook(() => useAutosave());
+    add('Lesson');
+    act(() => appStore.getState().setLessonIds([appStore.getState().activeId!]));
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).automata).toEqual([]);
+  });
+
   it('reports a failed save once through onFail', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('full');

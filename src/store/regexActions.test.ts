@@ -44,6 +44,17 @@ describe('createFromRegex', () => {
     expect(back.name).toBe('Untitled');
   });
 
+  it("never fills a lesson's automaton: the DFA is added as a new one", async () => {
+    resetAppStore({ automata: [seeded, blank], activeId: blank.id });
+    appStore.getState().setLessonIds([blank.id]);
+    const id = await createFromRegex('a');
+    const st = appStore.getState();
+    expect(id).not.toBe(blank.id);
+    expect(st.automata).toHaveLength(3);
+    expect(st.activeId).toBe(id);
+    expect(st.automata.find((x) => x.id === blank.id)!.states).toHaveLength(0);
+  });
+
   it('adds a new automaton when there is none to fill', async () => {
     resetAppStore({ automata: [], activeId: null });
     const id = await createFromRegex('a');

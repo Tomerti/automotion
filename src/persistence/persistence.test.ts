@@ -328,10 +328,12 @@ describe('storage', () => {
     expect(loadFromStorage(s)).toEqual({ automata: [a] });
   });
 
-  it('a stored empty list stays empty', () => {
+  it('a stored empty list loads as one blank DFA', () => {
     const s = memoryStorage();
     saveToStorage(s, []);
-    expect(loadFromStorage(s)).toEqual({ automata: [] });
+    const { automata } = loadFromStorage(s);
+    expect(automata).toHaveLength(1);
+    expect(automata[0]).toMatchObject({ name: 'Untitled', kind: 'DFA', states: [] });
   });
 
   it('drops dangling accepting and start ids from saved data instead of failing the load', () => {

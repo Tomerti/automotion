@@ -38,6 +38,7 @@ export function Canvas(): React.JSX.Element {
   const automata = useAppStore((s) => s.automata);
   const activeId = useAppStore((s) => s.activeId);
   const stored = useAppStore((s) => (s.activeId === null ? undefined : s.viewports[s.activeId]));
+  const inLesson = useAppStore((s) => s.activeId !== null && s.lessonIds.includes(s.activeId));
   const automaton = automata.find((a) => a.id === activeId);
 
   if (!automaton) {
@@ -62,6 +63,7 @@ export function Canvas(): React.JSX.Element {
       automaton={automaton}
       viewport={stored ?? DEFAULT_VIEWPORT}
       hasViewport={stored !== undefined}
+      inLesson={inLesson}
     />
   );
 }
@@ -70,8 +72,9 @@ function EditableCanvas(props: {
   automaton: Automaton;
   viewport: Viewport;
   hasViewport: boolean;
+  inLesson: boolean;
 }): React.JSX.Element {
-  const { automaton, viewport, hasViewport } = props;
+  const { automaton, viewport, hasViewport, inLesson } = props;
   const {
     containerRef,
     svgRef,
@@ -181,7 +184,7 @@ function EditableCanvas(props: {
           </g>
         )}
       </Diagram>
-      {automaton.states.length === 0 && (
+      {automaton.states.length === 0 && !inLesson && (
         <div className="av-canvas-hint" data-testid="canvas-hint">
           {/* Each phrase stays whole: a narrow canvas breaks the line at its dot. */}
           <p>

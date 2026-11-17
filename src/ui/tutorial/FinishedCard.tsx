@@ -93,9 +93,6 @@ export function FinishedCard({
         <p className="av-finished-cheer" data-testid="tutorial-cheer">
           {cheer}
         </p>
-        {!tutorial && (
-          <p className="av-welcome-note av-finished-note">Its automata stay in your history.</p>
-        )}
         <div className="av-welcome-actions">
           {tutorial ? (
             <>

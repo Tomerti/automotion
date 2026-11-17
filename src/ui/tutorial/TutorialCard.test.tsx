@@ -688,7 +688,7 @@ describe('a lesson other than Basics', () => {
     render(<FinishedCard lesson={TEST_LESSON} onClose={() => {}} />);
     const popup = screen.getByRole('dialog', { name: 'Lesson complete' });
     expect(within(popup).getByRole('heading')).toHaveTextContent('Lesson complete!');
-    expect(popup).toHaveTextContent('Its automata stay in your history.');
+    expect(popup).not.toHaveTextContent('stay in your history');
   });
 
   it('offers the first unfinished lesson after Basics as Next, and starts it', async () => {

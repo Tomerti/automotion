@@ -18,8 +18,8 @@ function browserStorage(): Storage | null {
 }
 
 /**
- * Save the automata to localStorage 500 ms after the last change; a save still pending when the
- * page is hidden or unloaded (`pagehide`) is written immediately.
+ * Save the automata, less the running lesson's, to localStorage 500 ms after the last change; a save
+ * still pending when the page is hidden or unloaded (`pagehide`) is written immediately.
  */
 export function useAutosave(options: AutosaveOptions = {}): void {
   const onFail = useRef(options.onFail);
@@ -34,7 +34,9 @@ export function useAutosave(options: AutosaveOptions = {}): void {
     const save = (): void => {
       clearTimeout(timer);
       pending = false;
-      if (!saveToStorage(browserStorage(), appStore.getState().automata) && !warned) {
+      const { automata, lessonIds } = appStore.getState();
+      const own = automata.filter((a) => !lessonIds.includes(a.id));
+      if (!saveToStorage(browserStorage(), own) && !warned) {
         warned = true;
         onFail.current?.(NO_PERSIST_WARNING);
       }
