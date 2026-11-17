@@ -3,6 +3,7 @@ import { EPSILON } from './model';
 import type { Automaton, State, StateId, Sym, Transition } from './model';
 import { parseRegex, printRegex, regexSymbols } from './regex';
 import type { Regex, Span } from './regex';
+import { layoutPieces } from './thompsonLayout';
 import type { ThompsonStep, ThompsonTrace } from './trace';
 
 /** Largest NFA the construction will build; beyond it the walkthrough and layout are unusable. */
@@ -199,7 +200,7 @@ export function thompson(input: string): ThompsonTrace {
     revealedTransitions: [...revealedTransitions],
   });
 
-  const result: Automaton = {
+  const built: Automaton = {
     id: newId(),
     name: printRegex(regex),
     kind: 'NFA',
@@ -209,5 +210,5 @@ export function thompson(input: string): ThompsonTrace {
     accepting: [root.accept],
     transitions,
   };
-  return { kind: 'thompson', regex: text, result, steps };
+  return { kind: 'thompson', regex: text, result: layoutPieces(root, built), steps };
 }
