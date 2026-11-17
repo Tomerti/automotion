@@ -11,6 +11,9 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Repo social preview: upload `public/og.png` in GitHub Settings → General → Social preview (web UI only, no API)
 - [ ] Lesson: Arrange (box select, Ctrl+click, move together, copy and paste, Tidy)
 - [ ] At 1024×480 with the history bar open, the floating trace player sits partly under the history bar, hiding its first buttons (Last among them); every walkthrough, not just regex
+- [ ] A pasted regex of ~20,000 characters (a long run of `a` or `a*`) overflows the stack in `thompsonStateCount` (recursive) inside `canThompson`, so the regex dialog falls to the error screen; count iteratively or catch `RangeError` there (deep nesting is already caught by `parseRegex`)
+- [ ] Typing `\epsilon` key by key in the regex or symbol inputs still gives `εilon`: `\eps` is normalised the moment it's typed (pasting `\epsilon` works)
+- [ ] `LabelText` keeps a quoted `'…'` literal only before a space, `,` `.` `:` `;` or the end: a quote followed directly by `)`, `!`, `?` or `→` is parsed as a label (no caller writes that today)
 - [ ] A state's name can still drop one device pixel when its rename input opens at some zooms (2 of 11 zoom levels at 125%, 5 at 150%, in Chrome): there the SVG label and the HTML input rasterize the text differently (the ink also moves sideways), which no input position can cancel. Gone for good only if the text being edited is drawn by the SVG itself, with the input's own text invisible (the caret and selection stay the input's)
 
 ## Ideas (later)
