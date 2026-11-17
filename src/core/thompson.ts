@@ -47,19 +47,24 @@ export interface Piece {
   children: Piece[];
 }
 
-export function thompson(input: string): ThompsonTrace {
-  const reason = canThompson(input);
-  if (reason !== null) throw new Error(reason);
-  const parsed = parseRegex(input);
-  if (!parsed.ok) throw new Error(parsed.error);
-  const { regex, text } = parsed;
+/** What building one piece added, reported to a walkthrough as it happens. */
+interface Built {
+  node: Regex;
+  explanation: string;
+  newStates: StateId[];
+  newTransitions: string[];
+  pieceStates: StateId[];
+  start: StateId;
+  accept: StateId;
+}
 
+function construct(
+  regex: Regex,
+  text: string,
+  onBuilt?: (built: Built) => void,
+): { root: Piece; states: State[]; transitions: Transition[] } {
   const states: State[] = [];
   const transitions: Transition[] = [];
-  const steps: ThompsonStep[] = [];
-  const builtSpans: Span[] = [];
-  const revealedStates: StateId[] = [];
-  const revealedTransitions: string[] = [];
 
   const addState = (made: StateId[]): StateId => {
     const n = states.length;
@@ -152,25 +157,39 @@ export function thompson(input: string): ThompsonTrace {
     }
 
     const pieceStates = [...children.flatMap((c) => c.states), ...newStates];
-    if (node.span) builtSpans.push(node.span);
-    revealedStates.push(...newStates);
-    revealedTransitions.push(...newTransitions);
-    steps.push({
-      phase: 'build',
-      explanation,
-      focus: { states: newStates, transitions: newTransitions },
-      span: node.span,
-      builtSpans: [...builtSpans],
-      newStates,
-      newTransitions,
-      pieceStates,
-      pieceStart: start,
-      pieceAccept: accept,
-      revealedStates: [...revealedStates],
-      revealedTransitions: [...revealedTransitions],
-    });
+    onBuilt?.({ node, explanation, newStates, newTransitions, pieceStates, start, accept });
     return { node, start, accept, states: pieceStates, children };
   };
+
+  return { root: walk(regex), states, transitions };
+}
+
+/** The NFA Thompson's construction builds for `regex`: no size cap, every position 0. */
+export function thompsonNfa(regex: Regex): Automaton {
+  const { root, states, transitions } = construct(regex, printRegex(regex));
+  return {
+    id: newId(),
+    name: printRegex(regex),
+    kind: 'NFA',
+    alphabet: regexSymbols(regex),
+    states,
+    starts: [root.start],
+    accepting: [root.accept],
+    transitions,
+  };
+}
+
+export function thompson(input: string): ThompsonTrace {
+  const reason = canThompson(input);
+  if (reason !== null) throw new Error(reason);
+  const parsed = parseRegex(input);
+  if (!parsed.ok) throw new Error(parsed.error);
+  const { regex, text } = parsed;
+
+  const steps: ThompsonStep[] = [];
+  const builtSpans: Span[] = [];
+  const revealedStates: StateId[] = [];
+  const revealedTransitions: string[] = [];
 
   steps.push({
     phase: 'intro',
@@ -185,7 +204,25 @@ export function thompson(input: string): ThompsonTrace {
     revealedTransitions: [],
   });
 
-  const root = walk(regex);
+  const { root, states, transitions } = construct(regex, text, (b) => {
+    if (b.node.span) builtSpans.push(b.node.span);
+    revealedStates.push(...b.newStates);
+    revealedTransitions.push(...b.newTransitions);
+    steps.push({
+      phase: 'build',
+      explanation: b.explanation,
+      focus: { states: b.newStates, transitions: b.newTransitions },
+      span: b.node.span,
+      builtSpans: [...builtSpans],
+      newStates: b.newStates,
+      newTransitions: b.newTransitions,
+      pieceStates: b.pieceStates,
+      pieceStart: b.start,
+      pieceAccept: b.accept,
+      revealedStates: [...revealedStates],
+      revealedTransitions: [...revealedTransitions],
+    });
+  });
   steps.push({
     phase: 'done',
     explanation: `The NFA for ${quoteRegex(text)}: the last piece built, with its one start and one accepting state.`,
