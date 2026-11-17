@@ -134,6 +134,13 @@ describe('Canvas editing', () => {
     expect(screen.queryByTestId('canvas-hint')).toBeNull();
   });
 
+  it('shows no hint on a lesson’s empty automaton', () => {
+    load(fixture({ kind: 'DFA', alphabet: 'a', states: [], name: 'm' }));
+    act(() => appStore.getState().setLessonIds([appStore.getState().activeId!]));
+    render(<Canvas />);
+    expect(screen.queryByTestId('canvas-hint')).toBeNull();
+  });
+
   it('the empty canvas offers building from a regex', async () => {
     load(fixture({ kind: 'DFA', alphabet: 'a', states: [], name: 'm' }));
     render(<Canvas />);
