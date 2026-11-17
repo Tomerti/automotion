@@ -104,7 +104,7 @@ A throwaway spike ran `layoutAutomaton` on it from three different messy drawing
 - **Tidy leaves every drawing choice automatic** here: no `bend`, `loopAngle`, `labelSide` or
   `startAngle`, and every `drawnBend` is 0. So the "differs from tidied" checks compare **drawn**
   values: `drawnBend` (`core/geometry.ts`), the side `labelSideOf` resolves to, and
-  `startAngle ?? START_ANGLE`. A drag back to the drawn value doesn't count. Since the messy
+  `startAngle ?? START_ANGLE`. A drag that never leaves the drawn value doesn't count. Since the messy
   drawing is automatic too, its drawn values equal the tidied ones and *Undo past Tidy* can't
   complete steps 5–7.
 
@@ -153,15 +153,19 @@ Ctrl+A is last because, with everything selected, a drag moves the whole automat
 it would get in the way of the single-arrow steps unless the lesson taught clearing the selection,
 which is a non-goal.
 
-The checks are structural (re-evaluated live), as in the other lessons, so the engine's existing
-rules apply: the card falls back within the current part if a done step comes undone (e.g. the
-student presses Tidy again or undoes), and never past the start of the part.
+Steps 4–7 **latch** (amended after review, 2026-11-17): each check runs live while its step is on
+the card, and the step stays done the moment it holds, since every drag edits the automaton as it
+goes. As first built they were structural, so the card fell back when a done step came undone, and
+a student who turned the start arrow and dragged it back to where it was (or bent the arrow back to
+straight) was stuck on a step that looked done. Latched, a gesture counts once made, and pressing
+Tidy again no longer re-asks part 3 (which also keeps the anti-goal: no step undoes the student's
+own work).
 
 **Undo past Tidy.** Ctrl+Z back past the Tidy restores the messy drawing while the `tidy` action
 stays latched and `tidied` stays set, and the engine never returns to step 1. Accepted as a rare
 edge case, with no engine work: because the messy automaton is messy by positions only, its
-drawing fails steps 5–7's checks (bend, label side and start angle: none explicit), and a test
-asserts that. The student just redoes, or presses Tidy again.
+drawing fails steps 5–7's checks (bend, label side and start angle: none explicit), so none of
+them latches by itself, and a test asserts that. The student just redoes, or presses Tidy again.
 
 ### Checks: what the engine needs
 

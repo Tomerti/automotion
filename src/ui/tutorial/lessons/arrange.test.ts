@@ -174,9 +174,25 @@ describe('the Arrange lesson', () => {
     expect(advance(L, 6, new Set(), tidyCtx({ automaton: a })).current).toBe(6);
   });
 
-  it('sends part 3 back to its first undone step when Tidy is pressed again', () => {
-    const p = advance(L, 7, new Set(['arrange/all']), tidyCtx({ automaton: tidied }));
-    expect(p.current).toBe(4);
+  it('keeps the fine-tuning done when Tidy is pressed again', () => {
+    const done = new Set(['arrange/bend', 'arrange/label', 'arrange/start']);
+    expect(advance(L, 7, done, tidyCtx({ automaton: tidied })).current).toBe(7);
+  });
+
+  it('counts the start arrow turned and dragged back to where it was', () => {
+    let p = advance(L, 6, new Set(), tidyCtx({ automaton: stage(3) }));
+    expect(p.current).toBe(7);
+    const back = withState(stage(3), 'q_0', { startAngle: START_ANGLE });
+    p = advance(L, p.progress, p.latched, tidyCtx({ automaton: back }));
+    expect(p.current).toBe(7);
+  });
+
+  it('counts the arrow bent and dragged back to straight', () => {
+    const moved3 = moved(tidied, THREE, 0, -80);
+    let p = advance(L, 4, new Set(), tidyCtx({ automaton: stage(1) }));
+    expect(p.current).toBe(5);
+    p = advance(L, p.progress, p.latched, tidyCtx({ automaton: moved3 }));
+    expect(p.current).toBe(5);
   });
 
   it('completes no part-3 step when undo goes past Tidy', () => {
@@ -189,6 +205,6 @@ describe('the Arrange lesson', () => {
 
   it('fails the bend, label and start checks on the messy drawing', () => {
     const c = tidyCtx({ automaton: start });
-    for (const i of [4, 5, 6]) expect(steps[i]!.done(c), steps[i]!.id).toBe(false);
+    for (const i of [4, 5, 6]) expect(steps[i]!.latch?.(c), steps[i]!.id).toBe(false);
   });
 });

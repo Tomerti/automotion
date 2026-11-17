@@ -71,6 +71,10 @@ function movedApart(ctx: TutorialContext, ids: readonly StateId[]): boolean {
 
 const startAngleOf = (a: Automaton): number => stateOf(a, 'q_0')?.startAngle ?? START_ANGLE;
 
+/**
+ * Every step after Tidy latches: a gesture counts the moment it happens, so dragging the start arrow
+ * (or a bend, a label, the three) back to where it was doesn't undo it, and nor does Tidy again.
+ */
 const STEPS: StepSpec[] = [
   {
     id: 'arrange/tidy',
@@ -94,7 +98,7 @@ const STEPS: StepSpec[] = [
   {
     id: 'arrange/move',
     instruction: () => 'Drag one of them: the other two move along.',
-    done: (ctx) => movedTogether(ctx, THREE),
+    latch: (ctx) => movedTogether(ctx, THREE),
     first: (ctx) => {
       if (movedTogether(ctx, THREE)) return null;
       if (movedApart(ctx, THREE)) return 'First, press Tidy: one of them moved on its own.';
@@ -105,7 +109,7 @@ const STEPS: StepSpec[] = [
     id: 'arrange/bend',
     instruction: () => 'Drag the line from «q_4» to «q_0» to bend the arrow.',
     why: () => 'Drag a loop the same way to turn it around its state.',
-    done: (ctx) =>
+    latch: (ctx) =>
       !!ctx.automaton &&
       !!ctx.tidied &&
       drawnBend(ctx.automaton, 'q_4', 'q_0') !== drawnBend(ctx.tidied, 'q_4', 'q_0'),
@@ -114,7 +118,7 @@ const STEPS: StepSpec[] = [
     id: 'arrange/label',
     instruction: () => 'Now drag the `0` written on that arrow across it, to the other side.',
     why: () => 'Drag the line to bend an arrow, and its symbols to move them.',
-    done: (ctx) => {
+    latch: (ctx) => {
       const a = ctx.automaton;
       const t = a?.transitions.find((x) => x.from === 'q_4' && x.to === 'q_0');
       if (!a || !t) return false;
@@ -125,7 +129,7 @@ const STEPS: StepSpec[] = [
   {
     id: 'arrange/start',
     instruction: () => 'Drag the start arrow to turn it around «q_0».',
-    done: (ctx) =>
+    latch: (ctx) =>
       !!ctx.automaton && !!ctx.tidied && startAngleOf(ctx.automaton) !== startAngleOf(ctx.tidied),
   },
   {
