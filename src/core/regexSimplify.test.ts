@@ -18,6 +18,18 @@ describe('regexSimplify', () => {
     [() => mkStar(mkStar(A)), 'a*'],
     [() => mkUnion(A, A), 'a'],
     [() => mkUnion(mkUnion(A, B), A), 'a|b'],
+    [() => mkUnion(EPS, mkConcat(A, mkStar(A))), 'a*'], // ε|rr* = r*
+    [() => mkUnion(EPS, mkConcat(mkStar(A), A)), 'a*'], // ε|r*r = r*
+    [() => mkUnion(mkConcat(A, mkStar(A)), EPS), 'a*'], // order-independent
+    [() => mkUnion(EPS, mkStar(A)), 'a*'], // ε|r* = r*
+    [() => mkUnion(A, mkStar(A)), 'a*'], // r|r* = r*
+    [() => mkUnion(mkUnion(EPS, B), mkConcat(A, mkStar(A))), 'b|a*'], // inside a longer union
+    [() => mkStar(mkUnion(EPS, A)), 'a*'], // (ε|r)* = r*
+    [() => mkConcat(mkStar(A), mkStar(A)), 'a*'], // r*r* = r*
+    [() => mkConcat(mkConcat(B, mkStar(A)), mkStar(A)), 'ba*'], // adjacent factors inside a chain
+    [() => mkConcat(mkUnion(EPS, A), mkStar(A)), 'a*'], // (ε|r)r* = r*
+    [() => mkConcat(mkStar(A), mkUnion(EPS, A)), 'a*'], // r*(ε|r) = r*
+    [() => mkConcat(A, mkStar(A)), 'aa*'], // unchanged: no rule
   ])('rule %#', (f, out) => expect(printRegex(f())).toBe(out));
 
   it('flattens unions into one node and prints minimal parentheses', () => {

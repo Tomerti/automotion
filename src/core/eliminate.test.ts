@@ -23,6 +23,22 @@ const endsInOne = fixture({
   ],
 });
 
+/** Minimal complete DFA for a*b*: the dead state D is reached by `a` after a `b`. */
+const aStarBStar = fixture({
+  kind: 'DFA',
+  alphabet: 'ab',
+  states: ['A', 'B', 'D'],
+  start: 'A',
+  accepting: ['A', 'B'],
+  edges: [
+    ['A', 'a', 'A'],
+    ['A', 'b', 'B'],
+    ['B', 'b', 'B'],
+    ['B', 'a', 'D'],
+    ['D', 'a,b', 'D'],
+  ],
+});
+
 /** `hub` has three arrows in and three out; the others have fewer. */
 const hubbed = fixture({
   kind: 'NFA',
@@ -277,6 +293,10 @@ function shuffled(ids: string[], picks: Iterator<number>): string[] {
   }
   return out;
 }
+
+it('a*b* comes back as a*b*', () => {
+  expect(eliminate(aStarBStar).regex).toBe('a*b*');
+});
 
 describe('eliminate language', () => {
   it("the regex has the automaton's language, in any order", () => {
