@@ -5,7 +5,7 @@ import { nthFromEnd } from '../core/testing/fixtures';
 import { layoutAutomaton } from '../layout/layout';
 import { appStore, resetAppStore } from './store';
 import { endsAb } from './testing/fixtures';
-import { startSubset } from './traceActions';
+import { startRun, startSubset, startThompson } from './traceActions';
 
 // The real layout by default; individual tests make it fail or hold it at the await.
 vi.mock('../layout/layout', async (importOriginal) => {
@@ -107,6 +107,31 @@ describe('startSubset', () => {
   it('is a no-op for a DFA', async () => {
     appStore.getState().addAutomaton({ ...endsAb, kind: 'DFA', transitions: [] });
     await startSubset();
+    expect(appStore.getState().trace).toBeNull();
+  });
+});
+
+describe('startThompson', () => {
+  it('replaces an open trace and keeps the active automaton', () => {
+    appStore.getState().addAutomaton(endsAb);
+    const seededId = appStore.getState().activeId;
+    startRun('ab');
+    expect(appStore.getState().trace?.kind).toBe('run');
+    startThompson('a|b');
+    expect(appStore.getState().trace?.kind).toBe('thompson');
+    expect(appStore.getState().activeId).toBe(seededId);
+    const x = (): number | undefined =>
+      appStore.getState().automata.find((a) => a.id === seededId)?.states[0]?.x;
+    // locked while the trace is open
+    appStore.getState().edit((a) => moveState(a, 'q0', { x: 7, y: 7 }));
+    expect(x()).not.toBe(7);
+    appStore.getState().closeTrace();
+    appStore.getState().edit((a) => moveState(a, 'q0', { x: 7, y: 7 }));
+    expect(x()).toBe(7);
+  });
+
+  it('does nothing for an invalid regex', () => {
+    startThompson('a|');
     expect(appStore.getState().trace).toBeNull();
   });
 });
