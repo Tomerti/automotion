@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   addState,
+  moveState,
   removeState,
   renameAutomaton,
   renameState,
@@ -12,7 +13,14 @@ import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { minimize } from '../../core/minimize';
 import { startRun } from '../../store/traceActions';
-import { endLesson, finishLesson, quitLesson, startLesson, tutorialStore } from './tutorialStore';
+import {
+  endLesson,
+  finishLesson,
+  noteTidied,
+  quitLesson,
+  startLesson,
+  tutorialStore,
+} from './tutorialStore';
 import { lessonSteps } from './engine';
 import { BASICS } from './lessons/basics';
 import { finishedLessons, LESSONS_DONE_KEY } from './lessonsDone';
@@ -283,5 +291,43 @@ describe('following the app', () => {
     app().edit((a) => addState(a, { x: 0, y: 0 }));
     expect(tut()).toMatchObject({ active: false, progress: 0 });
     expect(app().automata.some((a) => a.id === id)).toBe(true);
+  });
+});
+
+describe('noteTidied', () => {
+  it('records the lesson automaton and the tidy action', () => {
+    startLesson(TEST_LESSON);
+    noteTidied();
+    expect(tut().tidied).toBe(active());
+    expect(tut().actions.has('tidy')).toBe(true);
+  });
+
+  it('records again on every Tidy', () => {
+    startLesson(TEST_LESSON);
+    noteTidied();
+    const first = tut().tidied;
+    app().edit((a) => moveState(a, a.states[0]!.id, { x: 123, y: 45 }));
+    noteTidied();
+    expect(tut().tidied).toBe(active());
+    expect(tut().tidied).not.toBe(first);
+  });
+
+  it("ignores an automaton the lesson doesn't own", () => {
+    startLesson(TEST_LESSON);
+    app().createAutomaton('DFA');
+    noteTidied();
+    expect(tut().tidied).toBeUndefined();
+    expect(tut().actions.has('tidy')).toBe(false);
+  });
+
+  it('ending or restarting the lesson clears tidied', () => {
+    startLesson(TEST_LESSON);
+    noteTidied();
+    endLesson();
+    expect(tut().tidied).toBeUndefined();
+    startLesson(TEST_LESSON);
+    noteTidied();
+    startLesson(TEST_LESSON);
+    expect(tut().tidied).toBeUndefined();
   });
 });

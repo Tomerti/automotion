@@ -1587,7 +1587,7 @@ describe('Fit and Tidy', () => {
       await gate;
       return { ...a, states: a.states.map((s) => ({ ...s, x: 999, y: 999 })) };
     });
-    let done: Promise<void> = Promise.resolve();
+    let done: Promise<boolean> = Promise.resolve(true);
     act(() => {
       done = tidyActive();
     });
@@ -1602,6 +1602,26 @@ describe('Fit and Tidy', () => {
       [100, 0],
     ]);
     expect(st().history.m?.past).toHaveLength(1);
+  });
+
+  it('tidyActive resolves true once the layout lands', async () => {
+    load(two('DFA', 'a', [['q0', 'a', 'q1']]));
+    render(<Canvas />);
+    sizeCanvas(640, 480);
+    expect(await act(() => tidyActive())).toBe(true);
+  });
+
+  it('tidyActive resolves false while a trace is open', async () => {
+    load({
+      ...two('DFA', 'a', [
+        ['q0', 'a', 'q1'],
+        ['q1', 'a', 'q1'],
+      ]),
+      starts: ['q0'],
+    });
+    act(() => st().openTrace(runWord(active(), 'a')));
+    render(<Canvas />);
+    expect(await act(() => tidyActive())).toBe(false);
   });
 
   it('Tidy does nothing while a trace is open', async () => {

@@ -8,7 +8,7 @@ import { withEmbeddedFont } from '../canvas/embedFont';
 import { canCopyImage, copyPng, exportableSvg, svgToPng } from '../canvas/exportDiagram';
 import { latexDocument, latexSnippet } from '../canvas/exportLatex';
 import { fitActive, tidyActive } from '../canvas/useCanvasEditing';
-import { noteLessonAction } from '../tutorial/tutorialStore';
+import { noteLessonAction, noteTidied } from '../tutorial/tutorialStore';
 import { copyLink } from './copyLink';
 import { downloadBlob, downloadText, slug } from './download';
 import { isTypingTarget } from './help';
@@ -269,7 +269,11 @@ export function Toolbar(): React.JSX.Element {
           title="Tidy the layout"
           icon={<TidyIcon />}
           disabled={none || tracing}
-          onClick={() => void tidyActive()}
+          onClick={() =>
+            void tidyActive().then((ok) => {
+              if (ok) noteTidied();
+            })
+          }
         />
       </div>
       <div className="av-tool-group">
