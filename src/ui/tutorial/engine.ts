@@ -4,12 +4,12 @@ import type { AnyTrace } from '../../core/trace';
 
 export const LESSON_IDS = [
   'basics',
+  'arrange',
   'nfa',
   'epsilon',
   'convert',
   'minimize',
   'share',
-  'arrange',
 ] as const;
 export type LessonId = (typeof LESSON_IDS)[number];
 

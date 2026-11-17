@@ -695,12 +695,12 @@ describe('a lesson other than Basics', () => {
     render(<FinishedCard lesson={TEST_LESSON} onClose={onClose} />);
     // Basics, skipped, is the tutorial: it is never offered as Next.
     const next = screen.getByTestId('next-lesson');
-    expect(next).toHaveTextContent('Next: NFAs');
+    expect(next).toHaveTextContent('Next: Arrange');
     expect(screen.getByRole('button', { name: 'Back to building' })).not.toHaveClass('av-go');
     expect(screen.queryByRole('button', { name: 'See the lessons' })).toBeNull();
     await userEvent.setup().click(next);
     expect(onClose).toHaveBeenCalled();
-    expect(tutorialStore.getState().lessonId).toBe('nfa');
+    expect(tutorialStore.getState().lessonId).toBe('arrange');
   });
 
   it('never offers the lesson just finished, even when storage is blocked', () => {
@@ -708,7 +708,7 @@ describe('a lesson other than Basics', () => {
       throw new Error('denied');
     });
     render(<FinishedCard lesson={NFA_LESSON} onClose={() => {}} />);
-    expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: ε-moves');
+    expect(screen.getByTestId('next-lesson')).toHaveTextContent('Next: Arrange');
   });
 
   it('after the tutorial, offers Start building and See the lessons instead of starting a lesson', async () => {
