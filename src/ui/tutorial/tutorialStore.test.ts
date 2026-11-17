@@ -11,6 +11,7 @@ import { emptyAutomaton } from '../../core/model';
 import { fixture } from '../../core/testing/fixtures';
 import { appStore, resetAppStore } from '../../store/store';
 import { minimize } from '../../core/minimize';
+import { traceSourceId } from '../../core/trace';
 import { startRun } from '../../store/traceActions';
 import { endLesson, finishLesson, quitLesson, startLesson, tutorialStore } from './tutorialStore';
 import { lessonSteps } from './engine';
@@ -156,7 +157,7 @@ describe('startLesson', () => {
     app().edit((a) => addState(a, { x: 0, y: 0 }));
     app().edit((a) => setStart(a, a.states[0]!.id));
     startRun('');
-    expect(app().trace?.source.id).toBe(id);
+    expect(traceSourceId(app().trace!)).toBe(id);
     finishLesson();
     expect(tut().active).toBe(false);
     expect(app().trace).toBeNull();

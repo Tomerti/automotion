@@ -1,4 +1,5 @@
 import type { Automaton, StateId, Sym } from './model';
+import type { Span } from './regex';
 
 export interface Highlight {
   states?: StateId[];
@@ -32,7 +33,12 @@ export interface RunTrace {
   accepted: boolean;
 }
 
-export type AnyTrace = RunTrace | SubsetTrace | MinimizeTrace;
+export type AnyTrace = RunTrace | SubsetTrace | MinimizeTrace | ThompsonTrace;
+
+/** Id of the automaton a trace was computed from; null for a trace with no source (Thompson). */
+export function traceSourceId(t: AnyTrace): string | null {
+  return t.kind === 'thompson' ? null : t.source.id;
+}
 
 export interface SubsetStep extends StepBase {
   /** `starts`: several start states, so a single new one is added first. */
@@ -81,4 +87,30 @@ export interface MinimizeTrace {
   steps: MinimizeStep[];
   /** Nothing was removed or merged: `result` is `source` (plus at most a dead state). */
   alreadyMinimal: boolean;
+}
+
+export interface ThompsonStep extends StepBase {
+  phase: 'intro' | 'build' | 'done';
+  /** build: this node's span in `trace.regex`. */
+  span?: Span;
+  /** Spans of every node built so far, this one included. */
+  builtSpans: Span[];
+  newStates: StateId[];
+  newTransitions: string[];
+  /** build: every state of this piece; done: all. */
+  pieceStates: StateId[];
+  /** build and done. */
+  pieceStart?: StateId;
+  pieceAccept?: StateId;
+  /** Cumulative. */
+  revealedStates: StateId[];
+  revealedTransitions: string[];
+}
+
+export interface ThompsonTrace {
+  kind: 'thompson';
+  /** The normalised regex text that the spans index. */
+  regex: string;
+  result: Automaton;
+  steps: ThompsonStep[];
 }

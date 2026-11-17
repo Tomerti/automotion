@@ -18,5 +18,7 @@ export function TraceView({
       return <SubsetTraceView trace={trace} stepIndex={stepIndex} />;
     case 'minimize':
       return <MinimizeTraceView trace={trace} stepIndex={stepIndex} />;
+    case 'thompson':
+      return <></>; // the Thompson walkthrough view comes later
   }
 }
