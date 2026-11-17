@@ -15,13 +15,11 @@ function Harness({
   onClose = () => {},
   autoPlay,
   stopAt,
-  onPlayingChange,
 }: {
   n?: number;
   onClose?: () => void;
   autoPlay?: boolean;
   stopAt?: number | null;
-  onPlayingChange?: (playing: boolean) => void;
 }): React.JSX.Element {
   const [i, setI] = useState(0);
   return (
@@ -33,7 +31,6 @@ function Harness({
       onClose={onClose}
       autoPlay={autoPlay}
       stopAt={stopAt}
-      onPlayingChange={onPlayingChange}
     />
   );
 }
@@ -125,18 +122,6 @@ describe('TracePlayer', () => {
     const line = screen.getByText((_, el) => el?.getAttribute('aria-live') === 'polite');
     expect(line).toHaveTextContent("Read 'a': {q0} → {q12}");
     expect([...line.querySelectorAll('sub')].map((s) => s.textContent)).toEqual(['0', '12']);
-  });
-
-  it('onPlayingChange reports playing on mount and on every change', () => {
-    vi.useFakeTimers();
-    const onPlayingChange = vi.fn();
-    render(<Harness n={3} onPlayingChange={onPlayingChange} />);
-    expect(onPlayingChange.mock.calls).toEqual([[false]]);
-    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
-    expect(onPlayingChange.mock.calls).toEqual([[false], [true]]);
-    act(() => void vi.advanceTimersByTime(800));
-    act(() => void vi.advanceTimersByTime(800)); // reaches the end and stops
-    expect(onPlayingChange.mock.calls).toEqual([[false], [true], [false]]);
   });
 
   it('autoplay advances and stops at the end', () => {

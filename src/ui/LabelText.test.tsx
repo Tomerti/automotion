@@ -1,7 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { eliminate } from '../core/eliminate';
-import { fixture } from '../core/testing/fixtures';
 import { LabelText } from './LabelText';
 
 afterEach(cleanup);
@@ -32,25 +30,5 @@ describe('LabelText', () => {
     const { container } = render(<LabelText text="'a'_b': then q_1, then {q_2', q_3}." />);
     expect(container.textContent).toBe("'a'_b': then q1, then {q2', q3}.");
     expect(subs(container)).toEqual(['1', '2', '3']);
-  });
-});
-
-describe('LabelText with eliminate explanations', () => {
-  it('shows an eliminate formula with a _ symbol literally, state subscripts kept', () => {
-    const a = fixture({
-      kind: 'NFA',
-      alphabet: '_b',
-      states: ['p_1', 'q_y', 'r'],
-      start: 'p_1',
-      accepting: ['r'],
-      edges: [
-        ['p_1', '_', 'q_y'],
-        ['q_y', 'b', 'r'],
-      ],
-    });
-    const remove = eliminate(a, ['q_y']).steps.find((s) => s.phase === 'remove');
-    const { container } = render(<LabelText text={remove?.explanation ?? ''} />);
-    expect(container.textContent).toMatch(/^qy is gone\. New labels: p₁ → r: '_b'\.$/);
-    expect(subs(container)).toEqual(['y']);
   });
 });

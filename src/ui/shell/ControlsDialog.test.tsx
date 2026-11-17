@@ -77,22 +77,17 @@ describe('Controls popup', () => {
     expect(Array.from(panels).filter((p) => !(p as HTMLElement).hidden)).toHaveLength(1);
   });
 
-  it('the Run tab lists building an NFA from a regex and turning an automaton into one', async () => {
+  it('the Run tab lists creating a DFA from a regex', async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Controls' }));
     await user.click(within(dialog()!).getByRole('tab', { name: 'Run' }));
     const panel = within(dialog()!).getByRole('tabpanel');
     expect(within(panel).getByText('Create a DFA from a regex')).toBeInTheDocument();
-    expect(within(panel).getByText('Create → From regex…')).toBeInTheDocument();
+    expect(within(panel).getByText('Create → From regex')).toBeInTheDocument();
     // Commas, not ·, between the operators: · could be read as concatenation.
     expect(
       within(panel).getByText(String.raw`| or, + one or more, * any number, ε as \eps`),
-    ).toBeInTheDocument();
-    expect(within(panel).getByText('Turn the automaton into a regex')).toBeInTheDocument();
-    expect(within(panel).getByText('To regex')).toBeInTheDocument();
-    expect(
-      within(panel).getByText('Click a state while paused to remove it next'),
     ).toBeInTheDocument();
   });
 

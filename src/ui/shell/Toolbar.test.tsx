@@ -34,7 +34,6 @@ describe('Toolbar', () => {
       'Tidy',
       'Convert to DFA',
       'Minimize',
-      'To regex',
       'Share, copy or export',
     ]) {
       expect(btn(n)).toBeDisabled();
@@ -84,26 +83,6 @@ describe('Toolbar', () => {
       kind: 'error',
     });
     expect(appStore.getState().trace).toBeNull();
-  });
-
-  it('To regex opens the walkthrough; disabled with the reason', async () => {
-    const user = userEvent.setup();
-    resetAppStore({ automata: [{ ...nfa(), states: [], starts: [] }], activeId: 'n' });
-    const { unmount } = render(<Toolbar />);
-    expect(btn('To regex')).toBeDisabled();
-    expect(btn('To regex')).toHaveAttribute('title', 'Nothing to convert: add a state first');
-    unmount();
-
-    resetAppStore({ automata: [nfa()], activeId: 'n' });
-    render(<Toolbar />);
-    expect(btn('To regex')).toBeEnabled();
-    expect(btn('To regex')).toHaveAttribute(
-      'title',
-      'To regex: remove states one at a time, step by step',
-    );
-    await user.click(btn('To regex'));
-    expect(appStore.getState().trace?.kind).toBe('eliminate');
-    expect(appStore.getState().stepIndex).toBe(0);
   });
 
   it('the export menu downloads SVG and closes; Escape closes it too', async () => {

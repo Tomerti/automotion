@@ -223,11 +223,7 @@ function CreateMenu(): React.JSX.Element {
           {item('Blank automaton', 'An empty DFA to draw on', () =>
             appStore.getState().createAutomaton(),
           )}
-          {item(
-            'From regex…',
-            'Type a regular expression and get its minimal DFA',
-            openRegexDialog,
-          )}
+          {item('From regex', 'Type a regular expression and get its minimal DFA', openRegexDialog)}
         </div>
       )}
     </div>

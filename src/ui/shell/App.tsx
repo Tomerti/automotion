@@ -3,7 +3,6 @@ import { useAppStore } from '../../store/store';
 import { Canvas } from '../canvas/Canvas';
 import { useAutosave } from '../../persistence/useAutosave';
 import { RunPanel } from '../player/RunPanel';
-import { setPlaying } from '../player/playingStore';
 import { TraceExtraActions } from '../player/traceExtraActions';
 import { TracePlayer } from '../player/TracePlayer';
 import { TraceView } from '../player/TraceView';
@@ -121,7 +120,6 @@ export default function App(): React.JSX.Element {
                 onClose={closeTrace}
                 autoPlay={(trace.kind === 'run' || trace.kind === 'subset') && !opensPaused}
                 stopAt={stopAt}
-                onPlayingChange={setPlaying}
                 extraActions={<TraceExtraActions trace={trace} stepIndex={stepIndex} />}
               />
             )}

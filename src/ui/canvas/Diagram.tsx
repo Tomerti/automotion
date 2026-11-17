@@ -13,7 +13,6 @@ export interface DiagramHighlight {
   visibleStates?: StateId[];
   visibleTransitions?: string[]; // subset reveal; undefined = all
   edgeSymbols?: Record<string, Sym[]>; // label override per transition id (subset: built so far)
-  edgeTitles?: Record<string, string>; // native tooltip per transition id (To regex: a cut label)
   errorStates?: StateId[];
   errorTransitions?: string[];
   issueMarks?: Record<StateId, 'error' | 'warning'>; // states the issues popover points at
@@ -104,7 +103,6 @@ export function Diagram(props: DiagramProps): React.JSX.Element {
               selected={has(highlight.selectedTransitions, t.id)}
               error={has(highlight.errorTransitions, t.id)}
               editing={highlight.editing === t.id}
-              title={highlight.edgeTitles?.[t.id]}
             />
           );
         })}

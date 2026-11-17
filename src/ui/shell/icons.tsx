@@ -65,15 +65,6 @@ export const MinimizeIcon = (): React.JSX.Element => (
   </Icon>
 );
 
-/** An arrow into a Kleene star over a line: the automaton becomes a regex. */
-export const RegexIcon = (): React.JSX.Element => (
-  <Icon>
-    <path d="M3 10h4M5.5 7.5 8 10l-2.5 2.5" />
-    <path d="M14 5v6M11.4 6.5l5.2 3M16.6 6.5l-5.2 3" />
-    <path d="M11 15h6" />
-  </Icon>
-);
-
 /** An arrow down onto a line: save a file. */
 export const DownloadIcon = (): React.JSX.Element => (
   <Icon>

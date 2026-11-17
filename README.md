@@ -7,7 +7,7 @@
 
 <p align="center">
   Draw a DFA or an NFA, type a word, and watch it run, one symbol at a time.<br>
-  Convert NFAs to DFAs, minimize them, and go to and from regexes, with every step explained.
+  Convert NFAs to DFAs, minimize them, and build one from a regex, with every step explained.
 </p>
 
 <p align="center">
@@ -98,9 +98,7 @@ Press **?** in the app to see every control.
 
 ### Regular expressions
 
-- **From regex…** (in **Create**) creates the minimal DFA for the regex.
-- **To regex** removes states one at a time until a simplified regex is left. Click a state while paused to
-  choose which goes next.
+- **From regex** (in **Create**) creates the minimal DFA for the regex.
 - **The syntax:** `|` for or, `+` one or more, `*` any number, `\eps` for ε, `\emptyset` for ∅;
   write symbols side by side to join them and use `( )` to group.
 

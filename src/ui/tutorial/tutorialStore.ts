@@ -95,7 +95,7 @@ let unsubscribe: (() => void) | null = null;
 function nextOwned(owned: string[], app: AppState, prev: AppState, grows: boolean): string[] {
   const t = prev.trace;
   let next = owned;
-  if (grows && t && t.kind !== 'run' && t.kind !== 'eliminate' && ownsId(owned, t)) {
+  if (grows && t && t.kind !== 'run' && ownsId(owned, t)) {
     const saved = t.result.id;
     const isNew = !prev.automata.some((a) => a.id === saved);
     if (isNew && !owned.includes(saved) && app.automata.some((a) => a.id === saved)) {

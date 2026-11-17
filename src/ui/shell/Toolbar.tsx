@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { canEliminate } from '../../core/eliminate';
 import type { Automaton } from '../../core/model';
 import { canMinimize } from '../../core/minimize';
 import { canConvert } from '../../core/subset';
 import { appStore, selectedStates, useAppStore } from '../../store/store';
-import { startEliminate, startMinimize, startSubset } from '../../store/traceActions';
+import { startMinimize, startSubset } from '../../store/traceActions';
 import { withEmbeddedFont } from '../canvas/embedFont';
 import { canCopyImage, copyPng, exportableSvg, svgToPng } from '../canvas/exportDiagram';
 import { latexDocument, latexSnippet } from '../canvas/exportLatex';
@@ -21,7 +20,6 @@ import {
   LinkIcon,
   MinimizeIcon,
   RedoIcon,
-  RegexIcon,
   ShareIcon,
   TidyIcon,
   UndoIcon,
@@ -239,7 +237,6 @@ export function Toolbar(): React.JSX.Element {
 
   const convertReason = automaton ? canConvert(automaton) : null;
   const minimizeReason = automaton ? canMinimize(automaton) : null;
-  const eliminateReason = automaton ? canEliminate(automaton) : null;
 
   return (
     <div className="av-toolbar" role="toolbar" aria-label="Automaton tools">
@@ -291,14 +288,6 @@ export function Toolbar(): React.JSX.Element {
           icon={<MinimizeIcon />}
           disabled={none || minimizeReason !== null}
           onClick={startMinimize}
-        />
-        <IconButton
-          label="To regex"
-          text
-          title={eliminateReason ?? 'To regex: remove states one at a time, step by step'}
-          icon={<RegexIcon />}
-          disabled={none || eliminateReason !== null}
-          onClick={() => startEliminate((m) => toast(m, 'error'))}
         />
       </div>
       <ExportMenu automaton={automaton} disabled={none || tracing} />

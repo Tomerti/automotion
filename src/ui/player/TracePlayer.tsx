@@ -18,8 +18,6 @@ export interface TracePlayerProps {
    * there goes on. Stepping and jumps ignore it.
    */
   stopAt?: number | null;
-  /** Called with `playing` once on mount and whenever it changes. */
-  onPlayingChange?: (playing: boolean) => void;
 }
 
 const isTypingTarget = (t: EventTarget | null): boolean =>
@@ -82,7 +80,6 @@ export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
     extraActions,
     autoPlay = false,
     stopAt = null,
-    onPlayingChange,
   } = props;
   const [playing, setPlaying] = useState(autoPlay && stepCount > 1);
   // Local, so a new trace (which remounts the player) starts at 1×; mirrored for the views.
@@ -90,13 +87,6 @@ export function TracePlayer(props: TracePlayerProps): React.JSX.Element {
   const last = stepCount - 1;
 
   useEffect(() => setPlaybackSpeed(speed), [speed]);
-
-  // Only `playing` triggers it: a new callback on every render must not report again.
-  const onPlayingChangeRef = useRef(onPlayingChange);
-  useEffect(() => {
-    onPlayingChangeRef.current = onPlayingChange;
-  });
-  useEffect(() => onPlayingChangeRef.current?.(playing), [playing]);
 
   // Latest values for the interval and key handlers, which must not re-subscribe on every step.
   const latest = useRef({ index, last, onIndex, onClose, playing, stopAt });

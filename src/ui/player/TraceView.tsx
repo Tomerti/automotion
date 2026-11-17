@@ -1,5 +1,4 @@
 import type { AnyTrace } from '../../core/trace';
-import { EliminateTraceView } from './EliminateTraceView';
 import { MinimizeTraceView } from './MinimizeTraceView';
 import { RunTraceView } from './RunTraceView';
 import { SubsetTraceView } from './SubsetTraceView';
@@ -19,7 +18,5 @@ export function TraceView({
       return <SubsetTraceView trace={trace} stepIndex={stepIndex} />;
     case 'minimize':
       return <MinimizeTraceView trace={trace} stepIndex={stepIndex} />;
-    case 'eliminate':
-      return <EliminateTraceView trace={trace} stepIndex={stepIndex} />;
   }
 }

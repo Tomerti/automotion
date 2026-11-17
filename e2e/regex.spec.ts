@@ -1,9 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
-import { clickState, FIXTURES, item, openApp } from './helpers.ts';
+import { item, openApp } from './helpers.ts';
 
 async function openRegexDialog(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Create', exact: true }).click();
-  await page.getByRole('menuitem', { name: 'From regex…' }).click();
+  await page.getByRole('menuitem', { name: 'From regex' }).click();
 }
 
 test('from regex to a minimal DFA', async ({ page }) => {
@@ -34,29 +34,4 @@ test('a parse error is shown in the dialog', async ({ page }) => {
   await expect(page.getByTestId('regex-error')).toBeVisible();
   await expect(page.getByTestId('regex-error')).toContainText('Nothing after |');
   await expect(page.getByTestId('regex-build')).toBeDisabled();
-});
-
-test('to regex, picking a state', async ({ page, context }) => {
-  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await openApp(page, { clear: true });
-  await page.getByLabel('Import file').setInputFiles(FIXTURES);
-  await item(page, 'Ends in ab (NFA)').click();
-  await page.getByRole('button', { name: 'To regex' }).click();
-  // Opens paused on the GNFA step.
-  await expect(page.getByTestId('step-counter')).toHaveText('Step 1 / 10');
-  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
-  const explanation = page.getByTestId('trace-player').locator('.av-player-explanation');
-  // The automatic first pick is q₁ (one arrow in, one out); remove q₂ first instead.
-  await expect(explanation).toContainText('Remove q₁');
-  await clickState(page, 'q_2');
-  await expect(explanation).toContainText('Remove q₂');
-  await expect(page.getByTestId('step-counter')).toHaveText('Step 2 / 10');
-  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
-  await page.getByRole('button', { name: 'Last' }).click();
-  await expect(page.getByTestId('regex-result')).not.toBeEmpty();
-  const regex = await page.getByTestId('regex-result').textContent();
-  await page.getByTestId('regex-copy').click();
-  await expect(page.getByText('Regex copied')).toBeVisible();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(regex);
 });

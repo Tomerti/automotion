@@ -153,14 +153,6 @@ export function printRegex(r: Regex): string {
   }
 }
 
-/**
- * Regex text for an explanation: quoted like a symbol ('a') and without whitespace, so the
- * player's `LabelText` shows it literally (a `_` symbol is not read as a label subscript).
- */
-export function quoteRegex(regexText: string): string {
-  return `'${regexText.replace(/\s+/gu, '')}'`;
-}
-
 /** The symbols used, sorted and unique. */
 export function regexSymbols(r: Regex): Sym[] {
   const out = new Set<Sym>();

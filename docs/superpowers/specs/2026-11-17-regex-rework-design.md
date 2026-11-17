@@ -1,5 +1,7 @@
 # Regex rework: minimal DFA straight from a regex, simpler To regex, Create menu
 
+> To regex was removed on 2026-11-17 by decision; only From regex remains.
+
 Agreed in chat 2026-11-17, after trying the first regex build (`2026-11-17-regex-design.md`). This
 document wins where they disagree.
 

@@ -17,9 +17,14 @@ Nothing in progress: pick the next task from the list below.
 
 ## Ideas (later)
 
-- [ ] Lessons for regex (both directions), TMs, and checking an automaton against a language, as those features land
+- [ ] Lessons for regex → DFA, TMs, and checking an automaton against a language, as those features land
 
 ## Done
+
+### To regex removed (2026-11-17)
+
+- [x] To regex (automaton → regex by state elimination) dropped by decision, with its walkthrough, `playingStore`, `replaceTrace`, `edgeTitles` and Controls row; From regex stays
+- [x] The Create menu item reads From regex (no ellipsis)
 
 ### Regex rework (2026-11-17)
 

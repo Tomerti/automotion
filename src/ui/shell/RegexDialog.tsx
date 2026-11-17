@@ -14,7 +14,7 @@ export function RegexDialog(): React.JSX.Element | null {
 }
 
 /**
- * Create → From regex…: a box for a regular expression. Create DFA adds the regex's
+ * Create → From regex: a box for a regular expression. Create DFA adds the regex's
  * minimal DFA as a new automaton; a syntax error is shown under the offending character.
  */
 function RegexModal(): React.JSX.Element {

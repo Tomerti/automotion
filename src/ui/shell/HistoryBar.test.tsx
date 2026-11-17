@@ -105,7 +105,7 @@ describe('HistoryBar', () => {
     expect(st().automata[0]?.kind).toBe('DFA');
   });
 
-  it('Create opens a menu with Blank automaton and From regex…', async () => {
+  it('Create opens a menu with Blank automaton and From regex', async () => {
     const user = userEvent.setup();
     closeRegexDialog();
     render(<HistoryBar />);
@@ -115,7 +115,7 @@ describe('HistoryBar', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Blank automaton' }));
     expect(items()).toHaveLength(3);
     await user.click(screen.getByRole('button', { name: 'Create' }));
-    await user.click(screen.getByRole('menuitem', { name: 'From regex…' }));
+    await user.click(screen.getByRole('menuitem', { name: 'From regex' }));
     expect(useRegexDialog.getState().open).toBe(true);
     expect(items()).toHaveLength(3);
     closeRegexDialog();
