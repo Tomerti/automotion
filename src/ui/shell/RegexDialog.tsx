@@ -19,6 +19,7 @@ export function RegexDialog(): React.JSX.Element | null {
 function RegexModal(): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const caretRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState('');
   const id = useId();
   useModalDialog(dialogRef, closeRegexDialog);
@@ -83,6 +84,9 @@ function RegexModal(): React.JSX.Element {
             placeholder="(a|b)*abb"
             value={text}
             onChange={(e) => setText(normalizeRegexText(e.target.value))}
+            onScroll={(e) => {
+              if (caretRef.current) caretRef.current.scrollLeft = e.currentTarget.scrollLeft;
+            }}
           />
           {error && (
             <div
@@ -91,8 +95,15 @@ function RegexModal(): React.JSX.Element {
               data-testid="regex-error"
               role="alert"
             >
-              <div className="av-regex-caret" data-testid="regex-caret" aria-hidden="true">
-                {' '.repeat([...text.slice(0, error.at)].length) + '^'}
+              <div
+                ref={caretRef}
+                className="av-regex-caret"
+                data-testid="regex-caret"
+                aria-hidden="true"
+              >
+                {/* The text before the error, invisible: same glyphs and widths as the box. */}
+                <span data-testid="regex-caret-pad">{text.slice(0, error.at)}</span>
+                <span data-testid="regex-caret-mark">^</span>
               </div>
               <p>{error.error}</p>
             </div>

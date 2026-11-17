@@ -614,6 +614,17 @@ input.av-switcher-input {
 }
 
 /* Regex dialog (Create ▾ → From regex…) */
+/* One rule for the box and the caret row under it, so their glyph widths can't drift apart. */
+.av-regex .av-regex-input,
+.av-regex .av-regex-caret {
+  font-family: var(--av-font-symbol, ui-monospace, monospace);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+.av-regex .av-regex-input {
+  padding: 10px 12px;
+}
 .av-regex {
   width: min(520px, 100%);
 }
@@ -648,6 +659,10 @@ input.av-switcher-input {
   font-size: 15px;
   line-height: 1;
   white-space: pre;
+  overflow: hidden;
+}
+.av-regex-caret [data-testid='regex-caret-pad'] {
+  color: transparent;
 }
 .av-regex-syntax {
   margin: 10px 0 0;

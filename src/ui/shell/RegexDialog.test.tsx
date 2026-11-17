@@ -38,7 +38,7 @@ describe('RegexDialog', () => {
     await user.type(screen.getByLabelText('Regex'), 'a|');
     expect(screen.getByTestId('regex-error')).toHaveTextContent('Nothing after |');
     // The error is at the `|` (offset 1): one column in.
-    expect(screen.getByTestId('regex-caret').textContent).toBe(' ^');
+    expect(screen.getByTestId('regex-caret-pad').textContent).toBe('a');
     const build = screen.getByTestId('regex-build');
     expect(build).toBeDisabled();
     expect(build).toHaveAttribute('title', 'Nothing after |');
@@ -51,7 +51,15 @@ describe('RegexDialog', () => {
     const user = userEvent.setup();
     openDialog();
     await user.type(screen.getByLabelText('Regex'), '😀)');
-    expect(screen.getByTestId('regex-caret').textContent).toBe(' ^');
+    expect(screen.getByTestId('regex-caret-pad').textContent).toBe('😀');
+  });
+
+  it('keeps non-monospace symbols in the caret padding so the ^ lines up', async () => {
+    const user = userEvent.setup();
+    openDialog();
+    await user.type(screen.getByLabelText('Regex'), String.raw`(a|\eps)*)`);
+    expect(screen.getByTestId('regex-caret-pad').textContent).toBe('(a|ε)*');
+    expect(screen.getByTestId('regex-caret').textContent).toBe('(a|ε)*^');
   });
 
   it('empty input: Build NFA disabled, no error shown yet', () => {
