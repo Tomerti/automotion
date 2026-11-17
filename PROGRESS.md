@@ -8,6 +8,7 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
+- [ ] e2e `the NFAs card follows the run back with ←, from the closing card too` (e2e/lessons.spec.ts) is flaky: 4 quick ArrowRight presses sometimes stop at Step 4 / 5 (2 of 5 runs fail on master too)
 - [ ] Repo social preview: upload `public/og.png` in GitHub Settings → General → Social preview (web UI only, no API)
 - [ ] At 1024×480 with the history bar open, the floating trace player sits partly under the history bar, hiding its first buttons (Last among them); every walkthrough, not just regex
 - [ ] Typing `\epsilon` key by key in the regex or symbol inputs still gives `εilon`: `\eps` is normalised the moment it's typed (pasting `\epsilon` works)
@@ -26,6 +27,8 @@ Nothing in progress: pick the next task from the list below.
 - [x] Starting a lesson from a finished one's closing card removes the finished one's automata too
 - [x] Lesson automata are never autosaved, so a reload midway leaves nothing (an empty saved list opens a blank Untitled)
 - [x] No empty-canvas hint on a lesson's automaton (Basics' regex link filled the Tutorial automaton)
+- [x] Deleting a lesson's own automaton midway also removes the rest of its automata (a saved walkthrough result no longer turns into an autosaved one)
+- [x] The regex dialog never fills a lesson's automaton in place: the DFA is added as a new automaton
 
 ### Create is one click again; regex from the empty canvas (2026-11-17)
 

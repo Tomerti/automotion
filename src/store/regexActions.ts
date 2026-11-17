@@ -37,10 +37,11 @@ export async function createFromRegex(
   return laid.id;
 }
 
-/** The active automaton's id when it can take the DFA in place: no states, editable, no trace. */
+/** The active automaton's id when it can take the DFA in place: no states, editable, no trace, and not a lesson's. */
 function emptyTarget(): string | null {
-  const { activeId, automata, readOnly, trace } = appStore.getState();
+  const { activeId, automata, readOnly, lessonIds, trace } = appStore.getState();
   if (activeId === null || trace !== null || readOnly.includes(activeId)) return null;
+  if (lessonIds.includes(activeId)) return null;
   const active = automata.find((a) => a.id === activeId);
   return active && active.states.length === 0 ? activeId : null;
 }

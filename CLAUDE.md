@@ -83,7 +83,8 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
 ### `src/persistence/`
 
 - localStorage autosave (key `automotion:v1`) and the JSON file format
-  `{ format: "automotion", version, automata }` (version 2). Every load goes through `migrate()` and the
+  `{ format: "automotion", version, automata }` (version 2). An empty saved list loads as one blank Untitled: lesson automata are never
+  autosaved, so a first visit straight into a lesson saves `[]`. Every load goes through `migrate()` and the
   zod schema; only the autosave load repairs dangling start/accepting ids, imports and share links stay
   strict. Bump the version and extend `migrate()` for any format change.
 - Keep the legacy paths: files tagged `"automaton-vis"` (`LEGACY_FORMAT`) and `migrateLegacyKeys()`
@@ -125,7 +126,7 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
   Next would land on (`pacingStep`), so a run opened early is paced too. A step done on reaching a
   point of a run or walkthrough has `steppedBack`: stepped back (←) before that point, it shows again,
   so the card follows the trace back. While another automaton is open the card hides (it comes back on
-  the lesson's own). Finishing Basics removes its automaton and its popup offers Start building or See
+  the lesson's own). Deleting a lesson's own automaton ends it and removes the rest of its automata. Finishing Basics removes its automaton and its popup offers Start building or See
   the lessons (Controls on the Lessons tab); a lesson's Finish offers Next
   (`nextLesson`: never Basics; See the lessons once none is left).
   Only Basics has goal pictures and frames the word box and dock.

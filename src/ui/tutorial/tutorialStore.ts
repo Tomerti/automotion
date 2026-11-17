@@ -26,7 +26,9 @@ export interface TutorialState {
   automatonId: string | null;
   /**
    * The automata the lesson owns: its own, then any saved from a walkthrough of an owned one.
-   * Read-only while a lesson that isn't `editable` runs; quitting removes them.
+   * Read-only while a lesson that isn't `editable` runs. Quit and Finish both remove them, as does
+   * deleting the lesson's own automaton midway. Mirrored to the app store's `lessonIds`, so they
+   * are never autosaved.
    */
   owned: string[];
   /** The furthest step reached (index into `lessonSteps`). */
@@ -127,7 +129,11 @@ function follow(app: AppState, prev: AppState): void {
   const t = tutorialStore.getState();
   if (!t.active || !t.lesson) return;
   if (!app.automata.some((a) => a.id === t.automatonId)) {
+    // Its other automata would become ordinary, autosaved ones: remove them, as Quit does.
+    // `endLesson` unsubscribes first, so removing them doesn't come back in here.
+    const rest = t.owned.filter((id) => id !== t.automatonId);
     endLesson();
+    removeAutomata(rest);
     return;
   }
   const owned = nextOwned(t.owned, app, prev, t.lesson.start !== null);
@@ -354,8 +360,9 @@ export function closeCelebration(): void {
 }
 
 /**
- * Stop following the app and unlock its automata, which become ordinary ones. Reached directly
- * only by tests; `quitLesson` and `finishLesson` then remove them.
+ * Stop following the app and unlock its automata, which become ordinary ones. `quitLesson`,
+ * `finishLesson` and `follow` (the lesson's own automaton was deleted) call it, then remove the
+ * automata; tests also call it directly.
  */
 export function endLesson(): void {
   unsubscribe?.();

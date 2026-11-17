@@ -104,6 +104,7 @@ describe('a lesson with a start automaton', () => {
     app().addAutomaton(trace.result);
     expect(tut().owned).toHaveLength(2);
     expect(tut().owned).toContain(trace.result.id);
+    expect(app().lessonIds).toEqual(tut().owned);
     expect(steps[tut().current]!.hint(tutorialContext(app(), tut().automatonId))).toBeNull();
   });
 
@@ -123,6 +124,7 @@ describe('a lesson with a start automaton', () => {
     app().deleteAutomaton(trace.result.id);
     expect(tut().owned).toEqual([tut().automatonId]);
     expect(app().readOnly).toEqual(tut().owned);
+    expect(app().lessonIds).toEqual(tut().owned);
     expect(tut().active).toBe(true);
   });
 
@@ -130,6 +132,19 @@ describe('a lesson with a start automaton', () => {
     startLesson(TEST_LESSON);
     app().deleteAutomaton(tut().automatonId!);
     expect(tut().active).toBe(false);
+  });
+
+  it('removes its other automata too when its own is deleted', () => {
+    startLesson(TEST_LESSON);
+    const own = tut().automatonId!;
+    const saved = convert().result;
+    app().addAutomaton(saved);
+    expect(tut().owned).toEqual([own, saved.id]);
+    app().deleteAutomaton(own);
+    expect(tut().active).toBe(false);
+    expect(app().automata.some((a) => a.id === saved.id)).toBe(false);
+    expect(app().lessonIds).toEqual([]);
+    expect(app().readOnly).toEqual([]);
   });
 
   it('locks owned automata and unlocks them when it ends', () => {
