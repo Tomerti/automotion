@@ -10,6 +10,7 @@ import { startRun } from '../../store/traceActions';
 import { ConfirmDialog } from './ConfirmDialog';
 import { confirmStore } from './confirmStore';
 import { HistoryBar } from './HistoryBar';
+import { closeRegexDialog, useRegexDialog } from './regexDialogStore';
 import { toastStore } from './toastStore';
 
 const parity = fixture({
@@ -101,6 +102,18 @@ describe('HistoryBar', () => {
     expect(items()[0]).toHaveTextContent('Untitled');
     expect(items()[0]).toHaveAttribute('aria-current', 'page');
     expect(st().automata[0]?.kind).toBe('DFA');
+  });
+
+  it('Create still creates in one click; its ▾ menu has From regex…', async () => {
+    const user = userEvent.setup();
+    closeRegexDialog();
+    render(<HistoryBar />);
+    await user.click(screen.getByRole('button', { name: 'More ways to create' }));
+    expect(items()).toHaveLength(2);
+    await user.click(screen.getByRole('menuitem', { name: 'From regex…' }));
+    expect(useRegexDialog.getState().open).toBe(true);
+    expect(items()).toHaveLength(2);
+    closeRegexDialog();
   });
 
   it('an edit moves the automaton to the top of the list', () => {

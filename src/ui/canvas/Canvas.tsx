@@ -4,6 +4,7 @@ import { ignoringIncomplete, validate } from '../../core/validate';
 import { appStore, useAppStore } from '../../store/store';
 import type { Viewport } from '../../store/types';
 import { ContextMenu } from './ContextMenu';
+import { openRegexDialog } from '../shell/regexDialogStore';
 import { Diagram } from './Diagram';
 import { Arrowhead } from './EdgeView';
 import { InlineInput } from './InlineInput';
@@ -189,6 +190,11 @@ function EditableCanvas(props: {
           <p className="av-canvas-hint-small">
             <span>Ctrl+V pastes LaTeX (TikZ) code ·</span>{' '}
             <span>Drop a .json / .tex file to import</span>
+          </p>
+          <p className="av-canvas-hint-small">
+            <button type="button" className="av-canvas-hint-link" onClick={openRegexDialog}>
+              or build one from a regex
+            </button>
           </p>
         </div>
       )}

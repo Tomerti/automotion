@@ -19,6 +19,7 @@ import {
 import { WelcomeCard } from '../tutorial/WelcomeCard';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ControlsDialog } from './ControlsDialog';
+import { RegexDialog } from './RegexDialog';
 import { useControlsHelp, useWelcome } from './help';
 import { usePasteLatex } from './pasteLatex';
 import { HistoryBar } from './HistoryBar';
@@ -142,6 +143,7 @@ export default function App(): React.JSX.Element {
         <Toasts />
       </div>
       <ConfirmDialog />
+      <RegexDialog />
       {helpOpen && (
         <ControlsDialog
           openOnLessons={helpOnLessons}

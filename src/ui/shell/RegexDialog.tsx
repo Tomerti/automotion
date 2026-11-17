@@ -1,0 +1,119 @@
+import { useEffect, useId, useRef, useState } from 'react';
+import { normalizeRegexText, parseRegex } from '../../core/regex';
+import { canThompson } from '../../core/thompson';
+import { startThompson } from '../../store/traceActions';
+import { CloseIcon } from './icons';
+import { closeRegexDialog, useRegexDialog } from './regexDialogStore';
+import { useModalDialog } from './useModalDialog';
+
+/** The open regex dialog, if any (rendered once, in `App`). */
+export function RegexDialog(): React.JSX.Element | null {
+  const open = useRegexDialog((s) => s.open);
+  return open ? <RegexModal /> : null;
+}
+
+/**
+ * Create ▾ → From regex…: a box for a regular expression. Build NFA opens Thompson's
+ * construction as a walkthrough; a syntax error is shown under the offending character.
+ */
+function RegexModal(): React.JSX.Element {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [text, setText] = useState('');
+  const id = useId();
+  useModalDialog(dialogRef, closeRegexDialog);
+  // After the dialog's own focus (effects run in order): the box is what to use first.
+  useEffect(() => inputRef.current?.focus(), []);
+
+  const refusal = canThompson(text);
+  const parsed = text === '' ? null : parseRegex(text);
+  const error = parsed && !parsed.ok ? parsed : null;
+
+  const submit = (): void => {
+    if (refusal !== null) return;
+    closeRegexDialog();
+    startThompson(text);
+  };
+
+  return (
+    <div
+      className="av-modal-backdrop"
+      data-testid="modal-backdrop"
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) closeRegexDialog();
+      }}
+    >
+      <div
+        ref={dialogRef}
+        className="av-modal av-regex"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${id}-title`}
+        tabIndex={-1}
+      >
+        <header className="av-modal-head">
+          <h2 id={`${id}-title`}>Build an NFA from a regex</h2>
+          <button
+            type="button"
+            className="av-icon-button"
+            aria-label="Close"
+            title="Close (Esc)"
+            data-focus-stop
+            onClick={closeRegexDialog}
+          >
+            <CloseIcon />
+          </button>
+        </header>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <input
+            ref={inputRef}
+            className="av-regex-input"
+            data-testid="regex-input"
+            aria-label="Regex"
+            aria-invalid={error !== null}
+            aria-describedby={error ? `${id}-error` : `${id}-syntax`}
+            data-focus-stop
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="(a|b)*abb"
+            value={text}
+            onChange={(e) => setText(normalizeRegexText(e.target.value))}
+          />
+          {error && (
+            <div
+              id={`${id}-error`}
+              className="av-regex-error"
+              data-testid="regex-error"
+              role="alert"
+            >
+              <div className="av-regex-caret" data-testid="regex-caret" aria-hidden="true">
+                {' '.repeat([...text.slice(0, error.at)].length) + '^'}
+              </div>
+              <p>{error.error}</p>
+            </div>
+          )}
+          <p id={`${id}-syntax`} className="av-regex-syntax">
+            {String.raw`| or · + one or more · * any number · ε as \eps · ∅ as \emptyset`}
+          </p>
+          <div className="av-regex-foot">
+            <button
+              type="submit"
+              className="av-primary"
+              data-testid="regex-build"
+              data-focus-stop
+              disabled={refusal !== null}
+              title={refusal ?? undefined}
+            >
+              Build NFA
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

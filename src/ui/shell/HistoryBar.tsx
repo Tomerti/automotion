@@ -13,6 +13,7 @@ import { copyLink } from './copyLink';
 import { downloadText, slug } from './download';
 import { IMPORT_ACCEPT, importFile } from './importFile';
 import { PasteLatexDialog } from './PasteLatexDialog';
+import { openRegexDialog } from './regexDialogStore';
 import { toast } from './toastStore';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
 
@@ -173,6 +174,54 @@ function ImportMenu(props: { onPickFile: () => void; onPasteLatex: () => void })
             'Paste an automaton’s LaTeX (TikZ) code, from Overleaf, notes, …',
             onPasteLatex,
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Create's ▾: the other ways to start an automaton (Create itself stays one click). */
+function CreateMoreMenu(): React.JSX.Element {
+  const { open, setOpen, rootRef, triggerRef } = usePopover();
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (open) focusFirstItem(menuRef.current);
+  }, [open]);
+  return (
+    <div className="av-menu-anchor" ref={rootRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="av-split-more"
+        aria-label="More ways to create"
+        title="More ways to create"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <svg className="av-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <path d="M6 8l4 4 4-4" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          ref={menuRef}
+          className="av-popover av-menu"
+          role="menu"
+          aria-label="More ways to create"
+          onKeyDown={onMenuKeyDown}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            title="Type a regular expression and watch its NFA being built"
+            onClick={() => {
+              setOpen(false);
+              openRegexDialog();
+            }}
+          >
+            From regex…
+          </button>
         </div>
       )}
     </div>
@@ -387,7 +436,7 @@ export function HistoryBar(): React.JSX.Element {
       onPointerEnter={() => (hoveredRef.current = true)}
       onPointerLeave={() => (hoveredRef.current = false)}
     >
-      <div className="av-history-actions">
+      <div className="av-history-actions av-split">
         <button
           type="button"
           title="Create a new automaton (switch it between DFA and NFA above the canvas)"
@@ -395,6 +444,7 @@ export function HistoryBar(): React.JSX.Element {
         >
           Create
         </button>
+        <CreateMoreMenu />
       </div>
       <ul ref={listRef} className="av-history-list" data-picking={picking ? 'true' : undefined}>
         {automata.map((a) => {

@@ -132,3 +132,19 @@
 .av-canvas-hint-small {
   font-size: 12.5px;
 }
+
+/* The one clickable thing in the hint: the rest of it lets pointers through to the canvas. */
+.av-canvas-hint-link {
+  padding: 0;
+  font: inherit;
+  color: var(--av-accent);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+@media (hover: hover) {
+  .av-canvas-hint-link:hover {
+    text-decoration: underline;
+  }
+}

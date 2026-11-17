@@ -604,6 +604,62 @@ input.av-switcher-input {
   transform: translateX(-50%);
 }
 
+/* Create | ▾: the button keeps its row; the ▾ is a narrow one beside it. */
+.av-split .av-menu-anchor {
+  flex: none;
+}
+.av-history-actions .av-split-more {
+  flex: none;
+  padding-inline: 6px;
+}
+
+/* Regex dialog (Create ▾ → From regex…) */
+.av-regex {
+  width: min(520px, 100%);
+}
+.av-regex-input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--av-font-symbol, ui-monospace, monospace);
+  font-size: 15px;
+  color: var(--av-ink);
+  background: var(--av-paper);
+  border: 1px solid var(--av-rule-strong);
+  border-radius: 8px;
+}
+.av-regex-input[aria-invalid='true'] {
+  border-color: var(--av-red);
+}
+.av-regex-error {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--av-red);
+}
+.av-regex-error p {
+  margin: 2px 0 0;
+}
+/* Same font, size and left padding as the box, so the ^ lands under the character. */
+.av-regex-caret {
+  box-sizing: border-box;
+  padding: 0 13px;
+  font-family: var(--av-font-symbol, ui-monospace, monospace);
+  font-size: 15px;
+  line-height: 1;
+  white-space: pre;
+}
+.av-regex-syntax {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--av-ink-muted);
+}
+.av-regex-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
 /* Paste LaTeX dialog (Import → Paste LaTeX…) */
 .av-paste-latex {
   width: min(560px, 100%);
