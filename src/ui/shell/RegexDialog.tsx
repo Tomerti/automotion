@@ -133,7 +133,7 @@ function RegexModal(): React.JSX.Element {
           <div className="av-regex-foot">
             <button
               type="submit"
-              className="av-primary"
+              className="av-go"
               data-testid="regex-build"
               data-focus-stop
               disabled={refusal !== null}

@@ -232,7 +232,7 @@ button[aria-pressed='true'] {
   }
 }
 
-/* A pill in the run's own colour: Run, and the buttons that start and finish the tutorial. */
+/* A pill in the run's own colour: Run, the buttons that start and finish the tutorial, and Create DFA. */
 .av-go {
   font-weight: 600;
   color: var(--av-on-run);

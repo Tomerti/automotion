@@ -22,6 +22,13 @@ describe('RegexDialog', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('Create DFA is the orange pill (av-go), like Run, not the blue av-primary', () => {
+    openDialog();
+    const build = screen.getByTestId('regex-build');
+    expect(build).toHaveClass('av-go');
+    expect(build).not.toHaveClass('av-primary');
+  });
+
   it('normalises \\eps live; Enter creates the DFA and closes', async () => {
     const user = userEvent.setup();
     openDialog();
