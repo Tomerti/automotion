@@ -95,6 +95,16 @@ const TABS: Tab[] = [
       { gesture: { keys: ['→'] }, action: 'Step forward' },
       { gesture: { keys: ['←'] }, action: 'Step back' },
       { gesture: { keys: ['Esc'] }, action: 'Back to editing' },
+      {
+        gesture: { mouse: 'click', on: 'Create ▾ → From regex…' },
+        action: 'Build an NFA from a regex',
+        hint: '| or · + one or more · * any number · \\eps',
+      },
+      {
+        gesture: { mouse: 'click', on: 'To regex' },
+        action: 'Turn the automaton into a regex',
+        hint: 'Click a state while paused to remove it next',
+      },
     ],
   },
   {

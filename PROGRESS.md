@@ -10,14 +10,21 @@ Nothing in progress: pick the next task from the list below.
 
 - [ ] Repo social preview: upload `public/og.png` in GitHub Settings → General → Social preview (web UI only, no API)
 - [ ] Lesson: Arrange (box select, Ctrl+click, move together, copy and paste, Tidy)
+- [ ] At 1024×480 with the history bar open, the floating trace player sits partly under the history bar, hiding its first buttons (Last among them); every walkthrough, not just regex
 - [ ] A state's name can still drop one device pixel when its rename input opens at some zooms (2 of 11 zoom levels at 125%, 5 at 150%, in Chrome): there the SVG label and the HTML input rasterize the text differently (the ink also moves sideways), which no input position can cancel. Gone for good only if the text being edited is drawn by the SVG itself, with the input's own text invisible (the caret and selection stay the input's)
 
 ## Ideas (later)
 
-- [ ] Regex → NFA
-- [ ] Lessons for regex → NFA, TMs, and checking an automaton against a language, as those features land
+- [ ] Lessons for regex (both directions), TMs, and checking an automaton against a language, as those features land
 
 ## Done
+
+### Regex (2026-11-17)
+
+- [x] Regex → NFA: From regex… (Create ▾, or the empty canvas's link) parses a regex (`core/regex`, errors shown with a caret) and walks through Thompson's construction one operator per step; Save as new automaton, or Save and convert to DFA
+- [x] NFA → regex: the toolbar's To regex walks through state elimination with simplified labels; clicking a state while paused picks the next one removed, and the done step shows the regex with a Copy button
+- [x] Controls' Run tab lists both, with the syntax; the README has a Regular expressions section
+- [x] `e2e/regex.spec.ts` covers both directions
 
 ### v1.1.0 prep (2026-11-16)
 
