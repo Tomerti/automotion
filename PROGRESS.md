@@ -9,7 +9,6 @@ Nothing in progress: pick the next task from the list below.
 ## Next
 
 - [ ] e2e `the NFAs card follows the run back with ←, from the closing card too` (e2e/lessons.spec.ts) is flaky: 4 quick ArrowRight presses sometimes stop at Step 4 / 5 (2 of 5 runs failed on master; 1 of 10 on 2026-11-19)
-- [ ] At 1024×480 with the history bar open, the floating trace player sits partly under the history bar (player from x = 182, bar to x = 220), hiding First (⏮), whose clicks land on the bar's Import / Export all row; every walkthrough, not just regex. `.av-dock` centres on the whole canvas and ignores `--av-history-inset`
 - [ ] The word box and the regex box don't keep the caret when a rewrite (`\eps` → ε) shortens the text before it: typing `\eps,X` in the middle of `ab` gives `aε,bX` (the caret jumps to the end). The canvas's inline inputs already keep it (`InlineInput`)
 - [ ] `LabelText` keeps a quoted `'…'` literal only before a space, `,` `.` `:` `;` or the end: a quote followed directly by `)`, `!`, `?` or `→` is parsed as a label (no caller writes that today)
 - [ ] A state's name can still drop one device pixel when its rename input opens at some zooms (2 of 11 zoom levels at 125%, 5 at 150%, in Chrome): there the SVG label and the HTML input rasterize the text differently (the ink also moves sideways), which no input position can cancel. Gone for good only if the text being edited is drawn by the SVG itself, with the input's own text invisible (the caret and selection stay the input's)
@@ -19,6 +18,10 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Lessons for regex → DFA, TMs, and checking an automaton against a language, as those features land
 
 ## Done
+
+### The trace player keeps clear of the history bar (2026-11-19)
+
+- [x] Below about 1130 px with the history bar open, the trace player hid its first buttons under the bar (First at 1024 px, up to Next at 800 px): `.av-dock` centred on the whole canvas. It still centres on the window when that clears the bar, else slides right just clear of it, and is never wider than the room beside the bar (`--av-dock-room`)
 
 ### Typing `\epsilon` gives ε (2026-11-19)
 

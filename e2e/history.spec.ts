@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
-import { addStateAt, openApp } from './helpers.ts';
+import { expect, test, type Page } from '@playwright/test';
+import { addStateAt, FIXTURES, item, openApp } from './helpers.ts';
 
 test('the history bar lists automata newest edit first and switches between them', async ({
   page,
@@ -201,4 +201,43 @@ test('Ctrl+A on a history entry picks every automaton and Delete deletes them al
   await expect(entries).toHaveCount(1);
   await expect(entries.first()).toContainText('Untitled');
   await expect(entries.first()).toContainText('DFA · 0 states');
+});
+
+/** Opens a run of `aab` on the fixtures' NFA, the window `width` × 480 px with the bar open. */
+async function openRun(page: Page, width: number): Promise<void> {
+  await page.setViewportSize({ width, height: 480 });
+  await openApp(page, { clear: true });
+  await page.getByLabel('Import file').setInputFiles(FIXTURES);
+  await item(page, 'Ends in ab (NFA)').click();
+  await page.getByLabel('Word').fill('aab');
+  await page.getByLabel('Word').press('Enter');
+  await expect(page.getByTestId('step-counter')).toBeVisible();
+}
+
+for (const width of [1024, 800]) {
+  test(`at ${width} px the trace player keeps clear of the history bar`, async ({ page }) => {
+    await openRun(page, width);
+    const bar = await page.getByRole('navigation', { name: 'History' }).boundingBox();
+    const player = await page.getByTestId('trace-player').boundingBox();
+    if (!bar || !player) throw new Error('bar or player not visible');
+    expect(player.x).toBeGreaterThanOrEqual(bar.x + bar.width);
+    expect(player.x + player.width).toBeLessThanOrEqual(width);
+    // Every control takes a click at its centre: none is under the bar.
+    const hidden = await page.getByTestId('trace-player').evaluate((el) =>
+      [...el.querySelectorAll('button, select, input')]
+        .filter((c) => {
+          const r = c.getBoundingClientRect();
+          return !c.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+        })
+        .map((c) => c.getAttribute('aria-label') ?? c.textContent),
+    );
+    expect(hidden).toEqual([]);
+  });
+}
+
+test('with room to spare the trace player stays centred on the window', async ({ page }) => {
+  await openRun(page, 1280);
+  const player = await page.getByTestId('trace-player').boundingBox();
+  if (!player) throw new Error('player not visible');
+  expect(Math.abs(player.x + player.width / 2 - 640)).toBeLessThanOrEqual(1);
 });
