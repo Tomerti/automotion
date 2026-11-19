@@ -37,7 +37,10 @@ export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.El
         autoComplete="off"
         spellCheck={false}
         value={word}
-        onChange={(e) => setWord(normalizeSymbolText(e.target.value))}
+        onChange={(e) =>
+          setWord(normalizeSymbolText(e.target.value, e.target.selectionStart ?? undefined))
+        }
+        onBlur={() => setWord(normalizeSymbolText(word))}
       />
       <button
         type="submit"

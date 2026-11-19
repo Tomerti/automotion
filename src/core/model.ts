@@ -3,6 +3,20 @@ import { newId } from './id';
 export type StateId = string;
 export type Sym = string;
 export const EPSILON = 'ε';
+
+/**
+ * `\epsilon` and `\eps` → ε. With `caret` (live typing), the `\eps` the caret may still extend to
+ * `\epsilon` (the caret right after `\eps`, `\epsi`, `\epsil` or `\epsilo`) is kept as typed, so
+ * `\epsilon` typed key by key ends as ε, not εilon; the next key or the end of editing replaces it.
+ */
+export function replaceEpsilonAliases(text: string, caret?: number): string {
+  return text.replace(/\\eps(?:ilon)?/gu, (alias, at: number) => {
+    const end = at + alias.length;
+    const typing = alias === '\\eps' && caret !== undefined && caret >= end;
+    return typing && 'ilo'.startsWith(text.slice(end, caret)) ? alias : EPSILON;
+  });
+}
+
 export type AutomatonKind = 'DFA' | 'NFA';
 
 export interface State {

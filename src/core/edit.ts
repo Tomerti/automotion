@@ -1,5 +1,5 @@
 import { newId } from './id';
-import { EPSILON } from './model';
+import { EPSILON, replaceEpsilonAliases } from './model';
 import type { Automaton, AutomatonKind, LabelSide, StateId, Sym, Transition } from './model';
 import { hasErrors, ignoringIncomplete, validate } from './validate';
 import type { Issue } from './validate';
@@ -284,9 +284,12 @@ export function sameStructure(a: Automaton, b: Automaton): boolean {
 /** What a user may type for ε in a symbol input. */
 export const EPSILON_ALIASES = ['\\eps', 'eps', EPSILON];
 
-/** Live input normalization: `\eps` turns into ε as soon as it is typed (a pasted `\epsilon` too). */
-export function normalizeSymbolText(text: string): string {
-  return text.replaceAll('\\epsilon', EPSILON).replaceAll('\\eps', EPSILON);
+/**
+ * Live input normalization: `\eps` and `\epsilon` turn into ε. Pass the caret while typing, so a
+ * `\eps` that may still become `\epsilon` waits for the next key (`replaceEpsilonAliases`).
+ */
+export function normalizeSymbolText(text: string, caret?: number): string {
+  return replaceEpsilonAliases(text, caret);
 }
 
 /** Live state-name normalization: `\emptyset` turns into ∅ (the dead state's usual name). */

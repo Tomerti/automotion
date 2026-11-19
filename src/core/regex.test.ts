@@ -40,6 +40,12 @@ describe('regex parser and printer', () => {
     expect(normalizeRegexText(String.raw`(a|\epsilon)\emptyset\eps`)).toBe('(a|ε)∅ε');
     expect(parseRegex(String.raw`\epsilon`)).toMatchObject({ ok: true, text: 'ε' });
   });
+  it('typed key by key, \\epsilon ends as ε: the \\eps at the caret waits for the next key', () => {
+    expect(normalizeRegexText(String.raw`(a|\eps`, 7)).toBe(String.raw`(a|\eps`);
+    expect(normalizeRegexText(String.raw`(a|\epsil`, 9)).toBe(String.raw`(a|\epsil`);
+    expect(normalizeRegexText(String.raw`(a|\epsilon`, 11)).toBe('(a|ε');
+    expect(normalizeRegexText(String.raw`(a|\eps)`, 8)).toBe('(a|ε)');
+  });
   it('deep nesting is an error, never a throw', () => {
     const deep = '('.repeat(20000) + 'a' + ')'.repeat(20000);
     expect(parseRegex(deep)).toEqual({ ok: false, error: 'Nested too deeply', at: 0 });

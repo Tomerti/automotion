@@ -95,6 +95,37 @@ describe('RegexDialog', () => {
     expect(screen.getByTestId('regex-caret').textContent).toBe('(a|ε)*^');
   });
 
+  it('typing \\epsilon key by key gives ε, not εilon', async () => {
+    const user = userEvent.setup();
+    openDialog();
+    await user.type(screen.getByLabelText('Regex'), String.raw`(a|\epsilon)*`);
+    expect(screen.getByLabelText('Regex')).toHaveValue('(a|ε)*');
+  });
+
+  it('a \\eps left at the end turns into ε when the box loses focus', async () => {
+    const user = userEvent.setup();
+    openDialog();
+    await user.type(screen.getByLabelText('Regex'), String.raw`a|\eps`);
+    expect(screen.getByLabelText('Regex')).toHaveValue(String.raw`a|\eps`);
+    await user.tab();
+    expect(screen.getByLabelText('Regex')).toHaveValue('a|ε');
+  });
+
+  it('Enter right after \\eps names the DFA with ε', async () => {
+    const user = userEvent.setup();
+    openDialog();
+    await user.type(screen.getByLabelText('Regex'), String.raw`a|\eps{Enter}`);
+    await waitFor(() => expect(appStore.getState().automata[0]?.name).toBe('a|ε'));
+  });
+
+  it('the ^ lines up after a \\eps still being typed', async () => {
+    const user = userEvent.setup();
+    openDialog();
+    await user.type(screen.getByLabelText('Regex'), String.raw`(\eps`);
+    expect(screen.getByTestId('regex-error')).toHaveTextContent('Missing )');
+    expect(screen.getByTestId('regex-caret-pad').textContent).toBe(String.raw`(\eps`);
+  });
+
   it('empty input: Create DFA disabled, no error shown yet', () => {
     openDialog();
     expect(screen.queryByTestId('regex-error')).toBeNull();

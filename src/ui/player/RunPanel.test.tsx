@@ -93,13 +93,35 @@ describe('RunPanel', () => {
     render(<RunPanel />);
     const input = screen.getByLabelText('Word');
     await user.type(input, '0\\eps');
-    expect(input).toHaveValue('0ε');
-    await user.type(input, '0{Enter}');
+    expect(input).toHaveValue('0\\eps');
+    await user.type(input, '0');
+    expect(input).toHaveValue('0ε0');
+    await user.type(input, '{Enter}');
     expect(appStore.getState().trace).toMatchObject({ kind: 'run', word: '00', accepted: true });
     appStore.getState().closeTrace();
     await user.clear(input);
     await user.type(input, 'ε{Enter}');
     expect(appStore.getState().trace).toMatchObject({ kind: 'run', word: '', accepted: true });
+  });
+
+  it('typing \\epsilon key by key gives ε, not εilon', async () => {
+    resetAppStore({ automata: [evenZeros] });
+    const user = userEvent.setup();
+    render(<RunPanel />);
+    const input = screen.getByLabelText('Word');
+    await user.type(input, '0\\epsilon');
+    expect(input).toHaveValue('0ε');
+  });
+
+  it('a \\eps left at the end turns into ε when the box loses focus', async () => {
+    resetAppStore({ automata: [evenZeros] });
+    const user = userEvent.setup();
+    render(<RunPanel />);
+    const input = screen.getByLabelText('Word');
+    await user.type(input, '\\eps');
+    expect(input).toHaveValue('\\eps');
+    await user.tab();
+    expect(input).toHaveValue('ε');
   });
 
   it('running shows the verdict on the last step', async () => {

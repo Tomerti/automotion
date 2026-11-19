@@ -61,7 +61,10 @@ test('\\eps turns into ε and makes the automaton an NFA', async ({ page }) => {
   await addStateAt(page, 400, 150);
   await shiftDrag(page, 'q_0', 'q_1');
   const input = page.getByTestId('symbol-input');
+  // It may still become \epsilon: ε shows at the next key.
   await input.pressSequentially('\\eps');
+  await expect(input).toHaveValue('\\eps');
+  await input.pressSequentially('ilon');
   await expect(input).toHaveValue('ε');
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('edge-q_0-q_1').getByTestId('edge-label')).toHaveText('ε');
