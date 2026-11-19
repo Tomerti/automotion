@@ -10,10 +10,11 @@
   flex-direction: column;
   gap: 2px;
   /* 660 px, wider when the last step adds its buttons (Save, Save and minimize), never wider
-     than the window: then the bar wraps instead of spilling out of the box. */
+     than the room the shell's dock gives it (the window beside the history bar): then the bar
+     wraps instead of spilling out of the box. */
   width: max-content;
-  min-width: min(660px, calc(100vw - 32px));
-  max-width: calc(100vw - 32px);
+  min-width: min(660px, var(--av-dock-room, calc(100vw - 32px)));
+  max-width: var(--av-dock-room, calc(100vw - 32px));
   box-sizing: border-box;
   padding: 6px 8px 8px;
   color: var(--av-ink);

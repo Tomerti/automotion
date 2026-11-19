@@ -570,6 +570,8 @@ input.av-switcher-input {
   --av-dock-bottom: 18px;
   /* Kept clear on each side of what fits to view while the history bar covers the left edge. */
   --av-history-inset: 0px;
+  /* How wide the dock may be: what the history bar leaves, less a 16 px gutter each side. */
+  --av-dock-room: calc(100vw - var(--av-history-inset) - 32px);
 
   position: relative;
   min-width: 0;
@@ -598,10 +600,12 @@ input.av-switcher-input {
 .av-dock {
   position: absolute;
   bottom: var(--av-dock-bottom);
-  left: 50%;
+  left: calc(var(--av-history-inset) + 16px);
   z-index: 10;
-  max-width: calc(100% - 32px);
-  transform: translateX(-50%);
+  max-width: var(--av-dock-room);
+  /* Centred on the window (the canvas spans it) when that keeps it clear of the history bar;
+     else slid right just clear of it. 50% is half the dock's own width. */
+  transform: translateX(max(0px, calc(50vw - var(--av-history-inset) - 16px - 50%)));
 }
 
 /* Regex dialog (the empty canvas's "or build one from a regex") */
