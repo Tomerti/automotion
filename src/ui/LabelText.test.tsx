@@ -26,6 +26,12 @@ describe('LabelText', () => {
     expect(container.textContent).toBe('Ended in q1,  which');
   });
 
+  it.each([')', '!', '?', '→'])('keeps a quoted symbol literal right before %s', (after) => {
+    const { container } = render(<LabelText text={`(on 'a_1'${after} then q_2`} />);
+    expect(container.textContent).toBe(`(on 'a_1'${after} then q2`);
+    expect(subs(container)).toEqual(['2']);
+  });
+
   it('keeps a quote inside a quoted regex, and subscripts after it', () => {
     const { container } = render(<LabelText text="'a'_b': then q_1, then {q_2', q_3}." />);
     expect(container.textContent).toBe("'a'_b': then q1, then {q2', q3}.");
