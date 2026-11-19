@@ -8,7 +8,6 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
-- [ ] `LabelText` keeps a quoted `'…'` literal only before a space, `,` `.` `:` `;` or the end: a quote followed directly by `)`, `!`, `?` or `→` is parsed as a label (no caller writes that today)
 - [ ] A state's name can still drop one device pixel when its rename input opens at some zooms (2 of 11 zoom levels at 125%, 5 at 150%, in Chrome): there the SVG label and the HTML input rasterize the text differently (the ink also moves sideways), which no input position can cancel. Gone for good only if the text being edited is drawn by the SVG itself, with the input's own text invisible (the caret and selection stay the input's)
 
 ## Ideas (later)
@@ -16,6 +15,10 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Lessons for regex → DFA, TMs, and checking an automaton against a language, as those features land
 
 ## Done
+
+### `LabelText` keeps quotes before `)` `!` `?` `→` (2026-11-19)
+
+- [x] A quoted `'…'` literal directly followed by `)`, `!`, `?` or `→` stays literal (it was parsed as a label: `'a_1')` showed `'a₁')`); no caller wrote that yet
 
 ### The word and regex boxes keep the caret (2026-11-19)
 
