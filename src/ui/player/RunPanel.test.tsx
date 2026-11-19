@@ -113,6 +113,16 @@ describe('RunPanel', () => {
     expect(input).toHaveValue('0ε');
   });
 
+  it('a rewrite in the middle of the word keeps the caret where typing left it', async () => {
+    resetAppStore({ automata: [evenZeros] });
+    const user = userEvent.setup();
+    render(<RunPanel />);
+    const input = screen.getByLabelText<HTMLInputElement>('Word');
+    await user.type(input, 'ab');
+    await user.type(input, '\\eps,X', { initialSelectionStart: 1, initialSelectionEnd: 1 });
+    expect(input).toHaveValue('aε,Xb');
+  });
+
   it('a \\eps left at the end turns into ε when the box loses focus', async () => {
     resetAppStore({ automata: [evenZeros] });
     const user = userEvent.setup();

@@ -3,6 +3,7 @@ import { normalizeRegexText, parseRegex } from '../../core/regex';
 import { canBuildFromRegex } from '../../core/regexToDfa';
 import { createFromRegex } from '../../store/regexActions';
 import { fitActive } from '../canvas/useCanvasEditing';
+import { useRewritingChange } from '../useRewritingChange';
 import { CloseIcon } from './icons';
 import { closeRegexDialog, useRegexDialog } from './regexDialogStore';
 import { toast } from './toastStore';
@@ -32,6 +33,7 @@ function RegexModal(): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
   const caretRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState('');
+  const onChange = useRewritingChange(inputRef, text, setText, normalizeRegexText);
   const id = useId();
   useModalDialog(dialogRef, closeRegexDialog);
   // After the dialog's own focus (effects run in order): the box is what to use first.
@@ -99,9 +101,7 @@ function RegexModal(): React.JSX.Element {
             autoComplete="off"
             placeholder="(a|b)*abb"
             value={text}
-            onChange={(e) =>
-              setText(normalizeRegexText(e.target.value, e.target.selectionStart ?? undefined))
-            }
+            onChange={onChange}
             onBlur={() => setText(normalizeRegexText(text))}
             onScroll={(e) => {
               if (caretRef.current) caretRef.current.scrollLeft = e.currentTarget.scrollLeft;

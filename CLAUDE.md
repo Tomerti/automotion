@@ -110,6 +110,8 @@ the main bundle; `layout.worker.ts` must assign `self.onmessage` after its impor
 - Every letter shortcut goes through `shell/shortcut.ts` (`isCtrlLetter`, `shortcutLetter`), which handles
   non-Latin layouts (Hebrew Ctrl+A is `ש`).
 - Hover styles go inside `@media (hover: hover)`, so taps don't leave them stuck.
+- A text input rewritten as it's typed (`\eps` → ε) takes its `onChange` from `useRewritingChange.ts`, which
+  passes the rewrite the caret and puts the caret back after it.
 - `tutorial/engine.ts` holds the `Lesson`/`StepSpec` types, `lessonSteps` and `advance`: a step completes by
   a check on the automaton, a run reaching its verdict, a latch, or a reported action. `tutorial/lessons/`
   has `basics.ts` (the original tutorial), `arrange`, `nfa`, `epsilon`, `convert`, `minimize` and `share`; `index.ts`

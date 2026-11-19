@@ -102,6 +102,18 @@ describe('RegexDialog', () => {
     expect(screen.getByLabelText('Regex')).toHaveValue('(a|ε)*');
   });
 
+  it('a rewrite in the middle of the regex keeps the caret where typing left it', async () => {
+    const user = userEvent.setup();
+    openDialog();
+    const input = screen.getByLabelText<HTMLInputElement>('Regex');
+    await user.type(input, 'ab');
+    await user.type(input, String.raw`\eps|X`, {
+      initialSelectionStart: 1,
+      initialSelectionEnd: 1,
+    });
+    expect(input).toHaveValue('aε|Xb');
+  });
+
   it('a \\eps left at the end turns into ε when the box loses focus', async () => {
     const user = userEvent.setup();
     openDialog();

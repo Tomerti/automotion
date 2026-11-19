@@ -406,6 +406,17 @@ describe('Canvas editing', () => {
     expect(active().transitions[0]?.symbols).toEqual(['a', 'ε']);
   });
 
+  it('a rewrite in the middle of the symbols keeps the caret where typing left it', async () => {
+    const user = userEvent.setup();
+    load(two('NFA'));
+    render(<Canvas />);
+    drawEdge();
+    const input = screen.getByTestId<HTMLInputElement>('symbol-input');
+    await user.type(input, 'ab');
+    await user.type(input, '\\eps,X', { initialSelectionStart: 1, initialSelectionEnd: 1 });
+    expect(input).toHaveValue('aε,Xb');
+  });
+
   it('Enter right after \\eps commits ε', async () => {
     const user = userEvent.setup();
     load(two('NFA'));

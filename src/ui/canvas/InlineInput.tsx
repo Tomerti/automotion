@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { Point } from '../../core/geometry';
+import { useRewritingChange } from '../useRewritingChange';
 
 export interface InlineInputProps {
   testId: string;
@@ -55,8 +56,7 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
   const boxRef = useRef<HTMLDivElement>(null);
   const baselineRef = useRef<HTMLSpanElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  /** Caret to restore after a normalization shortened the text before it. */
-  const caret = useRef<number | null>(null);
+  const rewrite = useRewritingChange(inputRef, value, setValue, normalize ?? ((text) => text));
   /** Set once Enter or Escape closed the input, so a blur on unmount does nothing. */
   const closed = useRef(false);
 
@@ -90,20 +90,8 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
     setShift(applied.current);
   }, [baseline, value, fontSize]);
 
-  useLayoutEffect(() => {
-    if (caret.current === null) return;
-    inputRef.current?.setSelectionRange(caret.current, caret.current);
-    caret.current = null;
-  }, [value]);
-
   const onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const raw = e.target.value;
-    const pos = e.target.selectionStart ?? raw.length;
-    const next = normalize ? normalize(raw, pos) : raw;
-    if (next !== raw) {
-      caret.current = (normalize ? normalize(raw.slice(0, pos), pos) : raw.slice(0, pos)).length;
-    }
-    setValue(next);
+    rewrite(e);
     setError(null);
   };
 

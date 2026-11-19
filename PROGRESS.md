@@ -8,7 +8,6 @@ Nothing in progress: pick the next task from the list below.
 
 ## Next
 
-- [ ] The word box and the regex box don't keep the caret when a rewrite (`\eps` → ε) shortens the text before it: typing `\eps,X` in the middle of `ab` gives `aε,bX` (the caret jumps to the end). The canvas's inline inputs already keep it (`InlineInput`)
 - [ ] `LabelText` keeps a quoted `'…'` literal only before a space, `,` `.` `:` `;` or the end: a quote followed directly by `)`, `!`, `?` or `→` is parsed as a label (no caller writes that today)
 - [ ] A state's name can still drop one device pixel when its rename input opens at some zooms (2 of 11 zoom levels at 125%, 5 at 150%, in Chrome): there the SVG label and the HTML input rasterize the text differently (the ink also moves sideways), which no input position can cancel. Gone for good only if the text being edited is drawn by the SVG itself, with the input's own text invisible (the caret and selection stay the input's)
 
@@ -17,6 +16,10 @@ Nothing in progress: pick the next task from the list below.
 - [ ] Lessons for regex → DFA, TMs, and checking an automaton against a language, as those features land
 
 ## Done
+
+### The word and regex boxes keep the caret (2026-11-19)
+
+- [x] A rewrite (`\eps` → ε) in the middle of the word or regex box no longer sends the caret to the end (typing `\eps,X` after the `a` of `ab` gives `aε,Xb`, not `aε,bX`): the word box, the regex box and the canvas's inline inputs share `useRewritingChange`
 
 ### → right after Enter steps the run (2026-11-19)
 
