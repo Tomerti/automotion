@@ -114,7 +114,7 @@ interface InlineEdit {
   covers?: string;
   /** The arrow of a new transition, kept on screen while its symbols are typed. */
   draft?: RubberBand;
-  normalize?(text: string): string;
+  normalize?(text: string, caret: number): string;
   submit(text: string): string | null;
 }
 

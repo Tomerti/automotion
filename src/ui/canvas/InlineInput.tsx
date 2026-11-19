@@ -19,8 +19,8 @@ export interface InlineInputProps {
    * the input is centred on `at`, which matches a label drawn with `dominant-baseline: central`.
    */
   baseline?(text: string): number;
-  /** Live rewrite of the text as it is typed (e.g. `\eps` → ε). */
-  normalize?(text: string): string;
+  /** Live rewrite of the text as it is typed (e.g. `\eps` → ε), given where the caret is. */
+  normalize?(text: string, caret: number): string;
   /** Enter pressed. Returns an error to show (the input stays open) or null when done. */
   onSubmit(text: string): string | null;
   /** Escape pressed. */
@@ -98,10 +98,10 @@ export function InlineInput(props: InlineInputProps): React.JSX.Element {
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const raw = e.target.value;
-    const next = normalize ? normalize(raw) : raw;
+    const pos = e.target.selectionStart ?? raw.length;
+    const next = normalize ? normalize(raw, pos) : raw;
     if (next !== raw) {
-      const pos = e.target.selectionStart ?? raw.length;
-      caret.current = (normalize ? normalize(raw.slice(0, pos)) : raw.slice(0, pos)).length;
+      caret.current = (normalize ? normalize(raw.slice(0, pos), pos) : raw.slice(0, pos)).length;
     }
     setValue(next);
     setError(null);

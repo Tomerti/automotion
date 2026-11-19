@@ -379,18 +379,40 @@ describe('Canvas editing', () => {
     expect(active().transitions).toEqual([]);
   });
 
-  it('typing \\eps turns into ε as it is typed', async () => {
+  it('typing \\eps turns into ε at the next key', async () => {
     const user = userEvent.setup();
     load(two('NFA'));
     render(<Canvas />);
     drawEdge();
     const input = screen.getByTestId('symbol-input');
-    await user.type(input, 'a, \\ep');
-    expect(input).toHaveValue('a, \\ep');
-    await user.type(input, 's');
-    expect(input).toHaveValue('a, ε');
-    await user.type(input, ', b{Enter}');
+    await user.type(input, 'a, \\eps');
+    // It may still become \epsilon.
+    expect(input).toHaveValue('a, \\eps');
+    await user.type(input, ',');
+    expect(input).toHaveValue('a, ε,');
+    await user.type(input, ' b{Enter}');
     expect(active().transitions[0]?.symbols).toEqual(['a', 'ε', 'b']);
+  });
+
+  it('typing \\epsilon key by key gives ε, not εilon', async () => {
+    const user = userEvent.setup();
+    load(two('NFA'));
+    render(<Canvas />);
+    drawEdge();
+    const input = screen.getByTestId('symbol-input');
+    await user.type(input, 'a,\\epsilon');
+    expect(input).toHaveValue('a,ε');
+    await user.type(input, '{Enter}');
+    expect(active().transitions[0]?.symbols).toEqual(['a', 'ε']);
+  });
+
+  it('Enter right after \\eps commits ε', async () => {
+    const user = userEvent.setup();
+    load(two('NFA'));
+    render(<Canvas />);
+    drawEdge();
+    await user.type(screen.getByTestId('symbol-input'), '\\eps{Enter}');
+    expect(active().transitions[0]?.symbols).toEqual(['ε']);
   });
 
   it('ε on a DFA edge switches the automaton to an NFA with a toast', async () => {
