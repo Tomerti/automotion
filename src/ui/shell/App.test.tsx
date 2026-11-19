@@ -77,6 +77,16 @@ it('the dock swaps the run pill for the trace player while a trace is open', asy
   expect(screen.getByLabelText('Word')).toBeVisible();
 });
 
+it('→ right after Enter in the word box steps the run: the hidden box lets go of the focus', async () => {
+  const user = userEvent.setup();
+  resetAppStore({ automata: [loop()], activeId: 'd' });
+  render(<App />);
+  await user.type(screen.getByLabelText('Word'), 'aa{Enter}');
+  expect(screen.getByLabelText('Word')).not.toHaveFocus();
+  await user.keyboard('{ArrowRight}');
+  expect(screen.getByTestId('step-counter')).toHaveTextContent(/^Step 2 \/ /);
+});
+
 it('Create from the history bar shows its diagram, and the kind pill switches it to an NFA', async () => {
   const user = userEvent.setup();
   render(<App />);
