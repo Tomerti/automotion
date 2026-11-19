@@ -3,6 +3,7 @@ import { normalizeSymbolText } from '../../core/edit';
 import { canRun, readWord } from '../../core/run';
 import { useAppStore } from '../../store/store';
 import { startRun } from '../../store/traceActions';
+import { useRewritingChange } from '../useRewritingChange';
 import { playRunSound } from './sound';
 
 /**
@@ -22,6 +23,7 @@ export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.El
   useEffect(() => {
     if (hidden && document.activeElement === inputRef.current) inputRef.current?.blur();
   }, [hidden]);
+  const onChange = useRewritingChange(inputRef, word, setWord, normalizeSymbolText);
 
   const run = (): void => {
     if (reason !== null) return;
@@ -46,9 +48,7 @@ export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.El
         autoComplete="off"
         spellCheck={false}
         value={word}
-        onChange={(e) =>
-          setWord(normalizeSymbolText(e.target.value, e.target.selectionStart ?? undefined))
-        }
+        onChange={onChange}
         onBlur={() => setWord(normalizeSymbolText(word))}
       />
       <button
