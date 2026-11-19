@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { normalizeSymbolText } from '../../core/edit';
 import { canRun, readWord } from '../../core/run';
 import { useAppStore } from '../../store/store';
@@ -14,6 +14,14 @@ export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.El
   const automaton = useAppStore((s) => s.automata.find((a) => a.id === s.activeId));
   const [word, setWord] = useState('');
   const reason = automaton ? canRun(automaton, readWord(word)) : 'Create an automaton first';
+
+  // Hidden (a trace opened, usually by Enter here), the box lets go of the focus at once. Chrome
+  // moves it off a hidden element only later, and until then the player's → , Space and Esc go
+  // to the box, which they ignore as typing.
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (hidden && document.activeElement === inputRef.current) inputRef.current?.blur();
+  }, [hidden]);
 
   const run = (): void => {
     if (reason !== null) return;
@@ -31,6 +39,7 @@ export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.El
       }}
     >
       <input
+        ref={inputRef}
         aria-label="Word"
         placeholder="Test a word…"
         title="Type ε (or \eps), or leave it empty, to test the empty word"
