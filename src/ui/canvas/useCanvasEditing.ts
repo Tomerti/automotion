@@ -29,6 +29,7 @@ import type { MenuItem } from './ContextMenu';
 import {
   autoBend,
   bendThrough,
+  edgeGeometry,
   hitState,
   labelFontSize,
   labelSideAt,
@@ -40,6 +41,7 @@ import {
   type PathGeometry,
   type Point,
 } from '../../core/geometry';
+import { newArrowBend } from '../../layout/aesthetics';
 import { snapPosition, type Snap } from './snap';
 import { DRAG_THRESHOLD, ZOOM_STEP, fitToViewInset, screenToWorld, zoomAt } from './viewport';
 
@@ -289,14 +291,27 @@ function withDrawing(a: Automaton, laidOut: Automaton): Automaton {
 }
 
 /**
+ * The arrow from → to that releasing a Shift-drag there creates, as it will be drawn: an existing
+ * arrow or a self-loop as it is, a new arrow bent around the states in its way (`newArrowBend`).
+ * The rubber band, the arrow shown while its symbols are typed, and the arrow created all use it.
+ */
+function newArrow(a: Automaton, from: State, to: State): { bend?: number; geometry: PathGeometry } {
+  const bend = newArrowBend(a, from.id, to.id);
+  if (bend === undefined) return { geometry: transitionGeometry(a, from, to) };
+  return { bend, geometry: edgeGeometry(from, to, bend) };
+}
+
+/**
  * Symbols typed for (from, to). ε is accepted on a DFA too: it switches the automaton to an NFA
- * (with a toast). The store keeps the alphabet in sync.
+ * (with a toast). The store keeps the alphabet in sync. `bend`: the bend the arrow gets if this
+ * creates it.
  */
 function commitSymbols(
   from: StateId,
   to: StateId,
   text: string,
   mode: 'merge' | 'replace',
+  bend?: number,
 ): string | null {
   const a = activeAutomaton();
   if (!a) return null;
@@ -308,7 +323,7 @@ function commitSymbols(
   if (unchanged) return null;
   let promoted = false;
   appStore.getState().edit((cur) => {
-    const result = commitEdgeSymbols(cur, from, to, next);
+    const result = commitEdgeSymbols(cur, from, to, next, { bend });
     promoted = result.promoted;
     return result.automaton;
   });
@@ -428,7 +443,8 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       return;
     }
     // The input sits where the new edge's label will be drawn.
-    const { d, label, end, endAngle } = transitionGeometry(automaton, a, b);
+    const { bend, geometry } = newArrow(automaton, a, b);
+    const { d, label, end, endAngle } = geometry;
     openInline({
       testId: 'symbol-input',
       label: 'Transition symbols',
@@ -437,7 +453,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       fontSize: EDGE_LABEL_FONT_SIZE,
       draft: { loop: from === to, d, end, endAngle },
       normalize: normalizeSymbolText,
-      submit: (text) => commitSymbols(from, to, text, 'merge'),
+      submit: (text) => commitSymbols(from, to, text, 'merge', bend),
     });
   };
 
@@ -694,7 +710,7 @@ export function useCanvasEditing(automaton: Automaton, viewport: Viewport) {
       // Over a state: show the edge (or self-loop) that releasing here would create.
       const target = stateAt(p);
       if (target) {
-        const { d, end, endAngle } = transitionGeometry(automaton, from, target);
+        const { d, end, endAngle } = newArrow(automaton, from, target).geometry;
         setRubberBand({ loop: target.id === from.id, d, end, endAngle });
         return;
       }

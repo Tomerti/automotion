@@ -378,6 +378,61 @@ export function assignBends(a: Automaton): Automaton {
 }
 
 /**
+ * The bend `bendClearOfStates` gives the arrow `t0` of `cur` (drawn against `others`): the cheapest
+ * of BENDS by `arrowCost`, from its automatic bend up, plus a small cost per step beyond it.
+ */
+function clearBend(
+  cur: Automaton,
+  t0: Transition,
+  others: Drawn[],
+  byId: Map<StateId, State>,
+): { a: Automaton; d: Drawn } | null {
+  const hasReverse = cur.transitions.some((t) => t.from === t0.to && t.to === t0.from);
+  const base = autoBend(hasReverse);
+  const center = {
+    x: cur.states.reduce((s, p) => s + p.x, 0) / cur.states.length,
+    y: cur.states.reduce((s, p) => s + p.y, 0) / cur.states.length,
+  };
+  let best: { a: Automaton; d: Drawn } | null = null;
+  let bestCost = Infinity;
+  for (const m of BENDS) {
+    if (m < base) continue;
+    for (const sign of m === 0 || hasReverse ? [1] : [1, -1]) {
+      const t: Transition = { ...t0, bend: sign * m };
+      if (t.bend === base) delete t.bend;
+      const next = { ...cur, transitions: cur.transitions.map((x) => (x.id === t.id ? t : x)) };
+      const d = drawOne(next, t, byId);
+      if (!d) continue;
+      let cost = arrowCost(d, others, cur.states) + (W_BEND * (m - base)) / CURVE_OFFSET;
+      // As in `assignBends`: curves bulge away from the middle of the drawing.
+      const mid = { x: (d.from.x + d.to.x) / 2, y: (d.from.y + d.to.y) / 2 };
+      const apex = d.pts[Math.floor(d.pts.length / 2)]!;
+      if (m !== 0) cost -= (0.05 * (dist(apex, center) - dist(mid, center))) / CURVE_OFFSET;
+      if (cost < bestCost - 1e-9) {
+        bestCost = cost;
+        best = { a: next, d };
+      }
+    }
+  }
+  return best;
+}
+
+/** Whether the drawn arrow `d` runs through (or right past) a state other than its own two. */
+function throughState(d: Drawn, states: State[]): boolean {
+  const reach = STATE_RADIUS + STATE_CLEARANCE;
+  return states.some(
+    (s) =>
+      s.id !== d.from.id &&
+      s.id !== d.to.id &&
+      s.x > d.box.x0 - reach &&
+      s.x < d.box.x1 + reach &&
+      s.y > d.box.y0 - reach &&
+      s.y < d.box.y1 + reach &&
+      distToPolyline(s, d.pts) < reach,
+  );
+}
+
+/**
  * A quick stand-in for `assignBends`, for scoring many layouts in a search: only the arrows drawn
  * through a state get a bend, chosen as `assignBends` would (against the states and the other
  * arrows), and the rest stay automatic. Bending is what makes a compact layout read well, where
@@ -385,57 +440,38 @@ export function assignBends(a: Automaton): Automaton {
  */
 export function bendClearOfStates(a: Automaton): Automaton {
   const byId = new Map(a.states.map((s) => [s.id, s]));
-  const reach = STATE_RADIUS + STATE_CLEARANCE;
-  const blocked = (d: Drawn): boolean =>
-    a.states.some(
-      (s) =>
-        s.id !== d.from.id &&
-        s.id !== d.to.id &&
-        s.x > d.box.x0 - reach &&
-        s.x < d.box.x1 + reach &&
-        s.y > d.box.y0 - reach &&
-        s.y < d.box.y1 + reach &&
-        distToPolyline(s, d.pts) < reach,
-    );
   let drawn = drawAll(a);
-  const stuck = drawn.filter((d) => d.from.id !== d.to.id && blocked(d)).map((d) => d.t);
+  const stuck = drawn
+    .filter((d) => d.from.id !== d.to.id && throughState(d, a.states))
+    .map((d) => d.t);
   if (stuck.length === 0) return a;
-  const center = {
-    x: a.states.reduce((s, p) => s + p.x, 0) / a.states.length,
-    y: a.states.reduce((s, p) => s + p.y, 0) / a.states.length,
-  };
   let cur = a;
   for (const t0 of stuck) {
-    const hasReverse = a.transitions.some((t) => t.from === t0.to && t.to === t0.from);
-    const base = autoBend(hasReverse);
     const others = drawn.filter((e) => e.t.id !== t0.id);
-    let best: { a: Automaton; d: Drawn } | null = null;
-    let bestCost = Infinity;
-    for (const m of BENDS) {
-      if (m < base) continue;
-      for (const sign of m === 0 || hasReverse ? [1] : [1, -1]) {
-        const t: Transition = { ...t0, bend: sign * m };
-        if (t.bend === base) delete t.bend;
-        const next = { ...cur, transitions: cur.transitions.map((x) => (x.id === t.id ? t : x)) };
-        const d = drawOne(next, t, byId);
-        if (!d) continue;
-        let cost = arrowCost(d, others, a.states) + (W_BEND * (m - base)) / CURVE_OFFSET;
-        // As in `assignBends`: curves bulge away from the middle of the drawing.
-        const mid = { x: (d.from.x + d.to.x) / 2, y: (d.from.y + d.to.y) / 2 };
-        const apex = d.pts[Math.floor(d.pts.length / 2)]!;
-        if (m !== 0) cost -= (0.05 * (dist(apex, center) - dist(mid, center))) / CURVE_OFFSET;
-        if (cost < bestCost - 1e-9) {
-          bestCost = cost;
-          best = { a: next, d };
-        }
-      }
-    }
+    const best = clearBend(cur, t0, others, byId);
     if (best) {
       cur = best.a;
       drawn = [...others, best.d];
     }
   }
   return cur;
+}
+
+/**
+ * The bend a new arrow from → to, drawn by hand, is created with: `undefined` (automatic) when its
+ * automatic shape runs through no state, else the one `bendClearOfStates` would give it, so it
+ * curves around the states in its way instead of hiding behind them and the arrows between them.
+ * The arrows already there keep their shapes.
+ */
+export function newArrowBend(a: Automaton, from: StateId, to: StateId): number | undefined {
+  if (from === to || a.transitions.some((t) => t.from === from && t.to === to)) return undefined;
+  const t0: Transition = { id: 'new-arrow', from, to, symbols: [] };
+  const next = { ...a, transitions: [...a.transitions, t0] };
+  const byId = new Map(a.states.map((s) => [s.id, s]));
+  const d = drawOne(next, t0, byId);
+  if (!d || !throughState(d, a.states)) return undefined;
+  const best = clearBend(next, t0, drawAll(a), byId);
+  return best?.a.transitions.find((t) => t.id === t0.id)?.bend;
 }
 
 const START_DIRECTIONS = [

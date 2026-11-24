@@ -315,6 +315,13 @@ describe('derived alphabet and edge shape', () => {
     expect(commitEdgeSymbols(dfa(), 'q0', 'q1', ['b']).promoted).toBe(false);
   });
 
+  it('gives a newly created edge the bend it is drawn with; an existing edge keeps its own', () => {
+    const created = commitEdgeSymbols(dfa(), 'q1', 'q0', ['a'], { bend: 40 }).automaton;
+    expect(created.transitions.find((t) => t.from === 'q1' && t.to === 'q0')?.bend).toBe(40);
+    const kept = commitEdgeSymbols(dfa(), 'q0', 'q1', ['a', 'b'], { bend: 40 }).automaton;
+    expect('bend' in (kept.transitions.find((t) => t.from === 'q0') ?? {})).toBe(false);
+  });
+
   it('sets and clears a bend and a loop angle', () => {
     const a = dfa();
     const id = a.transitions[0]?.id ?? '';

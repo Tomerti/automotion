@@ -5,7 +5,7 @@ import type { Automaton, State } from '../core/model';
 import { subsetConstruction } from '../core/subset';
 import { arbNfa } from '../core/testing/arbitraries';
 import { fixture, nthFromEnd } from '../core/testing/fixtures';
-import { SPACING, bendClearOfStates, layoutCostTerms } from './aesthetics';
+import { SPACING, bendClearOfStates, layoutCostTerms, newArrowBend } from './aesthetics';
 import { compactSeeds, refineOnGrid } from './grid';
 import { layoutAutomaton } from './layout';
 import { layoutSamples } from './samples';
@@ -306,5 +306,44 @@ describe('bendClearOfStates', () => {
     // Nothing in the way: left as it is.
     const apart = { ...row, transitions: row.transitions.filter((t) => t.id !== 'p->r') };
     expect(bendClearOfStates(apart)).toBe(apart);
+  });
+});
+
+describe('newArrowBend', () => {
+  // Three states in a row, p → q → r, as drawn by hand.
+  const a = fixture({
+    kind: 'DFA',
+    alphabet: 'ab',
+    states: ['p', 'q', 'r'],
+    start: 'p',
+    edges: [
+      ['p', 'a', 'q'],
+      ['q', 'a', 'r'],
+    ],
+  });
+  const row: Automaton = {
+    ...a,
+    states: a.states.map((s, i) => ({ ...s, x: i * SPACING, y: 0 })),
+  };
+  const withArrow = (from: string, to: string, bend: number | undefined): Automaton => ({
+    ...row,
+    transitions: [
+      ...row.transitions,
+      { id: 'new', from, to, symbols: ['b'], ...(bend === undefined ? {} : { bend }) },
+    ],
+  });
+
+  it('bends a new arrow that would run through a state in between', () => {
+    const bend = newArrowBend(row, 'r', 'p');
+    expect(bend).not.toBeUndefined();
+    expect(arrowsThroughStates(withArrow('r', 'p', bend))).toEqual([]);
+    expect(arrowsThroughStates(withArrow('p', 'r', newArrowBend(row, 'p', 'r')))).toEqual([]);
+  });
+
+  it('leaves a new arrow automatic when nothing is in its way', () => {
+    expect(newArrowBend(row, 'r', 'q')).toBeUndefined();
+    expect(newArrowBend(row, 'p', 'p')).toBeUndefined();
+    const lifted = { ...row, states: row.states.map((s) => (s.id === 'q' ? { ...s, y: 100 } : s)) };
+    expect(newArrowBend(lifted, 'r', 'p')).toBeUndefined();
   });
 });

@@ -16,6 +16,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### A hand-drawn arrow bends around the states in its way (2026-11-24)
+
+- [x] With q0, q1, q2 in a row and q0 → q1 → q2 drawn, a new arrow from q2 to q0 was straight (automatic bends only curve an arrow with a reverse), so it ran through q1 and hid behind the other two arrows. A new arrow that would run through a state is now created with the bend Tidy would give it (`newArrowBend`, sharing `bendClearOfStates`'s choice): q2 → q0 curves 32 px under the row. The rubber band and the arrow shown while its symbols are typed already have that curve. Arrows already drawn keep their shapes, and moving a state onto a straight arrow later still doesn't bend it (Tidy does)
+
 ### `LabelText` keeps quotes before `)` `!` `?` `→` (2026-11-19)
 
 - [x] A quoted `'…'` literal directly followed by `)`, `!`, `?` or `→` stays literal (it was parsed as a label: `'a_1')` showed `'a₁')`); no caller wrote that yet

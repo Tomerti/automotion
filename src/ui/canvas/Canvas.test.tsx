@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Automaton } from '../../core/model';
 import { runWord } from '../../core/run';
 import { moveState } from '../../core/edit';
+import { STATE_RADIUS, transitionPolyline } from '../../core/geometry';
 import { fixture } from '../../core/testing/fixtures';
 import { layoutAutomaton } from '../../layout/layout';
 import { appStore, resetAppStore } from '../../store/store';
@@ -255,6 +256,46 @@ describe('Canvas editing', () => {
       [0, 0],
       [100, 0],
     ]);
+  });
+
+  it('a new arrow that would run through a state bends around it, previews included', async () => {
+    const user = userEvent.setup();
+    // q0, q1, q2 in a row (x = 0, 100, 200), q0 → q1 → q2; then an arrow from q2 back to q0.
+    load(
+      fixture({
+        kind: 'DFA',
+        alphabet: 'ab',
+        states: ['q0', 'q1', 'q2'],
+        edges: [
+          ['q0', 'a', 'q1'],
+          ['q1', 'a', 'q2'],
+        ],
+        name: 'm',
+      }),
+    );
+    render(<Canvas />);
+    const band = () => screen.getByTestId('rubber-band').querySelector('.av-edge-path');
+    fireEvent.pointerDown(stateEl('q2'), at(200, 0, { shiftKey: true }));
+    fireEvent.pointerMove(diagram(), at(100, 40, { shiftKey: true }));
+    fireEvent.pointerMove(diagram(), at(5, 5, { shiftKey: true }));
+    // Over q0: the preview is already the curve the release creates, not a line through q1.
+    const preview = band()?.getAttribute('d');
+    expect(preview).toMatch(/^M .* Q /);
+    fireEvent.pointerUp(diagram(), at(5, 5));
+    expect(band()?.getAttribute('d')).toBe(preview);
+    await user.type(screen.getByTestId('symbol-input'), 'b{Enter}');
+    const created = active().transitions.find((t) => t.from === 'q2' && t.to === 'q0');
+    expect(created?.bend).not.toBeUndefined();
+    expect(screen.getByTestId('edge-q2-q0').querySelector('.av-edge-path')).toHaveAttribute(
+      'd',
+      preview,
+    );
+    // Clear of q1's circle all along.
+    const q1 = { x: 100, y: 0 };
+    const pts = transitionPolyline(active(), active().states[2]!, active().states[0]!, 32);
+    expect(Math.min(...pts.map((p) => Math.hypot(p.x - q1.x, p.y - q1.y)))).toBeGreaterThan(
+      STATE_RADIUS,
+    );
   });
 
   it('Shift-dragging from a state back onto itself draws a self-loop', async () => {
