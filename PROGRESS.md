@@ -16,6 +16,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Pages deploy in two jobs (2026-11-24)
+
+- [x] CI builds the site in a `pages` job and publishes it in a separate `deploy` job: `deploy-pages`, run in the job that had just uploaded the site, kept failing with "No artifacts named github-pages" (3 of 4 attempts on 2026-11-24, GitHub's status all green), and a re-run then found two. A failed deploy now re-runs alone on the same upload
+
 ### F fits the view (2026-11-24)
 
 - [x] F on the canvas fits the view, like the Fit button, under the same rules as T (`CANVAS_KEYS` in `Toolbar.tsx`); the button's tooltip and the Keys tab mention it
