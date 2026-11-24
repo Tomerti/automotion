@@ -1,6 +1,5 @@
 import { AutomatonName } from './AutomatonName';
 import { GitHubIcon, HelpIcon, HistoryIcon } from './icons';
-import { IssuesChip } from './IssuesChip';
 import { ThemeMenu } from './ThemeMenu';
 import { Toolbar } from './Toolbar';
 
@@ -54,7 +53,6 @@ export function TopBar(props: {
           /
         </span>
         <AutomatonName />
-        <IssuesChip />
       </div>
       <div className="av-topbar-end">
         <Toolbar />

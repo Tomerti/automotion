@@ -250,46 +250,59 @@ input.av-switcher-input {
   border-color: var(--av-selected);
 }
 
-/* Issues chip and its popover */
+/*
+ * Issues chip and its popover: floating just above the run pill (the issues are what blocks Run),
+ * out of the dock's flow so the dock's measured height stays the run pill's. Opaque, with the
+ * pills' shadow, so it reads over the diagram; its list opens upwards.
+ */
 .av-issues-anchor {
-  position: relative;
-  margin-left: 6px;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  translate: -50% 0;
 }
 .av-chip {
-  gap: 5px;
-  min-height: 26px;
-  padding: 0 10px 0 8px;
-  font-size: 12.5px;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px 0 10px;
+  font-size: 13px;
   font-weight: 500;
+  white-space: nowrap;
   color: var(--av-warn);
-  background: color-mix(in srgb, var(--av-warn) 10%, transparent);
-  border-color: color-mix(in srgb, var(--av-warn) 35%, transparent);
+  background: color-mix(in srgb, var(--av-warn) 12%, var(--av-surface-raised));
+  border-color: color-mix(in srgb, var(--av-warn) 45%, transparent);
   border-radius: 999px;
+  box-shadow: var(--av-shadow-float);
 }
 .av-chip[data-severity='error'] {
   color: var(--av-red);
-  background: color-mix(in srgb, var(--av-red) 9%, transparent);
-  border-color: color-mix(in srgb, var(--av-red) 35%, transparent);
+  background: color-mix(in srgb, var(--av-red) 10%, var(--av-surface-raised));
+  border-color: color-mix(in srgb, var(--av-red) 45%, transparent);
 }
 .av-chip[data-severity='muted'] {
   color: var(--av-ink-muted);
-  background: transparent;
+  background: var(--av-surface-raised);
   border-color: var(--av-rule-strong);
 }
 @media (hover: hover) {
   .av-chip:hover:not(:disabled) {
-    background: color-mix(in srgb, currentColor 16%, transparent);
+    background: color-mix(in srgb, currentColor 18%, var(--av-surface-raised));
     border-color: currentColor;
   }
 }
 .av-chip .av-icon {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
 }
+/* Opens upwards, centred on the chip; `translate`, since av-pop-in animates `transform`. */
 .av-issues-popover {
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: 50%;
   width: min(340px, calc(100vw - 24px));
-  max-height: min(360px, 60vh);
+  max-height: min(360px, 50vh);
   overflow-y: auto;
+  translate: -50% 0;
 }
 .av-issues {
   display: flex;
@@ -1274,9 +1287,10 @@ kbd {
   .av-canvas-area {
     --av-dock-bottom: 12px;
   }
+  /* Above the dock and the issues chip floating over it. */
   .av-toasts {
     top: auto;
-    bottom: 72px;
+    bottom: 112px;
   }
   .av-guide-row {
     grid-template-columns: minmax(0, 1fr);

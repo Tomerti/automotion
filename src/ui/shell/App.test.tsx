@@ -77,6 +77,26 @@ it('the dock swaps the run pill for the trace player while a trace is open', asy
   expect(screen.getByLabelText('Word')).toBeVisible();
 });
 
+it('the issues chip floats in the dock above the run pill, not in the top bar', () => {
+  const unreachable = fixture({
+    kind: 'DFA',
+    alphabet: 'a',
+    states: ['q0', 'q1'],
+    start: 'q0',
+    accepting: ['q0'],
+    edges: [
+      ['q0', 'a', 'q0'],
+      ['q1', 'a', 'q1'],
+    ],
+    name: 'd',
+  });
+  resetAppStore({ automata: [unreachable], activeId: 'd' });
+  render(<App />);
+  const chip = screen.getByRole('button', { name: '1 issue' });
+  expect(screen.getByTestId('dock')).toContainElement(chip);
+  expect(screen.getByRole('banner')).not.toContainElement(chip);
+});
+
 it('→ right after Enter in the word box steps the run: the hidden box lets go of the focus', async () => {
   const user = userEvent.setup();
   resetAppStore({ automata: [loop()], activeId: 'd' });
