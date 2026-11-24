@@ -44,8 +44,8 @@ describe('Toolbar', () => {
     resetAppStore({ automata: [nfa()], activeId: 'n' });
     render(<Toolbar />);
     expect(btn('Undo')).toHaveAttribute('title', 'Undo (Ctrl+Z)');
-    expect(btn('Fit')).toHaveAttribute('title', 'Fit to view');
-    expect(btn('Tidy')).toHaveAttribute('title', 'Tidy the layout');
+    expect(btn('Fit')).toHaveAttribute('title', 'Fit to view (F)');
+    expect(btn('Tidy')).toHaveAttribute('title', 'Tidy the layout (T)');
     expect(btn('Share, copy or export')).toHaveAttribute(
       'title',
       'Share a link, or copy or export the picture or its LaTeX',

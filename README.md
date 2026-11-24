@@ -70,8 +70,8 @@ Press **?** in the app to see every control.
   names).
 - **Mistakes are pointed out.** The issues chip lists what is wrong, from a missing start state
   to unreachable states, and Run, Convert to DFA and Minimize say why when they are blocked.
-- **Neat diagrams.** States snap into line as you drag, arrows bend, and **Tidy** lays out the
-  whole automaton the way you would draw it by hand.
+- **Neat diagrams.** States snap into line as you drag, arrows bend, and **Tidy** (or **T** on the
+  canvas) lays out the whole automaton the way you would draw it by hand. **F** fits it to the view.
 - **Cut, copy and paste** states with their arrows, within an automaton or into another one.
 
 ### Run a word
