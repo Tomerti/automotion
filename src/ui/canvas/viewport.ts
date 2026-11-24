@@ -55,17 +55,18 @@ export function fitToView(
 
 /**
  * `fitToView` keeping `inset` px clear on the left and on the right (the history bar covers the
- * left edge), so the fit stays centred on the whole width, and `top` px clear at the top (the
- * tutorial card).
+ * left edge), so the fit stays centred on the whole width, `top` px clear at the top (the
+ * tutorial card) and `bottom` px clear at the bottom (the dock and the issues chip over it).
  */
 export function fitToViewInset(
   points: Point[],
   size: { width: number; height: number },
   inset: number,
   top = 0,
+  bottom = 0,
 ): Viewport {
   const width = Math.max(size.width - 2 * inset, 1);
-  const height = Math.max(size.height - top, 1);
+  const height = Math.max(size.height - top - bottom, 1);
   const vp = fitToView(points, { width, height });
-  return { ...vp, x: vp.x + (size.width - width) / 2, y: vp.y + size.height - height };
+  return { ...vp, x: vp.x + (size.width - width) / 2, y: vp.y + top };
 }

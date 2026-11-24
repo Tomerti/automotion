@@ -24,6 +24,7 @@ import { usePasteLatex } from './pasteLatex';
 import { HistoryBar } from './HistoryBar';
 import { useHistoryOpen } from './historyPrefs';
 import { importFile, isImportable } from './importFile';
+import { IssuesChip } from './IssuesChip';
 import { KindPill } from './KindPill';
 import { toast } from './toastStore';
 import { arrivedByLink, useSharedLink } from './useSharedLink';
@@ -109,6 +110,8 @@ export default function App(): React.JSX.Element {
             data-testid="dock"
             data-mode={trace ? 'trace' : 'run'}
           >
+            {/* Floats just above the run pill: the issues are what blocks Run. */}
+            <IssuesChip />
             <RunPanel hidden={trace !== null} />
             {trace && step && (
               <TracePlayer

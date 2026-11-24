@@ -16,6 +16,11 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### The issues chip floats above the run box (2026-11-24)
+
+- [x] The "⚠ N issues" chip moved from the top bar (after the automaton's name, easy to miss) to float just above the run pill, next to the Run it explains: larger, opaque with the pills' shadow, its list opening upwards. It sits out of the dock's flow, so `--av-dock-h` is unchanged; on 481–760 px screens toasts rise above it
+- [x] Fit (and the fit on an automaton's first show) keeps the dock and the chip's room clear at the bottom (`dockInset`, measured from the dock's box), so no state lands under the run pill or the chip
+
 ### A hand-drawn arrow bends around the states in its way (2026-11-24)
 
 - [x] With q0, q1, q2 in a row and q0 → q1 → q2 drawn, a new arrow from q2 to q0 was straight (automatic bends only curve an arrow with a reverse), so it ran through q1 and hid behind the other two arrows. A new arrow that would run through a state is now created with the bend Tidy would give it (`newArrowBend`, sharing `bendClearOfStates`'s choice): q2 → q0 curves 32 px under the row. The rubber band and the arrow shown while its symbols are typed already have that curve. Arrows already drawn keep their shapes, and moving a state onto a straight arrow later still doesn't bend it (Tidy does)

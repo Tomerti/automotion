@@ -12,6 +12,7 @@ import { useIssueMarks } from './issueMarks';
 import type { Gap } from './snap';
 import {
   DEFAULT_VIEWPORT,
+  dockInset,
   historyInset,
   tutorialInset,
   useCanvasEditing,
@@ -101,7 +102,13 @@ function EditableCanvas(props: {
       .getState()
       .setViewport(
         automaton.id,
-        fitToViewInset(automaton.states, { width, height }, historyInset(el), tutorialInset(el)),
+        fitToViewInset(
+          automaton.states,
+          { width, height },
+          historyInset(el),
+          tutorialInset(el),
+          dockInset(el),
+        ),
       );
     // Intentionally once per mount (the canvas is keyed by automaton id).
     // eslint-disable-next-line react-hooks/exhaustive-deps
