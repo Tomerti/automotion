@@ -230,23 +230,28 @@ function tidy(): void {
   });
 }
 
+/** The canvas's toolbar keys: the letter, and what its button does. */
+const CANVAS_KEYS: Partial<Record<string, () => void>> = { t: tidy, f: fitActive };
+
 /**
- * T on the canvas tidies, like the canvas's own S and A (on any layout: a Hebrew T key types
- * `א`). Not in a field or on a button inside it, not held down, not with Ctrl, Alt or ⌘, and not
- * while a trace is open. Listened for here rather than in `useCanvasEditing`, which must not
- * import the tutorial store, so the key reports to lessons like the button.
+ * T on the canvas tidies and F fits the view, like the canvas's own S and A (on any layout: a
+ * Hebrew T key types `א`). Not in a field or on a button inside it, not held down, not with Ctrl,
+ * Alt or ⌘, and not while a trace is open (when both buttons are disabled). Listened for here
+ * rather than in `useCanvasEditing`, which must not import the tutorial store, so T reports to
+ * lessons like the button.
  */
-function useTidyShortcut(): void {
+function useCanvasToolKeys(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.defaultPrevented || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (shortcutLetter(e) !== 't') return;
+      const run = CANVAS_KEYS[shortcutLetter(e)];
+      if (!run) return;
       const t = e.target;
       if (!(t instanceof Element) || !t.closest('[data-testid="canvas"]')) return;
       if (isTypingTarget(t) || t instanceof HTMLButtonElement) return;
       if (appStore.getState().trace) return;
       e.preventDefault();
-      tidy();
+      run();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -267,7 +272,7 @@ export function Toolbar(): React.JSX.Element {
 
   const convertReason = automaton ? canConvert(automaton) : null;
   const minimizeReason = automaton ? canMinimize(automaton) : null;
-  useTidyShortcut();
+  useCanvasToolKeys();
 
   return (
     <div className="av-toolbar" role="toolbar" aria-label="Automaton tools">
@@ -290,7 +295,7 @@ export function Toolbar(): React.JSX.Element {
       <div className="av-tool-group">
         <IconButton
           label="Fit"
-          title="Fit to view"
+          title="Fit to view (F)"
           icon={<FitIcon />}
           disabled={none || tracing}
           onClick={fitActive}

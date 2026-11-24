@@ -114,6 +114,11 @@ const TABS: Tab[] = [
         hint: 'Like the Tidy button at the top',
       },
       {
+        gesture: { keys: ['F'], on: 'canvas' },
+        action: 'Fit to view',
+        hint: 'Like the Fit button at the top',
+      },
+      {
         gesture: { keys: ['Delete'], on: 'selection or history entry' },
         action: 'Delete it',
         hint: 'A history entry asks first. Ctrl+click history entries to delete several at once',

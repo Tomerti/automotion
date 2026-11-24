@@ -16,6 +16,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### F fits the view (2026-11-24)
+
+- [x] F on the canvas fits the view, like the Fit button, under the same rules as T (`CANVAS_KEYS` in `Toolbar.tsx`); the button's tooltip and the Keys tab mention it
+
 ### T tidies, and Tidy's icon is a magic wand (2026-11-24)
 
 - [x] T on the canvas tidies, like the Tidy button (on any layout: Hebrew's T key types `א`); not in a field, on a button, held down, with Ctrl/Alt/⌘, or while a trace is open. It reports to lessons like the button (the listener is in `Toolbar.tsx`, since `useCanvasEditing` must not import the tutorial store). The button's tooltip, the Keys tab and the Arrange lesson's why line mention it
