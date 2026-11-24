@@ -109,6 +109,11 @@ const TABS: Tab[] = [
       { gesture: { keys: ['S'], on: 'selected state' }, action: 'Toggle start state' },
       { gesture: { keys: ['A'], on: 'selected state' }, action: 'Toggle accepting' },
       {
+        gesture: { keys: ['T'], on: 'canvas' },
+        action: 'Tidy the layout',
+        hint: 'Like the Tidy button at the top',
+      },
+      {
         gesture: { keys: ['Delete'], on: 'selection or history entry' },
         action: 'Delete it',
         hint: 'A history entry asks first. Ctrl+click history entries to delete several at once',
