@@ -16,6 +16,11 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### T tidies, and Tidy's icon is a magic wand (2026-11-24)
+
+- [x] T on the canvas tidies, like the Tidy button (on any layout: Hebrew's T key types `א`); not in a field, on a button, held down, with Ctrl/Alt/⌘, or while a trace is open. It reports to lessons like the button (the listener is in `Toolbar.tsx`, since `useCanvasEditing` must not import the tutorial store). The button's tooltip, the Keys tab and the Arrange lesson's why line mention it
+- [x] Tidy's icon is a magic wand with sparkles: its three dots joined by two lines were the usual share icon
+
 ### `LabelText` keeps quotes before `)` `!` `?` `→` (2026-11-19)
 
 - [x] A quoted `'…'` literal directly followed by `)`, `!`, `?` or `→` stays literal (it was parsed as a label: `'a_1')` showed `'a₁')`); no caller wrote that yet

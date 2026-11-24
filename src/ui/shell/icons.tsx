@@ -40,13 +40,15 @@ export const FitIcon = (): React.JSX.Element => (
   </Icon>
 );
 
-/** Three states falling into rank: auto-layout. */
+/**
+ * A magic wand with sparkles: auto-layout, done for you. (Three dots joined by lines, its old
+ * picture, read as the usual share icon.)
+ */
 export const TidyIcon = (): React.JSX.Element => (
   <Icon>
-    <circle cx="4.5" cy="10" r="2" />
-    <circle cx="15.5" cy="5" r="2" />
-    <circle cx="15.5" cy="15" r="2" />
-    <path d="M6.4 9.1 13.6 5.9M6.4 10.9l7.2 3.2" />
+    <path d="M3.5 16.5 12 8" />
+    <path d="M14.5 2.5c.3 1.9.9 2.6 2.75 3-1.85.4-2.45 1.1-2.75 3-.3-1.9-.9-2.6-2.75-3 1.85-.4 2.45-1.1 2.75-3Z" />
+    <path d="M6 3.5v2.5M4.75 4.75h2.5" />
   </Icon>
 );
 

@@ -24,7 +24,7 @@ import {
   TidyIcon,
   UndoIcon,
 } from './icons';
-import { isCtrlLetter } from './shortcut';
+import { isCtrlLetter, shortcutLetter } from './shortcut';
 import { toast } from './toastStore';
 import { focusFirstItem, onMenuKeyDown, usePopover } from './usePopover';
 
@@ -223,6 +223,36 @@ function ExportMenu(props: { automaton?: Automaton; disabled: boolean }): React.
   );
 }
 
+/** Tidy the active automaton, and tell a running lesson once the layout lands. */
+function tidy(): void {
+  void tidyActive().then((ok) => {
+    if (ok) noteTidied();
+  });
+}
+
+/**
+ * T on the canvas tidies, like the canvas's own S and A (on any layout: a Hebrew T key types
+ * `א`). Not in a field or on a button inside it, not held down, not with Ctrl, Alt or ⌘, and not
+ * while a trace is open. Listened for here rather than in `useCanvasEditing`, which must not
+ * import the tutorial store, so the key reports to lessons like the button.
+ */
+function useTidyShortcut(): void {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.defaultPrevented || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (shortcutLetter(e) !== 't') return;
+      const t = e.target;
+      if (!(t instanceof Element) || !t.closest('[data-testid="canvas"]')) return;
+      if (isTypingTarget(t) || t instanceof HTMLButtonElement) return;
+      if (appStore.getState().trace) return;
+      e.preventDefault();
+      tidy();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+}
+
 /** The automaton tools on the right of the top bar (the DFA/NFA switch floats on the canvas). */
 export function Toolbar(): React.JSX.Element {
   const automaton = useAppStore((s) => s.automata.find((a) => a.id === s.activeId));
@@ -237,6 +267,7 @@ export function Toolbar(): React.JSX.Element {
 
   const convertReason = automaton ? canConvert(automaton) : null;
   const minimizeReason = automaton ? canMinimize(automaton) : null;
+  useTidyShortcut();
 
   return (
     <div className="av-toolbar" role="toolbar" aria-label="Automaton tools">
@@ -266,14 +297,10 @@ export function Toolbar(): React.JSX.Element {
         />
         <IconButton
           label="Tidy"
-          title="Tidy the layout"
+          title="Tidy the layout (T)"
           icon={<TidyIcon />}
           disabled={none || tracing}
-          onClick={() =>
-            void tidyActive().then((ok) => {
-              if (ok) noteTidied();
-            })
-          }
+          onClick={tidy}
         />
       </div>
       <div className="av-tool-group">

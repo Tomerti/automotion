@@ -79,7 +79,8 @@ const STEPS: StepSpec[] = [
   {
     id: 'arrange/tidy',
     instruction: () => 'Press Tidy at the top.',
-    why: () => 'It lays out the whole automaton the way you’d draw it by hand.',
+    why: () =>
+      'It lays out the automaton the way you’d draw it by hand. [T] on the canvas does it too.',
     action: ['tidy'],
     target: () => 'button[aria-label="Tidy"]',
   },
