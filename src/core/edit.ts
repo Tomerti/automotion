@@ -192,17 +192,23 @@ export function syncAlphabet(a: Automaton): Automaton {
 
 /**
  * Set the symbols of edge (from, to). Adding ε to a DFA turns it into an NFA (`promoted`).
- * The alphabet is synced.
+ * The alphabet is synced. `bend`: the bend the edge gets if this creates it (an existing edge
+ * keeps its own).
  */
 export function commitEdgeSymbols(
   a: Automaton,
   from: StateId,
   to: StateId,
   syms: Sym[],
+  opts: { bend?: number } = {},
 ): { automaton: Automaton; promoted: boolean } {
   const promoted = a.kind === 'DFA' && syms.includes(EPSILON);
   const base: Automaton = promoted ? { ...a, kind: 'NFA' } : a;
-  return { automaton: syncAlphabet(setEdgeSymbols(base, from, to, syms)), promoted };
+  const isNew = !a.transitions.some((t) => t.from === from && t.to === to);
+  let next = setEdgeSymbols(base, from, to, syms);
+  const created = next.transitions.find((t) => t.from === from && t.to === to);
+  if (isNew && created && opts.bend !== undefined) next = setEdgeBend(next, created.id, opts.bend);
+  return { automaton: syncAlphabet(next), promoted };
 }
 
 export function removeTransition(a: Automaton, transitionId: string): Automaton {

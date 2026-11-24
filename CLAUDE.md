@@ -66,6 +66,8 @@ on `samples.ts` and `layout.test.ts` guards them: rerun it after touching costs 
 It runs in a Web Worker (`layoutClient.ts`) loaded by dynamic `import()`, so elk (~1.5 MB) stays out of
 the main bundle; `layout.worker.ts` must assign `self.onmessage` after its imports, because
 `elk.bundled.js` claims it inside a worker. Without workers (jsdom tests) it runs on the page.
+The canvas imports `aesthetics.ts` statically for `newArrowBend` (a hand-drawn arrow that would run
+through a state is created bent around it, as Tidy would bend it), so `aesthetics.ts` must not import elk.
 
 ### `src/store/`
 
