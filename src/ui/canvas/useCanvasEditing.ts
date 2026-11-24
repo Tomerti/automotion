@@ -189,9 +189,25 @@ export function tutorialInset(el: Element | null): number {
   return parseFloat(getComputedStyle(el).getPropertyValue('--av-tutorial-pad')) || 0;
 }
 
+/** Room the issues chip takes above the run pill: its 30 px and the 8 px gap (`.av-issues-anchor`). */
+export const ISSUES_CHIP_ROOM = 38;
+
+/**
+ * How far up a fit keeps clear: from the canvas's bottom to the dock's top, plus the issues chip
+ * floating over it, so no state ends up under them. Measured, not read from `--av-dock-h`, which
+ * App sets only after the canvas's first fit. 0 without a dock (the canvas on its own).
+ */
+export function dockInset(el: Element | null): number {
+  const dock = el?.closest('main')?.querySelector('[data-testid="dock"]');
+  if (!el || !dock) return 0;
+  const dockBox = dock.getBoundingClientRect();
+  if (dockBox.height === 0) return 0;
+  return Math.max(0, el.getBoundingClientRect().bottom - dockBox.top) + ISSUES_CHIP_ROOM;
+}
+
 /**
  * Fit the active automaton's states into the canvas (no-op while the canvas has no size), below
- * the tutorial card while there is one (`--av-tutorial-pad`).
+ * the tutorial card while there is one (`--av-tutorial-pad`) and above the dock.
  */
 export function fitActive(): void {
   const a = activeAutomaton();
@@ -200,7 +216,10 @@ export function fitActive(): void {
   const el = document.querySelector('[data-testid="canvas"]');
   appStore
     .getState()
-    .setViewport(a.id, fitToViewInset(a.states, size, historyInset(el), tutorialInset(el)));
+    .setViewport(
+      a.id,
+      fitToViewInset(a.states, size, historyInset(el), tutorialInset(el), dockInset(el)),
+    );
 }
 
 /**

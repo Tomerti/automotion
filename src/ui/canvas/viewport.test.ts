@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { STATE_RADIUS } from '../../core/geometry';
+import { ISSUES_CHIP_ROOM, dockInset } from './useCanvasEditing';
 import { fitToView, fitToViewInset, screenToWorld, zoomAt } from './viewport';
 
 describe('screenToWorld', () => {
@@ -136,5 +137,37 @@ describe('fitToViewInset', () => {
     expect(vp.y - STATE_RADIUS * vp.zoom).toBeGreaterThanOrEqual(300);
     expect(vp.y).toBeCloseTo(450);
     expect(vp.x + 500 * vp.zoom).toBeCloseTo(600);
+  });
+
+  it('keeps a bottom inset clear (the dock), centred in the height between the insets', () => {
+    const vp = fitToViewInset(pts, size, 0, 100, 200);
+    expect(vp.y + STATE_RADIUS * vp.zoom).toBeLessThanOrEqual(600 - 200);
+    expect(vp.y).toBeCloseTo(250);
+  });
+});
+
+describe('dockInset', () => {
+  const rect = (top: number, bottom: number): DOMRect =>
+    ({ top, bottom, height: bottom - top }) as DOMRect;
+
+  it('is the space from the dock’s top to the canvas’s bottom, plus the issues chip’s room', () => {
+    const area = document.createElement('main');
+    const canvas = document.createElement('div');
+    const dock = document.createElement('div');
+    dock.dataset.testid = 'dock';
+    area.append(canvas, dock);
+    document.body.append(area);
+    canvas.getBoundingClientRect = () => rect(50, 650);
+    dock.getBoundingClientRect = () => rect(588, 632);
+    expect(dockInset(canvas)).toBe(650 - 588 + ISSUES_CHIP_ROOM);
+    area.remove();
+  });
+
+  it('is 0 without a canvas or without a dock (the canvas alone, as in its tests)', () => {
+    expect(dockInset(null)).toBe(0);
+    const canvas = document.createElement('div');
+    document.body.append(canvas);
+    expect(dockInset(canvas)).toBe(0);
+    canvas.remove();
   });
 });

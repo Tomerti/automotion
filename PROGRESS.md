@@ -19,6 +19,7 @@ Nothing in progress: pick the next task from the list below.
 ### The issues chip floats above the run box (2026-11-24)
 
 - [x] The "⚠ N issues" chip moved from the top bar (after the automaton's name, easy to miss) to float just above the run pill, next to the Run it explains: larger, opaque with the pills' shadow, its list opening upwards. It sits out of the dock's flow, so `--av-dock-h` is unchanged; on 481–760 px screens toasts rise above it
+- [x] Fit (and the fit on an automaton's first show) keeps the dock and the chip's room clear at the bottom (`dockInset`, measured from the dock's box), so no state lands under the run pill or the chip
 
 ### A hand-drawn arrow bends around the states in its way (2026-11-24)
 
