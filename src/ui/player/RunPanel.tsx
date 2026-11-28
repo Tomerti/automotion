@@ -51,7 +51,6 @@ export function RunPanel({ hidden = false }: { hidden?: boolean }): React.JSX.El
         spellCheck={false}
         value={word}
         onChange={onChange}
-        onBlur={() => setWord(normalizeSymbolText(word))}
       />
       <button
         type="submit"

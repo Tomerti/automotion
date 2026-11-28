@@ -37,3 +37,37 @@ test('a parse error is shown in the dialog', async ({ page }) => {
   await expect(page.getByTestId('regex-error')).toContainText('Nothing after |');
   await expect(page.getByTestId('regex-build')).toBeDisabled();
 });
+
+/** Whether the button has focus with its focus ring drawn. */
+async function ringShown(page: Page, name: string): Promise<boolean> {
+  return page
+    .getByRole('button', { name })
+    .evaluate(
+      (el) => el === document.activeElement && getComputedStyle(el).outlineStyle !== 'none',
+    );
+}
+
+test('Escape after a click on the link puts focus back on it without a ring', async ({ page }) => {
+  await openApp(page, { clear: true });
+  await openRegexDialog(page);
+  await page.getByTestId('regex-input').fill('ab');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  const link = page.getByRole('button', { name: 'or build one from a regex' });
+  await expect(link).toBeFocused();
+  expect(await ringShown(page, 'or build one from a regex')).toBe(false);
+  // The ring comes back once the keyboard is used.
+  await page.keyboard.press('Shift');
+  expect(await ringShown(page, 'or build one from a regex')).toBe(true);
+});
+
+test('Escape after opening the dialog from the keyboard rings the link again', async ({ page }) => {
+  await openApp(page, { clear: true });
+  const link = page.getByRole('button', { name: 'or build one from a regex' });
+  await link.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(link).toBeFocused();
+  expect(await ringShown(page, 'or build one from a regex')).toBe(true);
+});

@@ -18,18 +18,9 @@ export function isRegexSymbol(ch: string): boolean {
   return [...ch].length === 1 && !RESERVED.has(ch) && !/\s/u.test(ch);
 }
 
-/**
- * `\eps` (or `\epsilon`) → ε and `\emptyset` → ∅. Pass the caret while typing, so a `\eps` that
- * may still become `\epsilon` waits for the next key (`replaceEpsilonAliases`).
- */
-export function normalizeRegexText(text: string, caret?: number): string {
-  const before = caret === undefined ? '' : text.slice(0, caret);
-  // ∅ first, with the caret moved by what it shortened before it.
-  const shift = before.length - before.replaceAll('\\emptyset', EMPTY_SET).length;
-  return replaceEpsilonAliases(
-    text.replaceAll('\\emptyset', EMPTY_SET),
-    caret === undefined ? undefined : caret - shift,
-  );
+/** `\eps` (or `\epsilon`) → ε and `\emptyset` → ∅. */
+export function normalizeRegexText(text: string): string {
+  return replaceEpsilonAliases(text.replaceAll('\\emptyset', EMPTY_SET));
 }
 
 export type ParseResult =

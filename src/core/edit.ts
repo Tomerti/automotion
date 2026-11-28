@@ -290,12 +290,9 @@ export function sameStructure(a: Automaton, b: Automaton): boolean {
 /** What a user may type for ε in a symbol input. */
 export const EPSILON_ALIASES = ['\\eps', 'eps', EPSILON];
 
-/**
- * Live input normalization: `\eps` and `\epsilon` turn into ε. Pass the caret while typing, so a
- * `\eps` that may still become `\epsilon` waits for the next key (`replaceEpsilonAliases`).
- */
-export function normalizeSymbolText(text: string, caret?: number): string {
-  return replaceEpsilonAliases(text, caret);
+/** Live input normalization: `\eps` and `\epsilon` turn into ε. */
+export function normalizeSymbolText(text: string): string {
+  return replaceEpsilonAliases(text);
 }
 
 /** Live state-name normalization: `\emptyset` turns into ∅ (the dead state's usual name). */
