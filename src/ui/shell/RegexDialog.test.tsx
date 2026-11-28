@@ -22,6 +22,13 @@ describe('RegexDialog', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('a phone keyboard neither capitalises nor corrects the regex (abb must not become Abb)', () => {
+    openDialog();
+    const input = screen.getByTestId('regex-input');
+    expect(input).toHaveAttribute('autocapitalize', 'off');
+    expect(input).toHaveAttribute('autocorrect', 'off');
+  });
+
   it('Create DFA is the orange pill (av-go), like Run, not the blue av-primary', () => {
     openDialog();
     const build = screen.getByTestId('regex-build');

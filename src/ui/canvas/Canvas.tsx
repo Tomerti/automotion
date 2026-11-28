@@ -4,6 +4,7 @@ import { ignoringIncomplete, validate } from '../../core/validate';
 import { appStore, useAppStore } from '../../store/store';
 import type { Viewport } from '../../store/types';
 import { openRegexDialog } from '../shell/regexDialogStore';
+import { useTouchOnly } from '../shell/touch';
 import { ContextMenu } from './ContextMenu';
 import { Diagram } from './Diagram';
 import { Arrowhead } from './EdgeView';
@@ -76,6 +77,7 @@ function EditableCanvas(props: {
   inLesson: boolean;
 }): React.JSX.Element {
   const { automaton, viewport, hasViewport, inLesson } = props;
+  const touchOnly = useTouchOnly();
   const {
     containerRef,
     svgRef,
@@ -193,19 +195,37 @@ function EditableCanvas(props: {
       </Diagram>
       {automaton.states.length === 0 && !inLesson && (
         <div className="av-canvas-hint" data-testid="canvas-hint">
-          {/* Each phrase stays whole: a narrow canvas breaks the line at its dot. */}
-          <p>
-            <span>Double-click to add a state ·</span> <span>Press ? for controls</span>
-          </p>
-          <p className="av-canvas-hint-small">
-            <span>Ctrl+V pastes LaTeX (TikZ) code ·</span>{' '}
-            <span>Drop a .json / .tex file to import</span>
-          </p>
-          <p className="av-canvas-hint-small">
-            <button type="button" className="av-canvas-hint-link" onClick={openRegexDialog}>
-              or build one from a regex
-            </button>
-          </p>
+          {touchOnly ? (
+            // A phone can't draw states, but it can build from a regex: lead with that.
+            <>
+              <p>
+                <button
+                  type="button"
+                  className="av-canvas-hint-link av-canvas-hint-tap"
+                  onClick={openRegexDialog}
+                >
+                  Create a DFA from a regex
+                </button>
+              </p>
+              <p className="av-canvas-hint-small">Building by hand needs a computer</p>
+            </>
+          ) : (
+            <>
+              {/* Each phrase stays whole: a narrow canvas breaks the line at its dot. */}
+              <p>
+                <span>Double-click to add a state ·</span> <span>Press ? for controls</span>
+              </p>
+              <p className="av-canvas-hint-small">
+                <span>Ctrl+V pastes LaTeX (TikZ) code ·</span>{' '}
+                <span>Drop a .json / .tex file to import</span>
+              </p>
+              <p className="av-canvas-hint-small">
+                <button type="button" className="av-canvas-hint-link" onClick={openRegexDialog}>
+                  or build one from a regex
+                </button>
+              </p>
+            </>
+          )}
         </div>
       )}
       {inline && (

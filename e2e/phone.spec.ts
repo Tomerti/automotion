@@ -28,23 +28,24 @@ function sharePayload(): string {
   return deflateRawSync(Buffer.from(json)).toString('base64url');
 }
 
-test('the phone welcome says what a phone is for, then a shared link opens and runs', async ({
+test('the phone welcome says what a phone can do, then a shared link opens and runs', async ({
   page,
 }) => {
   await page.goto('./');
   const welcome = page.getByRole('dialog', { name: 'Welcome' });
   await expect(welcome).toBeVisible();
-  await expect(welcome).toContainText('made for a mouse and keyboard');
+  await expect(welcome).toContainText('Drawing automata takes a mouse and keyboard');
   await expect(welcome.getByRole('listitem')).toHaveText([
+    'Build one from a regex',
     'Open shared automata',
     'Run words on them',
-    'Build or edit automata',
+    'Draw or edit by hand',
   ]);
   await expect(welcome.getByRole('button', { name: 'Start tutorial' })).toHaveCount(0);
   await expect(welcome.getByTestId('welcome-demo')).toBeVisible();
   // The notice is a callout above the demo, on screen without scrolling.
   const note = welcome.getByRole('note');
-  await expect(note).toContainText('Open this on a computer');
+  await expect(note).toContainText('Best on a computer');
   const noteBox = (await note.boundingBox())!;
   const demoBox = (await welcome.getByTestId('welcome-demo').boundingBox())!;
   expect(noteBox.y + noteBox.height).toBeLessThanOrEqual(demoBox.y);
@@ -80,4 +81,44 @@ test('the phone welcome says what a phone is for, then a shared link opens and r
   await page.getByRole('button', { name: 'Last' }).tap();
   await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'true');
   await page.screenshot({ path: 'test-results/phone-run.png' });
+});
+
+test('a phone builds a DFA from a regex on the empty canvas', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('dialog', { name: 'Welcome' }).getByRole('button', { name: 'Got it' }).tap();
+  const hint = page.getByTestId('canvas-hint');
+  await expect(hint).toContainText('Building by hand needs a computer');
+  await expect(hint).not.toContainText('Double-click');
+  const link = hint.getByRole('button', { name: 'Create a DFA from a regex' });
+  // Tall enough for a finger, while its line stays one 20 px dot gap like the line under it.
+  expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect((await hint.locator('p').first().boundingBox())!.height).toBe(20);
+  await page.screenshot({ path: 'test-results/phone-empty.png' });
+  await link.tap();
+  const dialog = page.getByRole('dialog', { name: 'Create a DFA from a regex' });
+  await expect(dialog).toBeVisible();
+  // Under 16 px, iOS zooms the page in on focus and leaves it zoomed after the dialog closes. The
+  // error's caret row keeps the box's size, so its ^ still lines up.
+  const fontPx = (id: string) =>
+    page.getByTestId(id).evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  expect(await fontPx('regex-input')).toBeGreaterThanOrEqual(16);
+  await page.getByTestId('regex-input').fill('a|');
+  expect(await fontPx('regex-caret')).toBe(await fontPx('regex-input'));
+  await page.getByTestId('regex-input').fill('(a|b)*ab');
+  await page.getByTestId('regex-build').tap();
+  await expect(dialog).toHaveCount(0);
+  const size = page.viewportSize()!;
+  for (const id of ['state-q_0', 'state-q_1', 'state-q_2']) {
+    const b = await page.getByTestId(id).locator('.av-state-body').boundingBox();
+    expect(b, id).not.toBeNull();
+    expect(b!.x).toBeGreaterThanOrEqual(0);
+    expect(b!.y).toBeGreaterThanOrEqual(0);
+    expect(b!.x + b!.width).toBeLessThanOrEqual(size.width);
+    expect(b!.y + b!.height).toBeLessThanOrEqual(size.height);
+  }
+  await page.getByLabel('Word').fill('bab');
+  await page.getByLabel('Word').press('Enter');
+  await page.getByRole('button', { name: 'Last' }).tap();
+  await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'true');
+  await page.screenshot({ path: 'test-results/phone-regex.png' });
 });

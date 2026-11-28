@@ -25,8 +25,9 @@ export function RegexDialog(): React.JSX.Element | null {
 }
 
 /**
- * The empty canvas's "or build one from a regex": a box for a regular expression. Create DFA adds the regex's
- * minimal DFA as a new automaton; a syntax error is shown under the offending character.
+ * The empty canvas's regex link ("or build one from a regex", on a phone "Create a DFA from a
+ * regex"): a box for a regular expression. Create DFA builds the regex's minimal DFA in the empty
+ * automaton (or adds it as a new one); a syntax error is shown under the offending character.
  */
 function RegexModal(): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -99,6 +100,8 @@ function RegexModal(): React.JSX.Element {
             data-focus-stop
             spellCheck={false}
             autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
             placeholder="(a|b)*abb"
             value={text}
             onChange={onChange}

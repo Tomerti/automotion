@@ -15,9 +15,10 @@ const PLAN: { what: string; how: string }[] = [
 
 /** The phone notice's checklist: what works on a touch-only device and what doesn't. */
 const PHONE_CAN: { what: string; can: boolean }[] = [
+  { what: 'Build one from a regex', can: true },
   { what: 'Open shared automata', can: true },
   { what: 'Run words on them', can: true },
-  { what: 'Build or edit automata', can: false },
+  { what: 'Draw or edit by hand', can: false },
 ];
 
 /**
@@ -74,9 +75,9 @@ export function WelcomeCard({
               <LaptopIcon />
             </span>
             <div>
-              <p className="av-welcome-device-head">Open this on a computer</p>
+              <p className="av-welcome-device-head">Best on a computer</p>
               <p className="av-welcome-device-body">
-                AutoMotion is made for a mouse and keyboard. On a phone you can:
+                Drawing automata takes a mouse and keyboard. On a phone you can:
               </p>
               <ul className="av-welcome-device-list">
                 {PHONE_CAN.map(({ what, can }) => (
