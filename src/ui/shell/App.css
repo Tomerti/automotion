@@ -621,7 +621,7 @@ input.av-switcher-input {
   transform: translateX(max(0px, calc(50vw - var(--av-history-inset) - 16px - 50%)));
 }
 
-/* Regex dialog (the empty canvas's "or build one from a regex") */
+/* Regex dialog (the empty canvas's regex link) */
 /* One rule for the box and the caret row under it, so their glyph widths can't drift apart. */
 .av-regex .av-regex-input,
 .av-regex .av-regex-caret {

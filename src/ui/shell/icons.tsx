@@ -148,7 +148,7 @@ export const WarningIcon = (): React.JSX.Element => (
   </Icon>
 );
 
-/** A laptop: the phone welcome's "open this on a computer". */
+/** A laptop: the phone welcome's "Best on a computer". */
 export const LaptopIcon = (): React.JSX.Element => (
   <Icon>
     <rect x="4" y="4.5" width="12" height="8.5" rx="1.25" />
