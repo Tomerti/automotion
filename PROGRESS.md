@@ -16,6 +16,10 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Anonymous usage counts (2026-11-28)
+
+- [x] GoatCounter (https://tomerti.goatcounter.com) counts visits on the live site, plus the events `run`, `convert`, `minimize`, `regex` and `lesson-<id>-start`/`-finish` (`src/analytics.ts`). Only `tomerti.github.io` loads `count.js`, so dev, tests and forks send nothing; events are fixed names, never what the user typed or named. Kept lean on purpose: no Tidy, sharing, import or export events. The README's _Good to know_ says so
+
 ### Phones build from a regex (2026-11-28)
 
 - [x] The phone welcome no longer says a phone can't build automata (From regex works there): the amber callout's headline is "Best on a computer", its body "Drawing automata takes a mouse and keyboard. On a phone you can:", and its checklist ✓ Build one from a regex, ✓ Open shared automata, ✓ Run words on them, ✗ Draw or edit by hand. Got it stays its only button

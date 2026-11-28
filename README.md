@@ -119,6 +119,9 @@ Press **?** in the app to see every control.
 
 - **Your work stays in your browser.** There is no server and no account. Clearing your
   browser's site data deletes your automata, so use **Export all** to keep a copy.
+- **Anonymous counts.** The site counts visits, runs, conversions, minimizations, DFAs built from
+  a regex, and lessons started and finished with [GoatCounter](https://www.goatcounter.com): no
+  cookies, and nothing you type or draw is sent.
 - **Phones** can build an automaton from a regex, open share links and run words; drawing by hand
   needs a mouse and keyboard.
 

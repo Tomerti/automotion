@@ -1,4 +1,5 @@
 import { canBuildFromRegex, regexToMinimalDfa } from '../core/regexToDfa';
+import { track } from '../analytics';
 import { appStore } from './store';
 
 /**
@@ -29,6 +30,7 @@ export async function createFromRegex(
     onError?.('Could not lay out the automaton');
     return null;
   }
+  track('regex');
   if (target !== null && emptyTarget() === target) {
     appStore.getState().edit(() => ({ ...laid, id: target }));
     return target;

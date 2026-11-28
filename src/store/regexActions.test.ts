@@ -4,6 +4,7 @@ import { fixture } from '../core/testing/fixtures';
 import { createFromRegex } from './regexActions';
 import { appStore, resetAppStore } from './store';
 import { startRun } from './traceActions';
+import { recordEvents } from '../test/goatcounter';
 
 vi.mock('../layout/layoutClient', async (importOriginal) => {
   const real = await importOriginal<typeof import('../layout/layoutClient')>();
@@ -109,5 +110,15 @@ describe('createFromRegex', () => {
     expect(appStore.getState().readOnly).not.toContain(id);
     appStore.getState().edit((a) => ({ ...a, name: 'Renamed' }));
     expect(appStore.getState().automata[0]?.name).toBe('Renamed');
+  });
+});
+
+describe('counting', () => {
+  it('counts a DFA built from a regex, and not a refused regex', async () => {
+    const events = recordEvents();
+    await createFromRegex('a|');
+    expect(events).toEqual([]);
+    await createFromRegex('(a|b)*abb');
+    expect(events).toEqual(['regex']);
   });
 });

@@ -1,6 +1,7 @@
 import { canMinimize, minimize } from '../core/minimize';
 import { canRun, runWord } from '../core/run';
 import { canConvert, subsetConstruction } from '../core/subset';
+import { track } from '../analytics';
 import { appStore } from './store';
 
 const message = (e: unknown, fallback: string): string =>
@@ -12,6 +13,7 @@ export function startRun(word: string): void {
   const a = automata.find((x) => x.id === activeId);
   if (!a || canRun(a, word) !== null) return;
   openTrace(runWord(a, word));
+  track('run');
 }
 
 /** A conversion is waiting for its layout: further Convert clicks are ignored until it settles. */
@@ -50,6 +52,7 @@ export async function startSubset(onError?: (message: string) => void): Promise<
   const current = now.automata.find((x) => x.id === a.id);
   if (now.activeId !== a.id || current !== a || now.trace) return;
   now.openTrace({ ...trace, result });
+  track('convert');
 }
 
 /** Open the minimization walkthrough for the active automaton (no-op if it can't be minimized). */
@@ -58,4 +61,5 @@ export function startMinimize(): void {
   const a = automata.find((x) => x.id === activeId);
   if (!a || canMinimize(a) !== null) return;
   openTrace(minimize(a));
+  track('minimize');
 }
