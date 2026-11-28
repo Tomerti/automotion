@@ -5,7 +5,9 @@ import { nthFromEnd } from '../core/testing/fixtures';
 import { layoutAutomaton } from '../layout/layout';
 import { appStore, resetAppStore } from './store';
 import { endsAb } from './testing/fixtures';
-import { startSubset } from './traceActions';
+import { fixture } from '../core/testing/fixtures';
+import { recordEvents } from '../test/goatcounter';
+import { startMinimize, startRun, startSubset } from './traceActions';
 
 // The real layout by default; individual tests make it fail or hold it at the await.
 vi.mock('../layout/layout', async (importOriginal) => {
@@ -108,5 +110,56 @@ describe('startSubset', () => {
     appStore.getState().addAutomaton({ ...endsAb, kind: 'DFA', transitions: [] });
     await startSubset();
     expect(appStore.getState().trace).toBeNull();
+  });
+});
+
+describe('counting', () => {
+  const dfa = fixture({
+    name: 'Even a',
+    kind: 'DFA',
+    alphabet: 'a',
+    states: ['p', 'q'],
+    start: 'p',
+    accepting: ['p'],
+    edges: [
+      ['p', 'a', 'q'],
+      ['q', 'a', 'p'],
+    ],
+  });
+
+  it('counts a run by the kind of automaton', () => {
+    const events = recordEvents();
+    appStore.getState().addAutomaton(dfa);
+    startRun('aa');
+    appStore.getState().closeTrace();
+    appStore.getState().addAutomaton(endsAb);
+    startRun('ab');
+    expect(events).toEqual(['run-dfa', 'run-nfa']);
+  });
+
+  it('counts no run that is refused', () => {
+    const events = recordEvents();
+    appStore.getState().addAutomaton(dfa);
+    startRun('b');
+    expect(appStore.getState().trace).toBeNull();
+    expect(events).toEqual([]);
+  });
+
+  it('counts a conversion once its walkthrough opens, and not a failed one', async () => {
+    const events = recordEvents();
+    appStore.getState().addAutomaton(endsAb);
+    layoutMock.mockRejectedValueOnce(new Error('elk exploded'));
+    await startSubset();
+    expect(events).toEqual([]);
+    await startSubset();
+    expect(events).toEqual(['convert']);
+  });
+
+  it('counts a minimization', () => {
+    const events = recordEvents();
+    appStore.getState().addAutomaton(dfa);
+    startMinimize();
+    expect(appStore.getState().trace).not.toBeNull();
+    expect(events).toEqual(['minimize']);
   });
 });
