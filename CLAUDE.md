@@ -82,6 +82,14 @@ through a state is created bent around it, as Tidy would bend it), so `aesthetic
   structure, cut and paste unless `sameStructure` (`core/edit.ts`) holds, so layout moves, Tidy and runs
   still work. Each refusal bumps `blockedEdits`, which the tutorial card reads to say it's read-only.
 
+### `src/analytics.ts`
+
+GoatCounter (`tomerti`): `startAnalytics()` (from `main.tsx`) loads `count.js` only on `tomerti.github.io`, so dev,
+tests and e2e send nothing; `track(event)` is a no-op without it. Events are the fixed names of
+`AnalyticsEvent` (`run`, `convert`, `minimize`, `regex`, `lesson-<id>-start`/`-finish`), never anything the user
+typed or named. `store/` and `ui/` may import it, `core/` and `layout/` don't. Tests stub it with
+`recordEvents()` (`src/test/goatcounter.ts`).
+
 ### `src/persistence/`
 
 - localStorage autosave (key `automotion:v1`) and the JSON file format

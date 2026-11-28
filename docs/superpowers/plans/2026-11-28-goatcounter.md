@@ -66,7 +66,10 @@
   (`run-${a.kind === 'DFA' ? 'dfa' : 'nfa'}`).
 - [ ] `npx vitest run src/store` passes. Commit `feat(analytics): count runs, conversions, minimizing and regexes`.
 
-### Task 3: shell events
+### Task 3: shell events (dropped)
+
+> Dropped during execution: Tomer asked to keep it lean (runs and lessons matter most), so the
+> events are `run` (one for DFAs and NFAs), `convert`, `minimize`, `regex` and the lesson events.
 
 **Files:** Modify `src/ui/shell/Toolbar.tsx`, `HistoryBar.tsx`, `copyLink.ts`,
 `useSharedLink.ts`, `importFile.ts`; tests in the matching `*.test.ts(x)` where one exists.

@@ -11,12 +11,7 @@ const SCRIPT = 'https://gc.zgo.at/count.js';
 
 /** Every event that can be sent. Lesson ids are `LessonId`s (`ui/tutorial/engine.ts`). */
 export type AnalyticsEvent =
-  | 'run'
-  | 'convert'
-  | 'minimize'
-  | 'regex'
-  | `lesson-${string}-start`
-  | `lesson-${string}-finish`;
+  'run' | 'convert' | 'minimize' | 'regex' | `lesson-${string}-start` | `lesson-${string}-finish`;
 
 declare global {
   interface Window {

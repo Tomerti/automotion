@@ -41,19 +41,16 @@ https://tomerti.goatcounter.com) is cookie-free and keeps no personal data.
   - `track(event: AnalyticsEvent)`: calls `window.goatcounter?.count({ path: event, title: event,
     event: true })` inside try/catch; no-op when the script is absent.
   - `AnalyticsEvent` is a string-literal union, so only listed names can be sent.
-- Events (called where the action actually happens, once per user action):
+- Events (called where the action actually happens, once per user action). Kept lean on Tomer's
+  request (runs and lessons matter most): one `run` for DFAs and NFAs alike, and no events for
+  Tidy, sharing, import or export.
 
   | Event | When |
   | --- | --- |
-  | `run-dfa`, `run-nfa` | a word's run opens (`startRun`) |
+  | `run` | a word's run opens (`startRun`) |
   | `convert` | a Convert to DFA walkthrough opens (`startSubset`) |
   | `minimize` | a Minimize walkthrough opens (`startMinimize`) |
   | `regex` | From regex builds a DFA (`createFromRegex` succeeds) |
-  | `tidy` | Tidy is applied |
-  | `share-link` | Share link copied |
-  | `open-shared-link` | the app opens a shared link |
-  | `import-json`, `import-latex`, `paste-latex` | an import succeeds |
-  | `export-json`, `export-svg`, `export-png`, `export-latex`, `copy-image`, `copy-latex` | an export |
   | `lesson-<id>-start`, `lesson-<id>-finish` | a lesson (Basics included) starts / is finished |
 
   The welcome screen's demo run is not a user action and is not counted.
@@ -63,8 +60,7 @@ https://tomerti.goatcounter.com) is cookie-free and keeps no personal data.
 
 ## Left to the builder
 
-- Exact call sites for each event (existing choke points: `store/traceActions.ts`,
-  `store/regexActions.ts`, `ui/shell/copyLink.ts`, `useSharedLink.ts`, `importFile.ts`,
-  `pasteLatex.ts`, the Toolbar/HistoryBar export items, `tutorial/tutorialStore.ts`).
+- Exact call sites for each event (`store/traceActions.ts`, `store/regexActions.ts`,
+  `ui/tutorial/tutorialStore.ts`).
 - Tests: unit tests for `analytics.ts` (hostname gate, no-op without the script, payload shape)
   and that the main actions call `track` with the right name.
