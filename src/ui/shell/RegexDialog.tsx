@@ -100,6 +100,8 @@ function RegexModal(): React.JSX.Element {
             data-focus-stop
             spellCheck={false}
             autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
             placeholder="(a|b)*abb"
             value={text}
             onChange={onChange}

@@ -37,6 +37,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('RunPanel', () => {
+  it('a phone keyboard neither capitalises nor corrects the word (abb must not become Abb)', () => {
+    render(<RunPanel />);
+    const input = screen.getByLabelText('Word');
+    expect(input).toHaveAttribute('autocapitalize', 'off');
+    expect(input).toHaveAttribute('autocorrect', 'off');
+  });
+
   it('Run is disabled without an automaton', () => {
     render(<RunPanel />);
     const run = screen.getByRole('button', { name: 'Run' });

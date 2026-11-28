@@ -97,6 +97,13 @@ test('a phone builds a DFA from a regex on the empty canvas', async ({ page }) =
   await link.tap();
   const dialog = page.getByRole('dialog', { name: 'Create a DFA from a regex' });
   await expect(dialog).toBeVisible();
+  // Under 16 px, iOS zooms the page in on focus and leaves it zoomed after the dialog closes. The
+  // error's caret row keeps the box's size, so its ^ still lines up.
+  const fontPx = (id: string) =>
+    page.getByTestId(id).evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  expect(await fontPx('regex-input')).toBeGreaterThanOrEqual(16);
+  await page.getByTestId('regex-input').fill('a|');
+  expect(await fontPx('regex-caret')).toBe(await fontPx('regex-input'));
   await page.getByTestId('regex-input').fill('(a|b)*ab');
   await page.getByTestId('regex-build').tap();
   await expect(dialog).toHaveCount(0);

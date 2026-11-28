@@ -630,6 +630,13 @@ input.av-switcher-input {
   font-weight: 400;
   letter-spacing: normal;
 }
+/* iOS zooms the page in on focusing a box under 16 px and leaves it zoomed after the dialog closes. */
+@media (pointer: coarse) {
+  .av-regex .av-regex-input,
+  .av-regex .av-regex-caret {
+    font-size: 16px;
+  }
+}
 .av-regex .av-regex-input {
   padding: 10px 12px;
 }
