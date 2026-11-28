@@ -14,6 +14,7 @@ import { appStore, resetAppStore } from '../../store/store';
 import { minimize } from '../../core/minimize';
 import { traceSourceId } from '../../core/trace';
 import { startRun } from '../../store/traceActions';
+import { recordEvents } from '../../test/goatcounter';
 import {
   endLesson,
   finishLesson,
@@ -64,6 +65,19 @@ describe('finished lessons', () => {
     finishLesson();
     expect(finishedLessons()).toEqual([]);
     expect(tut().celebrating).toBe(TEST_LESSON);
+  });
+});
+
+describe('counting lessons', () => {
+  it('counts a lesson started and finished, not quit, and never a test lesson', () => {
+    const events = recordEvents();
+    startLesson('nfa');
+    finishLesson();
+    startLesson('basics');
+    quitLesson();
+    startLesson(TEST_LESSON);
+    finishLesson();
+    expect(events).toEqual(['lesson-nfa-start', 'lesson-nfa-finish', 'lesson-basics-start']);
   });
 });
 

@@ -1,6 +1,7 @@
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
+import { track } from '../../analytics';
 import { renameAutomaton } from '../../core/edit';
 import { newId } from '../../core/id';
 import { emptyAutomaton } from '../../core/model';
@@ -236,6 +237,8 @@ export function startLesson(which: LessonId | Lesson): void {
   setOwned([automatonId]);
   unsubscribe = appStore.subscribe(follow);
   moveOn(appStore.getState());
+  // Only the real lessons: the tests' own aren't counted.
+  if (isLessonId(lesson.id)) track(`lesson-${lesson.id}-start`);
 }
 
 /**
@@ -347,7 +350,10 @@ function removeAutomata(ids: readonly string[]): void {
 export function finishLesson(): void {
   const { owned, lesson } = tutorialStore.getState();
   endLesson();
-  if (lesson && isLessonId(lesson.id)) markLessonFinished(lesson.id);
+  if (lesson && isLessonId(lesson.id)) {
+    markLessonFinished(lesson.id);
+    track(`lesson-${lesson.id}-finish`);
+  }
   const app = appStore.getState();
   if (app.trace && ownsId(owned, app.trace)) app.closeTrace();
   removeAutomata(owned);
