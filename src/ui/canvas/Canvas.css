@@ -154,11 +154,13 @@
  * On a phone the link is the hint's main line, so a finger needs room: vertical padding grows its
  * tap area to 44 px (20 px line + 2 × 12). A button lays out as inline-block even when set inline,
  * so the padding would grow the line too; the negative margin takes it back out, keeping the line
- * one dot gap tall on its row of dots.
+ * one dot gap tall on its row of dots. No tap highlight: phones flash it over the whole padded box,
+ * a big grey rectangle before the dialog opens (which is feedback enough).
  */
 .av-canvas-hint-tap {
   padding: 12px 0;
   margin: -12px 0;
+  -webkit-tap-highlight-color: transparent;
 }
 button.av-canvas-hint-link:active:not(:disabled) {
   transform: none;
