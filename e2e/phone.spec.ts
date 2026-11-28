@@ -93,6 +93,12 @@ test('a phone builds a DFA from a regex on the empty canvas', async ({ page }) =
   // Tall enough for a finger, while its line stays one 20 px dot gap like the line under it.
   expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   expect((await hint.locator('p').first().boundingBox())!.height).toBe(20);
+  // No tap highlight: the browser would flash it over the whole 44 px box, a big grey rectangle.
+  expect(
+    await link.evaluate((e) =>
+      getComputedStyle(e).getPropertyValue('-webkit-tap-highlight-color'),
+    ),
+  ).toBe('rgba(0, 0, 0, 0)');
   await page.screenshot({ path: 'test-results/phone-empty.png' });
   await link.tap();
   const dialog = page.getByRole('dialog', { name: 'Create a DFA from a regex' });
