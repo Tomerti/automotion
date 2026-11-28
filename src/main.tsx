@@ -2,6 +2,7 @@
 import './ui/theme.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { startAnalytics } from './analytics';
 import { loadFromStorage, migrateLegacyKeys } from './persistence/storage';
 import { appStore } from './store/store';
 import App from './ui/shell/App';
@@ -24,6 +25,8 @@ migrateLegacyKeys(browserStorage());
 // the system while that is the choice.
 applyTheme(readTheme());
 followSystemTheme();
+
+startAnalytics();
 
 const loaded = loadFromStorage(browserStorage());
 appStore.getState().replaceAll(loaded.automata);
