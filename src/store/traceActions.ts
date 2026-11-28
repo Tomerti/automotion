@@ -13,7 +13,7 @@ export function startRun(word: string): void {
   const a = automata.find((x) => x.id === activeId);
   if (!a || canRun(a, word) !== null) return;
   openTrace(runWord(a, word));
-  track(a.kind === 'DFA' ? 'run-dfa' : 'run-nfa');
+  track('run');
 }
 
 /** A conversion is waiting for its layout: further Convert clicks are ignored until it settles. */

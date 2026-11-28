@@ -1,7 +1,8 @@
 /**
- * Anonymous usage counts with GoatCounter (https://tomerti.goatcounter.com): page visits, plus one
- * event per use of a main feature. Only the live site loads it, so dev, tests and copies hosted
- * elsewhere send nothing. Events are fixed names: never anything the user typed, drew or named.
+ * Anonymous usage counts with GoatCounter (https://tomerti.goatcounter.com): page visits, plus an
+ * event per run, Convert to DFA, Minimize, DFA built from a regex, and lesson started or finished.
+ * Only the live site loads it, so dev, tests and copies hosted elsewhere send nothing. Events are
+ * fixed names: never anything the user typed, drew or named.
  */
 
 const LIVE_HOST = 'tomerti.github.io';
@@ -10,23 +11,10 @@ const SCRIPT = 'https://gc.zgo.at/count.js';
 
 /** Every event that can be sent. Lesson ids are `LessonId`s (`ui/tutorial/engine.ts`). */
 export type AnalyticsEvent =
-  | 'run-dfa'
-  | 'run-nfa'
+  | 'run'
   | 'convert'
   | 'minimize'
   | 'regex'
-  | 'tidy'
-  | 'share-link'
-  | 'open-shared-link'
-  | 'import-json'
-  | 'import-latex'
-  | 'paste-latex'
-  | 'export-json'
-  | 'export-svg'
-  | 'export-png'
-  | 'export-latex'
-  | 'copy-image'
-  | 'copy-latex'
   | `lesson-${string}-start`
   | `lesson-${string}-finish`;
 

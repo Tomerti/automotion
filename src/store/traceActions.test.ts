@@ -127,14 +127,14 @@ describe('counting', () => {
     ],
   });
 
-  it('counts a run by the kind of automaton', () => {
+  it('counts every run, on a DFA or an NFA', () => {
     const events = recordEvents();
     appStore.getState().addAutomaton(dfa);
     startRun('aa');
     appStore.getState().closeTrace();
     appStore.getState().addAutomaton(endsAb);
     startRun('ab');
-    expect(events).toEqual(['run-dfa', 'run-nfa']);
+    expect(events).toEqual(['run', 'run']);
   });
 
   it('counts no run that is refused', () => {

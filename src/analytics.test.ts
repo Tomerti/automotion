@@ -35,16 +35,16 @@ describe('track', () => {
   it('sends a named event', () => {
     const count = vi.fn();
     window.goatcounter = { count };
-    track('run-dfa');
+    track('run');
     expect(count).toHaveBeenCalledExactlyOnceWith({
-      path: 'run-dfa',
-      title: 'run-dfa',
+      path: 'run',
+      title: 'run',
       event: true,
     });
   });
 
   it('does nothing without GoatCounter', () => {
-    expect(() => track('convert')).not.toThrow();
+    expect(() => track('run')).not.toThrow();
   });
 
   it('never throws when GoatCounter does', () => {
@@ -53,6 +53,6 @@ describe('track', () => {
         throw new Error('blocked');
       },
     };
-    expect(() => track('convert')).not.toThrow();
+    expect(() => track('run')).not.toThrow();
   });
 });
