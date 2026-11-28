@@ -15,7 +15,7 @@ phone or desktop empty-canvas hint with the existing `useTouchOnly()` hook (`ui/
 
 ## Global Constraints
 
-- Exact copy (verbatim): headline `Best on a computer`; body `Drawing automata takes a mouse and keyboard. On a phone you can:`; checklist in order `Build one from a regex` (yes), `Open shared automata` (yes), `Run words on them` (yes), `Draw or edit by hand` (no); canvas link `Create a DFA from a regex`; canvas line `Drawing states by hand needs a computer`.
+- Exact copy (verbatim): headline `Best on a computer`; body `Drawing automata takes a mouse and keyboard. On a phone you can:`; checklist in order `Build one from a regex` (yes), `Open shared automata` (yes), `Run words on them` (yes), `Draw or edit by hand` (no); canvas link `Create a DFA from a regex`; canvas line `Building by hand needs a computer`.
 - The phone welcome keeps **Got it** as its only button.
 - Desktop welcome and desktop empty-canvas hint unchanged (including `or build one from a regex`).
 - Keep `data-testid="canvas-hint"`, `welcome-device-note`, and the existing accessible names.
@@ -88,7 +88,7 @@ git commit -m "feat(phone): the welcome lists building from a regex"
 
 - [ ] **Step 1: Write the failing tests** in `Canvas.test.tsx`, with a local `stubPointers(coarse, fine)` copied from `WelcomeCard.test.tsx` (and `vi.unstubAllGlobals()` in `finally`):
 
-- `on a phone the empty canvas leads with the regex link`: `stubPointers(true, false)`; empty DFA; the hint's button named `Create a DFA from a regex` opens the regex dialog (`useRegexDialog.getState().open === true`); the hint has text `Drawing states by hand needs a computer`; `not.toHaveTextContent('Double-click')`, `not.toHaveTextContent('Ctrl+V')`; no button named `or build one from a regex`.
+- `on a phone the empty canvas leads with the regex link`: `stubPointers(true, false)`; empty DFA; the hint's button named `Create a DFA from a regex` opens the regex dialog (`useRegexDialog.getState().open === true`); the hint has text `Building by hand needs a computer`; `not.toHaveTextContent('Double-click')`, `not.toHaveTextContent('Ctrl+V')`; no button named `or build one from a regex`.
 - `a laptop with a touch screen keeps the desktop hint`: `stubPointers(true, true)`; hint has `Double-click to add a state · Press ? for controls` and the button `or build one from a regex`.
 - `the hint follows a mouse being attached`: a matchMedia stub with listeners and a mutable `fine` (as in WelcomeCard's `switches to the tutorial offer…` test); starts with `Create a DFA from a regex`, after `fine = true` and firing listeners in `act`, shows `Double-click to add a state`.
 - `shows no hint on a lesson's empty automaton on a phone`: `stubPointers(true, false)` plus `setLessonIds`, `queryByTestId('canvas-hint')` is null.
@@ -100,7 +100,7 @@ Expected: FAIL (no `Create a DFA from a regex` button).
 
 - [ ] **Step 3: Implement** in `EditableCanvas`: `const touchOnly = useTouchOnly();` and, inside the existing `canvas-hint` div, render for `touchOnly`:
   - `<p><button type="button" className="av-canvas-hint-link av-canvas-hint-tap" onClick={openRegexDialog}>Create a DFA from a regex</button></p>`
-  - `<p className="av-canvas-hint-small">Drawing states by hand needs a computer</p>`
+  - `<p className="av-canvas-hint-small">Building by hand needs a computer</p>`
 
   else today's three paragraphs unchanged. CSS: `.av-canvas-hint-tap { padding: 12px 0; }`. The button is `display: inline`, so vertical padding grows the tap area to 44 px (20 px line + 24) without moving the line off its dot row. Add a comment saying so.
 

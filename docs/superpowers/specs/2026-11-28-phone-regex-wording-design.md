@@ -55,7 +55,7 @@ Drawing automata takes a mouse and keyboard. On a phone you can:
 
 ```
 Create a DFA from a regex                  (accent link, opens the regex dialog)
-Drawing states by hand needs a computer    (muted, small)
+Building by hand needs a computer          (muted, small)
 ```
 
 - A text link, not a button; wording matches the dialog's title "Create a DFA from a regex". No
