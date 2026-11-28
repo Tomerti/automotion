@@ -28,23 +28,24 @@ function sharePayload(): string {
   return deflateRawSync(Buffer.from(json)).toString('base64url');
 }
 
-test('the phone welcome says what a phone is for, then a shared link opens and runs', async ({
+test('the phone welcome says what a phone can do, then a shared link opens and runs', async ({
   page,
 }) => {
   await page.goto('./');
   const welcome = page.getByRole('dialog', { name: 'Welcome' });
   await expect(welcome).toBeVisible();
-  await expect(welcome).toContainText('made for a mouse and keyboard');
+  await expect(welcome).toContainText('Drawing automata takes a mouse and keyboard');
   await expect(welcome.getByRole('listitem')).toHaveText([
+    'Build one from a regex',
     'Open shared automata',
     'Run words on them',
-    'Build or edit automata',
+    'Draw or edit by hand',
   ]);
   await expect(welcome.getByRole('button', { name: 'Start tutorial' })).toHaveCount(0);
   await expect(welcome.getByTestId('welcome-demo')).toBeVisible();
   // The notice is a callout above the demo, on screen without scrolling.
   const note = welcome.getByRole('note');
-  await expect(note).toContainText('Open this on a computer');
+  await expect(note).toContainText('Best on a computer');
   const noteBox = (await note.boundingBox())!;
   const demoBox = (await welcome.getByTestId('welcome-demo').boundingBox())!;
   expect(noteBox.y + noteBox.height).toBeLessThanOrEqual(demoBox.y);
