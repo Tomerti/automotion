@@ -274,6 +274,10 @@ input[type='checkbox'] {
   outline: 2px solid var(--av-accent);
   outline-offset: 2px;
 }
+/* Focus a closed dialog gave back to the button it was opened from by a click (`useModalDialog`). */
+[data-quiet-focus]:focus-visible {
+  outline: none;
+}
 /* A field being edited is marked like a selection: in orange, its caret and selected text too. */
 input:focus-visible,
 textarea:focus-visible,

@@ -16,6 +16,11 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Dialogs closed with Escape leave no stray ring; `\eps` is ε at once (2026-11-28)
+
+- [x] Clicking "or build one from a regex" and pressing Escape left a blue focus ring on the link: the dialog gives the focus back to the button it was opened from, and Chrome rings focus moved by a script after a key press (or away from the regex box, which always shows its ring). `useModalDialog` now gives it back without the ring (`data-quiet-focus`, until a key is pressed or the focus leaves) when that button had none as the dialog opened, i.e. it was clicked; opened from the keyboard, the ring comes back as before. Applies to every modal dialog (`e2e/regex.spec.ts`)
+- [x] Typing `\eps` gives ε as soon as the `s` is typed, in the symbol, word and regex boxes (it waited for the next key, in case it became `\epsilon`); a pasted `\epsilon` is still one ε. Typing `\epsilon` key by key now gives `εilon`, by decision. The blur-time and Enter-time cleanup of a leftover `\eps` and the regex error's offset for it are gone
+
 ### Anonymous usage counts (2026-11-28)
 
 - [x] GoatCounter (https://tomerti.goatcounter.com) counts visits on the live site, plus the events `run`, `convert`, `minimize`, `regex` and `lesson-<id>-start`/`-finish` (`src/analytics.ts`). Only `tomerti.github.io` loads `count.js`, so dev, tests and forks send nothing; events are fixed names, never what the user typed or named. Kept lean on purpose: no Tidy, sharing, import or export events. The README's _Good to know_ says so

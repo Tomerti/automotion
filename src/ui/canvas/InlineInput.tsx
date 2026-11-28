@@ -20,8 +20,8 @@ export interface InlineInputProps {
    * the input is centred on `at`, which matches a label drawn with `dominant-baseline: central`.
    */
   baseline?(text: string): number;
-  /** Live rewrite of the text as it is typed (e.g. `\eps` → ε), given where the caret is. */
-  normalize?(text: string, caret: number): string;
+  /** Live rewrite of the text as it is typed (e.g. `\eps` → ε). */
+  normalize?(text: string): string;
   /** Enter pressed. Returns an error to show (the input stays open) or null when done. */
   onSubmit(text: string): string | null;
   /** Escape pressed. */

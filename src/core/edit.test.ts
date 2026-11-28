@@ -271,24 +271,15 @@ describe('normalizeSymbolText', () => {
     expect(normalizeSymbolText('a,\\eps')).toBe('a,ε'));
   it('replaces a pasted \\epsilon with ε, not ε followed by ilon', () =>
     expect(normalizeSymbolText('a,\\epsilon,\\eps')).toBe('a,ε,ε'));
-  it('keeps the \\eps the caret may still extend to \\epsilon', () => {
-    for (const typed of ['\\eps', '\\epsi', '\\epsil', '\\epsilo'])
-      expect(normalizeSymbolText(`a,${typed}`, 2 + typed.length)).toBe(`a,${typed}`);
-  });
-  it('typed key by key, \\epsilon ends as ε', () => {
+  it('typed key by key, \\eps is ε as soon as its s is typed', () => {
     let text = '';
-    for (const ch of '\\epsilon') {
-      text += ch;
-      text = normalizeSymbolText(text, text.length);
+    const seen: string[] = [];
+    for (const ch of '\\eps') {
+      text = normalizeSymbolText(text + ch);
+      seen.push(text);
     }
-    expect(text).toBe('ε');
+    expect(seen).toEqual(['\\', '\\e', '\\ep', 'ε']);
   });
-  it('replaces the \\eps at the caret once the next key does not continue \\epsilon', () => {
-    expect(normalizeSymbolText('\\eps,', 5)).toBe('ε,');
-    expect(normalizeSymbolText('\\epsa', 5)).toBe('εa');
-  });
-  it('keeps only the \\eps before the caret, typed in the middle of the text', () =>
-    expect(normalizeSymbolText('\\eps,\\eps,b', 9)).toBe('ε,\\eps,b'));
 });
 
 describe('normalizeStateLabel', () => {

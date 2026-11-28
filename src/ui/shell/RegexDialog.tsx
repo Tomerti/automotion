@@ -9,15 +9,6 @@ import { closeRegexDialog, useRegexDialog } from './regexDialogStore';
 import { toast } from './toastStore';
 import { useModalDialog } from './useModalDialog';
 
-/**
- * Where offset `at` of the normalised text falls in the box's `text`. They differ only by the
- * `\eps` still being typed (one at most: the rest is ε already), which the parser read as ε.
- */
-function displayOffset(text: string, at: number): number {
-  const typing = text.indexOf('\\eps');
-  return typing >= 0 && at > typing ? at + '\\eps'.length - 1 : at;
-}
-
 /** The open regex dialog, if any (rendered once, in `App`). */
 export function RegexDialog(): React.JSX.Element | null {
   const open = useRegexDialog((s) => s.open);
@@ -105,7 +96,6 @@ function RegexModal(): React.JSX.Element {
             placeholder="(a|b)*abb"
             value={text}
             onChange={onChange}
-            onBlur={() => setText(normalizeRegexText(text))}
             onScroll={(e) => {
               if (caretRef.current) caretRef.current.scrollLeft = e.currentTarget.scrollLeft;
             }}
@@ -124,9 +114,7 @@ function RegexModal(): React.JSX.Element {
                 aria-hidden="true"
               >
                 {/* The text before the error, invisible: same glyphs and widths as the box. */}
-                <span data-testid="regex-caret-pad">
-                  {text.slice(0, displayOffset(text, error.at))}
-                </span>
+                <span data-testid="regex-caret-pad">{text.slice(0, error.at)}</span>
                 <span data-testid="regex-caret-mark">^</span>
               </div>
               <p>{error.error}</p>
