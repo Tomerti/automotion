@@ -16,6 +16,11 @@ Nothing in progress: pick the next task from the list below.
 
 ## Done
 
+### Phones build from a regex (2026-11-28)
+
+- [x] The phone welcome no longer says a phone can't build automata (From regex works there): the amber callout's headline is "Best on a computer", its body "Drawing automata takes a mouse and keyboard. On a phone you can:", and its checklist ✓ Build one from a regex, ✓ Open shared automata, ✓ Run words on them, ✗ Draw or edit by hand. Got it stays its only button
+- [x] On a touch-only device the empty canvas leads with the regex link instead of desktop instructions (double-click, `?`, Ctrl+V, drop a file): "Create a DFA from a regex" (named like the dialog it opens), then muted "Building by hand needs a computer". The link's tap area is 44 px tall (padding, taken back out of the line by a negative margin, so it stays on its row of dots); it follows `useTouchOnly()`, so attaching a mouse brings the desktop hint back. `e2e/phone.spec.ts` builds `(a|b)*ab` from it and runs a word
+
 ### The issues chip floats above the run box (2026-11-24)
 
 - [x] The "⚠ N issues" chip moved from the top bar (after the automaton's name, easy to miss) to float just above the run pill, next to the Run it explains: larger, opaque with the pills' shadow, its list opening upwards. It sits out of the dock's flow, so `--av-dock-h` is unchanged; on 481–760 px screens toasts rise above it

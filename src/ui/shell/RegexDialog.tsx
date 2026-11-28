@@ -25,7 +25,8 @@ export function RegexDialog(): React.JSX.Element | null {
 }
 
 /**
- * The empty canvas's "or build one from a regex": a box for a regular expression. Create DFA adds the regex's
+ * The empty canvas's regex link ("or build one from a regex", on a phone "Create a DFA from a
+ * regex"): a box for a regular expression. Create DFA adds the regex's
  * minimal DFA as a new automaton; a syntax error is shown under the offending character.
  */
 function RegexModal(): React.JSX.Element {

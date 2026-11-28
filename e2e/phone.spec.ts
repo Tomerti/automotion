@@ -82,3 +82,36 @@ test('the phone welcome says what a phone can do, then a shared link opens and r
   await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'true');
   await page.screenshot({ path: 'test-results/phone-run.png' });
 });
+
+test('a phone builds a DFA from a regex on the empty canvas', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('dialog', { name: 'Welcome' }).getByRole('button', { name: 'Got it' }).tap();
+  const hint = page.getByTestId('canvas-hint');
+  await expect(hint).toContainText('Building by hand needs a computer');
+  await expect(hint).not.toContainText('Double-click');
+  const link = hint.getByRole('button', { name: 'Create a DFA from a regex' });
+  // Tall enough for a finger, while its line stays one 20 px dot gap like the line under it.
+  expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect((await hint.locator('p').first().boundingBox())!.height).toBe(20);
+  await page.screenshot({ path: 'test-results/phone-empty.png' });
+  await link.tap();
+  const dialog = page.getByRole('dialog', { name: 'Create a DFA from a regex' });
+  await expect(dialog).toBeVisible();
+  await page.getByTestId('regex-input').fill('(a|b)*ab');
+  await page.getByTestId('regex-build').tap();
+  await expect(dialog).toHaveCount(0);
+  const size = page.viewportSize()!;
+  for (const id of ['state-q_0', 'state-q_1', 'state-q_2']) {
+    const b = await page.getByTestId(id).locator('.av-state-body').boundingBox();
+    expect(b, id).not.toBeNull();
+    expect(b!.x).toBeGreaterThanOrEqual(0);
+    expect(b!.y).toBeGreaterThanOrEqual(0);
+    expect(b!.x + b!.width).toBeLessThanOrEqual(size.width);
+    expect(b!.y + b!.height).toBeLessThanOrEqual(size.height);
+  }
+  await page.getByLabel('Word').fill('bab');
+  await page.getByLabel('Word').press('Enter');
+  await page.getByRole('button', { name: 'Last' }).tap();
+  await expect(page.getByTestId('verdict')).toHaveAttribute('data-accepted', 'true');
+  await page.screenshot({ path: 'test-results/phone-regex.png' });
+});

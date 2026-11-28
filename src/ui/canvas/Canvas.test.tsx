@@ -79,6 +79,16 @@ function drawEdge(to: [number, number] = [100, 0]): void {
 
 const toasts = () => toastStore.getState().toasts;
 
+/** A matchMedia whose only true queries are the pointer ones asked for. */
+function stubPointers(coarse: boolean, fine: boolean): void {
+  vi.stubGlobal('matchMedia', (q: string) => ({
+    matches: q.includes('any-pointer') ? fine : q.includes('pointer: coarse') ? coarse : false,
+    media: q,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+}
+
 beforeEach(() => resetAppStore());
 afterEach(cleanup);
 
@@ -153,6 +163,67 @@ describe('Canvas editing', () => {
     );
     expect(useRegexDialog.getState().open).toBe(true);
     closeRegexDialog();
+  });
+
+  describe('on a touch-only device', () => {
+    afterEach(() => vi.unstubAllGlobals());
+    const empty = () => fixture({ kind: 'DFA', alphabet: 'a', states: [], name: 'm' });
+    const hint = () => screen.getByTestId('canvas-hint');
+
+    it('on a phone the empty canvas leads with the regex link', async () => {
+      stubPointers(true, false);
+      load(empty());
+      render(<Canvas />);
+      closeRegexDialog();
+      expect(hint()).toHaveTextContent('Building by hand needs a computer');
+      expect(hint()).not.toHaveTextContent('Double-click');
+      expect(hint()).not.toHaveTextContent('Ctrl+V');
+      expect(
+        within(hint()).queryByRole('button', { name: 'or build one from a regex' }),
+      ).toBeNull();
+      await userEvent
+        .setup()
+        .click(within(hint()).getByRole('button', { name: 'Create a DFA from a regex' }));
+      expect(useRegexDialog.getState().open).toBe(true);
+      closeRegexDialog();
+    });
+
+    it('a laptop with a touch screen keeps the desktop hint', () => {
+      stubPointers(true, true);
+      load(empty());
+      render(<Canvas />);
+      expect(hint()).toHaveTextContent('Double-click to add a state · Press ? for controls');
+      expect(
+        within(hint()).getByRole('button', { name: 'or build one from a regex' }),
+      ).toBeInTheDocument();
+    });
+
+    it('the hint follows a mouse being attached', () => {
+      let fine = false;
+      const listeners = new Set<() => void>();
+      vi.stubGlobal('matchMedia', (q: string) => ({
+        get matches() {
+          return q.includes('any-pointer') ? fine : q.includes('pointer: coarse');
+        },
+        media: q,
+        addEventListener: (_: string, l: () => void) => listeners.add(l),
+        removeEventListener: (_: string, l: () => void) => listeners.delete(l),
+      }));
+      load(empty());
+      render(<Canvas />);
+      expect(hint()).toHaveTextContent('Create a DFA from a regex');
+      fine = true;
+      act(() => listeners.forEach((l) => l()));
+      expect(hint()).toHaveTextContent('Double-click to add a state');
+    });
+
+    it('shows no hint on a lesson’s empty automaton on a phone', () => {
+      stubPointers(true, false);
+      load(empty());
+      act(() => appStore.getState().setLessonIds([appStore.getState().activeId!]));
+      render(<Canvas />);
+      expect(screen.queryByTestId('canvas-hint')).toBeNull();
+    });
   });
 
   it('clicking a state selects it; clicking the background clears the selection', () => {

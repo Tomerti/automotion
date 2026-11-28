@@ -119,7 +119,8 @@ Press **?** in the app to see every control.
 
 - **Your work stays in your browser.** There is no server and no account. Clearing your
   browser's site data deletes your automata, so use **Export all** to keep a copy.
-- **Phones** can open share links and run words; building automata needs a mouse and keyboard.
+- **Phones** can build an automaton from a regex, open share links and run words; drawing by hand
+  needs a mouse and keyboard.
 
 ## Development
 
